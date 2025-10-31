@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,10 +15,18 @@ import { Label } from "@/components/ui/label";
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex min-h-screen items-center justify-center font-sans">
       <main className="w-full max-w-md px-4">
         <Card>
           <CardHeader className="text-center">
+            <Image
+              src="/logo-text.png"
+              alt="LOL Comp Maker"
+              width={200}
+              height={50}
+              className="m-auto w-auto"
+              priority
+            />
             <CardTitle className="text-2xl">Créer un compte</CardTitle>
             <CardDescription>
               Remplissez les informations ci-dessous pour créer votre compte

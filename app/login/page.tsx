@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,18 +8,24 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex min-h-screen items-center justify-center font-sans">
       <main className="w-full max-w-md px-4">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Connexion</CardTitle>
+            <Image
+              src="/logo-text.png"
+              alt="LOL Comp Maker"
+              width={200}
+              height={50}
+              className="m-auto w-auto"
+              priority
+            />
             <CardDescription>
               Entrez vos identifiants pour accéder à votre compte
             </CardDescription>
