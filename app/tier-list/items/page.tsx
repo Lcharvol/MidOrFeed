@@ -272,8 +272,8 @@ export default function ItemsPage() {
                       <Image
                         src="/gold-piece.png"
                         alt="Gold"
-                        width={16}
-                        height={16}
+                        width={20}
+                        height={20}
                       />
                     </TableCell>
                   </TableRow>

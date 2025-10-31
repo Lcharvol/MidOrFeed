@@ -45,19 +45,21 @@
 
 :root {
   --radius: 0.625rem;
-  /* League of Legends inspired light mode - gray tones */
+
+  /* 🌞 Light mode - neutre et lisible */
   --background: oklch(0.98 0 0);
   --foreground: oklch(0.18 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0 0);
-  /* Gray tones for neutral look */
-  --primary: oklch(0.45 0 0);
-  --primary-foreground: oklch(0.98 0 0);
-  /* Secondary for accents */
+
+  /* Accent gold discret pour le mode clair */
+  --primary: oklch(0.8 0.18 80); /* Gold clair #FFD85C */
+  --primary-foreground: oklch(0.18 0 0);
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0.18 0 0);
+
   --muted: oklch(0.94 0 0);
   --muted-foreground: oklch(0.5 0 0);
   --accent: oklch(0.92 0 0);
@@ -65,58 +67,69 @@
   --destructive: oklch(0.55 0.2 20);
   --border: oklch(0.88 0 0);
   --input: oklch(0.88 0 0);
-  --ring: oklch(0.45 0 0);
-  /* Champion type colors */
-  --chart-1: oklch(0.55 0.2 350); /* Magenta - Assassin */
-  --chart-2: oklch(0.5 0.2 40); /* Orange - Fighter */
-  --chart-3: oklch(0.6 0.2 280); /* Purple - Mage */
-  --chart-4: oklch(0.5 0.15 200); /* Blue - Marksman */
-  --chart-5: oklch(0.55 0.15 150); /* Green - Support */
+  --ring: oklch(0.8 0.18 80);
+
+  /* Couleurs des rôles */
+  --chart-1: oklch(0.55 0.2 350); /* Assassin */
+  --chart-2: oklch(0.5 0.2 40); /* Fighter */
+  --chart-3: oklch(0.6 0.2 280); /* Mage */
+  --chart-4: oklch(0.5 0.15 200); /* Marksman */
+  --chart-5: oklch(0.55 0.15 150); /* Support */
+
+  /* Sidebar clair */
   --sidebar: oklch(0.98 0 0);
   --sidebar-foreground: oklch(0.18 0 0);
-  --sidebar-primary: oklch(0.45 0 0);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.8 0.18 80);
+  --sidebar-primary-foreground: oklch(0.18 0 0);
   --sidebar-accent: oklch(0.92 0 0);
   --sidebar-accent-foreground: oklch(0.18 0 0);
   --sidebar-border: oklch(0.88 0 0);
-  --sidebar-ring: oklch(0.45 0 0);
+  --sidebar-ring: oklch(0.8 0.18 80);
 }
 
 .dark {
-  /* League of Legends dark mode - rich dark with gold accents */
-  --background: oklch(0.12 0 0);
+  /* 🌑 Dark mode - LoL gold theme */
+  --background: oklch(0.12 0 260); /* Bleu nuit profond #0E1218 */
   --foreground: oklch(0.95 0 0);
-  --card: oklch(0.18 0 0);
+  --card: oklch(0.18 0 260);
   --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.18 0 0);
+  --popover: oklch(0.18 0 260);
   --popover-foreground: oklch(0.95 0 0);
-  /* Vivid gold primary like LoL */
-  --primary: oklch(0.75 0.2 75);
-  --primary-foreground: oklch(0.12 0 0);
-  --secondary: oklch(0.25 0 0);
+
+  /* 💛 Or profond et élégant */
+  --primary: oklch(0.7 0.15 80); /* #D4AF37 */
+  --primary-foreground: oklch(0.12 0 0); /* contraste sur fond clair */
+  --secondary: oklch(0.25 0 260);
   --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.25 0 0);
+
+  /* Muted / neutres */
+  --muted: oklch(0.25 0 260);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.25 0 260);
   --accent-foreground: oklch(0.95 0 0);
   --destructive: oklch(0.55 0.2 20);
-  --border: oklch(0.3 0 0);
-  --input: oklch(0.3 0 0);
-  --ring: oklch(0.75 0.2 75);
-  /* Champion type colors for dark mode */
-  --chart-1: oklch(0.6 0.2 350); /* Magenta - Assassin */
-  --chart-2: oklch(0.55 0.2 40); /* Orange - Fighter */
-  --chart-3: oklch(0.65 0.2 280); /* Purple - Mage */
-  --chart-4: oklch(0.55 0.15 200); /* Blue - Marksman */
-  --chart-5: oklch(0.6 0.15 150); /* Green - Support */
-  --sidebar: oklch(0.18 0 0);
+  --border: oklch(0.3 0 260);
+  --input: oklch(0.3 0 260);
+  --ring: oklch(0.7 0.15 80);
+
+  /* Couleurs des rôles */
+  --chart-1: oklch(0.6 0.2 350);
+  --chart-2: oklch(0.55 0.2 40);
+  --chart-3: oklch(0.65 0.2 280);
+  --chart-4: oklch(0.55 0.15 200);
+  --chart-5: oklch(0.6 0.15 150);
+
+  /* Sidebar sombre */
+  --sidebar: oklch(0.18 0 260);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.75 0.2 75);
+  --sidebar-primary: oklch(0.7 0.15 80);
   --sidebar-primary-foreground: oklch(0.12 0 0);
-  --sidebar-accent: oklch(0.25 0 0);
+  --sidebar-accent: oklch(0.25 0 260);
   --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.3 0 0);
-  --sidebar-ring: oklch(0.75 0.2 75);
+  --sidebar-border: oklch(0.3 0 260);
+  --sidebar-ring: oklch(0.7 0.15 80);
+
+  --primary-gradient: linear-gradient(135deg, #ffd85c, #ffb800);
 }
 
 @layer base {
