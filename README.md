@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LOL Comp Maker
 
-## Getting Started
+Application web pour créer et partager des compositions de champions pour League of Legends.
 
-First, run the development server:
+## 🚀 Technologies
+
+- **Frontend**: Next.js 16, React 19, TypeScript
+- **UI**: shadcn/ui, Tailwind CSS
+- **Backend**: Next.js API Routes, Prisma ORM
+- **Database**: SQLite (development)
+- **Authentification**: bcryptjs pour le hachage des mots de passe
+- **Validation**: Zod, react-hook-form
+
+## 📦 Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Installer les dépendances
+pnpm install
+
+# Générer le client Prisma
+pnpm run prisma:generate
+
+# Créer la base de données
+pnpm run prisma:migrate
+
+# Lancer le serveur de développement
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🗄️ Base de données
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Visualiser la base de données
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm run prisma:studio
+```
 
-## Learn More
+Ouvre l'interface Prisma Studio sur <http://localhost:5555>
 
-To learn more about Next.js, take a look at the following resources:
+### Commandes Prisma utiles
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Générer le client Prisma
+pnpm run prisma:generate
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Créer une nouvelle migration
+pnpm run prisma:migrate
 
-## Deploy on Vercel
+# Ouvrir Prisma Studio
+pnpm run prisma:studio
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔐 Authentification
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+L'application dispose d'un système d'authentification complet :
+
+### Fonctionnalités
+
+- **Inscription** (`/signup`) : Création de compte avec validation
+- **Connexion** (`/login`) : Authentification sécurisée
+- **Validation** : Utilisation de Zod pour la validation des formulaires
+- **Sécurité** : Mots de passe hashés avec bcryptjs
+- **Interface** : Formulaires avec react-hook-form et shadcn/ui
+
+### Structure de la base de données
+
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+```
+
+## 📁 Structure du projet
+
+```text
+lol-comp-maker/
+├── app/
+│   ├── api/
+│   │   └── auth/
+│   │       ├── login/
+│   │       └── signup/
+│   ├── login/
+│   ├── signup/
+│   ├── tier-list/
+│   │   ├── champions/
+│   │   └── items/
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── ui/        # Composants shadcn/ui
+│   ├── Header.tsx
+│   └── ConditionalHeader.tsx
+├── lib/
+│   ├── prisma.ts  # Client Prisma
+│   └── utils.ts
+├── prisma/
+│   ├── schema.prisma
+│   ├── dev.db
+│   └── migrations/
+└── public/
+    ├── logo.png
+    └── logo-text.png
+```
+
+## 🎨 Interface
+
+L'application utilise un thème inspiré de League of Legends avec :
+
+- Mode sombre forcé
+- Couleurs grises et or vibrant
+- Composants UI modernes de shadcn/ui
+
+## 🛠️ Scripts disponibles
+
+- `pnpm dev` : Lancer le serveur de développement
+- `pnpm build` : Créer une build de production
+- `pnpm start` : Lancer le serveur de production
+- `pnpm lint` : Lancer ESLint
+- `pnpm run prisma:studio` : Ouvrir Prisma Studio
+- `pnpm run prisma:generate` : Régénérer le client Prisma
+- `pnpm run prisma:migrate` : Créer/appliquer les migrations
+
+## 📝 Prochaines étapes
+
+- [ ] Implémenter NextAuth.js pour une authentification complète
+- [ ] Ajouter des sessions utilisateur
+- [ ] Créer les fonctionnalités de compositions
+- [ ] Intégrer l'API de League of Legends
+- [ ] Ajouter la gestion des favoris
+- [ ] Implémenter les statistiques
+
+## 📄 License
+
+MIT
