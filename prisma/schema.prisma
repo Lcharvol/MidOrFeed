@@ -20,3 +20,39 @@ model User {
 
   @@map("users")
 }
+
+model Champion {
+  id                   String   @id @default(cuid())
+  championId           String   @unique // ID Riot (ex: "Aatrox")
+  name                 String   @unique
+  title                String
+  blurb                String?
+  attack               Int
+  defense              Int
+  magic                Int
+  difficulty           Int
+  hp                   Float
+  hpPerLevel           Float
+  mp                   Float?
+  mpPerLevel           Float?
+  moveSpeed            Int
+  armor                Float
+  armorPerLevel        Float
+  spellBlock           Float
+  spellBlockPerLevel   Float
+  attackRange          Float
+  hpRegen              Float
+  hpRegenPerLevel      Float
+  mpRegen              Float?
+  mpRegenPerLevel      Float?
+  crit                 Float
+  critPerLevel         Float
+  attackDamage         Float
+  attackDamagePerLevel Float
+  attackSpeed          Float
+  attackSpeedPerLevel  Float
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("champions")
+}
