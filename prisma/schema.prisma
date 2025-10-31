@@ -56,3 +56,17 @@ model Champion {
 
   @@map("champions")
 }
+
+model Item {
+  id          String   @id @default(cuid())
+  itemId      String   @unique // ID Riot (ex: "1001")
+  name        String
+  description String? // Description HTML longue
+  plaintext   String? // Description courte
+  image       String? // Nom de l'image
+  gold        String? // Prix en JSON {"base": 100, "total": 300, "sell": 210}
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("items")
+}

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import useSWR from "swr";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -164,6 +165,13 @@ export default function ChampionsPage() {
     return filtered;
   }, [data, searchTerm, sortColumn, sortDirection]);
 
+  const getChampionImageUrl = (championId: string): string => {
+    // Les images de champions Riot suivent ce pattern:
+    // https://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{championId}.png
+    const version = "15.21.1"; // Version actuelle, à faire dynamique si besoin
+    return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championId}.png`;
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -203,6 +211,7 @@ export default function ChampionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-20">Image</TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
                   onClick={() => handleSort("name")}
@@ -287,13 +296,22 @@ export default function ChampionsPage() {
             <TableBody>
               {sortedAndFilteredChampions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     Aucun champion trouvé
                   </TableCell>
                 </TableRow>
               ) : (
                 sortedAndFilteredChampions.map((champion) => (
                   <TableRow key={champion.id}>
+                    <TableCell>
+                      <Image
+                        src={getChampionImageUrl(champion.championId)}
+                        alt={champion.name}
+                        width={56}
+                        height={56}
+                        className="rounded"
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {champion.name}
                     </TableCell>

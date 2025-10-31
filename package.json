@@ -10,7 +10,8 @@
     "prisma:studio": "prisma studio",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "sync:champions": "tsx scripts/sync-champions.ts"
+    "sync:champions": "tsx scripts/sync-champions.ts",
+    "sync:items": "tsx scripts/sync-items.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

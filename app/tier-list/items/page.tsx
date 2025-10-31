@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import useSWR from "swr";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -10,137 +12,68 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronsUpDownIcon,
+  Loader2Icon,
+} from "lucide-react";
 
+// Interface basée sur les données Riot
 interface Item {
+  id: string;
+  itemId: string;
   name: string;
-  winRate: number;
-  winRateIncrease: number;
-  pickRate: number;
-  pickRateIncrease: number;
+  description: string | null;
+  plaintext: string | null;
+  image: string | null;
+  gold: string | null; // JSON string avec {base, total, sell}
 }
 
-// Données d'exemple d'objets de League of Legends
-const items: Item[] = [
-  {
-    name: "Infinity Edge",
-    winRate: 54.2,
-    winRateIncrease: 2.1,
-    pickRate: 35.8,
-    pickRateIncrease: 5.3,
-  },
-  {
-    name: "Duskblade of Draktharr",
-    winRate: 51.8,
-    winRateIncrease: 1.2,
-    pickRate: 28.5,
-    pickRateIncrease: 3.1,
-  },
-  {
-    name: "Liandry's Anguish",
-    winRate: 52.5,
-    winRateIncrease: 0.8,
-    pickRate: 31.2,
-    pickRateIncrease: 1.5,
-  },
-  {
-    name: "Goredrinker",
-    winRate: 50.3,
-    winRateIncrease: -0.5,
-    pickRate: 22.4,
-    pickRateIncrease: -2.3,
-  },
-  {
-    name: "Shieldbow",
-    winRate: 53.1,
-    winRateIncrease: 3.2,
-    pickRate: 26.9,
-    pickRateIncrease: 4.8,
-  },
-  {
-    name: "Luden's Tempest",
-    winRate: 51.6,
-    winRateIncrease: 1.8,
-    pickRate: 29.7,
-    pickRateIncrease: 2.2,
-  },
-  {
-    name: "Sunfire Aegis",
-    winRate: 49.8,
-    winRateIncrease: -1.1,
-    pickRate: 18.3,
-    pickRateIncrease: -3.5,
-  },
-  {
-    name: "Blade of the Ruined King",
-    winRate: 52.9,
-    winRateIncrease: 2.5,
-    pickRate: 24.6,
-    pickRateIncrease: 3.7,
-  },
-  {
-    name: "Rabadon's Deathcap",
-    winRate: 55.4,
-    winRateIncrease: 0.7,
-    pickRate: 19.8,
-    pickRateIncrease: 1.9,
-  },
-  {
-    name: "Bloodthirster",
-    winRate: 50.7,
-    winRateIncrease: 0.3,
-    pickRate: 15.2,
-    pickRateIncrease: -0.8,
-  },
-  {
-    name: "Trinity Force",
-    winRate: 51.2,
-    winRateIncrease: 1.5,
-    pickRate: 20.1,
-    pickRateIncrease: 2.4,
-  },
-  {
-    name: "Zhonya's Hourglass",
-    winRate: 48.6,
-    winRateIncrease: -2.3,
-    pickRate: 32.5,
-    pickRateIncrease: 0.1,
-  },
-  {
-    name: "Void Staff",
-    winRate: 52.3,
-    winRateIncrease: 1.1,
-    pickRate: 27.4,
-    pickRateIncrease: 1.8,
-  },
-  {
-    name: "Lord Dominik's Regards",
-    winRate: 53.7,
-    winRateIncrease: 2.8,
-    pickRate: 23.8,
-    pickRateIncrease: 4.1,
-  },
-  {
-    name: "Death's Dance",
-    winRate: 49.4,
-    winRateIncrease: -0.9,
-    pickRate: 16.7,
-    pickRateIncrease: -1.7,
-  },
-];
+interface ItemsResponse {
+  success: boolean;
+  data: Item[];
+  count: number;
+}
 
-type SortColumn =
-  | "name"
-  | "winRate"
-  | "winRateIncrease"
-  | "pickRate"
-  | "pickRateIncrease";
+type SortColumn = "name" | "gold";
 type SortDirection = "asc" | "desc" | null;
+
+const fetcher = async (url: string): Promise<ItemsResponse> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Erreur lors de la récupération des items");
+  }
+  return res.json();
+};
+
+// Composant SortIcon défini en dehors du composant principal
+const SortIcon = ({
+  column,
+  sortColumn,
+  sortDirection,
+}: {
+  column: SortColumn;
+  sortColumn: SortColumn | null;
+  sortDirection: SortDirection;
+}) => {
+  if (sortColumn !== column)
+    return <ChevronsUpDownIcon className="ml-1 size-4 opacity-50" />;
+  if (sortDirection === "asc") return <ArrowUpIcon className="ml-1 size-4" />;
+  if (sortDirection === "desc")
+    return <ArrowDownIcon className="ml-1 size-4" />;
+  return <ChevronsUpDownIcon className="ml-1 size-4 opacity-50" />;
+};
 
 export default function ItemsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const { data, error, isLoading } = useSWR<ItemsResponse>(
+    "/api/items/list",
+    fetcher
+  );
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -159,9 +92,14 @@ export default function ItemsPage() {
   };
 
   const sortedAndFilteredItems = useMemo(() => {
-    let filtered = items.filter((item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    if (!data?.data) return [];
+
+    let filtered = data.data.filter((item) => {
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
 
     if (sortColumn && sortDirection) {
       filtered = [...filtered].sort((a, b) => {
@@ -173,150 +111,186 @@ export default function ItemsPage() {
             aValue = a.name;
             bValue = b.name;
             break;
-          case "winRate":
-            aValue = a.winRate;
-            bValue = b.winRate;
+          case "gold":
+            // Parse gold JSON to get total value
+            const aGold = a.gold ? JSON.parse(a.gold) : { total: 0 };
+            const bGold = b.gold ? JSON.parse(b.gold) : { total: 0 };
+            aValue = aGold.total || 0;
+            bValue = bGold.total || 0;
             break;
-          case "winRateIncrease":
-            aValue = a.winRateIncrease;
-            bValue = b.winRateIncrease;
-            break;
-          case "pickRate":
-            aValue = a.pickRate;
-            bValue = b.pickRate;
-            break;
-          case "pickRateIncrease":
-            aValue = a.pickRateIncrease;
-            bValue = b.pickRateIncrease;
-            break;
+          default:
+            aValue = 0;
+            bValue = 0;
         }
 
-        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+        } else if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortDirection === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
         return 0;
       });
     }
 
     return filtered;
-  }, [searchTerm, sortColumn, sortDirection]);
+  }, [data, searchTerm, sortColumn, sortDirection]);
 
-  const SortIcon = ({ column }: { column: SortColumn }) => {
-    if (sortColumn !== column)
-      return <ChevronsUpDownIcon className="ml-1 size-4 opacity-50" />;
-    if (sortDirection === "asc") return <ArrowUpIcon className="ml-1 size-4" />;
-    if (sortDirection === "desc")
-      return <ArrowDownIcon className="ml-1 size-4" />;
-    return <ChevronsUpDownIcon className="ml-1 size-4 opacity-50" />;
+  const getGoldValue = (gold: string | null): string => {
+    if (!gold) return "N/A";
+    try {
+      const parsed = JSON.parse(gold);
+      return `${parsed.total} gold`;
+    } catch {
+      return gold;
+    }
   };
 
-  const formatChange = (value: number) => {
-    const isPositive = value >= 0;
-    const sign = isPositive ? "+" : "";
-    const color = isPositive ? "text-green-500" : "text-red-500";
-    return (
-      <span className={color}>
-        {sign}
-        {value.toFixed(1)}%
-      </span>
-    );
+  const getPlaintextPreview = (text: string | null): string => {
+    if (!text) return "-";
+    // Remove HTML tags
+    const plain = text.replace(/<[^>]*>/g, "");
+    return plain.length > 80 ? `${plain.substring(0, 80)}...` : plain;
+  };
+
+  const cleanItemName = (name: string | null): string => {
+    if (!name) return "N/A";
+    // Remove HTML tags from name
+    return name.replace(/<[^>]*>/g, "");
+  };
+
+  const getItemImageUrl = (image: string | null): string => {
+    if (!image) return "";
+    // L'image de Riot contient déjà le nom complet (ex: "1001.png")
+    // On construit l'URL complète Data Dragon
+    // Pour obtenir la version, on pourrait la récupérer depuis l'API ou utiliser une version fixe
+    const version = "15.21.1"; // Version actuelle, à faire dynamique si besoin
+    return `https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${image}`;
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-2 text-4xl font-bold">Tier List - Objets</h1>
+        <h1 className="mb-2 text-4xl font-bold">Items</h1>
         <p className="text-muted-foreground">
-          Les statistiques actuelles des objets de League of Legends
+          Tous les objets de League of Legends avec leurs statistiques
         </p>
       </div>
 
-      <div className="mb-6">
-        <Input
-          placeholder="Rechercher un objet..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full sm:max-w-md"
-        />
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+        <div className="flex-1">
+          <Input
+            placeholder="Rechercher un item..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+          />
+        </div>
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => handleSort("name")}
-              >
-                <div className="flex items-center">
-                  Nom de l&apos;objet
-                  <SortIcon column="name" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => handleSort("winRate")}
-              >
-                <div className="flex items-center">
-                  Win Rate
-                  <SortIcon column="winRate" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => handleSort("winRateIncrease")}
-              >
-                <div className="flex items-center">
-                  Win Rate Increase
-                  <SortIcon column="winRateIncrease" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => handleSort("pickRate")}
-              >
-                <div className="flex items-center">
-                  Pick Rate
-                  <SortIcon column="pickRate" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => handleSort("pickRateIncrease")}
-              >
-                <div className="flex items-center">
-                  Pick Rate Increase
-                  <SortIcon column="pickRateIncrease" />
-                </div>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedAndFilteredItems.length === 0 ? (
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2Icon className="size-8 animate-spin text-primary" />
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
+          <p className="text-destructive">
+            Erreur lors du chargement des items
+          </p>
+        </div>
+      )}
+
+      {!isLoading && !error && (
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
-                  Aucun objet trouvé
-                </TableCell>
+                <TableHead className="w-16">Image</TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => handleSort("name")}
+                >
+                  <div className="flex items-center">
+                    Nom
+                    <SortIcon
+                      column="name"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                  </div>
+                </TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => handleSort("gold")}
+                >
+                  <div className="flex items-center">
+                    Prix
+                    <SortIcon
+                      column="gold"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                  </div>
+                </TableHead>
               </TableRow>
-            ) : (
-              sortedAndFilteredItems.map((item) => (
-                <TableRow key={item.name}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{item.winRate.toFixed(1)}%</TableCell>
-                  <TableCell>{formatChange(item.winRateIncrease)}</TableCell>
-                  <TableCell>{item.pickRate.toFixed(1)}%</TableCell>
-                  <TableCell>{formatChange(item.pickRateIncrease)}</TableCell>
+            </TableHeader>
+            <TableBody>
+              {sortedAndFilteredItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    Aucun item trouvé
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                sortedAndFilteredItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      {item.image ? (
+                        <Image
+                          src={getItemImageUrl(item.image)}
+                          alt={cleanItemName(item.name)}
+                          width={48}
+                          height={48}
+                          className="rounded"
+                        />
+                      ) : (
+                        <div className="size-12 rounded bg-muted" />
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {cleanItemName(item.name)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-md">
+                      {getPlaintextPreview(item.plaintext)}
+                    </TableCell>
+                    <TableCell className="flex items-center justify-end gap-2">
+                      {getGoldValue(item.gold)}
+                      <Image
+                        src="/gold-piece.png"
+                        alt="Gold"
+                        width={16}
+                        height={16}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-      <div className="mt-4 text-sm text-muted-foreground">
-        Affichage de {sortedAndFilteredItems.length} objet
-        {sortedAndFilteredItems.length > 1 ? "s" : ""}
-        {items.length > 0 && ` sur ${items.length}`}
-      </div>
+      {!isLoading && !error && (
+        <div className="mt-4 text-sm text-muted-foreground">
+          Affichage de {sortedAndFilteredItems.length} item
+          {sortedAndFilteredItems.length > 1 ? "s" : ""}
+          {data && ` sur ${data.count}`}
+        </div>
+      )}
     </div>
   );
 }
