@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         riotPuuid: validatedData.puuid || null,
         riotSummonerId: validatedData.summonerId || null,
         riotRegion: validatedData.region,
-      } as any,
+      },
     });
 
     return NextResponse.json(
@@ -59,11 +59,11 @@ export async function POST(request: Request) {
           id: updatedUser.id,
           email: updatedUser.email,
           name: updatedUser.name,
-          riotGameName: (updatedUser as any).riotGameName,
-          riotTagLine: (updatedUser as any).riotTagLine,
-          riotPuuid: (updatedUser as any).riotPuuid,
-          riotSummonerId: (updatedUser as any).riotSummonerId,
-          riotRegion: (updatedUser as any).riotRegion,
+          riotGameName: updatedUser.riotGameName,
+          riotTagLine: updatedUser.riotTagLine,
+          riotPuuid: updatedUser.riotPuuid,
+          riotSummonerId: updatedUser.riotSummonerId,
+          riotRegion: updatedUser.riotRegion,
         },
       },
       { status: 200 }

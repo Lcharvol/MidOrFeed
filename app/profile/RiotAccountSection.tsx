@@ -116,7 +116,7 @@ export function RiotAccountSection({
             <div className="grid gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="summonerName">Nom d'invocateur</Label>
+                  <Label htmlFor="summonerName">Nom d&apos;invocateur</Label>
                   <Input
                     id="summonerName"
                     placeholder="Entrez votre nom d'invocateur..."

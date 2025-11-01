@@ -98,7 +98,7 @@ async function findCompatibleChampions(teamChampions: string[], role: string) {
  * Classe les champions par pertinence
  */
 async function rankChampions(
-  champions: any[],
+  champions: Array<{ championId: string; name: string }>,
   enemyChampions?: string[],
   role?: string
 ) {

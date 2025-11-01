@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     // Transformer et insérer les champions
     const champions = Object.values(championsData.data);
     let created = 0;
-    let updated = 0;
+    const updated = 0;
 
     for (const champion of champions) {
       try {
