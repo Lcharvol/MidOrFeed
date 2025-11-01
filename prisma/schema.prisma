@@ -11,12 +11,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  password        String
+  riotGameName    String?  // Nom d'utilisateur Riot (ex: "PlayerName")
+  riotTagLine     String?  // Tag Riot (ex: "EUW1")
+  riotPuuid       String?  // PUUID unique Riot
+  riotSummonerId  String?  // Summoner ID Riot
+  riotRegion      String?  // Région (euw1, na1, etc.)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("users")
 }
@@ -69,4 +74,98 @@ model Item {
   updatedAt   DateTime @updatedAt
 
   @@map("items")
+}
+
+model Match {
+  id              String   @id @default(cuid())
+  matchId         String   @unique // ID Riot unique du match
+  gameCreation    BigInt   // Timestamp de création de la partie
+  gameDuration    Int      // Durée en secondes
+  gameMode        String   // Classique, Ranked, ARAM, etc.
+  gameType        String   // MATCHED_GAME, CUSTOM_GAME, etc.
+  gameVersion     String   // Version du jeu
+  mapId           Int      // ID de la map (Summoner's Rift = 11)
+  platformId      String   // Plateforme (EUW1, NA1, etc.)
+  queueId         Int      // ID de la queue (Ranked = 420, etc.)
+  region          String   // Région du match
+  
+  // Résultats du match
+  blueTeamWon     Boolean? // True si l'équipe bleue a gagné
+  redTeamWon      Boolean? // True si l'équipe rouge a gagné
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  participants    MatchParticipant[] // Participants du match
+
+  @@index([platformId])
+  @@index([queueId])
+  @@index([gameCreation])
+  @@map("matches")
+}
+
+model MatchParticipant {
+  id              String   @id @default(cuid())
+  matchId         String
+  participantId   Int      // ID du participant (1-10)
+  teamId          Int      // 100 pour bleu, 200 pour rouge
+  championId      String   // ID du champion joué
+  role            String?  // ROLE
+  lane            String?  // LANE
+  
+  // Statistiques du joueur
+  kills           Int      @default(0)
+  deaths          Int      @default(0)
+  assists         Int      @default(0)
+  goldEarned      Int      @default(0)
+  goldSpent       Int      @default(0)
+  totalDamageDealtToChampions Int @default(0)
+  totalDamageTaken Int     @default(0)
+  visionScore     Int      @default(0)
+  win             Boolean  @default(false)
+  
+  // Items achetés
+  item0           Int?
+  item1           Int?
+  item2           Int?
+  item3           Int?
+  item4           Int?
+  item5           Int?
+  item6           Int? // Ward/trinket
+  
+  // Runes et summoners
+  summoner1Id     Int? // Summoner spell 1
+  summoner2Id     Int? // Summoner spell 2
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, participantId])
+  @@index([championId])
+  @@index([teamId])
+  @@index([matchId])
+  @@map("match_participants")
+}
+
+model CompositionSuggestion {
+  id                String   @id @default(cuid())
+  userId            String?  // Optionnel pour suggestions globales
+  teamChampions     String   // JSON array des champions de l'équipe
+  enemyChampions    String?  // JSON array des champions ennemis
+  role              String   // ROLE pour lequel on suggère
+  suggestedChampion String   // Champion suggéré
+  confidence        Float    @default(0.0) // Score de confiance (0-1)
+  reasoning         String?  // Raisonnement de la suggestion
+  
+  // Métadonnées
+  gameMode          String?  // Mode de jeu
+  tier              String?  // Tier du joueur
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([role])
+  @@index([userId])
+  @@map("composition_suggestions")
 }

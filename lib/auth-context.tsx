@@ -12,6 +12,11 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  riotGameName?: string | null;
+  riotTagLine?: string | null;
+  riotPuuid?: string | null;
+  riotSummonerId?: string | null;
+  riotRegion?: string | null;
 }
 
 interface AuthContextType {

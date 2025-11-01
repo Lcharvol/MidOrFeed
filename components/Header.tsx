@@ -73,21 +73,24 @@ export function Header() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/compositions/create"
-                          className="flex h-full w-full select-none flex-col justify-end rounded-md bg-linear-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                          className="flex flex-row h-full w-full select-none flex-col justify-end rounded-md bg-linear-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
                         >
                           <Image
                             src="/tank-icon.png"
                             alt="Create Composition"
                             width={100}
                             height={100}
+                            className="w-10 h-10"
                           />
-                          <div className="mb-2 mt-4 text-lg font-medium">
-                            Créer une composition
+                          <div className="flex flex-col ml-4">
+                            <div className="mb-2 text-lg font-medium">
+                              Créer une composition
+                            </div>
+                            <p className="text-sm leading-tight text-muted-foreground">
+                              Découvrez comment créer la composition parfaite
+                              pour vos parties.
+                            </p>
                           </div>
-                          <p className="text-sm leading-tight text-muted-foreground">
-                            Découvrez comment créer la composition parfaite pour
-                            vos parties.
-                          </p>
                         </Link>
                       </NavigationMenuLink>
                     </li>
@@ -133,14 +136,23 @@ export function Header() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/tier-list/champions"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          className="flex flex-row block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
-                          <div className="text-sm font-medium leading-none">
-                            Champions
+                          <Image
+                            src="/jungle-icon.png"
+                            alt="Create Composition"
+                            width={100}
+                            height={100}
+                            className="w-10 h-10"
+                          />
+                          <div className="flex flex-col ml-4">
+                            <div className="text-sm font-medium leading-none">
+                              Champions
+                            </div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Les champions les plus forts en ce moment
+                            </p>
                           </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Les champions les plus forts en ce moment
-                          </p>
                         </Link>
                       </NavigationMenuLink>
                     </li>
@@ -148,14 +160,23 @@ export function Header() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/tier-list/items"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          className="flex flex-row block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
-                          <div className="text-sm font-medium leading-none">
-                            Objets
+                          <Image
+                            src="/adc-icon.png"
+                            alt="Create Composition"
+                            width={100}
+                            height={100}
+                            className="w-10 h-10"
+                          />
+                          <div className="flex flex-col ml-4">
+                            <div className="text-sm font-medium leading-none">
+                              Objets
+                            </div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Les objets les plus efficaces
+                            </p>
                           </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Les objets les plus efficaces
-                          </p>
                         </Link>
                       </NavigationMenuLink>
                     </li>
