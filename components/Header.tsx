@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -164,28 +163,19 @@ export function Header() {
                   {t("compositions.menu")}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    <li className="row-span-3">
+                  <ul className="grid w-[300px] gap-3 p-4">
+                    <li>
                       <NavigationMenuLink asChild>
                         <Link
                           href="/compositions/create"
-                          className="flex flex-row h-full w-full select-none flex-col justify-end rounded-md bg-linear-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
-                          <Image
-                            src="/tank-icon.png"
-                            alt="Create Composition"
-                            width={100}
-                            height={100}
-                            className="w-10 h-10"
-                          />
-                          <div className="flex flex-col ml-4">
-                            <div className="mb-2 text-lg font-medium">
-                              {t("compositions.create.title")}
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              {t("compositions.create.description")}
-                            </p>
+                          <div className="text-sm font-medium leading-none">
+                            {t("compositions.create.title")}
                           </div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            {t("compositions.create.description")}
+                          </p>
                         </Link>
                       </NavigationMenuLink>
                     </li>
@@ -233,23 +223,14 @@ export function Header() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/tier-list/champions"
-                          className="flex flex-row block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
-                          <Image
-                            src="/jungle-icon.png"
-                            alt="Create Composition"
-                            width={100}
-                            height={100}
-                            className="w-10 h-10"
-                          />
-                          <div className="flex flex-col ml-4">
-                            <div className="text-sm font-medium leading-none">
-                              {t("tierListMenu.champions.title")}
-                            </div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              {t("tierListMenu.champions.description")}
-                            </p>
+                          <div className="text-sm font-medium leading-none">
+                            {t("tierListMenu.champions.title")}
                           </div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            {t("tierListMenu.champions.description")}
+                          </p>
                         </Link>
                       </NavigationMenuLink>
                     </li>
@@ -257,23 +238,14 @@ export function Header() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/tier-list/items"
-                          className="flex flex-row block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
-                          <Image
-                            src="/adc-icon.png"
-                            alt="Create Composition"
-                            width={100}
-                            height={100}
-                            className="w-10 h-10"
-                          />
-                          <div className="flex flex-col ml-4">
-                            <div className="text-sm font-medium leading-none">
-                              {t("tierListMenu.items.title")}
-                            </div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              {t("tierListMenu.items.description")}
-                            </p>
+                          <div className="text-sm font-medium leading-none">
+                            {t("tierListMenu.items.title")}
                           </div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            {t("tierListMenu.items.description")}
+                          </p>
                         </Link>
                       </NavigationMenuLink>
                     </li>
