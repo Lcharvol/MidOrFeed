@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -14,6 +15,26 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
@@ -32,17 +53,22 @@ import {
   Loader2Icon,
   MoonIcon,
   SunIcon,
+  SearchIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
 import { getInitials } from "@/lib/profile-utils";
 import { useI18n } from "@/lib/i18n-context";
+import { RIOT_REGIONS } from "@/lib/riot-regions";
 
 export function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchRegion, setSearchRegion] = useState("euw1");
+  const [isSearching, setIsSearching] = useState(false);
   const { profileIconUrl, isLoading: isLoadingIcon } = useRiotProfileIcon(
     user?.riotPuuid,
     user?.riotRegion
@@ -62,6 +88,58 @@ export function Header() {
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const handleSummonerSearch = async (query: string) => {
+    if (!query || query.length < 2) return;
+
+    setIsSearching(true);
+    try {
+      // Parse query like "GameName#TagLine" or "GameName #TagLine"
+      const match = query.match(/^([^#]+)#?(\S*)$/);
+      if (!match) {
+        toast.error(t("header.searchInvalidFormat"));
+        return;
+      }
+
+      const [, gameName, tagLine] = match;
+
+      if (!gameName || !tagLine) {
+        toast.error(t("header.searchInvalidFormat"));
+        return;
+      }
+
+      // Try to search for the summoner using selected region
+      const region = searchRegion;
+
+      const response = await fetch("/api/riot/search-account", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gameName: gameName.trim(),
+          tagLine: tagLine.trim(),
+          region,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || t("header.searchError"));
+        return;
+      }
+
+      // Redirect to summoner page with the found PUUID
+      router.push(`/summoners?puuid=${result.puuid}&region=${region}`);
+    } catch (error) {
+      console.error("Search error:", error);
+      toast.error(t("header.searchError"));
+    } finally {
+      setIsSearching(false);
+      setSearchQuery("");
+    }
   };
 
   return (
@@ -218,6 +296,83 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Search Bar */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <SearchIcon className="h-5 w-5" />
+                <span className="sr-only">{t("header.searchSummoner")}</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-3" align="end">
+              <div className="space-y-3">
+                {/* Region Selector */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium whitespace-nowrap">
+                    {t("profile.region")}:
+                  </label>
+                  <Select value={searchRegion} onValueChange={setSearchRegion}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RIOT_REGIONS.map((region) => (
+                        <SelectItem key={region.value} value={region.value}>
+                          {region.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Search Input */}
+                <Command className="border rounded-md">
+                  <CommandInput
+                    placeholder={t("header.searchPlaceholder")}
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && searchQuery) {
+                        handleSummonerSearch(searchQuery);
+                      }
+                    }}
+                  />
+                  <CommandList>
+                    <CommandEmpty>{t("header.searchEmpty")}</CommandEmpty>
+                    <CommandGroup heading={t("header.searchInstructions")}>
+                      <CommandItem>
+                        <div className="flex flex-col gap-1">
+                          <p className="text-xs text-muted-foreground">
+                            {t("header.searchFormat")}
+                          </p>
+                          <p className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                            GameName#TagLine
+                          </p>
+                        </div>
+                      </CommandItem>
+                    </CommandGroup>
+                    {searchQuery && (
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => handleSummonerSearch(searchQuery)}
+                          className="cursor-pointer"
+                        >
+                          <SearchIcon className="mr-2 h-4 w-4" />
+                          {isSearching
+                            ? t("header.searching")
+                            : `${t("header.searchFor")} "${searchQuery}"`}
+                          {isSearching && (
+                            <Loader2Icon className="ml-auto h-4 w-4 animate-spin" />
+                          )}
+                        </CommandItem>
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           {/* Theme Toggle */}
           {mounted && (
             <Button

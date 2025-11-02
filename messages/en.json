@@ -19,7 +19,16 @@
     "monProfil": "My Profile",
     "logoutSuccessful": "Logged out successfully",
     "user": "User",
-    "toggleTheme": "Toggle theme"
+    "toggleTheme": "Toggle theme",
+    "searchSummoner": "Search for a summoner",
+    "searchPlaceholder": "Search for a player...",
+    "searchEmpty": "Start typing a name...",
+    "searchInstructions": "Instructions",
+    "searchFormat": "Format:",
+    "searchFor": "Search for",
+    "searching": "Searching...",
+    "searchInvalidFormat": "Invalid format. Use: Name#Tag",
+    "searchError": "Error searching"
   },
   "home": {
     "leagueOfLegends": "League of Legends",
