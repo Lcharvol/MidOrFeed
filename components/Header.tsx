@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -23,7 +25,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
-import { LogOutIcon, SettingsIcon, UserIcon, Loader2Icon } from "lucide-react";
+import {
+  LogOutIcon,
+  SettingsIcon,
+  UserIcon,
+  Loader2Icon,
+  MoonIcon,
+  SunIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
 import { getInitials } from "@/lib/profile-utils";
@@ -31,15 +40,26 @@ import { getInitials } from "@/lib/profile-utils";
 export function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const { profileIconUrl, isLoading: isLoadingIcon } = useRiotProfileIcon(
     user?.riotPuuid,
     user?.riotRegion
   );
 
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleLogout = () => {
     logout();
     toast.success("Déconnexion réussie");
     router.push("/");
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
@@ -193,61 +213,84 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Theme Toggle */}
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="h-9 w-9"
+            >
+              {theme === "dark" ? (
+                <SunIcon className="size-5" />
+              ) : (
+                <MoonIcon className="size-5" />
+              )}
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          )}
+
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="focus:outline-none">
-                  <Avatar className="h-9 w-9 cursor-pointer">
-                    {isLoadingIcon ? (
-                      <AvatarFallback className="bg-muted">
-                        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
-                      </AvatarFallback>
-                    ) : profileIconUrl ? (
-                      <>
-                        <AvatarImage src={profileIconUrl} alt="Profile Icon" />
+            <>
+              <Separator orientation="vertical" className="h-6" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="focus:outline-none">
+                    <Avatar className="h-9 w-9 cursor-pointer">
+                      {isLoadingIcon ? (
+                        <AvatarFallback className="bg-muted">
+                          <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+                        </AvatarFallback>
+                      ) : profileIconUrl ? (
+                        <>
+                          <AvatarImage
+                            src={profileIconUrl}
+                            alt="Profile Icon"
+                          />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {getInitials(user.name, user.email)}
+                          </AvatarFallback>
+                        </>
+                      ) : (
                         <AvatarFallback className="bg-primary text-primary-foreground">
                           {getInitials(user.name, user.email)}
                         </AvatarFallback>
-                      </>
-                    ) : (
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {getInitials(user.name, user.email)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user.name || "Utilisateur"}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer">
-                    <UserIcon className="mr-2 size-4" />
-                    Profil
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer">
-                    <SettingsIcon className="mr-2 size-4" />
-                    Paramètres
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOutIcon className="mr-2 size-4" />
-                  Se déconnecter
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      )}
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user.name || "Utilisateur"}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">
+                      <UserIcon className="mr-2 size-4" />
+                      Profil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="cursor-pointer">
+                      <SettingsIcon className="mr-2 size-4" />
+                      Paramètres
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOutIcon className="mr-2 size-4" />
+                    Se déconnecter
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <>
               <Button variant="ghost" asChild>
