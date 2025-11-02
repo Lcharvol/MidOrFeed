@@ -332,5 +332,13 @@
       "title": "Items",
       "description": "The most effective items"
     }
+  },
+  "aiInsight": {
+    "positive": "Positive",
+    "negative": "Negative",
+    "warning": "Warning",
+    "analysis": "Analysis",
+    "confidence": "Confidence",
+    "recommendation": "Recommendation"
   }
 }

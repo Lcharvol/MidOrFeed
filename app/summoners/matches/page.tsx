@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import useSWR from "swr";
 import {
   Card,
@@ -32,6 +32,7 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import Link from "next/link";
+import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -442,6 +443,67 @@ export default function MatchesPage() {
     .sort((a, b) => b[1].played - a[1].played)
     .slice(0, 5);
 
+  // Générer des insights IA pour les matchs
+  const aiInsights = useMemo<AIInsight[]>(() => {
+    const insights: AIInsight[] = [];
+
+    // Insight: Tendances récentes
+    const recentMatches = matchData.matches.slice(0, 10);
+    const recentWins = recentMatches.filter(
+      (m) => m.participants?.[0]?.win
+    ).length;
+    const recentWinRate = (recentWins / recentMatches.length) * 100;
+
+    if (recentMatches.length >= 5) {
+      if (recentWinRate >= 70) {
+        insights.push({
+          type: "positive",
+          title: "Forme excellente",
+          description: `Sur vos 10 derniers matchs, vous avez remporté ${recentWins} victoires (${recentWinRate.toFixed(
+            0
+          )}%). Vous êtes en pleine forme !`,
+          confidence: 88,
+          recommendation:
+            "Profitez de cette dynamique positive pour grimper les rangs !",
+          data: {
+            "Derniers 10 matchs": `${recentWins}W / ${
+              recentMatches.length - recentWins
+            }L`,
+          },
+        });
+      } else if (recentWinRate <= 30) {
+        insights.push({
+          type: "negative",
+          title: "Période difficile",
+          description: `Vos 10 derniers matchs montrent seulement ${recentWins} victoires (${recentWinRate.toFixed(
+            0
+          )}%). Prenez une petite pause peut aider !`,
+          confidence: 85,
+          recommendation:
+            "Reposez-vous 15-30 minutes avant le prochain match pour retrouver votre focus.",
+          data: {
+            "Derniers 10 matchs": `${recentWins}W / ${
+              recentMatches.length - recentWins
+            }L`,
+          },
+        });
+      }
+    }
+
+    // Insight: Volume de jeu
+    if (matchData.stats.totalGames >= 50) {
+      insights.push({
+        type: "positive",
+        title: "Volume de jeu important",
+        description: `Avec ${matchData.stats.totalGames} matchs analysés, nos insights IA sont très précis pour votre profil.`,
+        confidence: 95,
+        data: { "Matchs analysés": matchData.stats.totalGames },
+      });
+    }
+
+    return insights;
+  }, [matchData]);
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -569,6 +631,15 @@ export default function MatchesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Insights IA */}
+      {aiInsights.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 mb-8">
+          {aiInsights.map((insight, index) => (
+            <AIInsightCard key={index} insight={insight} size="compact" />
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Top Champions */}

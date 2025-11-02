@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -180,6 +181,98 @@ export default function ChampionsPage() {
     return filtered;
   }, [championStats, championMap, searchTerm, sortColumn, sortDirection]);
 
+  // Générer des insights IA basés sur les données
+  const aiInsights = useMemo<AIInsight[]>(() => {
+    if (!champions || champions.length === 0) return [];
+
+    const insights: AIInsight[] = [];
+
+    // Insight 1: Diversité des champions
+    const uniqueChampions = champions.filter(
+      (champ) => parseFloat(champ.winRate) >= 50
+    ).length;
+    if (champions.length >= 10 && uniqueChampions < 5) {
+      insights.push({
+        type: "warning",
+        title: "Diversité de champion limitée",
+        description: `Vous n'avez que ${uniqueChampions} champions avec un taux de victoire positif. L'IA recommande d'élargir votre pool de champions pour plus de flexibilité dans vos compositions.`,
+        confidence: 85,
+        recommendation:
+          "Essayez d'ajouter 2-3 nouveaux champions à votre roster pour augmenter votre capacité d'adaptation.",
+        data: {
+          "Champions joués": champions.length,
+          "Champions positifs": uniqueChampions,
+        },
+      });
+    } else if (uniqueChampions >= 5) {
+      insights.push({
+        type: "positive",
+        title: "Pool de champions solide",
+        description: `Excellente diversité ! Vous maîtrisez ${uniqueChampions} champions avec un taux de victoire de 50% ou plus.`,
+        confidence: 90,
+        recommendation:
+          "Continuez à vous perfectionner sur ces champions et ajoutez-en progressivement de nouveaux.",
+        data: {
+          "Champions positifs": uniqueChampions,
+          "Taux de diversité": `${Math.round(
+            (uniqueChampions / champions.length) * 100
+          )}%`,
+        },
+      });
+    }
+
+    // Insight 2: Meilleur champion
+    if (
+      champions[0] &&
+      parseFloat(champions[0].winRate) >= 70 &&
+      champions[0].played >= 10
+    ) {
+      insights.push({
+        type: "positive",
+        title: `${champions[0].name} : Votre meilleur atout`,
+        description: `Avec ${champions[0].winRate}% de victoires sur ${champions[0].played} matchs, ${champions[0].name} est clairement votre champion signature.`,
+        confidence: 95,
+        recommendation: `Continuez à prioriser ${champions[0].name} dans vos sélections pour maximiser vos chances de victoire.`,
+        data: {
+          "Win rate": `${champions[0].winRate}%`,
+          "Matchs joués": champions[0].played,
+        },
+      });
+    }
+
+    // Insight 3: KDA moyen
+    const avgKDA =
+      champions.reduce((sum, champ) => {
+        return sum + parseFloat(champ.kda);
+      }, 0) / champions.length;
+
+    if (avgKDA >= 2.5) {
+      insights.push({
+        type: "positive",
+        title: "Impact élevé sur vos matchs",
+        description: `Votre KDA moyen de ${avgKDA.toFixed(
+          2
+        )} indique que vous apportez une contribution significative à vos équipes.`,
+        confidence: 85,
+        data: { "KDA moyen": avgKDA.toFixed(2) },
+      });
+    } else if (avgKDA < 1.5) {
+      insights.push({
+        type: "negative",
+        title: "Impact de combat à améliorer",
+        description: `Votre KDA moyen de ${avgKDA.toFixed(
+          2
+        )} suggère que vous devriez vous concentrer sur l'amélioration de votre survie et de votre contribution en combat.`,
+        confidence: 80,
+        recommendation:
+          "Travaillez sur votre positioning et votre conscience de la carte pour réduire vos morts et augmenter votre impact.",
+        data: { "KDA moyen": avgKDA.toFixed(2) },
+      });
+    }
+
+    return insights;
+  }, [champions]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -277,6 +370,15 @@ export default function ChampionsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Insights IA */}
+      {aiInsights.length > 0 && (
+        <div className="space-y-4">
+          {aiInsights.map((insight, index) => (
+            <AIInsightCard key={index} insight={insight} />
+          ))}
+        </div>
+      )}
 
       {/* Tableau des champions */}
       <Card>

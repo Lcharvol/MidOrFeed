@@ -332,5 +332,13 @@
       "title": "Objets",
       "description": "Les objets les plus efficaces"
     }
+  },
+  "aiInsight": {
+    "positive": "Positif",
+    "negative": "Négatif",
+    "warning": "Attention",
+    "analysis": "Analyse",
+    "confidence": "Confiance",
+    "recommendation": "Recommandation"
   }
 }

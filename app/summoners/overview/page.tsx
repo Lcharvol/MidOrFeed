@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import useSWR from "swr";
 import {
   Card,
@@ -22,6 +23,7 @@ import {
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { Progress } from "@/components/ui/progress";
+import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -125,6 +127,90 @@ export default function OverviewPage() {
 
   const winRateNumber = parseFloat(matchData.stats.winRate);
 
+  // Générer des insights IA basés sur les données
+  const aiInsights = useMemo<AIInsight[]>(() => {
+    const insights: AIInsight[] = [];
+
+    // Insight 1: Win Rate
+    if (winRateNumber >= 55) {
+      insights.push({
+        type: "positive",
+        title: "Performance exceptionnelle",
+        description: `Avec un win rate de ${matchData.stats.winRate}, vous êtes nettement au-dessus de la moyenne !`,
+        confidence: 92,
+        recommendation:
+          "Continuez sur cette lancée et maintenez votre niveau de jeu constant.",
+        data: {
+          "Win rate": matchData.stats.winRate,
+          Parties: matchData.stats.totalGames,
+        },
+      });
+    } else if (winRateNumber < 50) {
+      insights.push({
+        type: "negative",
+        title: "Win rate en dessous de 50%",
+        description: `Votre win rate de ${matchData.stats.winRate} suggère qu'il y a des axes d'amélioration.`,
+        confidence: 85,
+        recommendation:
+          "Analysez vos matchs perdus pour identifier vos points faibles récurrents.",
+        data: {
+          "Win rate": matchData.stats.winRate,
+          Défaites: matchData.stats.totalGames - matchData.stats.totalWins,
+        },
+      });
+    }
+
+    // Insight 2: KDA
+    const kdaNumber = parseFloat(matchData.stats.avgKDA);
+    if (kdaNumber >= 2.5) {
+      insights.push({
+        type: "positive",
+        title: "Impact de combat élevé",
+        description: `Votre KDA de ${matchData.stats.avgKDA} montre que vous contribuez significativement aux combats.`,
+        confidence: 88,
+        data: { KDA: matchData.stats.avgKDA },
+      });
+    }
+
+    // Insight 3: Volume de jeu
+    if (matchData.stats.totalGames < 10) {
+      insights.push({
+        type: "warning",
+        title: "Échantillon limité",
+        description: `Avec seulement ${matchData.stats.totalGames} parties, les statistiques ne sont pas encore significatives.`,
+        confidence: 75,
+        recommendation:
+          "Jouez au moins 20 matchs pour obtenir des insights plus précis.",
+        data: { Parties: matchData.stats.totalGames },
+      });
+    }
+
+    // Insight 4: Top champion
+    if (topChampions.length > 0) {
+      const [championId, topStats] = topChampions[0];
+      const topWinRate = ((topStats.wins / topStats.played) * 100).toFixed(1);
+      if (parseFloat(topWinRate) >= 60 && topStats.played >= 5) {
+        insights.push({
+          type: "positive",
+          title: "Champion signature identifié",
+          description: `${
+            championMap.get(championId) || championId
+          } est votre meilleur champion avec ${topWinRate}% de victoires.`,
+          confidence: 90,
+          recommendation: `Priorisez ${
+            championMap.get(championId) || championId
+          } lorsque c'est possible pour maximiser vos chances de victoire.`,
+          data: {
+            Champion: championMap.get(championId) || championId,
+            "Win rate": `${topWinRate}%`,
+          },
+        });
+      }
+    }
+
+    return insights;
+  }, [matchData, topChampions, championMap]);
+
   return (
     <div className="space-y-6">
       {/* Statistiques globales */}
@@ -191,6 +277,15 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Insights IA */}
+      {aiInsights.length > 0 && (
+        <div className="space-y-4">
+          {aiInsights.map((insight, index) => (
+            <AIInsightCard key={index} insight={insight} size="compact" />
+          ))}
+        </div>
+      )}
 
       {/* Top Champions */}
       {topChampions.length > 0 && (

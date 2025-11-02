@@ -140,3 +140,53 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Animated shimmer effect */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Animated border */
+  @keyframes border-glow {
+    0%,
+    100% {
+      opacity: 0.8;
+      box-shadow: 0 0 10px currentColor;
+    }
+    50% {
+      opacity: 1;
+      box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+    }
+  }
+
+  /* Animated pulse glow */
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 3s infinite;
+  }
+
+  .animate-border-glow {
+    animation: border-glow 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
