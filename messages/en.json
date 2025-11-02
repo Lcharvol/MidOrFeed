@@ -76,6 +76,24 @@
     "step3": "Receive insights",
     "step3Description": "Get personalized suggestions to improve"
   },
+  "subscription": {
+    "title": "Subscriptions",
+    "freeTitle": "Free",
+    "freePrice": "$0",
+    "freePeriod": "forever",
+    "freeLimit": "3 AI analyses per day",
+    "freeFeatures": "Basic access",
+    "premiumTitle": "Premium",
+    "premiumPrice": "$9.99",
+    "premiumPeriod": "per month",
+    "premiumLimit": "Unlimited analyses",
+    "premiumFeatures": "Everything in Free +",
+    "upgradeNow": "Upgrade to Premium",
+    "currentPlan": "Current plan",
+    "remainingAnalyses": "Remaining analyses",
+    "unlimited": "Unlimited",
+    "lastReset": "Last reset"
+  },
   "login": {
     "title": "Welcome Back",
     "subtitle": "Sign in to your account",

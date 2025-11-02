@@ -53,6 +53,10 @@ export async function POST(request: Request) {
           riotPuuid: user.riotPuuid,
           riotSummonerId: user.riotSummonerId,
           riotRegion: user.riotRegion,
+          subscriptionTier: user.subscriptionTier,
+          subscriptionExpiresAt: user.subscriptionExpiresAt?.toISOString(),
+          dailyAnalysesUsed: user.dailyAnalysesUsed,
+          lastDailyReset: user.lastDailyReset.toISOString(),
         },
       },
       { status: 200 }

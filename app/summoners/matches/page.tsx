@@ -26,10 +26,12 @@ import {
   Gamepad2Icon,
   Loader2Icon,
   RefreshCwIcon,
+  BrainIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -155,35 +157,44 @@ function MatchDetailsDialog({
   return (
     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-3">
-          <div
-            className={`p-2 rounded-full ${
-              fullMatch.blueTeamWon || fullMatch.redTeamWon
-                ? "bg-green-500/20"
-                : "bg-red-500/20"
-            }`}
-          >
-            <TrophyIcon
-              className={`size-6 ${
+        <div className="flex items-start justify-between">
+          <DialogTitle className="flex items-center gap-3 flex-1">
+            <div
+              className={`p-2 rounded-full ${
                 fullMatch.blueTeamWon || fullMatch.redTeamWon
-                  ? "text-green-500"
-                  : "text-red-500"
+                  ? "bg-green-500/20"
+                  : "bg-red-500/20"
               }`}
-            />
-          </div>
-          <div>
-            <div className="text-2xl font-bold">
-              {fullMatch.blueTeamWon || fullMatch.redTeamWon
-                ? "Victoire"
-                : "Défaite"}{" "}
-              • {QUEUE_NAMES[fullMatch.queueId] || `Queue ${fullMatch.queueId}`}
+            >
+              <TrophyIcon
+                className={`size-6 ${
+                  fullMatch.blueTeamWon || fullMatch.redTeamWon
+                    ? "text-green-500"
+                    : "text-red-500"
+                }`}
+              />
             </div>
-            <DialogDescription>
-              {formatDate(fullMatch.gameCreation)} •{" "}
-              {formatDuration(fullMatch.gameDuration)}
-            </DialogDescription>
-          </div>
-        </DialogTitle>
+            <div>
+              <div className="text-2xl font-bold">
+                {fullMatch.blueTeamWon || fullMatch.redTeamWon
+                  ? "Victoire"
+                  : "Défaite"}{" "}
+                •{" "}
+                {QUEUE_NAMES[fullMatch.queueId] || `Queue ${fullMatch.queueId}`}
+              </div>
+              <DialogDescription>
+                {formatDate(fullMatch.gameCreation)} •{" "}
+                {formatDuration(fullMatch.gameDuration)}
+              </DialogDescription>
+            </div>
+          </DialogTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/ai-analysis/${fullMatch.id}`}>
+              <BrainIcon className="mr-2 size-4" />
+              Analyse IA
+            </Link>
+          </Button>
+        </div>
       </DialogHeader>
 
       <div className="space-y-6">
@@ -739,14 +750,23 @@ export default function MatchesPage() {
                         </div>
                       )}
 
-                      <div className="text-right">
-                        <Badge variant="outline" className="mb-2">
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge variant="outline">
                           {QUEUE_NAMES[match.queueId] ||
                             `Queue ${match.queueId}`}
                         </Badge>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(match.gameCreation)}
                         </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/ai-analysis/${match.id}`}>
+                            <BrainIcon className="mr-2 size-4" />
+                            Analyse IA
+                          </Link>
+                        </Button>
                       </div>
                     </div>
                   </DialogTrigger>

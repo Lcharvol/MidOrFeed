@@ -53,6 +53,7 @@ import {
   MoonIcon,
   SunIcon,
   SearchIcon,
+  CrownIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
@@ -268,6 +269,16 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Upgrade Button */}
+          {user && user.subscriptionTier !== "premium" && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/pricing">
+                <CrownIcon className="mr-2 size-4" />
+                {t("subscription.upgradeNow")}
+              </Link>
+            </Button>
+          )}
+
           {/* Search Bar */}
           <Popover>
             <PopoverTrigger asChild>

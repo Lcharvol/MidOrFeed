@@ -18,6 +18,10 @@ interface User {
   riotPuuid?: string | null;
   riotSummonerId?: string | null;
   riotRegion?: string | null;
+  subscriptionTier?: string;
+  subscriptionExpiresAt?: string | null;
+  dailyAnalysesUsed?: number;
+  lastDailyReset?: string;
 }
 
 interface AuthContextType {

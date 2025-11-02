@@ -76,6 +76,24 @@
     "step3": "Recevez des insights",
     "step3Description": "Obtenez des suggestions personnalisées pour progresser"
   },
+  "subscription": {
+    "title": "Abonnements",
+    "freeTitle": "Gratuit",
+    "freePrice": "€0",
+    "freePeriod": "pour toujours",
+    "freeLimit": "3 analyses IA par jour",
+    "freeFeatures": "Accès aux bases",
+    "premiumTitle": "Premium",
+    "premiumPrice": "€9.99",
+    "premiumPeriod": "par mois",
+    "premiumLimit": "Analyses illimitées",
+    "premiumFeatures": "Tout ce qui est gratuit +",
+    "upgradeNow": "Passer à Premium",
+    "currentPlan": "Plan actuel",
+    "remainingAnalyses": "Analyses restantes",
+    "unlimited": "Illimité",
+    "lastReset": "Dernier reset"
+  },
   "login": {
     "title": "Bon retour",
     "subtitle": "Connectez-vous à votre compte",

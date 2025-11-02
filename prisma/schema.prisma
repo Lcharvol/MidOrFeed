@@ -20,6 +20,13 @@ model User {
   riotPuuid       String?  // PUUID unique Riot
   riotSummonerId  String?  // Summoner ID Riot
   riotRegion      String?  // Région (euw1, na1, etc.)
+  
+  // Subscription
+  subscriptionTier String  @default("free") // free, premium
+  subscriptionExpiresAt DateTime?
+  dailyAnalysesUsed Int   @default(0)
+  lastDailyReset    DateTime @default(now())
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
