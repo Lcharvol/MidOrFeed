@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n-context";
 
 export default function SummonersLayout({
   children,
@@ -17,6 +20,51 @@ export default function SummonersLayout({
 }) {
   const { user } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
+  const { t } = useI18n();
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleUpdateProfile = async () => {
+    if (!user?.riotPuuid || !user?.riotRegion) {
+      toast.error("Aucun compte Riot lié");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      // Mettre à jour les matchs
+      const response = await fetch("/api/matches/collect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          puuid: user.riotPuuid,
+          region: user.riotRegion,
+          count: 100,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || "Erreur lors de la mise à jour");
+        return;
+      }
+
+      toast.success(
+        `Profil mis à jour: ${result.matchesCollected} matchs synchronisés`
+      );
+
+      // Recharger la page pour afficher les nouvelles données
+      router.refresh();
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast.error("Une erreur est survenue");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   // Rediriger vers la page de profil si pas de compte Riot lié
   if (!user) {
@@ -72,37 +120,58 @@ export default function SummonersLayout({
     <div className="container mx-auto py-10">
       {/* En-tête du profil */}
       <div className="mb-8">
-        <div className="flex items-center gap-6">
-          {isLoadingIcon ? (
-            <div className="size-24 rounded-full bg-muted animate-pulse" />
-          ) : profileIconUrl ? (
-            <Avatar className="size-24 border-4 border-primary/20">
-              <AvatarImage src={profileIconUrl} alt="Profile" />
-              <AvatarFallback>Loading</AvatarFallback>
-            </Avatar>
-          ) : (
-            <Avatar className="size-24 border-4 border-primary/20">
-              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-4xl">
-                {user.riotGameName?.[0].toUpperCase() || "?"}
-              </AvatarFallback>
-            </Avatar>
-          )}
-
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold mb-2">
-              {user.riotGameName}
-              {user.riotTagLine && (
-                <span className="text-muted-foreground">
-                  #{user.riotTagLine}
-                </span>
-              )}
-            </h1>
-            {user.riotRegion && (
-              <Badge variant="outline" className="text-lg px-3 py-1">
-                {user.riotRegion.toUpperCase()}
-              </Badge>
+        <div className="flex items-center justify-between gap-6">
+          <div className="flex items-center gap-6 flex-1">
+            {isLoadingIcon ? (
+              <div className="size-24 rounded-full bg-muted animate-pulse" />
+            ) : profileIconUrl ? (
+              <Avatar className="size-24 border-4 border-primary/20">
+                <AvatarImage src={profileIconUrl} alt="Profile" />
+                <AvatarFallback>Loading</AvatarFallback>
+              </Avatar>
+            ) : (
+              <Avatar className="size-24 border-4 border-primary/20">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-4xl">
+                  {user.riotGameName?.[0].toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
             )}
+
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold mb-2">
+                {user.riotGameName}
+                {user.riotTagLine && (
+                  <span className="text-muted-foreground">
+                    #{user.riotTagLine}
+                  </span>
+                )}
+              </h1>
+              {user.riotRegion && (
+                <Badge variant="outline" className="text-lg px-3 py-1">
+                  {user.riotRegion.toUpperCase()}
+                </Badge>
+              )}
+            </div>
           </div>
+
+          <Button
+            onClick={handleUpdateProfile}
+            disabled={isUpdating}
+            variant="outline"
+            size="sm"
+          >
+            {isUpdating ? (
+              <>
+                <Loader2Icon className="mr-2 size-4 animate-spin" />
+                Mise à jour...
+              </>
+            ) : (
+              <>
+                <RefreshCwIcon className="mr-2 size-4" />
+                Mettre à jour
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
