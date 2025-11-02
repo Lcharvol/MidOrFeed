@@ -19,8 +19,11 @@ import {
   BookIcon,
   BarChart3Icon,
 } from "lucide-react";
+import { useI18n } from "@/lib/i18n-context";
 
 export default function Home() {
+  const { t } = useI18n();
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -28,29 +31,28 @@ export default function Home() {
         <div className="relative z-10 px-4">
           <div className="mx-auto max-w-3xl text-center">
             <Badge className="mb-6" variant="secondary">
-              League of Legends
+              {t("home.leagueOfLegends")}
             </Badge>
             <h1 className="mb-6 text-5xl font-bold tracking-tight md:text-7xl">
-              Créez la composition
+              {t("home.createComposition")}
               <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 {" "}
-                parfaite
+                {t("home.perfect")}
               </span>
             </h1>
             <p className="mb-8 text-xl text-muted-foreground md:text-2xl">
-              Explorez les statistiques, analysez les meta et développez vos
-              stratégies pour dominer la Faille
+              {t("home.subtitle")}
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" className="text-lg" asChild>
                 <Link href="/tier-list/champions">
-                  Voir les Champions
+                  {t("home.viewChampions")}
                   <ZapIcon className="ml-2 size-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-lg" asChild>
                 <Link href="/tier-list/items">
-                  Explorer les Items
+                  {t("home.exploreItems")}
                   <SwordIcon className="ml-2 size-5" />
                 </Link>
               </Button>
@@ -70,11 +72,10 @@ export default function Home() {
         <div className="px-20">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-              Toutes les fonctionnalités pour performer
+              {t("home.allFeaturesToPerform")}
             </h2>
             <p className="text-lg text-muted-foreground">
-              Un outil complet pour analyser, créer et optimiser vos
-              compositions
+              {t("home.completeTool")}
             </p>
           </div>
 
@@ -84,11 +85,8 @@ export default function Home() {
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <TrophyIcon className="size-6 text-primary" />
                 </div>
-                <CardTitle>Tier Lists Actuelles</CardTitle>
-                <CardDescription>
-                  Consultez les classements en temps réel basés sur les
-                  dernières données de jeu
-                </CardDescription>
+                <CardTitle>{t("home.tierListsCurrent")}</CardTitle>
+                <CardDescription>{t("home.consultRankings")}</CardDescription>
               </CardHeader>
             </Card>
 
@@ -97,11 +95,8 @@ export default function Home() {
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <TrendingUpIcon className="size-6 text-primary" />
                 </div>
-                <CardTitle>Méta Analyse</CardTitle>
-                <CardDescription>
-                  Identifiez les picks les plus performants et les tendances
-                  actuelles
-                </CardDescription>
+                <CardTitle>{t("home.metaAnalysis")}</CardTitle>
+                <CardDescription>{t("home.identifyBestPicks")}</CardDescription>
               </CardHeader>
             </Card>
 
@@ -110,11 +105,8 @@ export default function Home() {
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <ShieldIcon className="size-6 text-primary" />
                 </div>
-                <CardTitle>Statistiques Détaillées</CardTitle>
-                <CardDescription>
-                  Accédez à toutes les données de chaque champion et objet du
-                  jeu
-                </CardDescription>
+                <CardTitle>{t("home.detailedStats")}</CardTitle>
+                <CardDescription>{t("home.accessAllData")}</CardDescription>
               </CardHeader>
             </Card>
 
@@ -123,10 +115,8 @@ export default function Home() {
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <BarChart3Icon className="size-6 text-primary" />
                 </div>
-                <CardTitle>Comparaisons</CardTitle>
-                <CardDescription>
-                  Comparez les forces et faiblesses de différentes compositions
-                </CardDescription>
+                <CardTitle>{t("home.comparisons")}</CardTitle>
+                <CardDescription>{t("home.compareStrengths")}</CardDescription>
               </CardHeader>
             </Card>
 
@@ -135,9 +125,9 @@ export default function Home() {
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <BookIcon className="size-6 text-primary" />
                 </div>
-                <CardTitle>Guides Stratégiques</CardTitle>
+                <CardTitle>{t("home.strategicGuides")}</CardTitle>
                 <CardDescription>
-                  Apprenez les meilleures pratiques et optimisez votre gameplay
+                  {t("home.learnBestPractices")}
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -147,11 +137,8 @@ export default function Home() {
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <UsersIcon className="size-6 text-primary" />
                 </div>
-                <CardTitle>Communauté</CardTitle>
-                <CardDescription>
-                  Partagez vos compositions et inspirez-vous de celles des
-                  autres
-                </CardDescription>
+                <CardTitle>{t("home.community")}</CardTitle>
+                <CardDescription>{t("home.shareCompositions")}</CardDescription>
               </CardHeader>
             </Card>
           </div>
@@ -164,15 +151,21 @@ export default function Home() {
           <div className="grid gap-8 md:grid-cols-3">
             <div className="text-center">
               <div className="mb-2 text-4xl font-bold text-primary">171</div>
-              <div className="text-muted-foreground">Champions disponibles</div>
+              <div className="text-muted-foreground">
+                {t("home.championsAvailable")}
+              </div>
             </div>
             <div className="text-center">
               <div className="mb-2 text-4xl font-bold text-primary">635+</div>
-              <div className="text-muted-foreground">Objets analysés</div>
+              <div className="text-muted-foreground">
+                {t("home.itemsAnalyzed")}
+              </div>
             </div>
             <div className="text-center">
               <div className="mb-2 text-4xl font-bold text-primary">24/7</div>
-              <div className="text-muted-foreground">Mise à jour continue</div>
+              <div className="text-muted-foreground">
+                {t("home.updateContinuous")}
+              </div>
             </div>
           </div>
         </div>
@@ -183,21 +176,20 @@ export default function Home() {
         <div className="px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-              Prêt à dominer la Faille ?
+              {t("home.readyToDominate")}
             </h2>
             <p className="mb-8 text-lg text-muted-foreground">
-              Rejoignez la communauté et commencez à créer vos propres
-              compositions gagnantes
+              {t("home.joinCommunity")}
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" asChild>
                 <Link href="/signup">
-                  Créer un compte
+                  {t("home.createAccount")}
                   <ZapIcon className="ml-2 size-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="/login">Se connecter</Link>
+                <Link href="/login">{t("home.signIn")}</Link>
               </Button>
             </div>
           </div>

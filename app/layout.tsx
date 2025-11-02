@@ -4,6 +4,7 @@ import { ConditionalHeader } from "@/components/ConditionalHeader";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { I18nProvider } from "@/lib/i18n-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,11 +34,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <AuthProvider>
-            <ConditionalHeader />
-            {children}
-            <Toaster />
-          </AuthProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <ConditionalHeader />
+              {children}
+              <Toaster />
+            </AuthProvider>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

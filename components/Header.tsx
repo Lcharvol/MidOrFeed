@@ -36,6 +36,7 @@ import {
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
 import { getInitials } from "@/lib/profile-utils";
+import { useI18n } from "@/lib/i18n-context";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -46,6 +47,7 @@ export function Header() {
     user?.riotPuuid,
     user?.riotRegion
   );
+  const { t } = useI18n();
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -54,7 +56,7 @@ export function Header() {
 
   const handleLogout = () => {
     logout();
-    toast.success("Déconnexion réussie");
+    toast.success(t("header.logoutSuccessful"));
     router.push("/");
   };
 
@@ -80,7 +82,9 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Compositions</NavigationMenuTrigger>
+                <NavigationMenuTrigger>
+                  {t("compositions.menu")}
+                </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                     <li className="row-span-3">
@@ -98,11 +102,10 @@ export function Header() {
                           />
                           <div className="flex flex-col ml-4">
                             <div className="mb-2 text-lg font-medium">
-                              Créer une composition
+                              {t("compositions.create.title")}
                             </div>
                             <p className="text-sm leading-tight text-muted-foreground">
-                              Découvrez comment créer la composition parfaite
-                              pour vos parties.
+                              {t("compositions.create.description")}
                             </p>
                           </div>
                         </Link>
@@ -115,10 +118,10 @@ export function Header() {
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
                           <div className="text-sm font-medium leading-none">
-                            Populaires
+                            {t("compositions.popular.title")}
                           </div>
                           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Les compositions les plus utilisées
+                            {t("compositions.popular.description")}
                           </p>
                         </Link>
                       </NavigationMenuLink>
@@ -130,10 +133,10 @@ export function Header() {
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
                           <div className="text-sm font-medium leading-none">
-                            Favoris
+                            {t("compositions.favorites.title")}
                           </div>
                           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Vos compositions sauvegardées
+                            {t("compositions.favorites.description")}
                           </p>
                         </Link>
                       </NavigationMenuLink>
@@ -143,7 +146,9 @@ export function Header() {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Tier List</NavigationMenuTrigger>
+                <NavigationMenuTrigger>
+                  {t("tierListMenu.title")}
+                </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[300px] gap-3 p-4">
                     <li>
@@ -161,10 +166,10 @@ export function Header() {
                           />
                           <div className="flex flex-col ml-4">
                             <div className="text-sm font-medium leading-none">
-                              Champions
+                              {t("tierListMenu.champions.title")}
                             </div>
                             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Les champions les plus forts en ce moment
+                              {t("tierListMenu.champions.description")}
                             </p>
                           </div>
                         </Link>
@@ -185,10 +190,10 @@ export function Header() {
                           />
                           <div className="flex flex-col ml-4">
                             <div className="text-sm font-medium leading-none">
-                              Objets
+                              {t("tierListMenu.items.title")}
                             </div>
                             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Les objets les plus efficaces
+                              {t("tierListMenu.items.description")}
                             </p>
                           </div>
                         </Link>
@@ -204,7 +209,7 @@ export function Header() {
                     href="/summoners"
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
-                    Mon Profil
+                    {t("header.monProfil")}
                   </Link>
                 </NavigationMenuItem>
               )}
@@ -226,7 +231,7 @@ export function Header() {
               ) : (
                 <MoonIcon className="size-5" />
               )}
-              <span className="sr-only">Toggle theme</span>
+              <span className="sr-only">{t("header.toggleTheme")}</span>
             </Button>
           )}
 
@@ -263,7 +268,7 @@ export function Header() {
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user.name || "Utilisateur"}
+                        {user.name || t("header.user")}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
@@ -274,19 +279,19 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="cursor-pointer">
                       <UserIcon className="mr-2 size-4" />
-                      Profil
+                      {t("header.profile")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="cursor-pointer">
                       <SettingsIcon className="mr-2 size-4" />
-                      Paramètres
+                      {t("header.settings")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOutIcon className="mr-2 size-4" />
-                    Se déconnecter
+                    {t("header.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -294,11 +299,11 @@ export function Header() {
           ) : (
             <>
               <Button variant="ghost" asChild>
-                <Link href="/login">Connexion</Link>
+                <Link href="/login">{t("header.login")}</Link>
               </Button>
               <Separator orientation="vertical" className="h-6" />
               <Button asChild>
-                <Link href="/signup">Créer un compte</Link>
+                <Link href="/signup">{t("header.signup")}</Link>
               </Button>
             </>
           )}

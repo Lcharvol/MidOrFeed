@@ -25,18 +25,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
-
-const loginSchema = z.object({
-  email: z.string().email("Email invalide"),
-  password: z.string().min(1, "Le mot de passe est requis"),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { useI18n } from "@/lib/i18n-context";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useI18n();
+
+  // Create schema dynamically based on locale
+  const loginSchema = z.object({
+    email: z.string().email(t("login.invalidEmail")),
+    password: z.string().min(1, t("login.passwordRequired")),
+  });
+
+  type LoginFormValues = z.infer<typeof loginSchema>;
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -60,17 +63,17 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || "Erreur lors de la connexion");
+        toast.error(result.error || t("login.connectionError"));
         return;
       }
 
       // Connecter l'utilisateur
       login(result.user);
-      toast.success("Connexion réussie!");
+      toast.success(t("login.connectionSuccessful"));
       router.push("/");
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error("Une erreur est survenue");
+      toast.error(t("login.anErrorOccurred"));
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +93,7 @@ export default function LoginPage() {
               priority
             />
             <CardDescription className="mt-4">
-              Entrez vos identifiants pour accéder à votre compte
+              {t("login.enterCredentials")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -104,10 +107,10 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("login.email")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="vous@exemple.com"
+                          placeholder={t("login.emailPlaceholder")}
                           type="email"
                           {...field}
                         />
@@ -121,10 +124,10 @@ export default function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mot de passe</FormLabel>
+                      <FormLabel>{t("login.password")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="••••••••"
+                          placeholder={t("login.passwordPlaceholder")}
                           type="password"
                           {...field}
                         />
@@ -140,11 +143,11 @@ export default function LoginPage() {
                       className="rounded border-gray-300"
                     />
                     <span className="text-muted-foreground">
-                      Se souvenir de moi
+                      {t("login.rememberMe")}
                     </span>
                   </label>
                   <a href="#" className="text-primary hover:underline">
-                    Mot de passe oublié ?
+                    {t("login.forgotPassword")}
                   </a>
                 </div>
               </form>
@@ -157,7 +160,7 @@ export default function LoginPage() {
               onClick={form.handleSubmit(onSubmit)}
               disabled={isLoading}
             >
-              {isLoading ? "Connexion..." : "Se connecter"}
+              {isLoading ? t("login.connecting") : t("login.submit")}
             </Button>
             <div className="relative w-full">
               <div className="absolute inset-0 flex items-center">
@@ -165,7 +168,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-card px-2 text-muted-foreground">
-                  Ou continuer avec
+                  {t("login.orContinueWith")}
                 </span>
               </div>
             </div>
@@ -178,9 +181,9 @@ export default function LoginPage() {
               </Button>
             </div>
             <p className="text-center text-sm text-muted-foreground">
-              Pas encore de compte ?{" "}
+              {t("login.noAccount")}{" "}
               <a href="/signup" className="text-primary hover:underline">
-                Créer un compte
+                {t("login.signup")}
               </a>
             </p>
           </CardFooter>

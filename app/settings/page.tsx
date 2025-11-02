@@ -26,9 +26,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { useI18n } from "@/lib/i18n-context";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { locale, setLocale, t } = useI18n();
   const { user, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState(false);
@@ -41,12 +43,21 @@ export default function SettingsPage() {
 
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
-    toast.success(`Thème ${newTheme === "dark" ? "sombre" : "clair"} activé`);
+    toast.success(
+      t(`settings.theme${newTheme === "dark" ? "Dark" : "Light"}Activated`)
+    );
+  };
+
+  const handleLanguageChange = (newLocale: "fr" | "en") => {
+    setLocale(newLocale);
+    toast.success(t("settings.languageChanged"));
   };
 
   const handleNotificationsToggle = (checked: boolean) => {
     setNotifications(checked);
-    toast.success(`Notifications ${checked ? "activées" : "désactivées"}`);
+    toast.success(
+      t(`settings.notifications${checked ? "Enabled" : "Disabled"}`)
+    );
   };
 
   const handleClearCache = async () => {
@@ -54,24 +65,20 @@ export default function SettingsPage() {
     try {
       // Simuler une suppression de cache
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Cache vidé avec succès");
+      toast.success(t("settings.cacheCleared"));
     } catch (error) {
-      toast.error("Erreur lors de la suppression du cache");
+      toast.error(t("settings.cacheError"));
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteAccount = async () => {
-    if (
-      !confirm(
-        "⚠️ Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible."
-      )
-    ) {
+    if (!confirm(t("settings.deleteAccountConfirmation"))) {
       return;
     }
 
-    toast.info("Fonctionnalité de suppression de compte à venir");
+    toast.info(t("settings.deleteAccountComingSoon"));
   };
 
   return (
@@ -82,11 +89,9 @@ export default function SettingsPage() {
             <div className="p-2 rounded-lg bg-primary/10">
               <SettingsIcon className="size-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">Paramètres</h1>
+            <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
           </div>
-          <p className="text-muted-foreground">
-            Gérez vos préférences et les paramètres de votre compte
-          </p>
+          <p className="text-muted-foreground">{t("settings.subtitle")}</p>
         </div>
 
         {/* Apparence */}
@@ -100,18 +105,18 @@ export default function SettingsPage() {
                   <SunIcon className="size-4 text-purple-600 dark:text-purple-400" />
                 )}
               </div>
-              <CardTitle>Apparence</CardTitle>
+              <CardTitle>{t("settings.appearance")}</CardTitle>
             </div>
             <CardDescription>
-              Personnalisez l&apos;apparence de l&apos;application
+              {t("settings.appearanceDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">Thème</h3>
+                <h3 className="text-sm font-medium">{t("settings.theme")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Choisissez un thème clair ou sombre
+                  {t("settings.chooseTheme")}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -122,7 +127,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2"
                 >
                   <SunIcon className="size-4" />
-                  Clair
+                  {t("settings.light")}
                 </Button>
                 <Button
                   variant={mounted && theme === "dark" ? "default" : "outline"}
@@ -131,22 +136,40 @@ export default function SettingsPage() {
                   className="flex items-center gap-2"
                 >
                   <MoonIcon className="size-4" />
-                  Sombre
+                  {t("settings.dark")}
                 </Button>
               </div>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">Langue</h3>
+                <h3 className="text-sm font-medium">
+                  {t("settings.language")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Langue de l&apos;interface
+                  {t("settings.interfaceLanguage")}
                 </p>
               </div>
-              <Badge variant="outline" className="flex items-center gap-1">
-                <GlobeIcon className="size-3" />
-                Français (FR)
-              </Badge>
+              <div className="flex gap-2">
+                <Button
+                  variant={locale === "fr" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleLanguageChange("fr")}
+                  className="flex items-center gap-2"
+                >
+                  <GlobeIcon className="size-4" />
+                  Français
+                </Button>
+                <Button
+                  variant={locale === "en" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleLanguageChange("en")}
+                  className="flex items-center gap-2"
+                >
+                  <GlobeIcon className="size-4" />
+                  English
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -158,18 +181,20 @@ export default function SettingsPage() {
               <div className="p-2 rounded-md bg-blue-500/10">
                 <BellIcon className="size-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <CardTitle>Notifications</CardTitle>
+              <CardTitle>{t("settings.notifications")}</CardTitle>
             </div>
             <CardDescription>
-              Gérez vos préférences de notification
+              {t("settings.manageNotifications")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">Notifications push</h3>
+                <h3 className="text-sm font-medium">
+                  {t("settings.pushNotifications")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Recevez des notifications sur vos performances
+                  {t("settings.receiveNotifications")}
                 </p>
               </div>
               <Switch
@@ -180,9 +205,11 @@ export default function SettingsPage() {
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">Alertes de match</h3>
+                <h3 className="text-sm font-medium">
+                  {t("settings.matchAlerts")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Notifications pour vos matchs récents
+                  {t("settings.recentMatchNotifications")}
                 </p>
               </div>
               <Switch disabled />
@@ -197,28 +224,30 @@ export default function SettingsPage() {
               <div className="p-2 rounded-md bg-green-500/10">
                 <ShieldIcon className="size-4 text-green-600 dark:text-green-400" />
               </div>
-              <CardTitle>Confidentialité</CardTitle>
+              <CardTitle>{t("settings.privacy")}</CardTitle>
             </div>
-            <CardDescription>
-              Contrôlez vos données et votre vie privée
-            </CardDescription>
+            <CardDescription>{t("settings.controlData")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">Profil public</h3>
+                <h3 className="text-sm font-medium">
+                  {t("settings.publicProfile")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Votre profil est actuellement privé
+                  {t("settings.profileCurrentlyPrivate")}
                 </p>
               </div>
-              <Badge variant="secondary">Privé</Badge>
+              <Badge variant="secondary">{t("settings.private")}</Badge>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">Partage de données</h3>
+                <h3 className="text-sm font-medium">
+                  {t("settings.dataSharing")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Contribuer à améliorer l&apos;application
+                  {t("settings.contributeToImprove")}
                 </p>
               </div>
               <Switch disabled />
@@ -233,16 +262,16 @@ export default function SettingsPage() {
               <div className="p-2 rounded-md bg-orange-500/10">
                 <DatabaseIcon className="size-4 text-orange-600 dark:text-orange-400" />
               </div>
-              <CardTitle>Données</CardTitle>
+              <CardTitle>{t("settings.data")}</CardTitle>
             </div>
-            <CardDescription>Gérez votre cache et vos données</CardDescription>
+            <CardDescription>{t("settings.manageCache")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">Cache</h3>
+                <h3 className="text-sm font-medium">{t("settings.cache")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Videz le cache pour libérer de l&apos;espace
+                  {t("settings.clearCache")}
                 </p>
               </div>
               <Button
@@ -257,19 +286,21 @@ export default function SettingsPage() {
                 ) : (
                   <RefreshCwIcon className="size-4" />
                 )}
-                Vider
+                {t("settings.clear")}
               </Button>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">Exporter mes données</h3>
+                <h3 className="text-sm font-medium">
+                  {t("settings.exportData")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Téléchargez une copie de vos données
+                  {t("settings.downloadDataCopy")}
                 </p>
               </div>
               <Button variant="outline" size="sm" disabled>
-                Exporter
+                {t("settings.export")}
               </Button>
             </div>
           </CardContent>
@@ -283,21 +314,21 @@ export default function SettingsPage() {
                 <Trash2Icon className="size-4 text-red-600 dark:text-red-400" />
               </div>
               <CardTitle className="text-red-600 dark:text-red-400">
-                Zone de danger
+                {t("settings.dangerZone")}
               </CardTitle>
             </div>
             <CardDescription className="text-red-600/70 dark:text-red-400/70">
-              Actions irréversibles
+              {t("settings.irreversibleActions")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <h3 className="text-sm font-medium text-red-600 dark:text-red-400">
-                  Supprimer mon compte
+                  {t("settings.deleteAccount")}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Supprime définitivement votre compte et toutes vos données
+                  {t("settings.permanentlyDeleteAccount")}
                 </p>
               </div>
               <Button
@@ -307,7 +338,7 @@ export default function SettingsPage() {
                 className="flex items-center gap-2"
               >
                 <Trash2Icon className="size-4" />
-                Supprimer
+                {t("settings.delete")}
               </Button>
             </div>
           </CardContent>

@@ -25,29 +25,29 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-
-const signupSchema = z
-  .object({
-    name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-    email: z.string().email("Email invalide"),
-    password: z
-      .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-    confirmPassword: z.string(),
-    terms: z.boolean().refine((val) => val === true, {
-      message: "Vous devez accepter les conditions",
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Les mots de passe ne correspondent pas",
-    path: ["confirmPassword"],
-  });
-
-type SignupFormValues = z.infer<typeof signupSchema>;
+import { useI18n } from "@/lib/i18n-context";
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { t } = useI18n();
+
+  const signupSchema = z
+    .object({
+      name: z.string().min(2, t("signup.nameMinCharacters")),
+      email: z.string().email(t("signup.invalidEmail")),
+      password: z.string().min(8, t("signup.passwordMinCharacters")),
+      confirmPassword: z.string(),
+      terms: z.boolean().refine((val) => val === true, {
+        message: t("signup.mustAcceptConditions"),
+      }),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("signup.passwordsDoNotMatch"),
+      path: ["confirmPassword"],
+    });
+
+  type SignupFormValues = z.infer<typeof signupSchema>;
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -81,20 +81,20 @@ export default function SignupPage() {
       if (!response.ok) {
         if (result.details && Array.isArray(result.details)) {
           result.details.forEach((detail: { message?: string }) => {
-            toast.error(detail.message || "Erreur de validation");
+            toast.error(detail.message || t("signup.validationError"));
           });
         } else {
-          toast.error(result.error || "Erreur lors de la création du compte");
+          toast.error(result.error || t("signup.errorAccountCreation"));
         }
         return;
       }
 
-      toast.success("Compte créé avec succès!");
+      toast.success(t("signup.success"));
       // Rediriger vers la page de connexion
       router.push("/login");
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error("Une erreur est survenue");
+      toast.error(t("signup.error"));
     } finally {
       setIsLoading(false);
     }
@@ -113,10 +113,8 @@ export default function SignupPage() {
               className="m-auto w-auto"
               priority
             />
-            <CardTitle className="text-2xl">Créer un compte</CardTitle>
-            <CardDescription>
-              Remplissez les informations ci-dessous pour créer votre compte
-            </CardDescription>
+            <CardTitle className="text-2xl">{t("signup.title")}</CardTitle>
+            <CardDescription>{t("signup.fillInfo")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -129,9 +127,12 @@ export default function SignupPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nom complet</FormLabel>
+                      <FormLabel>{t("signup.name")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jean Dupont" {...field} />
+                        <Input
+                          placeholder={t("signup.namePlaceholder")}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -142,10 +143,10 @@ export default function SignupPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("signup.email")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="vous@exemple.com"
+                          placeholder={t("signup.emailPlaceholder")}
                           type="email"
                           {...field}
                         />
@@ -159,10 +160,10 @@ export default function SignupPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mot de passe</FormLabel>
+                      <FormLabel>{t("signup.password")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="••••••••"
+                          placeholder={t("signup.passwordPlaceholder")}
                           type="password"
                           {...field}
                         />
@@ -176,10 +177,10 @@ export default function SignupPage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirmer le mot de passe</FormLabel>
+                      <FormLabel>{t("signup.confirmPassword")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="••••••••"
+                          placeholder={t("signup.passwordPlaceholder")}
                           type="password"
                           {...field}
                         />
@@ -203,13 +204,13 @@ export default function SignupPage() {
                       </FormControl>
                       <div className="text-muted-foreground">
                         <label>
-                          J&apos;accepte les{" "}
+                          {t("signup.acceptTerms")}{" "}
                           <a href="#" className="text-primary hover:underline">
-                            conditions d&apos;utilisation
+                            {t("signup.termsOfUse")}
                           </a>{" "}
-                          et la{" "}
+                          {t("signup.and")}{" "}
                           <a href="#" className="text-primary hover:underline">
-                            politique de confidentialité
+                            {t("signup.privacyPolicy")}
                           </a>
                         </label>
                       </div>
@@ -227,7 +228,7 @@ export default function SignupPage() {
               onClick={form.handleSubmit(onSubmit)}
               disabled={isLoading}
             >
-              {isLoading ? "Création..." : "Créer mon compte"}
+              {isLoading ? t("signup.creating") : t("signup.submit")}
             </Button>
             <div className="relative w-full">
               <div className="absolute inset-0 flex items-center">
@@ -235,7 +236,7 @@ export default function SignupPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-card px-2 text-muted-foreground">
-                  Ou continuer avec
+                  {t("signup.orContinueWith")}
                 </span>
               </div>
             </div>
@@ -248,9 +249,9 @@ export default function SignupPage() {
               </Button>
             </div>
             <p className="text-center text-sm text-muted-foreground">
-              Déjà un compte ?{" "}
+              {t("signup.hasAccount")}{" "}
               <a href="/login" className="text-primary hover:underline">
-                Se connecter
+                {t("signup.login")}
               </a>
             </p>
           </CardFooter>

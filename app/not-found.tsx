@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HomeIcon, SwordIcon } from "lucide-react";
+import { useI18n } from "@/lib/i18n-context";
 
 export default function NotFound() {
+  const { t } = useI18n();
+
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-4 py-20">
       {/* Decorative background elements */}
@@ -26,11 +29,10 @@ export default function NotFound() {
         {/* Error message with LoL theme */}
         <div className="mb-8">
           <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-            Champion introuvable !
+            {t("notFound.championNotFound")}
           </h2>
           <p className="text-lg text-muted-foreground md:text-xl">
-            Cette page a été éliminée ou n&apos;a jamais existé dans la Faille
-            de l&apos;invocateur.
+            {t("notFound.pageEliminated")}
           </p>
         </div>
 
@@ -46,13 +48,13 @@ export default function NotFound() {
           <Button size="lg" className="text-lg" asChild>
             <Link href="/">
               <HomeIcon className="mr-2 size-5" />
-              Retour à l&apos;accueil
+              {t("notFound.backHome")}
             </Link>
           </Button>
           <Button size="lg" variant="outline" className="text-lg" asChild>
             <Link href="/compositions/create">
               <SwordIcon className="mr-2 size-5" />
-              Créer une composition
+              {t("notFound.createComposition")}
             </Link>
           </Button>
         </div>
@@ -60,22 +62,22 @@ export default function NotFound() {
         {/* Fun message */}
         <div className="mt-16 rounded-lg border bg-card/50 p-6 backdrop-blur-sm">
           <p className="text-sm text-muted-foreground">
-            💡 <span className="font-medium">Astuce :</span> Vous cherchez
-            peut-être les{" "}
+            💡 <span className="font-medium">{t("notFound.tip")}</span>{" "}
+            {t("notFound.maybeLookingFor")}{" "}
             <Link
               href="/tier-list/champions"
               className="font-medium text-primary hover:underline"
             >
-              champions
+              {t("notFound.champions")}
             </Link>{" "}
-            ou les{" "}
+            {t("notFound.or")}{" "}
             <Link
               href="/tier-list/items"
               className="font-medium text-primary hover:underline"
             >
-              objets
+              {t("notFound.items")}
             </Link>{" "}
-            les plus puissants du moment ?
+            {t("notFound.mostPowerfulMoment")}
           </p>
         </div>
       </div>
