@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const searchSchema = z.object({
-  gameName: z.string().min(1, "Le nom de jeu est requis"),
-  tagLine: z.string().min(1, "Le tag est requis"),
-  region: z.string().min(1, "La région est requise"),
+const getAccountDetailsSchema = z.object({
+  puuid: z.string().min(1, "PUUID est requis"),
+  region: z.string().min(1, "Région est requise"),
 });
 
 // Clé API Riot Games depuis les variables d'environnement
@@ -33,6 +32,26 @@ const REGION_TO_ROUTING: Record<string, string> = {
   vn2: "asia",
 };
 
+// Mapping des régions vers les endpoints Summoner
+const REGION_TO_BASE_URL: Record<string, string> = {
+  euw1: "https://euw1.api.riotgames.com",
+  eun1: "https://eun1.api.riotgames.com",
+  tr1: "https://tr1.api.riotgames.com",
+  ru: "https://ru.api.riotgames.com",
+  na1: "https://na1.api.riotgames.com",
+  la1: "https://la1.api.riotgames.com",
+  la2: "https://la2.api.riotgames.com",
+  br1: "https://br1.api.riotgames.com",
+  kr: "https://kr.api.riotgames.com",
+  jp1: "https://jp1.api.riotgames.com",
+  oc1: "https://oc1.api.riotgames.com",
+  ph2: "https://ph2.api.riotgames.com",
+  sg2: "https://sg2.api.riotgames.com",
+  th2: "https://th2.api.riotgames.com",
+  tw2: "https://tw2.api.riotgames.com",
+  vn2: "https://vn2.api.riotgames.com",
+};
+
 export async function POST(request: Request) {
   try {
     // Vérifier que la clé API est configurée
@@ -46,21 +65,19 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Valider les données
-    const validatedData = searchSchema.parse(body);
+    const validatedData = getAccountDetailsSchema.parse(body);
 
     // Vérifier que la région est valide
     const routing = REGION_TO_ROUTING[validatedData.region];
-    if (!routing) {
+    const baseUrl = REGION_TO_BASE_URL[validatedData.region];
+
+    if (!routing || !baseUrl) {
       return NextResponse.json({ error: "Région invalide" }, { status: 400 });
     }
 
-    // Encoder le nom de jeu et le tag pour l'URL
-    const encodedGameName = encodeURIComponent(validatedData.gameName);
-    const encodedTagLine = encodeURIComponent(validatedData.tagLine);
-
-    // Appeler l'API Account pour obtenir le PUUID
+    // Appeler l'API Account pour obtenir le Riot ID
     const accountResponse = await fetch(
-      `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodedGameName}/${encodedTagLine}`,
+      `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${validatedData.puuid}`,
       {
         headers: {
           "X-Riot-Token": RIOT_API_KEY,
@@ -69,12 +86,10 @@ export async function POST(request: Request) {
     );
 
     if (!accountResponse.ok) {
-      const errorBody = await accountResponse.json().catch(() => ({}));
-
       if (accountResponse.status === 404) {
         return NextResponse.json(
           {
-            error: "Compte non trouvé. Vérifiez le nom de jeu et le tag.",
+            error: "Compte non trouvé.",
           },
           { status: 404 }
         );
@@ -93,11 +108,11 @@ export async function POST(request: Request) {
           {
             error:
               "Accès refusé. Vérifiez que votre clé API a les bonnes permissions.",
-            details: errorBody,
           },
           { status: 403 }
         );
       }
+      const errorBody = await accountResponse.json().catch(() => ({}));
       return NextResponse.json(
         {
           error: `Erreur API Riot: ${accountResponse.status}`,
@@ -109,14 +124,36 @@ export async function POST(request: Request) {
 
     const accountData = await accountResponse.json();
 
-    // Retourner les données du compte
+    // Appeler l'API Summoner pour obtenir plus de détails
+    const summonerResponse = await fetch(
+      `${baseUrl}/lol/summoner/v4/summoners/by-puuid/${validatedData.puuid}`,
+      {
+        headers: {
+          "X-Riot-Token": RIOT_API_KEY,
+        },
+      }
+    );
+
+    let summonerData = null;
+    if (summonerResponse.ok) {
+      summonerData = await summonerResponse.json();
+    }
+
+    // Retourner les données complètes du compte
     return NextResponse.json(
       {
         success: true,
         data: {
+          // Données Account API
           puuid: accountData.puuid,
           gameName: accountData.gameName,
           tagLine: accountData.tagLine,
+          // Données Summoner API
+          summonerLevel: summonerData?.summonerLevel || null,
+          profileIconId: summonerData?.profileIconId || null,
+          summonerId: summonerData?.id || null,
+          accountId: summonerData?.accountId || null,
+          revisionDate: summonerData?.revisionDate || null,
         },
       },
       { status: 200 }
@@ -129,9 +166,9 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Erreur lors de la recherche du compte:", error);
+    console.error("Erreur lors de la récupération des détails:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la recherche du compte" },
+      { error: "Erreur lors de la récupération des détails" },
       { status: 500 }
     );
   }

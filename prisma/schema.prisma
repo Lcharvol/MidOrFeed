@@ -29,6 +29,7 @@ model User {
 model Champion {
   id                   String   @id @default(cuid())
   championId           String   @unique // ID Riot (ex: "Aatrox")
+  championKey          Int?     @unique // Clé numérique Riot (ex: 266)
   name                 String   @unique
   title                String
   blurb                String?
@@ -108,6 +109,7 @@ model MatchParticipant {
   id              String   @id @default(cuid())
   matchId         String
   participantId   Int      // ID du participant (1-10)
+  participantPUuid String? // PUUID du participant
   teamId          Int      // 100 pour bleu, 200 pour rouge
   championId      String   // ID du champion joué
   role            String?  // ROLE
@@ -146,6 +148,7 @@ model MatchParticipant {
   @@index([championId])
   @@index([teamId])
   @@index([matchId])
+  @@index([participantPUuid])
   @@map("match_participants")
 }
 

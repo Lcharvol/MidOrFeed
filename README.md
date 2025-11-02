@@ -1,6 +1,6 @@
-# LOL Comp Maker
+# MidOrFeed
 
-Application web pour créer et partager des compositions de champions pour League of Legends.
+Plateforme d'analyse de performances League of Legends avec suggestions de compositions IA.
 
 ## 🚀 Technologies
 
@@ -129,7 +129,7 @@ model Champion {
 ## 📁 Structure du projet
 
 ```text
-lol-comp-maker/
+mid-or-feed/
 ├── app/
 │   ├── api/
 │   │   ├── auth/

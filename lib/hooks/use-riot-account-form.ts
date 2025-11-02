@@ -18,28 +18,30 @@ interface UseRiotAccountFormProps {
 }
 
 export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
-  const [summonerName, setSummonerName] = useState("");
+  const [gameName, setGameName] = useState("");
+  const [tagLine, setTagLine] = useState("");
   const [region, setRegion] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSaveAccount = async () => {
-    if (!summonerName || !region) {
+    if (!gameName || !tagLine || !region) {
       toast.error("Veuillez remplir tous les champs");
       return;
     }
 
     setIsSaving(true);
     try {
-      // Rechercher le compte via l'API Summoner
+      // Rechercher le compte via l'API Account
       const searchResponse = await fetch("/api/riot/search-account", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          summonerName,
+          gameName,
+          tagLine,
           region,
         }),
       });
@@ -51,7 +53,7 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
         return;
       }
 
-      const { puuid, summonerId } = searchResult.data;
+      const { puuid } = searchResult.data;
 
       // Sauvegarder le compte dans la base de données
       const response = await fetch("/api/user/save-riot-account", {
@@ -61,10 +63,9 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
           "x-user-id": user?.id || "",
         },
         body: JSON.stringify({
-          gameName: summonerName,
-          tagLine: null, // Plus nécessaire avec Summoner API
+          gameName,
+          tagLine,
           puuid,
-          summonerId,
           region,
         }),
       });
@@ -83,7 +84,8 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
 
       toast.success("Compte Riot sauvegardé avec succès!");
       setIsEditing(false);
-      setSummonerName("");
+      setGameName("");
+      setTagLine("");
       setRegion("");
     } catch (error) {
       console.error("Erreur:", error);
@@ -95,7 +97,8 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
 
   const handleEditAccount = () => {
     if (user && user.riotGameName) {
-      setSummonerName(user.riotGameName);
+      setGameName(user.riotGameName);
+      setTagLine(user.riotTagLine || "");
       setRegion(user.riotRegion || "");
       setIsEditing(true);
     }
@@ -103,7 +106,8 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setSummonerName("");
+    setGameName("");
+    setTagLine("");
     setRegion("");
   };
 
@@ -144,8 +148,10 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
   };
 
   return {
-    summonerName,
-    setSummonerName,
+    gameName,
+    setGameName,
+    tagLine,
+    setTagLine,
     region,
     setRegion,
     isSaving,

@@ -106,9 +106,9 @@ export default function SignupPage() {
         <Card>
           <CardHeader className="text-center">
             <Image
-              src="/logo-text.png"
-              alt="LOL Comp Maker"
-              width={200}
+              src="/logo.png"
+              alt="MidOrFeed"
+              width={100}
               height={50}
               className="m-auto w-auto"
               priority

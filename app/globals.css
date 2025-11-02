@@ -54,9 +54,9 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0 0);
 
-  /* Accent gold discret pour le mode clair */
-  --primary: oklch(0.8 0.18 80); /* Gold clair #FFD85C */
-  --primary-foreground: oklch(0.18 0 0);
+  /* Accent violet LoL */
+  --primary: oklch(0.55 0.2 280); /* Violet #7C3AED */
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0.18 0 0);
 
@@ -67,7 +67,7 @@
   --destructive: oklch(0.55 0.2 20);
   --border: oklch(0.88 0 0);
   --input: oklch(0.88 0 0);
-  --ring: oklch(0.8 0.18 80);
+  --ring: oklch(0.55 0.2 280);
 
   /* Couleurs des rôles */
   --chart-1: oklch(0.55 0.2 350); /* Assassin */
@@ -79,12 +79,12 @@
   /* Sidebar clair */
   --sidebar: oklch(0.98 0 0);
   --sidebar-foreground: oklch(0.18 0 0);
-  --sidebar-primary: oklch(0.8 0.18 80);
-  --sidebar-primary-foreground: oklch(0.18 0 0);
+  --sidebar-primary: oklch(0.55 0.2 280);
+  --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.92 0 0);
   --sidebar-accent-foreground: oklch(0.18 0 0);
   --sidebar-border: oklch(0.88 0 0);
-  --sidebar-ring: oklch(0.8 0.18 80);
+  --sidebar-ring: oklch(0.55 0.2 280);
 }
 
 .dark {
@@ -96,9 +96,9 @@
   --popover: oklch(0.18 0 260);
   --popover-foreground: oklch(0.95 0 0);
 
-  /* 💛 Or profond et élégant */
-  --primary: oklch(0.7 0.15 80); /* #D4AF37 */
-  --primary-foreground: oklch(0.12 0 0); /* contraste sur fond clair */
+  /* 💜 Violet LoL */
+  --primary: oklch(0.65 0.25 280); /* #7C3AED */
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.25 0 260);
   --secondary-foreground: oklch(0.95 0 0);
 
@@ -110,7 +110,7 @@
   --destructive: oklch(0.55 0.2 20);
   --border: oklch(0.3 0 260);
   --input: oklch(0.3 0 260);
-  --ring: oklch(0.7 0.15 80);
+  --ring: oklch(0.65 0.25 280);
 
   /* Couleurs des rôles */
   --chart-1: oklch(0.6 0.2 350);
@@ -122,14 +122,14 @@
   /* Sidebar sombre */
   --sidebar: oklch(0.18 0 260);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.7 0.15 80);
-  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-primary: oklch(0.65 0.25 280);
+  --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.25 0 260);
   --sidebar-accent-foreground: oklch(0.95 0 0);
   --sidebar-border: oklch(0.3 0 260);
-  --sidebar-ring: oklch(0.7 0.15 80);
+  --sidebar-ring: oklch(0.65 0.25 280);
 
-  --primary-gradient: linear-gradient(135deg, #ffd85c, #ffb800);
+  --primary-gradient: linear-gradient(135deg, #7c3aed, #6d28d9);
 }
 
 @layer base {

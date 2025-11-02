@@ -62,10 +62,7 @@ async function generateSuggestions(data: {
   // TODO: Implémenter une vraie IA avec ML en analysant les matchs
 
   // Étape 1: Récupérer les champions compatibles avec l'équipe actuelle
-  const compatibleChampions = await findCompatibleChampions(
-    teamChampions,
-    role
-  );
+  const compatibleChampions = await findCompatibleChampions(teamChampions);
 
   // Étape 2: Si des ennemis sont spécifiés, ajouter une couche de contrepick
   const suggestions = await rankChampions(
@@ -80,7 +77,7 @@ async function generateSuggestions(data: {
 /**
  * Trouve les champions compatibles avec l'équipe actuelle
  */
-async function findCompatibleChampions(teamChampions: string[], role: string) {
+async function findCompatibleChampions(teamChampions: string[]) {
   // Pour l'instant, on retourne tous les champions
   // TODO: Implémenter une logique de synergie basée sur les matchs gagnants
 

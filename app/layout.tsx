@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LOL Comp Maker",
+  title: "MidOrFeed",
   description:
-    "Créez et partagez vos compositions de champions pour League of Legends",
+    "Analysez vos performances League of Legends et obtenez des suggestions de compositions IA",
 };
 
 export default function RootLayout({

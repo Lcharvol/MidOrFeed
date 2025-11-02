@@ -32,8 +32,10 @@ interface RiotAccountSectionProps {
     riotPuuid?: string | null;
     id: string;
   } | null;
-  summonerName: string;
-  setSummonerName: (value: string) => void;
+  gameName: string;
+  setGameName: (value: string) => void;
+  tagLine: string;
+  setTagLine: (value: string) => void;
   region: string;
   setRegion: (value: string) => void;
   isSaving: boolean;
@@ -47,8 +49,10 @@ interface RiotAccountSectionProps {
 
 export function RiotAccountSection({
   user,
-  summonerName,
-  setSummonerName,
+  gameName,
+  setGameName,
+  tagLine,
+  setTagLine,
   region,
   setRegion,
   isSaving,
@@ -72,7 +76,10 @@ export function RiotAccountSection({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Gamepad2Icon className="size-5 text-primary" />
-                  <span className="font-semibold">{user.riotGameName}</span>
+                  <span className="font-semibold">
+                    {user.riotGameName}
+                    {user.riotTagLine && `#${user.riotTagLine}`}
+                  </span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={onEdit}>
                   <EditIcon className="size-4" />
@@ -116,35 +123,47 @@ export function RiotAccountSection({
             <div className="grid gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="summonerName">Nom d&apos;invocateur</Label>
+                  <Label htmlFor="gameName">Nom de jeu</Label>
                   <Input
-                    id="summonerName"
-                    placeholder="Entrez votre nom d'invocateur..."
-                    value={summonerName}
-                    onChange={(e) => setSummonerName(e.target.value)}
+                    id="gameName"
+                    placeholder="Votre nom de jeu..."
+                    value={gameName}
+                    onChange={(e) => setGameName(e.target.value)}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Votre nom in-game League of Legends
+                    Votre nom in-game
                   </p>
                 </div>
                 <div>
-                  <Label htmlFor="region">Région</Label>
-                  <Select value={region} onValueChange={setRegion}>
-                    <SelectTrigger id="region">
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RIOT_REGIONS.map((regionOption) => (
-                        <SelectItem
-                          key={regionOption.value}
-                          value={regionOption.value}
-                        >
-                          {regionOption.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="tagLine">Tag</Label>
+                  <Input
+                    id="tagLine"
+                    placeholder="Votre tag..."
+                    value={tagLine}
+                    onChange={(e) => setTagLine(e.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Format: EUW1, NA1, etc.
+                  </p>
                 </div>
+              </div>
+              <div>
+                <Label htmlFor="region">Région</Label>
+                <Select value={region} onValueChange={setRegion}>
+                  <SelectTrigger id="region">
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RIOT_REGIONS.map((regionOption) => (
+                      <SelectItem
+                        key={regionOption.value}
+                        value={regionOption.value}
+                      >
+                        {regionOption.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="flex gap-2">

@@ -21,31 +21,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
-import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react";
+import { LogOutIcon, SettingsIcon, UserIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
+import { getInitials } from "@/lib/profile-utils";
 
 export function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { profileIconUrl, isLoading: isLoadingIcon } = useRiotProfileIcon(
+    user?.riotPuuid,
+    user?.riotRegion
+  );
 
   const handleLogout = () => {
     logout();
     toast.success("Déconnexion réussie");
     router.push("/");
-  };
-
-  const getInitials = (name: string | null, email: string) => {
-    if (name) {
-      return name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    return email[0].toUpperCase();
   };
 
   return (
@@ -55,7 +49,7 @@ export function Header() {
           <Link href="/" className="flex items-center justify-center">
             <Image
               src="/logo.png"
-              alt="LOL Comp Maker"
+              alt="MidOrFeed"
               width={40}
               height={140}
               className="w-auto"
@@ -184,14 +178,16 @@ export function Header() {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
-              <NavigationMenuItem>
-                <Link
-                  href="/stats"
-                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                >
-                  Statistiques
-                </Link>
-              </NavigationMenuItem>
+              {user && (
+                <NavigationMenuItem>
+                  <Link
+                    href="/summoners"
+                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    Mon Profil
+                  </Link>
+                </NavigationMenuItem>
+              )}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
@@ -202,9 +198,22 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <button className="focus:outline-none">
                   <Avatar className="h-9 w-9 cursor-pointer">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getInitials(user.name, user.email)}
-                    </AvatarFallback>
+                    {isLoadingIcon ? (
+                      <AvatarFallback className="bg-muted">
+                        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+                      </AvatarFallback>
+                    ) : profileIconUrl ? (
+                      <>
+                        <AvatarImage src={profileIconUrl} alt="Profile Icon" />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {getInitials(user.name, user.email)}
+                        </AvatarFallback>
+                      </>
+                    ) : (
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getInitials(user.name, user.email)}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>

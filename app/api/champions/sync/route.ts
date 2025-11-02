@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 interface RiotChampion {
   id: string;
+  key: string;
   name: string;
   title: string;
   blurb: string;
@@ -52,9 +53,9 @@ export async function POST(request: Request) {
     const versions: string[] = await versionsResponse.json();
     const latestVersion = versions[0];
 
-    // Récupérer les données des champions
+    // Récupérer les données des champions (utiliser EN pour avoir le champ 'key')
     const championsResponse = await fetch(
-      `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/fr_FR/champion.json`
+      `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/champion.json`
     );
     if (!championsResponse.ok) {
       throw new Error("Impossible de récupérer les champions");
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
         await prisma.champion.upsert({
           where: { championId: champion.id },
           update: {
+            championKey: parseInt(champion.key, 10),
             name: champion.name,
             title: champion.title,
             blurb: champion.blurb,
@@ -102,6 +104,7 @@ export async function POST(request: Request) {
           },
           create: {
             championId: champion.id,
+            championKey: parseInt(champion.key, 10),
             name: champion.name,
             title: champion.title,
             blurb: champion.blurb,

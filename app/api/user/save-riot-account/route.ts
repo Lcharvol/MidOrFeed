@@ -4,9 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 const saveRiotAccountSchema = z.object({
   gameName: z.string().min(1, "Le nom de jeu est requis"),
-  tagLine: z.string().nullable().optional(),
+  tagLine: z.string().min(1, "Le tag est requis"),
   puuid: z.string().optional().default(""),
-  summonerId: z.string().optional(),
   region: z.string().min(1, "La région est requise"),
 });
 
@@ -45,9 +44,8 @@ export async function POST(request: Request) {
       where: { id: userId },
       data: {
         riotGameName: validatedData.gameName,
-        riotTagLine: validatedData.tagLine || null,
+        riotTagLine: validatedData.tagLine,
         riotPuuid: validatedData.puuid || null,
-        riotSummonerId: validatedData.summonerId || null,
         riotRegion: validatedData.region,
       },
     });
