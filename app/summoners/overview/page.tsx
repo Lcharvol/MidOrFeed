@@ -70,65 +70,45 @@ export default function OverviewPage() {
   const { data, error, isLoading } = useSWR(matchesUrl, fetcher);
   const { data: championsData } = useSWR("/api/champions/list", fetcher);
 
-  const championMap = championsData?.data
-    ? new Map(
-        championsData.data.map(
-          (champion: { championId: string; name: string }) => [
-            champion.championId,
-            champion.name,
-          ]
-        )
-      )
-    : new Map();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2Icon className="size-12 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (error || !data?.success) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-muted-foreground">
-          Erreur lors du chargement des données
-        </p>
-      </div>
-    );
-  }
-
-  const matchData: MatchData = data.data;
-
-  if (matchData.stats.totalGames === 0) {
-    return (
-      <Card>
-        <CardContent className="py-20">
-          <div className="text-center">
-            <Gamepad2Icon className="size-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Aucune donnée</h3>
-            <p className="text-muted-foreground">
-              Les statistiques apparaîtront après avoir collecté des matchs
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const topChampions = Object.entries(matchData.championStats)
-    .sort((a, b) => b[1].played - a[1].played)
-    .slice(0, 3);
-
-  const roleStatsSorted = Object.entries(matchData.roleStats).sort(
-    (a, b) => b[1].played - a[1].played
+  const championMap = useMemo(
+    () =>
+      championsData?.data
+        ? new Map(
+            championsData.data.map(
+              (champion: { championId: string; name: string }) => [
+                champion.championId,
+                champion.name,
+              ]
+            )
+          )
+        : new Map(),
+    [championsData]
   );
 
-  const winRateNumber = parseFloat(matchData.stats.winRate);
+  const matchData: MatchData | null = data?.data || null;
+
+  const topChampions = useMemo(() => {
+    if (!matchData) return [];
+    return Object.entries(matchData.championStats)
+      .sort((a, b) => b[1].played - a[1].played)
+      .slice(0, 3);
+  }, [matchData]);
+
+  const roleStatsSorted = useMemo(() => {
+    if (!matchData) return [];
+    return Object.entries(matchData.roleStats).sort(
+      (a, b) => b[1].played - a[1].played
+    );
+  }, [matchData]);
+
+  const winRateNumber = useMemo(() => {
+    if (!matchData) return 0;
+    return parseFloat(matchData.stats.winRate);
+  }, [matchData]);
 
   // Générer des insights IA basés sur les données
   const aiInsights = useMemo<AIInsight[]>(() => {
+    if (!matchData || topChampions.length === 0) return [];
     const insights: AIInsight[] = [];
 
     // Insight 1: Win Rate
@@ -209,7 +189,41 @@ export default function OverviewPage() {
     }
 
     return insights;
-  }, [matchData, topChampions, championMap]);
+  }, [matchData, topChampions, championMap, winRateNumber]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2Icon className="size-12 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !data?.success) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-muted-foreground">
+          Erreur lors du chargement des données
+        </p>
+      </div>
+    );
+  }
+
+  if (!matchData || matchData.stats.totalGames === 0) {
+    return (
+      <Card>
+        <CardContent className="py-20">
+          <div className="text-center">
+            <Gamepad2Icon className="size-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Aucune donnée</h3>
+            <p className="text-muted-foreground">
+              Les statistiques apparaîtront après avoir collecté des matchs
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">

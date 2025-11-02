@@ -137,6 +137,16 @@ export async function POST(request: Request) {
     let summonerData = null;
     if (summonerResponse.ok) {
       summonerData = await summonerResponse.json();
+      console.log("Summoner data:", summonerData);
+      console.log("Keys in summonerData:", Object.keys(summonerData));
+    } else {
+      console.log(
+        "Summoner API error:",
+        summonerResponse.status,
+        summonerResponse.statusText
+      );
+      const errorText = await summonerResponse.text().catch(() => "");
+      console.log("Summoner API error body:", errorText);
     }
 
     // Retourner les données complètes du compte

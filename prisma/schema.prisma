@@ -179,3 +179,57 @@ model CompositionSuggestion {
   @@index([userId])
   @@map("composition_suggestions")
 }
+
+model DiscoveredPlayer {
+  id              String   @id @default(cuid())
+  puuid           String   @unique // PUUID unique du joueur
+  riotGameName    String?  // Nom d'invocateur
+  riotTagLine     String?  // Tag
+  riotRegion      String   // Région du joueur
+  
+  // État de collecte
+  lastCrawledAt   DateTime? // Dernière fois qu'on a crawl ce joueur
+  crawlStatus     String   @default("pending") // pending, crawling, completed, failed
+  matchesCollected Int     @default(0) // Nombre de matches collectés
+  
+  // Métadonnées
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([crawlStatus])
+  @@index([puuid])
+  @@index([riotRegion])
+  @@map("discovered_players")
+}
+
+model LeagueOfLegendsAccount {
+  id              String   @id @default(cuid())
+  puuid           String   @unique // PUUID unique Riot
+  riotGameName    String?  // Nom d'invocateur
+  riotTagLine     String?  // Tag
+  riotRegion      String   // Région (euw1, na1, etc.)
+  
+  // Détails du compte
+  riotSummonerId  String?  // Summoner ID (si disponible)
+  riotAccountId   String?  // Account ID
+  summonerLevel   Int?     // Niveau du summoner
+  profileIconId   Int?     // ID de l'icône de profil
+  revisionDate    BigInt?  // Date de dernière mise à jour Riot
+  
+  // Statistiques calculées
+  totalMatches    Int      @default(0) // Nombre total de matchs
+  totalWins       Int      @default(0) // Nombre total de victoires
+  totalLosses     Int      @default(0) // Nombre total de défaites
+  winRate         Float    @default(0) // Taux de victoire
+  avgKDA          Float    @default(0) // KDA moyen (kills + assists) / deaths
+  mostPlayedChampion String? // Champion le plus joué
+  
+  // Métadonnées
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([puuid])
+  @@index([riotRegion])
+  @@index([riotGameName])
+  @@map("league_accounts")
+}

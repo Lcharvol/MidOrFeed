@@ -11,7 +11,11 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "sync:champions": "tsx scripts/sync-champions.ts",
-    "sync:items": "tsx scripts/sync-items.ts"
+    "sync:items": "tsx scripts/sync-items.ts",
+    "crawl:seed": "tsx scripts/crawl-seed.ts",
+    "crawl:process": "tsx scripts/crawl-process.ts",
+    "crawl:status": "tsx scripts/crawl-status.ts",
+    "crawl:sync-accounts": "tsx scripts/crawl-sync-accounts.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

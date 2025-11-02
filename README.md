@@ -133,37 +133,42 @@ mid-or-feed/
 ├── app/
 │   ├── api/
 │   │   ├── auth/
-│   │   │   ├── login/
-│   │   │   └── signup/
-│   │   └── champions/
-│   │       ├── sync/
-│   │       └── list/
-│   ├── login/
-│   ├── signup/
+│   │   ├── champions/
+│   │   ├── crawl/
+│   │   ├── matches/
+│   │   ├── riot/
+│   │   └── user/
+│   ├── ai-analysis/
+│   ├── compositions/
+│   ├── pricing/
 │   ├── profile/
 │   ├── settings/
+│   ├── summoners/
 │   ├── tier-list/
-│   │   ├── champions/
-│   │   └── items/
-│   ├── layout.tsx
-│   └── page.tsx
+│   └── ...
 ├── components/
 │   ├── ui/        # Composants shadcn/ui
 │   ├── Header.tsx
-│   └── ConditionalHeader.tsx
+│   └── AIInsightCard.tsx
 ├── lib/
-│   ├── prisma.ts        # Client Prisma
-│   ├── auth-context.tsx # Contexte d'authentification
-│   └── utils.ts
+│   ├── hooks/
+│   ├── prisma.ts
+│   ├── auth-context.tsx
+│   └── i18n-context.tsx
 ├── scripts/
-│   └── sync-champions.ts # Script de synchronisation des champions
+│   ├── sync-champions.ts
+│   ├── sync-items.ts
+│   └── crawl-data.ts
+├── messages/
+│   ├── fr.json
+│   └── en.json
 ├── prisma/
 │   ├── schema.prisma
 │   ├── dev.db
 │   └── migrations/
 └── public/
     ├── logo.png
-    └── logo-text.png
+    └── home_background.png
 ```
 
 ## 🎨 Interface
@@ -184,6 +189,27 @@ L'application utilise un thème inspiré de League of Legends avec :
 - `pnpm run prisma:generate` : Régénérer le client Prisma
 - `pnpm run prisma:migrate` : Créer/appliquer les migrations
 - `pnpm run sync:champions` : Synchroniser les champions depuis l'API Riot
+
+## 🕷️ Système de Crawl de Données
+
+MidOrFeed intègre un système de crawl automatique pour collecter des données de joueurs et de matchs depuis l'API Riot Games.
+
+### Commandes rapides
+
+```bash
+# Découvrir de nouveaux joueurs
+pnpm crawl:seed euw1 50
+
+# Crawler les joueurs en attente
+pnpm crawl:process
+
+# Voir les statistiques
+pnpm crawl:status
+```
+
+### Documentation complète
+
+Consultez [CRAWL_SYSTEM.md](./CRAWL_SYSTEM.md) pour la documentation détaillée du système de crawl.
 
 ## 📝 Prochaines étapes
 
