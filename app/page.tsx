@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,14 +11,17 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  TrophyIcon,
-  TrendingUpIcon,
-  UsersIcon,
-  ZapIcon,
-  ShieldIcon,
-  SwordIcon,
-  BookIcon,
+  BrainIcon,
   BarChart3Icon,
+  LightbulbIcon,
+  UsersIcon,
+  TrophyIcon,
+  ZapIcon,
+  SparklesIcon,
+  TargetIcon,
+  TrendingUpIcon,
+  MessageSquareIcon,
+  ArrowRightIcon,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
 
@@ -27,17 +31,30 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b bg-gradient-to-b from-muted/50 to-background py-20 md:py-32">
+      <section className="relative overflow-hidden border-b py-20 md:py-32">
+        {/* Background Image */}
+        <div className="absolute inset-0 -z-10">
+          <Image
+            src="/home_background.png"
+            alt="League of Legends Background"
+            fill
+            className="object-cover object-center"
+            priority
+          />
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90" />
+        </div>
+
         <div className="relative z-10 px-4">
-          <div className="mx-auto max-w-3xl text-center">
+          <div className="mx-auto max-w-4xl text-center">
             <Badge className="mb-6" variant="secondary">
-              {t("home.leagueOfLegends")}
+              <BrainIcon className="mr-2 size-3" />
+              {t("home.poweredByAI")}
             </Badge>
-            <h1 className="mb-6 text-5xl font-bold tracking-tight md:text-7xl">
-              {t("home.createComposition")}
-              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                {" "}
-                {t("home.perfect")}
+            <h1 className="mb-6 text-5xl font-bold tracking-tight text-white md:text-7xl">
+              {t("home.aiCoach")}{" "}
+              <span className="bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent">
+                {t("home.dominateRift")}
               </span>
             </h1>
             <p className="mb-8 text-xl text-muted-foreground md:text-2xl">
@@ -45,127 +62,207 @@ export default function Home() {
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" className="text-lg" asChild>
-                <Link href="/tier-list/champions">
-                  {t("home.viewChampions")}
-                  <ZapIcon className="ml-2 size-5" />
+                <Link href="/signup">
+                  {t("home.getStarted")}
+                  <ArrowRightIcon className="ml-2 size-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg" asChild>
-                <Link href="/tier-list/items">
-                  {t("home.exploreItems")}
-                  <SwordIcon className="ml-2 size-5" />
-                </Link>
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-lg bg-background/90 backdrop-blur hover:bg-background"
+                asChild
+              >
+                <Link href="/login">{t("home.learnMore")}</Link>
               </Button>
+            </div>
+
+            {/* Quick Stats in Hero */}
+            <div className="mt-16 grid grid-cols-2 gap-6 md:grid-cols-4">
+              <div className="text-center">
+                <div className="mb-2 text-3xl font-bold text-primary">
+                  2.5M+
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {t("home.matchesAnalyzed")}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="mb-2 text-3xl font-bold text-primary">50K+</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("home.playersCoached")}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="mb-2 text-3xl font-bold text-primary">23%</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("home.rankBoost")}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="mb-2 text-3xl font-bold text-primary">10M+</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("home.aiInsights")}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 -z-0">
-          <div className="absolute left-1/4 top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute right-1/4 bottom-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-        </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Main Features - AI Focused */}
       <section className="py-20">
-        <div className="px-20">
-          <div className="mb-12 text-center">
+        <div className="container mx-auto px-4">
+          <div className="mb-16 text-center">
             <h2 className="mb-4 text-3xl font-bold md:text-4xl">
               {t("home.allFeaturesToPerform")}
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
               {t("home.completeTool")}
             </p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="group transition-all hover:border-primary/50 hover:shadow-lg">
-              <CardHeader>
-                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <TrophyIcon className="size-6 text-primary" />
-                </div>
-                <CardTitle>{t("home.tierListsCurrent")}</CardTitle>
-                <CardDescription>{t("home.consultRankings")}</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group transition-all hover:border-primary/50 hover:shadow-lg">
-              <CardHeader>
-                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <TrendingUpIcon className="size-6 text-primary" />
-                </div>
-                <CardTitle>{t("home.metaAnalysis")}</CardTitle>
-                <CardDescription>{t("home.identifyBestPicks")}</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group transition-all hover:border-primary/50 hover:shadow-lg">
-              <CardHeader>
-                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <ShieldIcon className="size-6 text-primary" />
-                </div>
-                <CardTitle>{t("home.detailedStats")}</CardTitle>
-                <CardDescription>{t("home.accessAllData")}</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group transition-all hover:border-primary/50 hover:shadow-lg">
+            <Card className="group border-2 transition-all hover:border-primary/50 hover:shadow-xl">
               <CardHeader>
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <BarChart3Icon className="size-6 text-primary" />
                 </div>
-                <CardTitle>{t("home.comparisons")}</CardTitle>
-                <CardDescription>{t("home.compareStrengths")}</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group transition-all hover:border-primary/50 hover:shadow-lg">
-              <CardHeader>
-                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <BookIcon className="size-6 text-primary" />
-                </div>
-                <CardTitle>{t("home.strategicGuides")}</CardTitle>
-                <CardDescription>
-                  {t("home.learnBestPractices")}
+                <CardTitle className="text-xl">
+                  {t("home.statsAnalysis")}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {t("home.statsDescription")}
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="group transition-all hover:border-primary/50 hover:shadow-lg">
+            <Card className="group border-2 transition-all hover:border-primary/50 hover:shadow-xl">
+              <CardHeader>
+                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <LightbulbIcon className="size-6 text-primary" />
+                </div>
+                <CardTitle className="text-xl">
+                  {t("home.personalizedSuggestions")}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {t("home.suggestionsDescription")}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="group border-2 transition-all hover:border-primary/50 hover:shadow-xl">
+              <CardHeader>
+                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <TargetIcon className="size-6 text-primary" />
+                </div>
+                <CardTitle className="text-xl">
+                  {t("home.soloQueueCoaching")}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {t("home.soloCoachingDescription")}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="group border-2 transition-all hover:border-primary/50 hover:shadow-xl">
               <CardHeader>
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <UsersIcon className="size-6 text-primary" />
                 </div>
-                <CardTitle>{t("home.community")}</CardTitle>
-                <CardDescription>{t("home.shareCompositions")}</CardDescription>
+                <CardTitle className="text-xl">
+                  {t("home.teamCoaching")}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {t("home.teamCoachingDescription")}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="group border-2 transition-all hover:border-primary/50 hover:shadow-xl">
+              <CardHeader>
+                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <MessageSquareIcon className="size-6 text-primary" />
+                </div>
+                <CardTitle className="text-xl">
+                  {t("home.inGameAssistant")}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {t("home.assistantDescription")}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="group border-2 transition-all hover:border-primary/50 hover:shadow-xl">
+              <CardHeader>
+                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <TrendingUpIcon className="size-6 text-primary" />
+                </div>
+                <CardTitle className="text-xl">
+                  {t("home.matchAnalysis")}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {t("home.matchAnalysisDescription")}
+                </CardDescription>
               </CardHeader>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="border-y bg-muted/30 py-16">
-        <div className="px-4">
+      {/* How It Works Section */}
+      <section className="border-y bg-gradient-to-b from-muted/30 to-background py-20">
+        <div className="container mx-auto px-4">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+              {t("homeHowItWorks.title")}
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              {t("homeHowItWorks.subtitle")}
+            </p>
+          </div>
+
           <div className="grid gap-8 md:grid-cols-3">
             <div className="text-center">
-              <div className="mb-2 text-4xl font-bold text-primary">171</div>
-              <div className="text-muted-foreground">
-                {t("home.championsAvailable")}
+              <div className="mb-6 flex justify-center">
+                <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+                  <TrophyIcon className="size-10 text-primary" />
+                </div>
               </div>
+              <h3 className="mb-3 text-xl font-bold">
+                1. {t("homeHowItWorks.step1")}
+              </h3>
+              <p className="text-muted-foreground">
+                {t("homeHowItWorks.step1Description")}
+              </p>
             </div>
+
             <div className="text-center">
-              <div className="mb-2 text-4xl font-bold text-primary">635+</div>
-              <div className="text-muted-foreground">
-                {t("home.itemsAnalyzed")}
+              <div className="mb-6 flex justify-center">
+                <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+                  <BrainIcon className="size-10 text-primary" />
+                </div>
               </div>
+              <h3 className="mb-3 text-xl font-bold">
+                2. {t("homeHowItWorks.step2")}
+              </h3>
+              <p className="text-muted-foreground">
+                {t("homeHowItWorks.step2Description")}
+              </p>
             </div>
+
             <div className="text-center">
-              <div className="mb-2 text-4xl font-bold text-primary">24/7</div>
-              <div className="text-muted-foreground">
-                {t("home.updateContinuous")}
+              <div className="mb-6 flex justify-center">
+                <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+                  <SparklesIcon className="size-10 text-primary" />
+                </div>
               </div>
+              <h3 className="mb-3 text-xl font-bold">
+                3. {t("homeHowItWorks.step3")}
+              </h3>
+              <p className="text-muted-foreground">
+                {t("homeHowItWorks.step3Description")}
+              </p>
             </div>
           </div>
         </div>
@@ -173,24 +270,29 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="py-20">
-        <div className="px-4">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-              {t("home.readyToDominate")}
-            </h2>
-            <p className="mb-8 text-lg text-muted-foreground">
-              {t("home.joinCommunity")}
-            </p>
-            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Button size="lg" asChild>
-                <Link href="/signup">
-                  {t("home.createAccount")}
-                  <ZapIcon className="ml-2 size-5" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/login">{t("home.signIn")}</Link>
-              </Button>
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-3xl">
+            <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-primary/5 p-12 text-center">
+              <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+                {t("home.readyToImprove")}
+              </h2>
+              <p className="mb-8 text-lg text-muted-foreground">
+                {t("home.joinAIRevolution")}
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+                <Button size="lg" className="text-lg" asChild>
+                  <Link href="/signup">
+                    {t("home.startFree")}
+                    <ZapIcon className="ml-2 size-5" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="text-lg" asChild>
+                  <Link href="/login">{t("home.signIn")}</Link>
+                </Button>
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground">
+                {t("home.noCreditCard")}
+              </p>
             </div>
           </div>
         </div>
