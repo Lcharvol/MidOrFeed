@@ -21,6 +21,7 @@ import {
 import { Loader2Icon, PlayIcon, SquareIcon } from "lucide-react";
 import { toast } from "sonner";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
+import { authenticatedFetch } from "@/lib/api-client";
 
 export function PipelineCard() {
   const [running, setRunning] = useState(false);
@@ -37,7 +38,9 @@ export function PipelineCard() {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch("/api/admin/pipeline", { cache: "no-store" });
+      const res = await authenticatedFetch("/api/admin/pipeline", {
+        cache: "no-store",
+      });
       if (!res.ok) return;
       const data = await res.json();
       setRunning(!!data?.state?.running);
@@ -67,7 +70,7 @@ export function PipelineCard() {
   const start = async () => {
     setPolling(true);
     try {
-      const res = await fetch("/api/admin/pipeline", {
+      const res = await authenticatedFetch("/api/admin/pipeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,7 +98,7 @@ export function PipelineCard() {
   const stop = async () => {
     setPolling(true);
     try {
-      const res = await fetch("/api/admin/pipeline", {
+      const res = await authenticatedFetch("/api/admin/pipeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "stop" }),
@@ -228,7 +231,8 @@ export function PipelineCard() {
         >
           {logs.length === 0 ? (
             <div className="text-xs text-muted-foreground">
-              Aucun événement récent. Lancez le pipeline pour voir l'activité.
+              Aucun événement récent. Lancez le pipeline pour voir
+              l&apos;activité.
             </div>
           ) : (
             <ul className="space-y-1 text-xs leading-relaxed">

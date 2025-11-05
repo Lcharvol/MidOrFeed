@@ -65,7 +65,14 @@ export async function POST(request: Request) {
           riotTagLine: validatedData.tagLine,
         },
       });
-      leagueAccount = upserted as any;
+      leagueAccount = {
+        id: upserted.id,
+        puuid: upserted.puuid,
+        riotRegion: upserted.riotRegion,
+        riotGameName: upserted.riotGameName,
+        riotTagLine: upserted.riotTagLine,
+        profileIconId: upserted.profileIconId ?? null,
+      };
     } else {
       // Pas de PUUID: tenter de trouver par (gameName, tagLine, region)
       const existing = await prisma.leagueOfLegendsAccount.findFirst({
@@ -81,7 +88,21 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      leagueAccount = existing as any;
+      leagueAccount = {
+        id: existing.id,
+        puuid: existing.puuid,
+        riotRegion: existing.riotRegion,
+        riotGameName: existing.riotGameName,
+        riotTagLine: existing.riotTagLine,
+        profileIconId: existing.profileIconId ?? null,
+      };
+    }
+
+    if (!leagueAccount) {
+      return NextResponse.json(
+        { error: "Aucun compte League of Legends déterminé" },
+        { status: 400 }
+      );
     }
 
     const updatedUser = await prisma.user.update({

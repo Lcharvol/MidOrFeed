@@ -1,34 +1,43 @@
-app = "lol-comp-maker"
-primary_region = "cdg"
+# fly.toml app configuration file generated for lol-comp-maker-blue-violet-4218 on 2025-11-05T14:50:27+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'lol-comp-maker-blue-violet-4218'
+primary_region = 'cdg'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "8080"
-  NODE_ENV = "production"
+  NODE_ENV = 'production'
+  PORT = '8080'
 
 [[services]]
+  protocol = 'tcp'
   internal_port = 8080
-  processes = ["app"]
-  protocol = "tcp"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
-  auto_stop_machines = true
   min_machines_running = 1
+  processes = ['app']
 
   [[services.ports]]
-    handlers = ["http"]
     port = 80
+    handlers = ['http']
+
   [[services.ports]]
-    handlers = ["tls", "http"]
     port = 443
+    handlers = ['tls', 'http']
 
   [[services.http_checks]]
-    interval = "15s"
-    grace_period = "10s"
-    method = "get"
-    path = "/"
-    protocol = "http"
-    timeout = "2s"
+    interval = '15s'
+    timeout = '5s'
+    grace_period = '30s'
+    method = 'get'
+    path = '/'
+    protocol = 'http'
 
-
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

@@ -76,18 +76,13 @@ export async function POST(request: Request) {
 
     if (recentMatches.length === 0) {
       // Si pas de matchs, utiliser les utilisateurs enregistrés comme seed
-      const usersWithPuuid = await prisma.user.findMany({
-        where: {
-          riotPuuid: { not: null },
-          riotRegion: validatedData.region,
-        },
+      const accounts = await prisma.leagueOfLegendsAccount.findMany({
+        where: { riotRegion: validatedData.region },
+        select: { puuid: true },
         take: 50,
       });
-
-      for (const user of usersWithPuuid) {
-        if (user.riotPuuid) {
-          discoveredPUUIDs.add(user.riotPuuid);
-        }
+      for (const acc of accounts) {
+        if (acc.puuid) discoveredPUUIDs.add(acc.puuid);
       }
     } else {
       // Extraire tous les PUUID uniques des participants

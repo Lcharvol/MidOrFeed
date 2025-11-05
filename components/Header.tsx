@@ -47,6 +47,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getProfileIconUrl } from "@/constants/ddragon";
 import { useAuth } from "@/lib/auth-context";
+import { isAdmin } from "@/types/roles";
 import {
   LogOutIcon,
   SettingsIcon,
@@ -56,18 +57,35 @@ import {
   SunIcon,
   SearchIcon,
   CrownIcon,
+  MenuIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
 import { getInitials } from "@/lib/profile-utils";
 import { useI18n } from "@/lib/i18n-context";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchRegion, setSearchRegion] = useState("euw1");
   const [isSearching, setIsSearching] = useState(false);
@@ -192,164 +210,311 @@ export function Header() {
     }
   };
 
+  // Menu de navigation pour desktop
+  const NavigationContent = () => (
+    <>
+      <NavigationMenuItem>
+        <NavigationMenuTrigger>{t("compositions.menu")}</NavigationMenuTrigger>
+        <NavigationMenuContent>
+          <ul className="grid w-[300px] gap-3 p-4">
+            <li>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/compositions/create"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">
+                    {t("compositions.create.title")}
+                  </div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    {t("compositions.create.description")}
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+            </li>
+            <li>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/compositions/popular"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">
+                    {t("compositions.popular.title")}
+                  </div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    {t("compositions.popular.description")}
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+            </li>
+            <li>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/compositions/favorites"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">
+                    {t("compositions.favorites.title")}
+                  </div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    {t("compositions.favorites.description")}
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+            </li>
+          </ul>
+        </NavigationMenuContent>
+      </NavigationMenuItem>
+
+      <NavigationMenuItem>
+        <NavigationMenuTrigger>{t("tierListMenu.title")}</NavigationMenuTrigger>
+        <NavigationMenuContent>
+          <ul className="grid w-[300px] gap-3 p-4">
+            <li>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/tier-list/champions"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">
+                    {t("tierListMenu.champions.title")}
+                  </div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    {t("tierListMenu.champions.description")}
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+            </li>
+            <li>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/tier-list/items"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">
+                    {t("tierListMenu.items.title")}
+                  </div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    {t("tierListMenu.items.description")}
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+            </li>
+          </ul>
+        </NavigationMenuContent>
+      </NavigationMenuItem>
+
+      <NavigationMenuItem>
+        <Link
+          href="/leaderboard"
+          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+        >
+          Leaderboard
+        </Link>
+      </NavigationMenuItem>
+
+      {user && (
+        <>
+          <NavigationMenuItem>
+            <Link
+              href={
+                user?.leagueAccount
+                  ? `/summoners/${user.leagueAccount.puuid}/overview?region=${user.leagueAccount.riotRegion}`
+                  : "/summoners"
+              }
+              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+            >
+              {t("header.monProfil")}
+            </Link>
+          </NavigationMenuItem>
+          {isAdmin(user.role) && (
+            <NavigationMenuItem>
+              <Link
+                href="/admin"
+                className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+              >
+                Admin
+              </Link>
+            </NavigationMenuItem>
+          )}
+        </>
+      )}
+    </>
+  );
+
+  // Menu mobile avec accordéons
+  const MobileMenuContent = () => (
+    <nav className="flex flex-col space-y-2 px-2">
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="compositions">
+          <AccordionTrigger className="text-base font-medium px-4 py-3">
+            {t("compositions.menu")}
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="flex flex-col space-y-1 pl-6 pr-2 pb-2">
+              <Link
+                href="/compositions/create"
+                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t("compositions.create.title")}
+              </Link>
+              <Link
+                href="/compositions/popular"
+                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t("compositions.popular.title")}
+              </Link>
+              <Link
+                href="/compositions/favorites"
+                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t("compositions.favorites.title")}
+              </Link>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="tier-list">
+          <AccordionTrigger className="text-base font-medium px-4 py-3">
+            {t("tierListMenu.title")}
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="flex flex-col space-y-1 pl-6 pr-2 pb-2">
+              <Link
+                href="/tier-list/champions"
+                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t("tierListMenu.champions.title")}
+              </Link>
+              <Link
+                href="/tier-list/items"
+                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t("tierListMenu.items.title")}
+              </Link>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      <Link
+        href="/leaderboard"
+        className="block rounded-md px-4 py-3 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+        onClick={() => setMobileMenuOpen(false)}
+      >
+        Leaderboard
+      </Link>
+
+      {user && (
+        <>
+          <Separator className="my-3" />
+          <Link
+            href={
+              user?.leagueAccount
+                ? `/summoners/${user.leagueAccount.puuid}/overview?region=${user.leagueAccount.riotRegion}`
+                : "/summoners"
+            }
+            className="block rounded-md px-4 py-3 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            {t("header.monProfil")}
+          </Link>
+          {isAdmin(user.role) && (
+            <Link
+              href="/admin"
+              className="block rounded-md px-4 py-3 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
+        </>
+      )}
+    </nav>
+  );
+
   return (
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-6">
+      <div className="flex h-16 items-center justify-between px-2 sm:px-4">
+        <div className="flex items-center gap-2 sm:gap-6">
           <Link href="/" className="flex items-center justify-center">
             <Image
               src="/logo.png"
               alt="MidOrFeed"
-              width={40}
+              width={50}
               height={140}
-              className="w-auto"
+              className="h-auto w-10 sm:w-12"
               priority
             />
           </Link>
 
-          <NavigationMenu>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>
-                  {t("compositions.menu")}
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[300px] gap-3 p-4">
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          href="/compositions/create"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">
-                            {t("compositions.create.title")}
-                          </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            {t("compositions.create.description")}
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
-                    </li>
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          href="/compositions/popular"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">
-                            {t("compositions.popular.title")}
-                          </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            {t("compositions.popular.description")}
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
-                    </li>
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          href="/compositions/favorites"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">
-                            {t("compositions.favorites.title")}
-                          </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            {t("compositions.favorites.description")}
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
-                    </li>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
+          {/* Menu desktop */}
+          {!isMobile && (
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationContent />
+              </NavigationMenuList>
+            </NavigationMenu>
+          )}
 
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>
-                  {t("tierListMenu.title")}
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[300px] gap-3 p-4">
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          href="/tier-list/champions"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">
-                            {t("tierListMenu.champions.title")}
-                          </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            {t("tierListMenu.champions.description")}
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
-                    </li>
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          href="/tier-list/items"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">
-                            {t("tierListMenu.items.title")}
-                          </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            {t("tierListMenu.items.description")}
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
-                    </li>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <Link
-                  href="/leaderboard"
-                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                >
-                  Leaderboard
-                </Link>
-              </NavigationMenuItem>
-
-              {user && (
-                <>
-                  <NavigationMenuItem>
-                    <Link
-                      href={
-                        user?.leagueAccount
-                          ? `/summoners/${user.leagueAccount.puuid}/overview?region=${user.leagueAccount.riotRegion}`
-                          : "/summoners"
-                      }
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    >
-                      {t("header.monProfil")}
-                    </Link>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem>
-                    <Link
-                      href="/admin"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    >
-                      Admin
-                    </Link>
-                  </NavigationMenuItem>
-                </>
-              )}
-            </NavigationMenuList>
-          </NavigationMenu>
+          {/* Menu mobile */}
+          {isMobile && (
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <MenuIcon className="h-5 w-5" />
+                  <span className="sr-only">Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+                <SheetHeader className="pb-4">
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4">
+                  <MobileMenuContent />
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Upgrade Button */}
           {user && user.subscriptionTier !== "premium" && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/pricing">
-                <CrownIcon className="mr-2 size-4" />
-                {t("subscription.upgradeNow")}
-              </Link>
-            </Button>
+            <>
+              {/* Version mobile : icône uniquement */}
+              <Button
+                variant="outline"
+                size="icon"
+                asChild
+                className="sm:hidden h-9 w-9"
+                title={t("subscription.upgradeNow")}
+              >
+                <Link href="/pricing">
+                  <CrownIcon className="size-4" />
+                  <span className="sr-only">
+                    {t("subscription.upgradeNow")}
+                  </span>
+                </Link>
+              </Button>
+              {/* Version desktop : icône + texte */}
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="hidden sm:inline-flex"
+              >
+                <Link href="/pricing">
+                  <CrownIcon className="mr-2 size-4" />
+                  {t("subscription.upgradeNow")}
+                </Link>
+              </Button>
+            </>
           )}
 
           {/* Search Bar */}
@@ -360,7 +525,10 @@ export function Header() {
                 <span className="sr-only">{t("header.searchSummoner")}</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-3" align="end">
+            <PopoverContent
+              className="w-[calc(100vw-2rem)] sm:w-[400px] p-3"
+              align="end"
+            >
               <div className="space-y-3">
                 {/* Region Selector */}
                 <div className="flex items-center gap-2">
@@ -512,7 +680,10 @@ export function Header() {
 
           {user ? (
             <>
-              <Separator orientation="vertical" className="h-6" />
+              <Separator
+                orientation="vertical"
+                className="hidden sm:block h-6"
+              />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="focus:outline-none">
@@ -573,11 +744,19 @@ export function Header() {
             </>
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="hidden sm:inline-flex"
+              >
                 <Link href="/login">{t("header.login")}</Link>
               </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <Button asChild>
+              <Separator
+                orientation="vertical"
+                className="hidden sm:block h-6"
+              />
+              <Button size="sm" asChild>
                 <Link href="/signup">{t("header.signup")}</Link>
               </Button>
             </>

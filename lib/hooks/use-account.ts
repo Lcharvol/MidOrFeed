@@ -33,7 +33,7 @@ const postJson = async <TRequest, TResponse>(
 };
 
 export function useAccount(puuid?: string | null) {
-  const key = puuid ? ["leagueAccountByPuuid", puuid] : (null as const);
+  const key = puuid ? (["leagueAccountByPuuid", puuid] as const) : null;
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     key,

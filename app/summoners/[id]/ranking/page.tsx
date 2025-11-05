@@ -342,7 +342,6 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
     }
   }
   const flexQueue = leagueData.find((l) => l.queueType === "RANKED_FLEX_SR");
-  const soloQueue = leagueData.find((l) => l.queueType === "RANKED_SOLO_5x5");
   if (flexQueue && soloQueue) {
     const tierOrder = [
       "IRON",

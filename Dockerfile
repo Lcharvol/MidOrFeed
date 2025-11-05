@@ -18,14 +18,25 @@ RUN pnpm prisma generate
 RUN pnpm build
 
 FROM node:20-alpine AS runner
+RUN corepack enable
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
-# Copy standalone server and assets
+
+# Copy Prisma schema/migrations (for migrate deploy)
+COPY --from=builder /app/prisma ./prisma
+
+# Copy standalone server and assets (includes minimal node_modules)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+
+# Copy startup script
+COPY --from=builder /app/scripts/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 EXPOSE 8080
-CMD ["node", "server.js"]
+
+CMD ["/app/start.sh"]
 
 

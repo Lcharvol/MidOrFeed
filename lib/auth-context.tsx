@@ -13,6 +13,7 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  role?: string;
   subscriptionTier?: string;
   subscriptionExpiresAt?: string | null;
   dailyAnalysesUsed?: number;
@@ -30,7 +31,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (user: User) => void;
+  login: (user: unknown) => void | Promise<void>;
   logout: () => void;
 }
 
@@ -44,9 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [isLoading] = useState(false);
 
-  const login = useCallback((userData: User) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
+  const login = useCallback((userData: unknown) => {
+    const castUser = userData as User;
+    setUser(castUser);
+    localStorage.setItem("user", JSON.stringify(castUser));
   }, []);
 
   const logout = useCallback(() => {

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2Icon, DatabaseIcon } from "lucide-react";
 import { toast } from "sonner";
+import { authenticatedFetch } from "@/lib/api-client";
 
 interface SyncAccountsCardProps {
   onSyncComplete: () => void;
@@ -23,7 +24,7 @@ export function SyncAccountsCard({ onSyncComplete }: SyncAccountsCardProps) {
   const handleSyncAccounts = async () => {
     setIsSyncing(true);
     try {
-      const response = await fetch("/api/admin/sync-accounts", {
+      const response = await authenticatedFetch("/api/admin/sync-accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });

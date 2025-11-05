@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   UsersIcon,
   DatabaseIcon,
@@ -13,6 +14,9 @@ import { ProcessCard } from "./ProcessCard";
 import { SyncAccountsCard } from "./SyncAccountsCard";
 import { StatusBreakdownCard } from "./StatusBreakdownCard";
 import { PipelineCard } from "./PipelineCard";
+import { useAuth } from "@/lib/auth-context";
+import { isAdmin } from "@/types/roles";
+import { authenticatedFetch } from "@/lib/api-client";
 
 interface Stats {
   totalPlayers: number;
@@ -23,6 +27,8 @@ interface Stats {
 }
 
 export default function AdminPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [stats, setStats] = useState<Stats>({
     totalPlayers: 0,
     totalMatches: 0,
@@ -33,6 +39,18 @@ export default function AdminPage() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const hasLoadedRef = useRef(false);
+
+  // Vérifier les permissions admin
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (!isAdmin(user.role)) {
+      router.push("/");
+      return;
+    }
+  }, [user, router]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -48,7 +66,7 @@ export default function AdminPage() {
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      const response = await fetch("/api/admin/stats", {
+      const response = await authenticatedFetch("/api/admin/stats", {
         signal: controller.signal,
         cache: "no-store",
       });
@@ -114,6 +132,19 @@ export default function AdminPage() {
       }
     };
   }, []);
+
+  // Afficher un loader pendant la vérification des permissions
+  if (!user || !isAdmin(user.role)) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex items-center justify-center">
+          <p className="text-muted-foreground">
+            Vérification des permissions...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10 space-y-8">

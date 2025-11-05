@@ -1,11 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-utils";
 
 /**
  * GET /api/admin/stats
  * Retourne les statistiques globales de la base de données
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Vérifier les permissions admin
+  const authError = await requireAdmin(request);
+  if (authError) {
+    return authError;
+  }
   try {
     // Statistiques des joueurs découverts
     const playerStats = await prisma.discoveredPlayer.groupBy({

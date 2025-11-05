@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -18,6 +18,9 @@ model User {
   // Référence vers le compte League of Legends lié (remplace les champs riot*)
   leagueAccountId String?
   leagueAccount   LeagueOfLegendsAccount? @relation(fields: [leagueAccountId], references: [id])
+
+  // Rôles et permissions
+  role String @default("user") // user, admin
 
   // Subscription
   subscriptionTier      String    @default("free") // free, premium

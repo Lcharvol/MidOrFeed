@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "prisma:studio": "prisma studio",
+    "prisma:studio:prod": "bash scripts/studio-prod.sh",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "sync:champions": "tsx scripts/sync-champions.ts",
@@ -15,7 +16,8 @@
     "crawl:seed": "tsx scripts/crawl-seed.ts",
     "crawl:process": "tsx scripts/crawl-process.ts",
     "crawl:status": "tsx scripts/crawl-status.ts",
-    "crawl:sync-accounts": "tsx scripts/crawl-sync-accounts.ts"
+    "crawl:sync-accounts": "tsx scripts/crawl-sync-accounts.ts",
+    "make-admin": "tsx scripts/make-admin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

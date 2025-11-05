@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth-utils";
 
 type PipelineState = {
   running: boolean;
@@ -82,12 +83,23 @@ async function runOneCycle(
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Vérifier les permissions admin
+  const authError = await requireAdmin(request);
+  if (authError) {
+    return authError;
+  }
+
   const state: PipelineState = global.__ADMIN_PIPELINE__ || { running: false };
   return NextResponse.json({ success: true, state }, { status: 200 });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Vérifier les permissions admin
+  const authError = await requireAdmin(request);
+  if (authError) {
+    return authError;
+  }
   try {
     const body = await request.json().catch(() => ({}));
     const action = body?.action as "start" | "stop" | undefined;

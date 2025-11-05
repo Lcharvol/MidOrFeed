@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { REGION_TO_BASE_URL } from "@/constants/regions";
 
 const schema = z.object({
@@ -43,8 +44,18 @@ export async function POST(req: Request) {
       );
     }
     const json = await res.json();
-    const rawEntries = Array.isArray(json?.entries) ? json.entries : [];
-    const entries = rawEntries.map((e: any) => ({
+    interface RiotLeagueEntry {
+      summonerId?: string;
+      summonerName?: string;
+      leaguePoints?: number;
+      wins?: number;
+      losses?: number;
+      rank?: string;
+    }
+    const rawEntries: RiotLeagueEntry[] = Array.isArray(json?.entries)
+      ? (json.entries as RiotLeagueEntry[])
+      : [];
+    const entries = rawEntries.map((e: RiotLeagueEntry, _i: number) => ({
       summonerId: String(e?.summonerId ?? "").trim(),
       summonerName: typeof e?.summonerName === "string" ? e.summonerName : "",
       leaguePoints: Number(e?.leaguePoints) || 0,
@@ -56,23 +67,43 @@ export async function POST(req: Request) {
     // Remplacement full-snapshot de la tranche (region, tier)
     const regionLower = region.toLowerCase();
     const tierUpper = tier.toUpperCase();
-    const normalized = entries.map((e, i) => ({
-      region: regionLower,
-      queueType: "RANKED_SOLO_5x5" as const,
-      tier: tierUpper,
-      rank: e.rank ?? null,
-      summonerId:
-        e.summonerId && e.summonerId.length > 0
-          ? e.summonerId
-          : `anon:${e.summonerName || "unknown"}:${e.rank || ""}:$${
-              e.leaguePoints
-            }:${e.wins}:${e.losses}:${i}`,
-      summonerName: e.summonerName ?? "",
-      leaguePoints: e.leaguePoints,
-      wins: e.wins,
-      losses: e.losses,
-    }));
-    await prisma.leaderboardEntry.deleteMany({
+    const normalized = entries.map(
+      (
+        e: {
+          summonerId: string;
+          summonerName: string;
+          leaguePoints: number;
+          wins: number;
+          losses: number;
+          rank?: string;
+        },
+        _i: number
+      ) => ({
+        region: regionLower,
+        queueType: "RANKED_SOLO_5x5" as const,
+        tier: tierUpper,
+        rank: e.rank ?? null,
+        summonerId:
+          e.summonerId && e.summonerId.length > 0
+            ? e.summonerId
+            : `anon:${e.summonerName || "unknown"}:${e.rank || ""}:$${
+                e.leaguePoints
+              }:${e.wins}:${e.losses}:${_i}`,
+        summonerName: e.summonerName ?? "",
+        leaguePoints: e.leaguePoints,
+        wins: e.wins,
+        losses: e.losses,
+      })
+    );
+    const db = prisma as unknown as {
+      leaderboardEntry: {
+        deleteMany: (args: unknown) => Promise<{ count: number }>;
+        createMany: (args: unknown) => Promise<{ count: number }>;
+        findMany: (args: unknown) => Promise<Array<{ summonerId: string }>>;
+        update: (args: unknown) => Promise<unknown>;
+      };
+    };
+    await db.leaderboardEntry.deleteMany({
       where: {
         region: regionLower,
         tier: tierUpper,
@@ -87,7 +118,7 @@ export async function POST(req: Request) {
       seen.add(key);
       return true;
     });
-    const createRes = await prisma.leaderboardEntry.createMany({
+    const createRes = await db.leaderboardEntry.createMany({
       data: unique,
     });
     const upserts = createRes.count;
@@ -95,7 +126,7 @@ export async function POST(req: Request) {
     // Enrichir les noms d'invocateur manquants (quota léger pour éviter 429)
     let enriched = 0;
     const maxEnrich = 60;
-    const candidates = await prisma.leaderboardEntry.findMany({
+    const candidates = await db.leaderboardEntry.findMany({
       where: {
         region: regionLower,
         tier: tierUpper,
@@ -132,7 +163,7 @@ export async function POST(req: Request) {
         const name =
           typeof summonerJson?.name === "string" ? summonerJson.name : "";
         if (!name) continue;
-        await prisma.leaderboardEntry.update({
+        await db.leaderboardEntry.update({
           where: {
             region_queueType_tier_summonerId: {
               region: regionLower,
