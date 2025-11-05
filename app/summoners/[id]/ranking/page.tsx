@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2Icon, TrophyIcon } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
+import { useParams, useSearchParams } from "next/navigation";
 
 interface LeagueEntry {
   leagueId: string;
@@ -62,38 +62,32 @@ const RANK_ROMAN: Record<string, string> = {
   I: "I",
 };
 
-export default function RankingPage() {
-  const { user } = useAuth();
+export default function RankingByIdPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const puuid = typeof params?.id === "string" ? params.id : undefined;
+  const region = searchParams.get("region") || undefined;
+
   const [leagueData, setLeagueData] = useState<LeagueEntry[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<{
-    data?: {
-      summonerId?: string;
-      [key: string]: string | number | null | undefined;
-    };
+    data?: { summonerId?: string };
   } | null>(null);
 
-  // Charger les détails du profil pour obtenir le summonerId
   useEffect(() => {
     const fetchProfileData = async () => {
-      if (!user?.riotPuuid || !user?.riotRegion) {
+      if (!puuid || !region) {
         setIsLoading(false);
         return;
       }
-
       try {
         const response = await fetch("/api/riot/get-account-details", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            puuid: user.riotPuuid,
-            region: user.riotRegion,
-          }),
+          body: JSON.stringify({ puuid, region }),
         });
-
         const result = await response.json();
-
         if (response.ok && result.data) {
           setProfileData(result);
         }
@@ -101,43 +95,36 @@ export default function RankingPage() {
         console.error("Erreur lors du chargement du profil:", err);
       }
     };
-
     fetchProfileData();
-  }, [user?.riotPuuid, user?.riotRegion]);
+  }, [puuid, region]);
 
-  // Charger les données de classement
   useEffect(() => {
     const fetchLeagueData = async () => {
-      if (!profileData?.data?.summonerId || !user?.riotRegion) {
+      if (!profileData?.data?.summonerId || !region) {
         setError(
           "Non classé. Information de classement non disponible avec l'API Riot actuelle."
         );
         setIsLoading(false);
         return;
       }
-
       setIsLoading(true);
       setError(null);
-
       try {
         const response = await fetch("/api/riot/get-league", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             summonerId: profileData.data.summonerId,
-            region: user.riotRegion,
+            region,
           }),
         });
-
         const result = await response.json();
-
         if (!response.ok) {
           setError(
             result.error || "Erreur lors de la récupération du classement"
           );
           return;
         }
-
         setLeagueData(result.data || []);
       } catch (err) {
         console.error("Erreur:", err);
@@ -146,11 +133,9 @@ export default function RankingPage() {
         setIsLoading(false);
       }
     };
-
     fetchLeagueData();
-  }, [profileData, user?.riotRegion]);
+  }, [profileData, region]);
 
-  // Générer des insights IA
   const aiInsights = getRankingInsights(leagueData || []);
 
   if (isLoading) {
@@ -160,7 +145,6 @@ export default function RankingPage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="text-center py-20">
@@ -168,7 +152,6 @@ export default function RankingPage() {
       </div>
     );
   }
-
   if (!leagueData || leagueData.length === 0) {
     return (
       <Card>
@@ -177,8 +160,7 @@ export default function RankingPage() {
             <TrophyIcon className="size-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Non classé</h3>
             <p className="text-muted-foreground">
-              Vous n&apos;avez pas encore de classement actif sur League of
-              Legends
+              Vous n&apos;avez pas encore de classement actif
             </p>
           </div>
         </CardContent>
@@ -188,7 +170,6 @@ export default function RankingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Insights IA */}
       {aiInsights.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2">
           {aiInsights.map((insight, index) => (
@@ -196,8 +177,6 @@ export default function RankingPage() {
           ))}
         </div>
       )}
-
-      {/* Cartes de classement */}
       <div className="grid gap-4 md:grid-cols-2">
         {leagueData.map((league) => {
           const winRate = (
@@ -210,17 +189,14 @@ export default function RankingPage() {
             ? `${tierName} ${RANK_ROMAN[league.rank] || league.rank}`
             : tierName;
           const queueName = QUEUE_TYPES[league.queueType] || league.queueType;
-
           return (
             <Card
               key={league.leagueId}
               className="border-2 border-primary/20 relative overflow-hidden"
             >
-              {/* Background tier gradient */}
               <div
                 className={`absolute inset-0 bg-gradient-to-br from-${league.tier.toLowerCase()}-500/10 to-transparent`}
               />
-
               <CardHeader className="relative">
                 <div className="flex items-center justify-between mb-4">
                   <CardTitle>{queueName}</CardTitle>
@@ -249,7 +225,6 @@ export default function RankingPage() {
                   </div>
                 </div>
               </CardHeader>
-
               <CardContent className="relative">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
@@ -275,7 +250,6 @@ export default function RankingPage() {
                     </div>
                   </div>
                 </div>
-
                 {league.freshBlood && (
                   <Badge
                     variant="outline"
@@ -295,12 +269,8 @@ export default function RankingPage() {
 
 function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
   const insights: AIInsight[] = [];
-
   if (leagueData.length === 0) return insights;
-
-  // Trouver le rang le plus élevé
   const soloQueue = leagueData.find((l) => l.queueType === "RANKED_SOLO_5x5");
-
   if (soloQueue) {
     const winRate = (
       (soloQueue.wins / (soloQueue.wins + soloQueue.losses)) *
@@ -319,8 +289,6 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
       "CHALLENGER",
     ];
     const currentTierIndex = tierOrder.indexOf(soloQueue.tier);
-
-    // Insight: Progression de rang
     if (currentTierIndex >= 3) {
       insights.push({
         type: "positive",
@@ -337,8 +305,6 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
         },
       });
     }
-
-    // Insight: Win rate
     if (parseFloat(winRate) >= 55) {
       insights.push({
         type: "positive",
@@ -363,8 +329,6 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
         },
       });
     }
-
-    // Insight: Série chaude
     if (soloQueue.hotStreak) {
       insights.push({
         type: "positive",
@@ -377,11 +341,10 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
       });
     }
   }
-
-  // Flex queue
   const flexQueue = leagueData.find((l) => l.queueType === "RANKED_FLEX_SR");
+  const soloQueue = leagueData.find((l) => l.queueType === "RANKED_SOLO_5x5");
   if (flexQueue && soloQueue) {
-    const soloTierOrder = [
+    const tierOrder = [
       "IRON",
       "BRONZE",
       "SILVER",
@@ -393,9 +356,8 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
       "GRANDMASTER",
       "CHALLENGER",
     ];
-    const soloIndex = soloTierOrder.indexOf(soloQueue.tier);
-    const flexIndex = soloTierOrder.indexOf(flexQueue.tier);
-
+    const soloIndex = tierOrder.indexOf(soloQueue.tier);
+    const flexIndex = tierOrder.indexOf(flexQueue.tier);
     if (flexIndex > soloIndex) {
       insights.push({
         type: "positive",
@@ -415,6 +377,5 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
       });
     }
   }
-
   return insights;
 }

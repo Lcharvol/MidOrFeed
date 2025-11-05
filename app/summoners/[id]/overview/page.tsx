@@ -11,19 +11,16 @@ import {
 } from "@/components/ui/card";
 import {
   Loader2Icon,
-  MedalIcon,
   TrophyIcon,
-  ZapIcon,
-  TrendingUpIcon,
   TargetIcon,
   SwordsIcon,
   UsersIcon,
   Gamepad2Icon,
 } from "lucide-react";
 import Image from "next/image";
-import { useAuth } from "@/lib/auth-context";
 import { Progress } from "@/components/ui/progress";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
+import { useParams } from "next/navigation";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -62,10 +59,12 @@ interface MatchData {
   >;
 }
 
-export default function OverviewPage() {
-  const { user } = useAuth();
-  const matchesUrl = user?.riotPuuid
-    ? `/api/matches/list?puuid=${user.riotPuuid}`
+export default function SummonerOverviewByIdPage() {
+  const params = useParams();
+  const puuid = typeof params?.id === "string" ? params.id : undefined;
+
+  const matchesUrl = puuid
+    ? `/api/matches/list?puuid=${puuid}`
     : "/api/matches/list";
   const { data, error, isLoading } = useSWR(matchesUrl, fetcher);
   const { data: championsData } = useSWR("/api/champions/list", fetcher);
@@ -88,16 +87,16 @@ export default function OverviewPage() {
   const matchData: MatchData | null = data?.data || null;
 
   const topChampions = useMemo(() => {
-    if (!matchData) return [];
+    if (!matchData) return [] as Array<[string, any]>;
     return Object.entries(matchData.championStats)
-      .sort((a, b) => b[1].played - a[1].played)
+      .sort((a, b) => (b[1] as any).played - (a[1] as any).played)
       .slice(0, 3);
   }, [matchData]);
 
   const roleStatsSorted = useMemo(() => {
-    if (!matchData) return [];
+    if (!matchData) return [] as Array<[string, any]>;
     return Object.entries(matchData.roleStats).sort(
-      (a, b) => b[1].played - a[1].played
+      (a, b) => (b[1] as any).played - (a[1] as any).played
     );
   }, [matchData]);
 
@@ -106,12 +105,11 @@ export default function OverviewPage() {
     return parseFloat(matchData.stats.winRate);
   }, [matchData]);
 
-  // Générer des insights IA basés sur les données
   const aiInsights = useMemo<AIInsight[]>(() => {
     if (!matchData || topChampions.length === 0) return [];
     const insights: AIInsight[] = [];
 
-    // Insight 1: Win Rate
+    const kdaNumber = parseFloat(matchData.stats.avgKDA);
     if (winRateNumber >= 55) {
       insights.push({
         type: "positive",
@@ -140,8 +138,6 @@ export default function OverviewPage() {
       });
     }
 
-    // Insight 2: KDA
-    const kdaNumber = parseFloat(matchData.stats.avgKDA);
     if (kdaNumber >= 2.5) {
       insights.push({
         type: "positive",
@@ -152,7 +148,6 @@ export default function OverviewPage() {
       });
     }
 
-    // Insight 3: Volume de jeu
     if (matchData.stats.totalGames < 10) {
       insights.push({
         type: "warning",
@@ -165,11 +160,13 @@ export default function OverviewPage() {
       });
     }
 
-    // Insight 4: Top champion
     if (topChampions.length > 0) {
-      const [championId, topStats] = topChampions[0];
-      const topWinRate = ((topStats.wins / topStats.played) * 100).toFixed(1);
-      if (parseFloat(topWinRate) >= 60 && topStats.played >= 5) {
+      const [championId, topStats] = topChampions[0] as [string, any];
+      const topWinRate = (
+        ((topStats.wins || 0) / (topStats.played || 1)) *
+        100
+      ).toFixed(1);
+      if (parseFloat(topWinRate) >= 60 && (topStats.played || 0) >= 5) {
         insights.push({
           type: "positive",
           title: "Champion signature identifié",
@@ -311,7 +308,11 @@ export default function OverviewPage() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
               {topChampions.map(([championId, stats], index) => {
-                const winRate = ((stats.wins / stats.played) * 100).toFixed(0);
+                const s: any = stats as any;
+                const winRate = (
+                  ((s.wins || 0) / (s.played || 1)) *
+                  100
+                ).toFixed(0);
                 return (
                   <div
                     key={championId}
@@ -331,10 +332,10 @@ export default function OverviewPage() {
                     </div>
                     <div className="flex-1">
                       <p className="font-bold">
-                        {championMap.get(championId) || championId}
+                        {(championMap as any).get(championId) || championId}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {stats.played} parties • {winRate}% WR
+                        {s.played || 0} parties • {winRate}% WR
                       </p>
                       <Progress
                         value={parseFloat(winRate)}
@@ -362,7 +363,11 @@ export default function OverviewPage() {
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
               {roleStatsSorted.map(([role, stats]) => {
-                const winRate = ((stats.wins / stats.played) * 100).toFixed(1);
+                const s: any = stats as any;
+                const winRate = (
+                  ((s.wins || 0) / (s.played || 1)) *
+                  100
+                ).toFixed(1);
                 return (
                   <div
                     key={role}
@@ -371,7 +376,7 @@ export default function OverviewPage() {
                     <SwordsIcon className="size-8 text-primary mb-2" />
                     <p className="font-bold text-lg mb-1">{role}</p>
                     <p className="text-sm text-muted-foreground mb-3">
-                      {stats.played} parties
+                      {s.played || 0} parties
                     </p>
                     <div className="text-center">
                       <p
@@ -392,63 +397,6 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Statistiques détaillées */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-2 border-orange-500/20 bg-gradient-to-br from-background to-orange-500/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Kills</CardTitle>
-            <SwordsIcon className="size-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {matchData.stats.totalKills}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {(
-                matchData.stats.totalKills / matchData.stats.totalGames
-              ).toFixed(1)}{" "}
-              par partie
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-red-500/20 bg-gradient-to-br from-background to-red-500/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Deaths</CardTitle>
-            <TargetIcon className="size-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {matchData.stats.totalDeaths}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {(
-                matchData.stats.totalDeaths / matchData.stats.totalGames
-              ).toFixed(1)}{" "}
-              par partie
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-background to-blue-500/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assists</CardTitle>
-            <UsersIcon className="size-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {matchData.stats.totalAssists}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {(
-                matchData.stats.totalAssists / matchData.stats.totalGames
-              ).toFixed(1)}{" "}
-              par partie
-            </p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

@@ -1,35 +1,60 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
+
+const riotAccountSchema = z.object({
+  gameName: z.string().min(1, "Le nom de jeu est requis"),
+  tagLine: z.string().min(1, "Le tag est requis"),
+  region: z.string().min(1, "La région est requise"),
+});
+
+export type RiotAccountFormValues = z.infer<typeof riotAccountSchema>;
 
 interface User {
   id: string;
-  name: string | null;
-  email: string;
+  name?: string | null;
+  email?: string;
   riotGameName?: string | null;
   riotTagLine?: string | null;
   riotRegion?: string | null;
   riotPuuid?: string | null;
   riotSummonerId?: string | null;
+  leagueAccount?: {
+    riotGameName?: string | null;
+    riotTagLine?: string | null;
+    riotRegion?: string | null;
+  } | null;
 }
 
 interface UseRiotAccountFormProps {
   user: User | null;
-  login: (user: User) => void;
+  login: (user: unknown) => void | Promise<void>;
 }
 
 export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
-  const [gameName, setGameName] = useState("");
-  const [tagLine, setTagLine] = useState("");
-  const [region, setRegion] = useState("");
+  const riotGameName =
+    user?.leagueAccount?.riotGameName || user?.riotGameName || "";
+  const riotTagLine =
+    user?.leagueAccount?.riotTagLine || user?.riotTagLine || "";
+  const riotRegion = user?.leagueAccount?.riotRegion || user?.riotRegion || "";
+
+  const form = useForm<RiotAccountFormValues>({
+    resolver: zodResolver(riotAccountSchema),
+    defaultValues: {
+      gameName: riotGameName,
+      tagLine: riotTagLine,
+      region: riotRegion,
+    },
+  });
+
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleSaveAccount = async () => {
-    if (!gameName || !tagLine || !region) {
-      toast.error("Veuillez remplir tous les champs");
-      return;
-    }
+  const handleSaveAccount = async (values: RiotAccountFormValues) => {
+    const { gameName, tagLine, region } = values;
 
     setIsSaving(true);
     try {
@@ -79,14 +104,12 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
 
       // Mettre à jour l'utilisateur dans le contexte
       if (user && result.user) {
-        login(result.user);
+        login(result.user as unknown);
       }
 
       toast.success("Compte Riot sauvegardé avec succès!");
       setIsEditing(false);
-      setGameName("");
-      setTagLine("");
-      setRegion("");
+      form.reset();
     } catch (error) {
       console.error("Erreur:", error);
       toast.error("Une erreur est survenue");
@@ -96,19 +119,23 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
   };
 
   const handleEditAccount = () => {
-    if (user && user.riotGameName) {
-      setGameName(user.riotGameName);
-      setTagLine(user.riotTagLine || "");
-      setRegion(user.riotRegion || "");
+    if (user) {
+      form.reset({
+        gameName: riotGameName,
+        tagLine: riotTagLine,
+        region: riotRegion,
+      });
       setIsEditing(true);
     }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setGameName("");
-    setTagLine("");
-    setRegion("");
+    form.reset({
+      gameName: riotGameName,
+      tagLine: riotTagLine,
+      region: riotRegion,
+    });
   };
 
   const handleAnalyzeMatches = async () => {
@@ -148,12 +175,7 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
   };
 
   return {
-    gameName,
-    setGameName,
-    tagLine,
-    setTagLine,
-    region,
-    setRegion,
+    form,
     isSaving,
     isAnalyzing,
     isEditing,

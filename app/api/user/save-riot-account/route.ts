@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     // Vérifier que l'utilisateur existe
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true },
     });
 
     if (!user) {
@@ -39,14 +40,69 @@ export async function POST(request: Request) {
       );
     }
 
-    // Mettre à jour l'utilisateur avec les informations Riot
+    // Créer ou mettre à jour le compte League of Legends et lier à l'utilisateur
+    let leagueAccount = null as null | {
+      id: string;
+      puuid: string;
+      riotRegion: string;
+      riotGameName: string | null;
+      riotTagLine: string | null;
+      profileIconId: number | null;
+    };
+
+    if (validatedData.puuid) {
+      const upserted = await prisma.leagueOfLegendsAccount.upsert({
+        where: { puuid: validatedData.puuid },
+        update: {
+          riotRegion: validatedData.region,
+          riotGameName: validatedData.gameName,
+          riotTagLine: validatedData.tagLine,
+        },
+        create: {
+          puuid: validatedData.puuid,
+          riotRegion: validatedData.region,
+          riotGameName: validatedData.gameName,
+          riotTagLine: validatedData.tagLine,
+        },
+      });
+      leagueAccount = upserted as any;
+    } else {
+      // Pas de PUUID: tenter de trouver par (gameName, tagLine, region)
+      const existing = await prisma.leagueOfLegendsAccount.findFirst({
+        where: {
+          riotGameName: validatedData.gameName,
+          riotTagLine: validatedData.tagLine,
+          riotRegion: validatedData.region,
+        },
+      });
+      if (!existing) {
+        return NextResponse.json(
+          { error: "PUUID manquant et aucun compte correspondant trouvé" },
+          { status: 400 }
+        );
+      }
+      leagueAccount = existing as any;
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        riotGameName: validatedData.gameName,
-        riotTagLine: validatedData.tagLine,
-        riotPuuid: validatedData.puuid || null,
-        riotRegion: validatedData.region,
+        leagueAccountId: leagueAccount.id,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        leagueAccount: {
+          select: {
+            id: true,
+            puuid: true,
+            riotRegion: true,
+            riotGameName: true,
+            riotTagLine: true,
+            profileIconId: true,
+          },
+        },
       },
     });
 
@@ -57,11 +113,16 @@ export async function POST(request: Request) {
           id: updatedUser.id,
           email: updatedUser.email,
           name: updatedUser.name,
-          riotGameName: updatedUser.riotGameName,
-          riotTagLine: updatedUser.riotTagLine,
-          riotPuuid: updatedUser.riotPuuid,
-          riotSummonerId: updatedUser.riotSummonerId,
-          riotRegion: updatedUser.riotRegion,
+          leagueAccount: updatedUser.leagueAccount
+            ? {
+                id: updatedUser.leagueAccount.id,
+                puuid: updatedUser.leagueAccount.puuid,
+                riotRegion: updatedUser.leagueAccount.riotRegion,
+                riotGameName: updatedUser.leagueAccount.riotGameName,
+                riotTagLine: updatedUser.leagueAccount.riotTagLine,
+                profileIconId: updatedUser.leagueAccount.profileIconId,
+              }
+            : null,
         },
       },
       { status: 200 }

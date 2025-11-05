@@ -1,0 +1,242 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useAccount } from "@/lib/hooks/use-account";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getProfileIconUrl } from "@/constants/ddragon";
+import { Loader2Icon, RefreshCwIcon } from "lucide-react";
+import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  usePathname,
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { toast } from "sonner";
+
+export default function SummonerByIdLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const puuid = typeof params?.id === "string" ? params.id : undefined;
+  const region = searchParams.get("region") || undefined;
+
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [details, setDetails] = useState<{
+    puuid: string;
+    gameName?: string;
+    tagLine?: string;
+    summonerLevel?: number | null;
+    profileIconId?: number | null;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const {
+    account,
+    isLoading: accLoading,
+    forceRefreshFromRiot,
+  } = useAccount(puuid);
+
+  // Set details from DB cache-first
+  useEffect(() => {
+    if (!puuid) {
+      setLoading(false);
+      return;
+    }
+    if (accLoading) {
+      setLoading(true);
+      return;
+    }
+    if (account) {
+      setDetails({
+        puuid,
+        gameName: account.riotGameName || undefined,
+        tagLine: account.riotTagLine || undefined,
+        summonerLevel: account.summonerLevel || null,
+        profileIconId: account.profileIconId || null,
+      });
+    }
+    setLoading(false);
+  }, [puuid, accLoading, account]);
+
+  // If region missing in URL but present in DB, propagate it once
+  useEffect(() => {
+    if (!puuid) return;
+    if (region) return;
+    const accRegion: string | undefined = account?.riotRegion;
+    if (!accRegion) return;
+    router.replace(
+      `/summoners/${puuid}${
+        pathname.endsWith("overview")
+          ? "/overview"
+          : pathname.endsWith("champions")
+          ? "/champions"
+          : pathname.endsWith("matches")
+          ? "/matches"
+          : ""
+      }?region=${accRegion}`
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puuid, region, account]);
+
+  const profileIconUrl = useMemo(() => {
+    if (!details?.profileIconId) return null;
+    return getProfileIconUrl(details.profileIconId);
+  }, [details]);
+
+  const isActive = (sub: string) => pathname === `/summoners/${puuid}${sub}`;
+
+  const handleUpdateProfile = async () => {
+    if (!puuid || !region) return;
+    setIsUpdating(true);
+    try {
+      await forceRefreshFromRiot(region);
+
+      const response = await fetch("/api/matches/collect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ puuid, region, count: 100 }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        toast.error(result.error || "Erreur lors de la collecte");
+        return;
+      }
+      toast.success(`Collecte terminée: ${result.matchesCollected} matchs`);
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error("Une erreur est survenue");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-10">
+      <div className="mb-8">
+        <div className="flex items-center justify-between gap-6">
+          <div className="flex items-center gap-6 flex-1">
+            {loading ? (
+              <Skeleton className="size-24 rounded-full" aria-busy="true" />
+            ) : profileIconUrl ? (
+              <Avatar className="size-24 border-4 border-primary/20">
+                <AvatarImage src={profileIconUrl} alt="Profile" />
+                <AvatarFallback>?</AvatarFallback>
+              </Avatar>
+            ) : (
+              <Avatar className="size-24 border-4 border-primary/20">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-4xl">
+                  {details?.gameName?.[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+            )}
+
+            <div className="flex-1">
+              {loading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-7 w-64" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-4xl font-bold mb-2">
+                    {details?.gameName || puuid}
+                    {details?.tagLine && (
+                      <span className="text-muted-foreground">
+                        #{details.tagLine}
+                      </span>
+                    )}
+                  </h1>
+                  {region && (
+                    <Badge variant="outline" className="text-lg px-3 py-1">
+                      {region.toUpperCase()}
+                    </Badge>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <div>
+            {loading ? (
+              <Skeleton className="h-9 w-36" />
+            ) : (
+              <Button
+                onClick={handleUpdateProfile}
+                disabled={isUpdating || !puuid || !region}
+                variant="outline"
+                size="sm"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2Icon className="mr-2 size-4 animate-spin" />
+                    Mise à jour...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCwIcon className="mr-2 size-4" />
+                    Mettre à jour
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-b mb-6">
+        {loading ? (
+          <div className="flex gap-8">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="h-6 w-24" />
+          </div>
+        ) : (
+          <div className="flex gap-8">
+            <Link
+              href={`/summoners/${puuid}/overview?region=${region || ""}`}
+              className={`pb-4 px-2 font-semibold transition-colors relative ${
+                isActive("/overview")
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Vue d&apos;ensemble
+            </Link>
+            <Link
+              href={`/summoners/${puuid}/champions?region=${region || ""}`}
+              className={`pb-4 px-2 font-semibold transition-colors relative ${
+                isActive("/champions")
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Champions
+            </Link>
+            <Link
+              href={`/summoners/${puuid}/matches?region=${region || ""}`}
+              className={`pb-4 px-2 font-semibold transition-colors relative ${
+                isActive("/matches")
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Matchs
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {children}
+    </div>
+  );
+}

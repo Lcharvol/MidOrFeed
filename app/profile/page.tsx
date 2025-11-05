@@ -10,12 +10,7 @@ export default function ProfilePage() {
 
   // Gestion du formulaire Riot
   const {
-    gameName,
-    setGameName,
-    tagLine,
-    setTagLine,
-    region,
-    setRegion,
+    form,
     isSaving,
     isAnalyzing,
     isEditing,
@@ -34,12 +29,7 @@ export default function ProfilePage() {
 
         <RiotAccountSection
           user={user}
-          gameName={gameName}
-          setGameName={setGameName}
-          tagLine={tagLine}
-          setTagLine={setTagLine}
-          region={region}
-          setRegion={setRegion}
+          form={form}
           isSaving={isSaving}
           isAnalyzing={isAnalyzing}
           isEditing={isEditing}

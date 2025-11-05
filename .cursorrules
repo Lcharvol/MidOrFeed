@@ -1,0 +1,12 @@
+rules:
+  - "Toujours utiliser un style de programmation fonctionnelle."
+  - "Utilise les arrow functions."
+  - "Evite d'utiliser des let ou var en typescript, utilise plutôt const."
+  - "Découpe au maximum la logic et le rendue dans les composants front."
+  - "Éviter les effets de bord et les mutations d’état."
+  - "Favoriser les fonctions pures, la composition et l’immuabilité."
+  - "Utiliser des fonctions de plus haut niveau (map, filter, reduce, etc.) quand c’est pertinent."
+  - "Ne pas utiliser de classes ou d’approche orientée objet sauf nécessité absolue."
+  - "Utilise au maximum un type centralisé dans /types."
+  - "utilise au maximum swr pour la stratégie de fetching."
+  - "n'uilise pas de any en typescript."

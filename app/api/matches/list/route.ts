@@ -11,23 +11,27 @@ export async function GET(request: Request) {
     const puuid = searchParams.get("puuid");
 
     const matches = await prisma.match.findMany({
+      where: puuid
+        ? {
+            participants: {
+              some: {
+                participantPUuid: puuid,
+              },
+            },
+          }
+        : {},
       include: {
-        participants: true,
+        participants: puuid
+          ? {
+              where: { participantPUuid: puuid },
+            }
+          : true,
       },
       orderBy: {
         gameCreation: "desc",
       },
       take: 100, // Limiter à 100 matchs les plus récents
     });
-
-    // Si un PUUID est fourni, ne garder que les participants correspondants
-    if (puuid) {
-      matches.forEach((match) => {
-        match.participants = match.participants.filter(
-          (p) => p.participantPUuid === puuid
-        );
-      });
-    }
 
     // Calculer les statistiques agrégées
     let totalMatches = 0;

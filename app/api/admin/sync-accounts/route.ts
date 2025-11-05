@@ -21,14 +21,48 @@ const PLATFORM_TO_REGION: Record<string, string> = {
   VN2: "vn2",
 };
 
+// Limiteur global par région (token spacing + backoff sur 429)
+type LimiterState = { nextAt: number };
+declare global {
+  var __RIOT_REGION_LIMITER__: Record<string, LimiterState> | undefined;
+}
+function getLimiter(region: string) {
+  if (!global.__RIOT_REGION_LIMITER__) global.__RIOT_REGION_LIMITER__ = {};
+  const key = region.toLowerCase();
+  if (!global.__RIOT_REGION_LIMITER__[key]) {
+    global.__RIOT_REGION_LIMITER__[key] = { nextAt: 0 };
+  }
+  return global.__RIOT_REGION_LIMITER__[key];
+}
+async function awaitPermit(region: string, minSpacingMs = 250) {
+  const limiter = getLimiter(region);
+  const now = Date.now();
+  if (limiter.nextAt > now) {
+    await new Promise((r) => setTimeout(r, limiter.nextAt - now));
+  }
+  // léger jitter pour désynchroniser
+  const jitter = Math.floor(Math.random() * 50);
+  limiter.nextAt = Date.now() + minSpacingMs + jitter;
+}
+
 /**
  * POST /api/admin/sync-accounts
  * Convertit tous les participants de matchs en comptes League of Legends
  * et calcule leurs statistiques
  */
-export async function POST() {
+export async function POST(request?: Request) {
   try {
     console.log("[SYNC-ACCOUNTS] Démarrage de la synchronisation...");
+    // Paramètres optionnels
+    let maxRiotCallsPerCycle = Number.POSITIVE_INFINITY;
+    if (request) {
+      try {
+        const body = await request.json().catch(() => ({}));
+        if (typeof body?.maxRiotCallsPerCycle === "number") {
+          maxRiotCallsPerCycle = Math.max(0, body.maxRiotCallsPerCycle | 0);
+        }
+      } catch {}
+    }
 
     // 1. Récupérer tous les PUUID uniques des participants
     const participants = await prisma.matchParticipant.findMany({
@@ -44,9 +78,10 @@ export async function POST() {
     console.log(`[SYNC-ACCOUNTS] ${participants.length} PUUID uniques trouvés`);
 
     let accountsCreated = 0;
-    let accountsUpdated = 0;
+    const accountsUpdated = 0;
 
     // 2. Pour chaque PUUID, créer ou mettre à jour le compte
+    let riotCalls = 0;
     for (const participant of participants) {
       if (!participant.participantPUuid) continue;
 
@@ -119,73 +154,110 @@ export async function POST() {
         const platformId = sampleMatch?.match.platformId || "UNKNOWN";
         const region = PLATFORM_TO_REGION[platformId] || null;
 
-        // Récupérer les détails du compte Riot depuis l'API
+        // Récupérer les détails du compte Riot depuis l'API UNIQUEMENT si les données sont manquantes ou anciennes
         let riotDetails = null;
         if (region) {
-          try {
-            const riotResponse = await fetch(
-              `${
-                process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
-              }/api/riot/get-account-details`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  puuid: participant.participantPUuid,
-                  region,
-                }),
-              }
-            );
-
-            if (riotResponse.ok) {
-              riotDetails = await riotResponse.json();
-              console.log(
-                `[SYNC-ACCOUNTS] Données Riot récupérées pour ${participant.participantPUuid}:`,
-                riotDetails
-              );
-            } else if (riotResponse.status === 429) {
-              // Rate limit exceeded - attendre avant de continuer
-              console.warn("[SYNC-ACCOUNTS] Rate limit atteint, attente...");
-              await new Promise((resolve) => setTimeout(resolve, 2000)); // Attendre 2 secondes
-
-              // Retry once
-              const retryResponse = await fetch(
-                `${
-                  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
-                }/api/riot/get-account-details`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    puuid: participant.participantPUuid,
-                    region,
-                  }),
-                }
-              );
-
-              if (retryResponse.ok) {
-                riotDetails = await retryResponse.json();
-              }
+          const existing = await prisma.leagueOfLegendsAccount.findUnique({
+            where: { puuid: participant.participantPUuid },
+            select: {
+              updatedAt: true,
+              riotGameName: true,
+              riotTagLine: true,
+              profileIconId: true,
+            },
+          });
+          const freshEnough =
+            existing &&
+            Date.now() - new Date(existing.updatedAt).getTime() <
+              6 * 60 * 60 * 1000; // < 6h
+          const hasBasicProfile =
+            existing &&
+            (existing.riotGameName ||
+              existing.riotTagLine ||
+              existing.profileIconId);
+          if (freshEnough && hasBasicProfile) {
+            // éviter l'appel Riot si déjà frais
+          } else {
+            // quota atteint ? on saute l'appel Riot pour ce participant
+            if (riotCalls >= maxRiotCallsPerCycle) {
+              // Pas d'appel riotDetails, on se contente des stats locales
             } else {
-              const errorBody = await riotResponse.json().catch(() => ({}));
-              console.error(
-                `[SYNC-ACCOUNTS] Erreur Riot API pour ${participant.participantPUuid}:`,
-                riotResponse.status,
-                errorBody
-              );
-            }
+              try {
+                await awaitPermit(region, 300);
+                // Appeler l'endpoint interne directement (évite les problèmes d'URL/port)
+                const { POST } = await import(
+                  "@/app/api/riot/get-account-details/route"
+                );
+                const req = new Request(
+                  "http://internal/api/riot/get-account-details",
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      puuid: participant.participantPUuid,
+                      region: region.toLowerCase(),
+                    }),
+                  }
+                );
+                const riotResponse = await POST(req);
+                riotCalls++;
 
-            // Délai entre les requêtes pour éviter les rate limits
-            await new Promise((resolve) => setTimeout(resolve, 200)); // 200ms entre chaque appel
-          } catch (error) {
-            console.error(
-              `[SYNC-ACCOUNTS] Erreur Riot API pour ${participant.participantPUuid}:`,
-              error
-            );
+                if (riotResponse.ok) {
+                  riotDetails = await riotResponse.json();
+                  console.log(
+                    `[SYNC-ACCOUNTS] Données Riot récupérées pour ${participant.participantPUuid}:`,
+                    riotDetails
+                  );
+                } else if (riotResponse.status === 429) {
+                  // Rate limit exceeded - attendre avant de continuer
+                  console.warn(
+                    "[SYNC-ACCOUNTS] Rate limit atteint, attente..."
+                  );
+                  const retryAfterHeader =
+                    riotResponse.headers.get("Retry-After");
+                  const retryAfter = parseInt(retryAfterHeader || "2", 10);
+                  const backoffMs = (isNaN(retryAfter) ? 2 : retryAfter) * 1000;
+                  // positionner le prochain slot après backoff
+                  const limiter = getLimiter(region);
+                  limiter.nextAt = Date.now() + backoffMs;
+                  await new Promise((resolve) =>
+                    setTimeout(resolve, backoffMs)
+                  );
+
+                  // Retry once
+                  await awaitPermit(region, 500);
+                  const retryReq = new Request(
+                    "http://internal/api/riot/get-account-details",
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        puuid: participant.participantPUuid,
+                        region: region.toLowerCase(),
+                      }),
+                    }
+                  );
+                  const retryResponse = await POST(retryReq);
+
+                  if (retryResponse.ok) {
+                    riotDetails = await retryResponse.json();
+                  }
+                } else {
+                  console.error(
+                    `[SYNC-ACCOUNTS] Erreur Riot API pour ${participant.participantPUuid}:`,
+                    riotResponse.status
+                  );
+                }
+
+                // Délai entre les requêtes pour éviter les rate limits
+                await awaitPermit(region, 300);
+              } catch (error) {
+                console.error(
+                  `[SYNC-ACCOUNTS] Erreur Riot API pour ${participant.participantPUuid}:`,
+                  error
+                );
+              }
+            }
           }
         }
 
@@ -212,12 +284,13 @@ export async function POST() {
             mostPlayedChampion,
           },
           update: {
-            riotGameName: riotDetails?.data?.gameName || undefined,
-            riotTagLine: riotDetails?.data?.tagLine || undefined,
-            riotSummonerId: riotDetails?.data?.summonerId || undefined,
-            riotAccountId: riotDetails?.data?.accountId || undefined,
-            summonerLevel: riotDetails?.data?.summonerLevel || undefined,
-            profileIconId: riotDetails?.data?.profileIconId || undefined,
+            // n'écrase que si on a récupéré des données Riot
+            riotGameName: riotDetails?.data?.gameName ?? undefined,
+            riotTagLine: riotDetails?.data?.tagLine ?? undefined,
+            riotSummonerId: riotDetails?.data?.summonerId ?? undefined,
+            riotAccountId: riotDetails?.data?.accountId ?? undefined,
+            summonerLevel: riotDetails?.data?.summonerLevel ?? undefined,
+            profileIconId: riotDetails?.data?.profileIconId ?? undefined,
             revisionDate: riotDetails?.data?.revisionDate
               ? BigInt(riotDetails.data.revisionDate)
               : undefined,

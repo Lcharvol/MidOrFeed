@@ -13,15 +13,18 @@ interface User {
   id: string;
   email: string;
   name: string | null;
-  riotGameName?: string | null;
-  riotTagLine?: string | null;
-  riotPuuid?: string | null;
-  riotSummonerId?: string | null;
-  riotRegion?: string | null;
   subscriptionTier?: string;
   subscriptionExpiresAt?: string | null;
   dailyAnalysesUsed?: number;
   lastDailyReset?: string;
+  leagueAccount?: {
+    id: string;
+    puuid: string;
+    riotRegion: string;
+    riotGameName?: string | null;
+    riotTagLine?: string | null;
+    profileIconId?: number | null;
+  } | null;
 }
 
 interface AuthContextType {

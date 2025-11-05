@@ -11,24 +11,22 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
+  id              String                  @id @default(cuid())
+  email           String                  @unique
   name            String?
   password        String
-  riotGameName    String?  // Nom d'utilisateur Riot (ex: "PlayerName")
-  riotTagLine     String?  // Tag Riot (ex: "EUW1")
-  riotPuuid       String?  // PUUID unique Riot
-  riotSummonerId  String?  // Summoner ID Riot
-  riotRegion      String?  // Région (euw1, na1, etc.)
-  
+  // Référence vers le compte League of Legends lié (remplace les champs riot*)
+  leagueAccountId String?
+  leagueAccount   LeagueOfLegendsAccount? @relation(fields: [leagueAccountId], references: [id])
+
   // Subscription
-  subscriptionTier String  @default("free") // free, premium
+  subscriptionTier      String    @default("free") // free, premium
   subscriptionExpiresAt DateTime?
-  dailyAnalysesUsed Int   @default(0)
-  lastDailyReset    DateTime @default(now())
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  dailyAnalysesUsed     Int       @default(0)
+  lastDailyReset        DateTime  @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
@@ -85,26 +83,26 @@ model Item {
 }
 
 model Match {
-  id              String   @id @default(cuid())
-  matchId         String   @unique // ID Riot unique du match
-  gameCreation    BigInt   // Timestamp de création de la partie
-  gameDuration    Int      // Durée en secondes
-  gameMode        String   // Classique, Ranked, ARAM, etc.
-  gameType        String   // MATCHED_GAME, CUSTOM_GAME, etc.
-  gameVersion     String   // Version du jeu
-  mapId           Int      // ID de la map (Summoner's Rift = 11)
-  platformId      String   // Plateforme (EUW1, NA1, etc.)
-  queueId         Int      // ID de la queue (Ranked = 420, etc.)
-  region          String   // Région du match
-  
-  // Résultats du match
-  blueTeamWon     Boolean? // True si l'équipe bleue a gagné
-  redTeamWon      Boolean? // True si l'équipe rouge a gagné
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String @id @default(cuid())
+  matchId      String @unique // ID Riot unique du match
+  gameCreation BigInt // Timestamp de création de la partie
+  gameDuration Int // Durée en secondes
+  gameMode     String // Classique, Ranked, ARAM, etc.
+  gameType     String // MATCHED_GAME, CUSTOM_GAME, etc.
+  gameVersion  String // Version du jeu
+  mapId        Int // ID de la map (Summoner's Rift = 11)
+  platformId   String // Plateforme (EUW1, NA1, etc.)
+  queueId      Int // ID de la queue (Ranked = 420, etc.)
+  region       String // Région du match
 
-  participants    MatchParticipant[] // Participants du match
+  // Résultats du match
+  blueTeamWon Boolean? // True si l'équipe bleue a gagné
+  redTeamWon  Boolean? // True si l'équipe rouge a gagné
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants MatchParticipant[] // Participants du match
 
   @@index([platformId])
   @@index([queueId])
@@ -113,43 +111,43 @@ model Match {
 }
 
 model MatchParticipant {
-  id              String   @id @default(cuid())
-  matchId         String
-  participantId   Int      // ID du participant (1-10)
+  id               String  @id @default(cuid())
+  matchId          String
+  participantId    Int // ID du participant (1-10)
   participantPUuid String? // PUUID du participant
-  teamId          Int      // 100 pour bleu, 200 pour rouge
-  championId      String   // ID du champion joué
-  role            String?  // ROLE
-  lane            String?  // LANE
-  
-  // Statistiques du joueur
-  kills           Int      @default(0)
-  deaths          Int      @default(0)
-  assists         Int      @default(0)
-  goldEarned      Int      @default(0)
-  goldSpent       Int      @default(0)
-  totalDamageDealtToChampions Int @default(0)
-  totalDamageTaken Int     @default(0)
-  visionScore     Int      @default(0)
-  win             Boolean  @default(false)
-  
-  // Items achetés
-  item0           Int?
-  item1           Int?
-  item2           Int?
-  item3           Int?
-  item4           Int?
-  item5           Int?
-  item6           Int? // Ward/trinket
-  
-  // Runes et summoners
-  summoner1Id     Int? // Summoner spell 1
-  summoner2Id     Int? // Summoner spell 2
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  teamId           Int // 100 pour bleu, 200 pour rouge
+  championId       String // ID du champion joué
+  role             String? // ROLE
+  lane             String? // LANE
 
-  match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  // Statistiques du joueur
+  kills                       Int     @default(0)
+  deaths                      Int     @default(0)
+  assists                     Int     @default(0)
+  goldEarned                  Int     @default(0)
+  goldSpent                   Int     @default(0)
+  totalDamageDealtToChampions Int     @default(0)
+  totalDamageTaken            Int     @default(0)
+  visionScore                 Int     @default(0)
+  win                         Boolean @default(false)
+
+  // Items achetés
+  item0 Int?
+  item1 Int?
+  item2 Int?
+  item3 Int?
+  item4 Int?
+  item5 Int?
+  item6 Int? // Ward/trinket
+
+  // Runes et summoners
+  summoner1Id Int? // Summoner spell 1
+  summoner2Id Int? // Summoner spell 2
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   @@unique([matchId, participantId])
   @@index([championId])
@@ -160,20 +158,20 @@ model MatchParticipant {
 }
 
 model CompositionSuggestion {
-  id                String   @id @default(cuid())
-  userId            String?  // Optionnel pour suggestions globales
-  teamChampions     String   // JSON array des champions de l'équipe
-  enemyChampions    String?  // JSON array des champions ennemis
-  role              String   // ROLE pour lequel on suggère
-  suggestedChampion String   // Champion suggéré
-  confidence        Float    @default(0.0) // Score de confiance (0-1)
-  reasoning         String?  // Raisonnement de la suggestion
-  
+  id                String  @id @default(cuid())
+  userId            String? // Optionnel pour suggestions globales
+  teamChampions     String // JSON array des champions de l'équipe
+  enemyChampions    String? // JSON array des champions ennemis
+  role              String // ROLE pour lequel on suggère
+  suggestedChampion String // Champion suggéré
+  confidence        Float   @default(0.0) // Score de confiance (0-1)
+  reasoning         String? // Raisonnement de la suggestion
+
   // Métadonnées
-  gameMode          String?  // Mode de jeu
-  tier              String?  // Tier du joueur
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  gameMode  String? // Mode de jeu
+  tier      String? // Tier du joueur
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([role])
   @@index([userId])
@@ -181,20 +179,20 @@ model CompositionSuggestion {
 }
 
 model DiscoveredPlayer {
-  id              String   @id @default(cuid())
-  puuid           String   @unique // PUUID unique du joueur
-  riotGameName    String?  // Nom d'invocateur
-  riotTagLine     String?  // Tag
-  riotRegion      String   // Région du joueur
-  
+  id           String  @id @default(cuid())
+  puuid        String  @unique // PUUID unique du joueur
+  riotGameName String? // Nom d'invocateur
+  riotTagLine  String? // Tag
+  riotRegion   String // Région du joueur
+
   // État de collecte
-  lastCrawledAt   DateTime? // Dernière fois qu'on a crawl ce joueur
-  crawlStatus     String   @default("pending") // pending, crawling, completed, failed
-  matchesCollected Int     @default(0) // Nombre de matches collectés
-  
+  lastCrawledAt    DateTime? // Dernière fois qu'on a crawl ce joueur
+  crawlStatus      String    @default("pending") // pending, crawling, completed, failed
+  matchesCollected Int       @default(0) // Nombre de matches collectés
+
   // Métadonnées
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([crawlStatus])
   @@index([puuid])
@@ -203,33 +201,54 @@ model DiscoveredPlayer {
 }
 
 model LeagueOfLegendsAccount {
-  id              String   @id @default(cuid())
-  puuid           String   @unique // PUUID unique Riot
-  riotGameName    String?  // Nom d'invocateur
-  riotTagLine     String?  // Tag
-  riotRegion      String   // Région (euw1, na1, etc.)
-  
+  id           String  @id @default(cuid())
+  puuid        String  @unique // PUUID unique Riot
+  riotGameName String? // Nom d'invocateur
+  riotTagLine  String? // Tag
+  riotRegion   String // Région (euw1, na1, etc.)
+
   // Détails du compte
-  riotSummonerId  String?  // Summoner ID (si disponible)
-  riotAccountId   String?  // Account ID
-  summonerLevel   Int?     // Niveau du summoner
-  profileIconId   Int?     // ID de l'icône de profil
-  revisionDate    BigInt?  // Date de dernière mise à jour Riot
-  
+  riotSummonerId String? // Summoner ID (si disponible)
+  riotAccountId  String? // Account ID
+  summonerLevel  Int? // Niveau du summoner
+  profileIconId  Int? // ID de l'icône de profil
+  revisionDate   BigInt? // Date de dernière mise à jour Riot
+
   // Statistiques calculées
-  totalMatches    Int      @default(0) // Nombre total de matchs
-  totalWins       Int      @default(0) // Nombre total de victoires
-  totalLosses     Int      @default(0) // Nombre total de défaites
-  winRate         Float    @default(0) // Taux de victoire
-  avgKDA          Float    @default(0) // KDA moyen (kills + assists) / deaths
+  totalMatches       Int     @default(0) // Nombre total de matchs
+  totalWins          Int     @default(0) // Nombre total de victoires
+  totalLosses        Int     @default(0) // Nombre total de défaites
+  winRate            Float   @default(0) // Taux de victoire
+  avgKDA             Float   @default(0) // KDA moyen (kills + assists) / deaths
   mostPlayedChampion String? // Champion le plus joué
-  
+
   // Métadonnées
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User[]
 
   @@index([puuid])
   @@index([riotRegion])
   @@index([riotGameName])
   @@map("league_accounts")
+}
+
+model LeaderboardEntry {
+  id           String  @id @default(cuid())
+  region       String
+  queueType    String  @default("RANKED_SOLO_5x5")
+  tier         String // CHALLENGER, GRANDMASTER, MASTER
+  rank         String? // I, II, III, IV (mostly for Master/GM/Chall)
+  summonerId   String
+  summonerName String
+  leaguePoints Int
+  wins         Int
+  losses       Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([region, queueType, tier, summonerId])
+  @@index([region, tier])
+  @@map("leaderboard_entries")
 }

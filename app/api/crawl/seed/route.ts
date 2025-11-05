@@ -1,34 +1,18 @@
 import { NextResponse } from "next/server";
+import { REGION_TO_ROUTING } from "@/constants/regions";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const seedSchema = z.object({
   region: z.string().min(1, "Région requise"),
-  count: z.number().min(1).max(100).default(20), // Nombre de joueurs à découvrir
+  count: z.number().min(1).default(20), // Nombre de joueurs à découvrir
 });
 
 // Clé API Riot Games depuis les variables d'environnement
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
 // Mapping des régions
-const REGION_TO_ROUTING: Record<string, string> = {
-  euw1: "europe",
-  eun1: "europe",
-  tr1: "europe",
-  ru: "europe",
-  na1: "americas",
-  la1: "americas",
-  la2: "americas",
-  br1: "americas",
-  kr: "asia",
-  jp1: "asia",
-  oc1: "asia",
-  ph2: "asia",
-  sg2: "asia",
-  th2: "asia",
-  tw2: "asia",
-  vn2: "asia",
-};
+// Routing mapping centralisé dans constants/regions
 
 const REGION_TO_PLATFORM: Record<string, string> = {
   euw1: "EUW1",

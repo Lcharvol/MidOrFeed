@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { REGION_TO_ROUTING } from "@/constants/regions";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -10,28 +11,7 @@ const searchSchema = z.object({
 // Clé API Riot Games depuis les variables d'environnement
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
-// Mapping des régions vers leurs routing regions pour l'API Account
-const REGION_TO_ROUTING: Record<string, string> = {
-  // Europe
-  euw1: "europe",
-  eun1: "europe",
-  tr1: "europe",
-  ru: "europe",
-  // Americas
-  na1: "americas",
-  la1: "americas",
-  la2: "americas",
-  br1: "americas",
-  // Asia
-  kr: "asia",
-  jp1: "asia",
-  oc1: "asia",
-  ph2: "asia",
-  sg2: "asia",
-  th2: "asia",
-  tw2: "asia",
-  vn2: "asia",
-};
+// Routing mapping centralisé dans constants/regions
 
 export async function POST(request: Request) {
   try {

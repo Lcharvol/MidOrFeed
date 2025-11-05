@@ -1,56 +1,18 @@
 import { NextResponse } from "next/server";
+import { REGION_TO_ROUTING, REGION_TO_BASE_URL } from "@/constants/regions";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const getAccountDetailsSchema = z.object({
   puuid: z.string().min(1, "PUUID est requis"),
   region: z.string().min(1, "Région est requise"),
+  force: z.boolean().optional(),
 });
 
 // Clé API Riot Games depuis les variables d'environnement
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
-// Mapping des régions vers leurs routing regions pour l'API Account
-const REGION_TO_ROUTING: Record<string, string> = {
-  // Europe
-  euw1: "europe",
-  eun1: "europe",
-  tr1: "europe",
-  ru: "europe",
-  // Americas
-  na1: "americas",
-  la1: "americas",
-  la2: "americas",
-  br1: "americas",
-  // Asia
-  kr: "asia",
-  jp1: "asia",
-  oc1: "asia",
-  ph2: "asia",
-  sg2: "asia",
-  th2: "asia",
-  tw2: "asia",
-  vn2: "asia",
-};
-
-// Mapping des régions vers les endpoints Summoner
-const REGION_TO_BASE_URL: Record<string, string> = {
-  euw1: "https://euw1.api.riotgames.com",
-  eun1: "https://eun1.api.riotgames.com",
-  tr1: "https://tr1.api.riotgames.com",
-  ru: "https://ru.api.riotgames.com",
-  na1: "https://na1.api.riotgames.com",
-  la1: "https://la1.api.riotgames.com",
-  la2: "https://la2.api.riotgames.com",
-  br1: "https://br1.api.riotgames.com",
-  kr: "https://kr.api.riotgames.com",
-  jp1: "https://jp1.api.riotgames.com",
-  oc1: "https://oc1.api.riotgames.com",
-  ph2: "https://ph2.api.riotgames.com",
-  sg2: "https://sg2.api.riotgames.com",
-  th2: "https://th2.api.riotgames.com",
-  tw2: "https://tw2.api.riotgames.com",
-  vn2: "https://vn2.api.riotgames.com",
-};
+// Base URLs importés depuis constants/regions
 
 export async function POST(request: Request) {
   try {
@@ -67,16 +29,71 @@ export async function POST(request: Request) {
     // Valider les données
     const validatedData = getAccountDetailsSchema.parse(body);
 
-    // Vérifier que la région est valide
-    const routing = REGION_TO_ROUTING[validatedData.region];
-    const baseUrl = REGION_TO_BASE_URL[validatedData.region];
+    // Normaliser et vérifier que la région est valide (accepte EUW1, euw1, etc.)
+    const normalizedRegion = validatedData.region.toLowerCase();
+    const routing = REGION_TO_ROUTING[normalizedRegion];
+    const baseUrl = REGION_TO_BASE_URL[normalizedRegion];
 
     if (!routing || !baseUrl) {
       return NextResponse.json({ error: "Région invalide" }, { status: 400 });
     }
 
+    // 1) Si pas force: tenter de retourner le cache DB
+    if (!validatedData.force) {
+      const existing = await prisma.leagueOfLegendsAccount.findFirst({
+        where: { puuid: validatedData.puuid },
+        select: {
+          id: true,
+          puuid: true,
+          riotRegion: true,
+          riotGameName: true,
+          riotTagLine: true,
+          summonerLevel: true,
+          profileIconId: true,
+          riotSummonerId: true,
+          riotAccountId: true,
+          revisionDate: true,
+          updatedAt: true,
+        },
+      });
+      if (existing) {
+        return NextResponse.json(
+          {
+            success: true,
+            data: {
+              puuid: existing.puuid,
+              gameName: existing.riotGameName,
+              tagLine: existing.riotTagLine,
+              summonerLevel: existing.summonerLevel,
+              profileIconId: existing.profileIconId,
+              summonerId: existing.riotSummonerId,
+              accountId: existing.riotAccountId,
+              revisionDate:
+                existing.revisionDate !== null &&
+                existing.revisionDate !== undefined
+                  ? Number(existing.revisionDate)
+                  : null,
+            },
+            cached: true,
+          },
+          { status: 200 }
+        );
+      }
+    }
+
+    // 2) Sinon: appel Riot puis mise à jour du cache DB
+    // Simple rate limiter par routing (token spacing ~150ms)
+    const limiterKey = `__RIOT_RATE_${routing}` as const;
+    const g = globalThis as unknown as Record<string, number>;
+    const now = Date.now();
+    if (!g[limiterKey]) g[limiterKey] = 0;
+    if (g[limiterKey] > now) {
+      await new Promise((r) => setTimeout(r, g[limiterKey] - now));
+    }
+    g[limiterKey] = Date.now() + 150; // ~6-7 rps par routing
+
     // Appeler l'API Account pour obtenir le Riot ID
-    const accountResponse = await fetch(
+    let accountResponse = await fetch(
       `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${validatedData.puuid}`,
       {
         headers: {
@@ -84,6 +101,23 @@ export async function POST(request: Request) {
         },
       }
     );
+    if (accountResponse.status === 429) {
+      const retryAfter = parseInt(
+        accountResponse.headers.get("Retry-After") || "2",
+        10
+      );
+      await new Promise((r) =>
+        setTimeout(r, (isNaN(retryAfter) ? 2 : retryAfter) * 1000)
+      );
+      accountResponse = await fetch(
+        `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${validatedData.puuid}`,
+        {
+          headers: {
+            "X-Riot-Token": RIOT_API_KEY,
+          },
+        }
+      );
+    }
 
     if (!accountResponse.ok) {
       if (accountResponse.status === 404) {
@@ -137,34 +171,56 @@ export async function POST(request: Request) {
     let summonerData = null;
     if (summonerResponse.ok) {
       summonerData = await summonerResponse.json();
-      console.log("Summoner data:", summonerData);
-      console.log("Keys in summonerData:", Object.keys(summonerData));
     } else {
       console.log(
         "Summoner API error:",
         summonerResponse.status,
         summonerResponse.statusText
       );
-      const errorText = await summonerResponse.text().catch(() => "");
-      console.log("Summoner API error body:", errorText);
     }
+
+    // Upsert en base pour persister les infos
+    await prisma.leagueOfLegendsAccount.upsert({
+      where: { puuid: validatedData.puuid },
+      update: {
+        riotRegion: normalizedRegion,
+        riotGameName: accountData.gameName ?? null,
+        riotTagLine: accountData.tagLine ?? null,
+        summonerLevel: summonerData?.summonerLevel ?? null,
+        profileIconId: summonerData?.profileIconId ?? null,
+        riotSummonerId: summonerData?.id ?? null,
+        riotAccountId: summonerData?.accountId ?? null,
+        revisionDate: summonerData?.revisionDate ?? null,
+        updatedAt: new Date(),
+      },
+      create: {
+        puuid: validatedData.puuid,
+        riotRegion: normalizedRegion,
+        riotGameName: accountData.gameName ?? null,
+        riotTagLine: accountData.tagLine ?? null,
+        summonerLevel: summonerData?.summonerLevel ?? null,
+        profileIconId: summonerData?.profileIconId ?? null,
+        riotSummonerId: summonerData?.id ?? null,
+        riotAccountId: summonerData?.accountId ?? null,
+        revisionDate: summonerData?.revisionDate ?? null,
+      },
+    });
 
     // Retourner les données complètes du compte
     return NextResponse.json(
       {
         success: true,
         data: {
-          // Données Account API
           puuid: accountData.puuid,
           gameName: accountData.gameName,
           tagLine: accountData.tagLine,
-          // Données Summoner API
           summonerLevel: summonerData?.summonerLevel || null,
           profileIconId: summonerData?.profileIconId || null,
           summonerId: summonerData?.id || null,
           accountId: summonerData?.accountId || null,
           revisionDate: summonerData?.revisionDate || null,
         },
+        cached: false,
       },
       { status: 200 }
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -44,6 +44,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { getProfileIconUrl } from "@/constants/ddragon";
 import { useAuth } from "@/lib/auth-context";
 import {
   LogOutIcon,
@@ -69,9 +71,18 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchRegion, setSearchRegion] = useState("euw1");
   const [isSearching, setIsSearching] = useState(false);
+  type LocalSearchResult = {
+    puuid: string;
+    gameName?: string;
+    tagLine?: string;
+    region: string;
+    profileIconId?: number;
+    stats?: { totalMatches?: number };
+  };
+  const [searchResults, setSearchResults] = useState<LocalSearchResult[]>([]);
   const { profileIconUrl, isLoading: isLoadingIcon } = useRiotProfileIcon(
-    user?.riotPuuid,
-    user?.riotRegion
+    user?.leagueAccount?.puuid,
+    user?.leagueAccount?.riotRegion
   );
   const { t } = useI18n();
 
@@ -89,6 +100,44 @@ export function Header() {
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
+
+  // Recherche locale en temps réel
+  const performLocalSearch = useCallback(
+    async (query: string) => {
+      if (!query || query.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/search/summoners", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            region: searchRegion,
+            limit: 5,
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setSearchResults(result.results || []);
+        }
+      } catch (error) {
+        console.error("Local search error:", error);
+      }
+    },
+    [searchRegion]
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      performLocalSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, performLocalSearch]);
 
   const handleSummonerSearch = async (query: string) => {
     if (!query || query.length < 2) return;
@@ -139,6 +188,7 @@ export function Header() {
     } finally {
       setIsSearching(false);
       setSearchQuery("");
+      setSearchResults([]);
     }
   };
 
@@ -254,11 +304,24 @@ export function Header() {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
+              <NavigationMenuItem>
+                <Link
+                  href="/leaderboard"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  Leaderboard
+                </Link>
+              </NavigationMenuItem>
+
               {user && (
                 <>
                   <NavigationMenuItem>
                     <Link
-                      href="/summoners"
+                      href={
+                        user?.leagueAccount
+                          ? `/summoners/${user.leagueAccount.puuid}/overview?region=${user.leagueAccount.riotRegion}`
+                          : "/summoners"
+                      }
                       className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                     >
                       {t("header.monProfil")}
@@ -331,19 +394,83 @@ export function Header() {
                     }}
                   />
                   <CommandList>
-                    <CommandEmpty>{t("header.searchEmpty")}</CommandEmpty>
-                    <CommandGroup heading={t("header.searchInstructions")}>
-                      <CommandItem>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-xs text-muted-foreground">
-                            {t("header.searchFormat")}
-                          </p>
-                          <p className="text-xs font-mono bg-muted px-2 py-1 rounded">
-                            GameName#TagLine
-                          </p>
-                        </div>
-                      </CommandItem>
-                    </CommandGroup>
+                    <CommandEmpty>
+                      {searchQuery.length < 2
+                        ? t("header.searchEmpty")
+                        : "Aucun résultat local"}
+                    </CommandEmpty>
+
+                    {/* Résultats locaux */}
+                    {searchResults.length > 0 && (
+                      <CommandGroup heading="Résultats locaux">
+                        {searchResults.map((result) => (
+                          <CommandItem
+                            key={result.puuid}
+                            value={`${result.gameName || ""}#${
+                              result.tagLine || ""
+                            } ${result.puuid}`}
+                            onSelect={() => {
+                              router.push(
+                                `/summoners/${result.puuid}/overview?region=${result.region}`
+                              );
+                              setSearchQuery("");
+                              setSearchResults([]);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Avatar className="size-6 mr-2">
+                              {result.profileIconId ? (
+                                <>
+                                  <AvatarImage
+                                    src={getProfileIconUrl(
+                                      result.profileIconId
+                                    )}
+                                    alt="Profile Icon"
+                                  />
+                                  <AvatarFallback>
+                                    {result.gameName?.[0] || "?"}
+                                  </AvatarFallback>
+                                </>
+                              ) : (
+                                <AvatarFallback>
+                                  {result.gameName?.[0] || "?"}
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <span className="text-sm font-medium truncate">
+                                {result.gameName}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-muted-foreground">
+                                  #{result.tagLine}
+                                </span>
+                                <Badge variant="outline" className="text-xs">
+                                  {result.stats?.totalMatches || 0} games
+                                </Badge>
+                              </div>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+
+                    {!searchQuery && (
+                      <CommandGroup heading={t("header.searchInstructions")}>
+                        <CommandItem>
+                          <div className="flex flex-col gap-1">
+                            <p className="text-xs text-muted-foreground">
+                              {t("header.searchFormat")}
+                            </p>
+                            <p className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                              GameName#TagLine
+                            </p>
+                          </div>
+                        </CommandItem>
+                      </CommandGroup>
+                    )}
+
+                    {/* Recherche externe */}
                     {searchQuery && (
                       <CommandGroup>
                         <CommandItem

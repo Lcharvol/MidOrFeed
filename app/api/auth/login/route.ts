@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     // Trouver l'utilisateur
     const user = await prisma.user.findUnique({
       where: { email: validatedData.email },
+      include: { leagueAccount: true },
     });
 
     if (!user) {
@@ -48,15 +49,20 @@ export async function POST(request: Request) {
           id: user.id,
           email: user.email,
           name: user.name,
-          riotGameName: user.riotGameName,
-          riotTagLine: user.riotTagLine,
-          riotPuuid: user.riotPuuid,
-          riotSummonerId: user.riotSummonerId,
-          riotRegion: user.riotRegion,
           subscriptionTier: user.subscriptionTier,
           subscriptionExpiresAt: user.subscriptionExpiresAt?.toISOString(),
           dailyAnalysesUsed: user.dailyAnalysesUsed,
           lastDailyReset: user.lastDailyReset.toISOString(),
+          leagueAccount: user.leagueAccount
+            ? {
+                id: user.leagueAccount.id,
+                puuid: user.leagueAccount.puuid,
+                riotRegion: user.leagueAccount.riotRegion,
+                riotGameName: user.leagueAccount.riotGameName,
+                riotTagLine: user.leagueAccount.riotTagLine,
+                profileIconId: user.leagueAccount.profileIconId,
+              }
+            : null,
         },
       },
       { status: 200 }

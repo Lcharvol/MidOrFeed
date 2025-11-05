@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 import {
   Card,
@@ -19,7 +19,6 @@ import {
   ChevronsUpDownIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { useAuth } from "@/lib/auth-context";
 import {
   Table,
   TableBody,
@@ -29,22 +28,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
+import { getChampionImageUrl } from "@/constants/ddragon";
+import type { ChampionStats } from "@/types";
+import { useParams } from "next/navigation";
+import { Separator } from "@/components/ui/separator";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const getChampionImageUrl = (championId: string): string => {
-  const version = "15.21.1";
-  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championId}.png`;
-};
+// Image helper centralized in constants/ddragon
 
-interface ChampionStats {
-  played: number;
-  wins: number;
-  kills: number;
-  deaths: number;
-  assists: number;
-}
+// Using shared type from types/index.ts
 
 type SortColumn =
   | "name"
@@ -54,10 +50,10 @@ type SortColumn =
   | "kda"
   | "avgKills"
   | "avgDeaths"
-  | "avgAssists";
+  | "avgAssists"
+  | "score";
 type SortDirection = "asc" | "desc" | null;
 
-// Composant SortIcon
 const SortIcon = ({
   column,
   sortColumn,
@@ -75,14 +71,36 @@ const SortIcon = ({
   return <ChevronsUpDownIcon className="ml-1 size-4 opacity-50" />;
 };
 
-export default function ChampionsPage() {
-  const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+export default function ChampionsByIdPage() {
+  const params = useParams();
+  const puuid = typeof params?.id === "string" ? params.id : undefined;
 
-  const matchesUrl = user?.riotPuuid
-    ? `/api/matches/list?puuid=${user.riotPuuid}`
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>("score");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  // Scoring configuration
+  const MIN_GAMES_FOR_SCORE = 3; // en dessous: pas de score affiché
+  const VOLUME_REF_GAMES = 10; // nombre de parties pour atteindre le volume max
+
+  const getScoreBadgeClass = (score: number) => {
+    if (score >= 80) return "bg-green-600 hover:bg-green-600 text-white";
+    if (score >= 65) return "bg-emerald-500 hover:bg-emerald-500 text-white";
+    if (score >= 50) return "bg-amber-500 hover:bg-amber-500 text-white";
+    if (score >= 35) return "bg-orange-500 hover:bg-orange-500 text-white";
+    return "bg-red-500 hover:bg-red-500 text-white";
+  };
+
+  const getScoreTextClass = (score: number) => {
+    if (score >= 80) return "text-green-600 dark:text-green-400";
+    if (score >= 65) return "text-emerald-500";
+    if (score >= 50) return "text-amber-500";
+    if (score >= 35) return "text-orange-500";
+    return "text-red-500";
+  };
+
+  const matchesUrl = puuid
+    ? `/api/matches/list?puuid=${puuid}`
     : "/api/matches/list";
   const { data, error, isLoading } = useSWR(matchesUrl, fetcher);
   const { data: championsData } = useSWR("/api/champions/list", fetcher);
@@ -134,6 +152,17 @@ export default function ChampionsPage() {
         avgKills: (stats.kills / stats.played).toFixed(1),
         avgDeaths: (stats.deaths / stats.played).toFixed(1),
         avgAssists: (stats.assists / stats.played).toFixed(1),
+        // Score agrégé pour classer les meilleurs champions
+        score: (() => {
+          if (stats.played < MIN_GAMES_FOR_SCORE) return null as number | null;
+          const winRate01 = stats.played > 0 ? stats.wins / stats.played : 0; // 0..1
+          const kdaNum = (stats.kills + stats.assists) / (stats.deaths || 1); // 0..+
+          const kda01 = Math.min(1, kdaNum / 5); // clamp à 5 pour normaliser
+          const volume01 = Math.min(1, stats.played / VOLUME_REF_GAMES); // pondération par volume
+          const raw = 0.6 * winRate01 + 0.4 * kda01; // base sur perf
+          const weighted = raw * (0.6 + 0.4 * volume01); // boost si volume élevé
+          return Number((weighted * 100).toFixed(1)); // 0..100
+        })(),
       }))
       .filter((champion) => {
         const matchesSearch = champion.name
@@ -154,11 +183,23 @@ export default function ChampionsPage() {
             break;
           case "played":
           case "wins":
+          case "score":
           case "avgKills":
           case "avgDeaths":
           case "avgAssists":
-            aValue = a[sortColumn];
-            bValue = b[sortColumn];
+            if (sortColumn === "score") {
+              const as = a.score;
+              const bs = b.score;
+              // nulls en dernier
+              if (as === null && bs === null) return 0;
+              if (as === null) return 1;
+              if (bs === null) return -1;
+              aValue = as;
+              bValue = bs;
+            } else {
+              aValue = (a as any)[sortColumn] ?? -Infinity;
+              bValue = (b as any)[sortColumn] ?? -Infinity;
+            }
             break;
           case "winRate":
           case "kda":
@@ -174,20 +215,45 @@ export default function ChampionsPage() {
         return 0;
       });
     } else {
-      // Tri par défaut par parties jouées
       filtered.sort((a, b) => b.played - a.played);
     }
 
     return filtered;
   }, [championStats, championMap, searchTerm, sortColumn, sortDirection]);
 
-  // Générer des insights IA basés sur les données
+  const bestChampionId = useMemo(() => {
+    const top = Object.entries(championStats).sort(
+      (a, b) => b[1].played - a[1].played
+    )[0]?.[0];
+    return top || null;
+  }, [championStats]);
+
+  const bestChampionStats = useMemo(() => {
+    if (!bestChampionId)
+      return null as null | {
+        played: number;
+        wins: number;
+        winRate: string;
+        kda: string;
+      };
+    const s = (championStats as any)[bestChampionId] as {
+      played: number;
+      wins: number;
+      kills: number;
+      deaths: number;
+      assists: number;
+    };
+    if (!s) return null;
+    const winRate = ((s.wins / (s.played || 1)) * 100).toFixed(1);
+    const kda = ((s.kills + s.assists) / (s.deaths || 1)).toFixed(2);
+    return { played: s.played, wins: s.wins, winRate, kda };
+  }, [bestChampionId, championStats]);
+
+  // Best champion id for background splash in the card
+
   const aiInsights = useMemo<AIInsight[]>(() => {
     if (!champions || champions.length === 0) return [];
-
     const insights: AIInsight[] = [];
-
-    // Insight 1: Diversité des champions
     const uniqueChampions = champions.filter(
       (champ) => parseFloat(champ.winRate) >= 50
     ).length;
@@ -220,8 +286,6 @@ export default function ChampionsPage() {
         },
       });
     }
-
-    // Insight 2: Meilleur champion
     if (
       champions[0] &&
       parseFloat(champions[0].winRate) >= 70 &&
@@ -239,37 +303,6 @@ export default function ChampionsPage() {
         },
       });
     }
-
-    // Insight 3: KDA moyen
-    const avgKDA =
-      champions.reduce((sum, champ) => {
-        return sum + parseFloat(champ.kda);
-      }, 0) / champions.length;
-
-    if (avgKDA >= 2.5) {
-      insights.push({
-        type: "positive",
-        title: "Impact élevé sur vos matchs",
-        description: `Votre KDA moyen de ${avgKDA.toFixed(
-          2
-        )} indique que vous apportez une contribution significative à vos équipes.`,
-        confidence: 85,
-        data: { "KDA moyen": avgKDA.toFixed(2) },
-      });
-    } else if (avgKDA < 1.5) {
-      insights.push({
-        type: "negative",
-        title: "Impact de combat à améliorer",
-        description: `Votre KDA moyen de ${avgKDA.toFixed(
-          2
-        )} suggère que vous devriez vous concentrer sur l'amélioration de votre survie et de votre contribution en combat.`,
-        confidence: 80,
-        recommendation:
-          "Travaillez sur votre positioning et votre conscience de la carte pour réduire vos morts et augmenter votre impact.",
-        data: { "KDA moyen": avgKDA.toFixed(2) },
-      });
-    }
-
     return insights;
   }, [champions]);
 
@@ -301,8 +334,7 @@ export default function ChampionsPage() {
               Aucune donnée de champions
             </h3>
             <p className="text-muted-foreground">
-              Les statistiques de vos champions apparaîtront après avoir
-              collecté des matchs
+              Les statistiques apparaîtront après collecte
             </p>
           </div>
         </CardContent>
@@ -313,13 +345,12 @@ export default function ChampionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold">Mes Champions</h2>
+        <h2 className="text-3xl font-bold">Champions</h2>
         <p className="text-muted-foreground">
-          Statistiques détaillées de vos performances par champion
+          Statistiques détaillées par champion
         </p>
       </div>
 
-      {/* Statistiques globales */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-background to-primary/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -329,7 +360,9 @@ export default function ChampionsPage() {
             <SwordsIcon className="size-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{champions.length}</div>
+            <div className="text-2xl font-bold">
+              {Object.keys(championStats).length}
+            </div>
           </CardContent>
         </Card>
 
@@ -343,8 +376,9 @@ export default function ChampionsPage() {
           <CardContent>
             <div className="text-2xl font-bold">
               {
-                champions.filter((champ) => parseFloat(champ.winRate) >= 50)
-                  .length
+                Object.values(championStats).filter(
+                  (s) => (s.wins / (s.played || 1)) * 100 >= 50
+                ).length
               }
             </div>
             <p className="text-xs text-muted-foreground">
@@ -353,43 +387,105 @@ export default function ChampionsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-purple-500/20 bg-gradient-to-br from-background to-purple-500/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background to-purple-500/5 min-h-[180px]">
+          {bestChampionId && (
+            <div className="pointer-events-none absolute inset-0 z-0">
+              <Image
+                src={`https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${bestChampionId}_0.jpg`}
+                alt={bestChampionId}
+                fill
+                priority
+                className="object-cover object-[center_top] opacity-25"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/70 to-background/30" />
+            </div>
+          )}
+          <CardHeader className="relative z-10 flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Meilleur champion
             </CardTitle>
             <TrophyIcon className="size-4 text-purple-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {champions[0]?.name || "N/A"}
+          <CardContent className="relative z-10">
+            <div className="flex items-center gap-3">
+              {bestChampionId && (
+                <Image
+                  src={getChampionImageUrl(bestChampionId)}
+                  alt={bestChampionId}
+                  width={36}
+                  height={36}
+                  className="rounded-md ring-1 ring-border"
+                />
+              )}
+              <div className="text-2xl font-bold leading-tight drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
+                {bestChampionId
+                  ? championMap.get(bestChampionId) || bestChampionId
+                  : "N/A"}
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {champions[0]?.played || 0} parties jouées
-            </p>
+            {bestChampionStats && (
+              <>
+                <Separator className="my-3" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Parties</p>
+                    <p className="font-semibold tabular-nums">
+                      {bestChampionStats.played}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Win rate</p>
+                    <div className="flex items-center gap-2">
+                      <Progress
+                        value={parseFloat(bestChampionStats.winRate)}
+                        className="h-2 w-full max-w-[120px]"
+                      />
+                      <Badge
+                        className={
+                          parseFloat(bestChampionStats.winRate) >= 50
+                            ? "bg-green-500 hover:bg-green-500 text-white"
+                            : "bg-red-500 hover:bg-red-500 text-white"
+                        }
+                      >
+                        {bestChampionStats.winRate}%
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">KDA moyen</p>
+                    <p
+                      className={`font-semibold tabular-nums ${
+                        parseFloat(bestChampionStats.kda) >= 3
+                          ? "text-green-600 dark:text-green-400"
+                          : parseFloat(bestChampionStats.kda) >= 2
+                          ? "text-amber-600 dark:text-amber-400"
+                          : ""
+                      }`}
+                    >
+                      {bestChampionStats.kda}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Insights IA */}
       {aiInsights.length > 0 && (
         <div className="space-y-4">
-          {aiInsights.map((insight, index) => (
-            <AIInsightCard key={index} insight={insight} />
+          {aiInsights.map((insight, idx) => (
+            <AIInsightCard key={idx} insight={insight} />
           ))}
         </div>
       )}
 
-      {/* Tableau des champions */}
       <Card>
         <CardHeader>
           <CardTitle>Détails par champion</CardTitle>
-          <CardDescription>
-            Statistiques complètes de vos performances
-          </CardDescription>
+          <CardDescription>Statistiques complètes</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Barre de recherche */}
           <div className="mb-4">
             <Input
               placeholder="Rechercher un champion..."
@@ -398,10 +494,9 @@ export default function ChampionsPage() {
               className="max-w-sm"
             />
           </div>
-
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-md border">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead
                     className="cursor-pointer hover:bg-accent"
@@ -421,7 +516,7 @@ export default function ChampionsPage() {
                     onClick={() => handleSort("played")}
                   >
                     <div className="flex items-center">
-                      Parties
+                      Parties jouées
                       <SortIcon
                         column="played"
                         sortColumn={sortColumn}
@@ -447,7 +542,7 @@ export default function ChampionsPage() {
                     onClick={() => handleSort("winRate")}
                   >
                     <div className="flex items-center">
-                      Win Rate
+                      Win rate
                       <SortIcon
                         column="winRate"
                         sortColumn={sortColumn}
@@ -481,11 +576,27 @@ export default function ChampionsPage() {
                       />
                     </div>
                   </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-accent"
+                    onClick={() => handleSort("score")}
+                  >
+                    <div className="flex items-center">
+                      Score
+                      <SortIcon
+                        column="score"
+                        sortColumn={sortColumn}
+                        sortDirection={sortDirection}
+                      />
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {champions.map((champion) => (
-                  <TableRow key={champion.championId}>
+                  <TableRow
+                    key={champion.championId}
+                    className="odd:bg-muted/30 hover:bg-accent/50 transition-colors"
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Image
@@ -505,6 +616,7 @@ export default function ChampionsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">{champion.played}</div>
+                      <p className="text-xs text-muted-foreground">parties</p>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-green-600 dark:text-green-400">
@@ -515,24 +627,60 @@ export default function ChampionsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div
-                        className={`font-bold ${
-                          parseFloat(champion.winRate) >= 50
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        {champion.winRate}%
+                      <div className="flex items-center gap-2">
+                        <Progress
+                          value={parseFloat(champion.winRate)}
+                          className="h-2 w-24"
+                          role="progressbar"
+                        />
+                        <Badge
+                          className={
+                            parseFloat(champion.winRate) >= 50
+                              ? "bg-green-500 hover:bg-green-500 text-white"
+                              : "bg-red-500 hover:bg-red-500 text-white"
+                          }
+                        >
+                          {champion.winRate}%
+                        </Badge>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">{champion.kda}</div>
+                      <div className="font-medium">
+                        <span
+                          className={
+                            parseFloat(champion.kda) >= 3
+                              ? "text-green-600 dark:text-green-400"
+                              : parseFloat(champion.kda) >= 2
+                              ? "text-amber-600 dark:text-amber-400"
+                              : ""
+                          }
+                        >
+                          {champion.kda}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">moyen</p>
                     </TableCell>
                     <TableCell>
                       <div className="font-mono text-sm">
                         {champion.avgKills} / {champion.avgDeaths} /{" "}
                         {champion.avgAssists}
                       </div>
+                      <p className="text-xs text-muted-foreground">par match</p>
+                    </TableCell>
+                    <TableCell>
+                      {champion.score === null ? (
+                        <div className="text-xs text-muted-foreground">
+                          Min {MIN_GAMES_FOR_SCORE} parties
+                        </div>
+                      ) : (
+                        <div
+                          className={`font-semibold ${getScoreTextClass(
+                            Number(champion.score)
+                          )}`}
+                        >
+                          {Number(champion.score).toFixed(1)}
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

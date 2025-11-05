@@ -64,20 +64,34 @@ export async function POST(request: Request) {
         );
 
         const collectResponse = await POST(mockRequest);
-        const collectResult = await collectResponse.json();
+        const status = collectResponse.status;
+        let collectResult: any = {};
+        try {
+          collectResult = await collectResponse.json();
+        } catch {}
         const collectResponseOk = collectResponse.ok;
 
-        // Marquer le joueur comme "completed" ou "failed"
+        // Log explicite en cas d'échec
+        if (!collectResponseOk) {
+          console.error(
+            `[CRAWL/PROCESS] Collect failed for ${player.puuid} (${player.riotRegion}) - status ${status}:`,
+            collectResult
+          );
+        }
+
+        // 404 = aucun match trouvé: considérer comme complété (0 matches), pas failed
+        const markAsCompleted = collectResponseOk || status === 404;
+
         await prisma.discoveredPlayer.update({
           where: { id: player.id },
           data: {
-            crawlStatus: collectResponseOk ? "completed" : "failed",
+            crawlStatus: markAsCompleted ? "completed" : "failed",
             lastCrawledAt: new Date(),
             matchesCollected: collectResult.matchesCollected || 0,
           },
         });
 
-        if (collectResponseOk) {
+        if (markAsCompleted) {
           totalMatchesCollected += collectResult.matchesCollected || 0;
         }
       } catch (error) {

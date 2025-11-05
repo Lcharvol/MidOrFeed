@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 import {
   Card,
@@ -29,17 +29,15 @@ import {
   BrainIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import Link from "next/link";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
+import { QUEUE_NAMES } from "@/constants/queues";
+import { useParams, useSearchParams } from "next/navigation";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const getChampionImageUrl = (championId: string): string => {
-  const version = "15.21.1";
-  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championId}.png`;
-};
+import { getChampionImageUrl } from "@/constants/ddragon";
 
 interface Match {
   id: string;
@@ -68,6 +66,7 @@ interface Participant {
   totalDamageTaken: number;
   visionScore: number;
   win: boolean;
+  participantPUuid?: string;
 }
 
 interface MatchData {
@@ -100,18 +99,7 @@ interface MatchData {
   >;
 }
 
-const QUEUE_NAMES: Record<number, string> = {
-  400: "Normal Draft",
-  420: "Ranked Solo",
-  430: "Normal Blind",
-  440: "Ranked Flex",
-  450: "ARAM",
-  700: "Clash",
-  720: "ARAM Clash",
-  1020: "One for All",
-  1300: "Nexus Blitz",
-  1700: "Arena",
-};
+// QUEUE_NAMES centralized in @/types
 
 function MatchDetailsDialog({
   match,
@@ -136,13 +124,14 @@ function MatchDetailsDialog({
 
   const formatDate = (timestamp: string | bigint) => {
     const date = new Date(Number(timestamp));
-    return date.toLocaleDateString("fr-FR", {
+    return new Intl.DateTimeFormat("fr-FR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    });
+      timeZone: "UTC",
+    }).format(date);
   };
 
   if (!fullMatch.participants || fullMatch.participants.length === 0) {
@@ -199,7 +188,6 @@ function MatchDetailsDialog({
       </DialogHeader>
 
       <div className="space-y-6">
-        {/* Équipe Bleue */}
         <div className="border-2 border-blue-500/30 rounded-lg p-4 bg-blue-500/5">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-3 h-3 bg-blue-500 rounded-full" />
@@ -251,7 +239,6 @@ function MatchDetailsDialog({
           </div>
         </div>
 
-        {/* Équipe Rouge */}
         <div className="border-2 border-red-500/30 rounded-lg p-4 bg-red-500/5">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-3 h-3 bg-red-500 rounded-full" />
@@ -307,16 +294,19 @@ function MatchDetailsDialog({
   );
 }
 
-export default function MatchesPage() {
-  const { user } = useAuth();
-  const matchesUrl = user?.riotPuuid
-    ? `/api/matches/list?puuid=${user.riotPuuid}`
+export default function MatchesByIdPage() {
+  const params = useParams();
+  const puuid = typeof params?.id === "string" ? params.id : undefined;
+  const searchParams = useSearchParams();
+  const region = searchParams.get("region") || undefined;
+
+  const matchesUrl = puuid
+    ? `/api/matches/list?puuid=${puuid}`
     : "/api/matches/list";
   const { data, error, isLoading, mutate } = useSWR(matchesUrl, fetcher);
   const { data: championsData } = useSWR("/api/champions/list", fetcher);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Créer un mapping championId -> name
   const championMap = championsData?.data
     ? new Map(
         championsData.data.map(
@@ -329,39 +319,28 @@ export default function MatchesPage() {
     : new Map();
 
   const handleRefresh = async () => {
-    if (!user?.riotPuuid || !user?.riotRegion) {
-      toast.error("Veuillez d'abord lier votre compte Riot Games");
+    if (!puuid || !region) {
+      toast.error("Paramètres manquants");
       return;
     }
-
     setIsRefreshing(true);
     try {
       const response = await fetch("/api/matches/collect", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          puuid: user.riotPuuid,
-          region: user.riotRegion,
-          count: 100,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ puuid, region, count: 100 }),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         toast.error(result.error || "Erreur lors de la collecte");
         return;
       }
-
       toast.success(
         `Collecte terminée: ${result.matchesCollected} matchs collectés`
       );
-      // Recharger les données
       mutate();
-    } catch (error) {
-      console.error("Erreur:", error);
+    } catch (e) {
+      console.error(e);
       toast.error("Une erreur est survenue");
     } finally {
       setIsRefreshing(false);
@@ -392,68 +371,17 @@ export default function MatchesPage() {
 
   const matchData: MatchData = data.data;
 
-  if (matchData.stats.totalGames === 0) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="mb-2 text-4xl font-bold">Mes Matchs</h1>
-            <p className="text-muted-foreground">
-              Analyse de vos performances League of Legends
-            </p>
-          </div>
-          <Button
-            onClick={handleRefresh}
-            disabled={isRefreshing || !user?.riotPuuid}
-            variant="outline"
-          >
-            {isRefreshing ? (
-              <>
-                <Loader2Icon className="mr-2 size-4 animate-spin" />
-                Mise à jour...
-              </>
-            ) : (
-              <>
-                <RefreshCwIcon className="mr-2 size-4" />
-                Mettre à jour les matchs
-              </>
-            )}
-          </Button>
-        </div>
-        <Card>
-          <CardContent className="py-20">
-            <div className="text-center">
-              <Gamepad2Icon className="size-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">
-                Aucun match collecté
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                {user?.riotPuuid
-                  ? "Cliquez sur le bouton ci-dessus pour collecter vos matchs"
-                  : "Veuillez d'abord lier votre compte Riot Games depuis votre profil"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const topChampions = Object.entries(matchData.championStats)
     .sort((a, b) => b[1].played - a[1].played)
     .slice(0, 5);
 
-  // Générer des insights IA pour les matchs
   const aiInsights = useMemo<AIInsight[]>(() => {
     const insights: AIInsight[] = [];
-
-    // Insight: Tendances récentes
     const recentMatches = matchData.matches.slice(0, 10);
     const recentWins = recentMatches.filter(
       (m) => m.participants?.[0]?.win
     ).length;
     const recentWinRate = (recentWins / recentMatches.length) * 100;
-
     if (recentMatches.length >= 5) {
       if (recentWinRate >= 70) {
         insights.push({
@@ -489,8 +417,6 @@ export default function MatchesPage() {
         });
       }
     }
-
-    // Insight: Volume de jeu
     if (matchData.stats.totalGames >= 50) {
       insights.push({
         type: "positive",
@@ -500,7 +426,6 @@ export default function MatchesPage() {
         data: { "Matchs analysés": matchData.stats.totalGames },
       });
     }
-
     return insights;
   }, [matchData]);
 
@@ -509,16 +434,16 @@ export default function MatchesPage() {
     const secs = seconds % 60;
     return `${mins}m ${secs}s`;
   };
-
   const formatDate = (timestamp: string | bigint) => {
     const date = new Date(Number(timestamp));
-    return date.toLocaleDateString("fr-FR", {
+    return new Intl.DateTimeFormat("fr-FR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    });
+      timeZone: "UTC",
+    }).format(date);
   };
 
   return (
@@ -531,17 +456,15 @@ export default function MatchesPage() {
             </div>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Mes Matchs
+                Matchs
               </h1>
-              <p className="text-muted-foreground">
-                Analyse de vos performances League of Legends
-              </p>
+              <p className="text-muted-foreground">Analyse des performances</p>
             </div>
           </div>
         </div>
         <Button
           onClick={handleRefresh}
-          disabled={isRefreshing || !user?.riotPuuid}
+          disabled={isRefreshing || !puuid || !region}
           className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
         >
           {isRefreshing ? (
@@ -558,7 +481,6 @@ export default function MatchesPage() {
         </Button>
       </div>
 
-      {/* Statistiques globales */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card className="relative overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-background to-primary/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl" />
@@ -578,7 +500,6 @@ export default function MatchesPage() {
             </p>
           </CardContent>
         </Card>
-
         <Card className="relative overflow-hidden border-2 border-red-500/20 bg-gradient-to-br from-background to-red-500/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-3xl" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
@@ -594,7 +515,6 @@ export default function MatchesPage() {
             <p className="text-xs text-muted-foreground mt-2">Par match</p>
           </CardContent>
         </Card>
-
         <Card className="relative overflow-hidden border-2 border-blue-500/20 bg-gradient-to-br from-background to-blue-500/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-3xl" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
@@ -612,7 +532,6 @@ export default function MatchesPage() {
             </p>
           </CardContent>
         </Card>
-
         <Card className="relative overflow-hidden border-2 border-green-500/20 bg-gradient-to-br from-background to-green-500/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full blur-3xl" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
@@ -632,7 +551,6 @@ export default function MatchesPage() {
         </Card>
       </div>
 
-      {/* Insights IA */}
       {aiInsights.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 mb-8">
           {aiInsights.map((insight, index) => (
@@ -641,119 +559,6 @@ export default function MatchesPage() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Top Champions */}
-        <Card className="lg:col-span-2 border-2 border-primary/10">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-            <CardTitle className="flex items-center gap-2">
-              <TrophyIcon className="size-5 text-primary" />
-              Top Champions
-            </CardTitle>
-            <CardDescription>Vos champions les plus joués</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {topChampions.map(([championId, stats]) => {
-                const winRate = ((stats.wins / stats.played) * 100).toFixed(1);
-                const avgKDA = `${(stats.kills / stats.played).toFixed(1)} / ${(
-                  stats.deaths / stats.played
-                ).toFixed(1)} / ${(stats.assists / stats.played).toFixed(1)}`;
-                const championName = championMap.get(championId) || championId;
-                const isWinRateGood = parseFloat(winRate) >= 50;
-
-                return (
-                  <div
-                    key={championId}
-                    className="flex items-center gap-4 p-4 rounded-lg border-2 hover:border-primary/30 transition-colors bg-gradient-to-r from-background to-muted/20"
-                  >
-                    <div className="relative">
-                      <Image
-                        src={getChampionImageUrl(championId)}
-                        alt={championName}
-                        width={64}
-                        height={64}
-                        className="rounded-lg border-2 border-primary/20"
-                      />
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center border-2 border-background">
-                        <span className="text-xs font-bold text-primary-foreground">
-                          {topChampions.indexOf([championId, stats]) + 1}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">{championName}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {stats.played} matchs • {avgKDA} KDA
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <Badge
-                        variant={isWinRateGood ? "default" : "secondary"}
-                        className={
-                          isWinRateGood
-                            ? "bg-green-500 hover:bg-green-500 text-white"
-                            : "bg-red-500 hover:bg-red-500 text-white"
-                        }
-                      >
-                        {winRate}%
-                      </Badge>
-                      <p className="text-xs text-muted-foreground">Win Rate</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Performance par rôle */}
-        <Card className="border-2 border-blue-500/10">
-          <CardHeader className="bg-gradient-to-r from-blue-500/5 to-transparent">
-            <CardTitle className="flex items-center gap-2">
-              <TargetIcon className="size-5 text-blue-500" />
-              Par Rôle
-            </CardTitle>
-            <CardDescription>Stats par position</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Object.entries(matchData.roleStats)
-                .sort((a, b) => b[1].played - a[1].played)
-                .map(([role, stats]) => {
-                  const winRate = ((stats.wins / stats.played) * 100).toFixed(
-                    1
-                  );
-                  const isWinRateGood = parseFloat(winRate) >= 50;
-                  return (
-                    <div
-                      key={role}
-                      className="flex items-center justify-between p-3 rounded-lg border-2 hover:border-primary/30 transition-colors bg-gradient-to-r from-background to-muted/10"
-                    >
-                      <div>
-                        <p className="font-bold capitalize text-sm">{role}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {stats.played} matchs
-                        </p>
-                      </div>
-                      <Badge
-                        variant={isWinRateGood ? "default" : "secondary"}
-                        className={
-                          isWinRateGood
-                            ? "bg-green-500 hover:bg-green-500 text-white"
-                            : "bg-red-500 hover:bg-red-500 text-white"
-                        }
-                      >
-                        {winRate}%
-                      </Badge>
-                    </div>
-                  );
-                })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Historique des matchs */}
       <Card className="mt-8 border-2 border-purple-500/10">
         <CardHeader className="bg-gradient-to-r from-purple-500/5 to-transparent">
           <CardTitle className="flex items-center gap-2">
@@ -765,12 +570,16 @@ export default function MatchesPage() {
         <CardContent>
           <div className="space-y-3">
             {matchData.matches.slice(0, 20).map((match) => {
-              const userParticipant = match.participants[0];
+              const userParticipant =
+                (puuid
+                  ? match.participants.find(
+                      (p) => (p as Participant).participantPUuid === puuid
+                    )
+                  : match.participants[0]) || match.participants[0];
               const isWin = userParticipant?.win;
               const kda = userParticipant
                 ? `${userParticipant.kills}/${userParticipant.deaths}/${userParticipant.assists}`
                 : "0/0/0";
-
               return (
                 <Dialog key={match.id}>
                   <DialogTrigger asChild>
@@ -795,7 +604,6 @@ export default function MatchesPage() {
                           {formatDuration(match.gameDuration)}
                         </p>
                       </div>
-
                       {userParticipant && (
                         <div className="flex items-center gap-3 flex-1">
                           <div className="relative">
@@ -820,7 +628,6 @@ export default function MatchesPage() {
                           </div>
                         </div>
                       )}
-
                       <div className="flex flex-col items-end gap-2">
                         <Badge variant="outline">
                           {QUEUE_NAMES[match.queueId] ||
@@ -830,7 +637,6 @@ export default function MatchesPage() {
                           {formatDate(match.gameCreation)}
                         </p>
                       </div>
-
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/ai-analysis/${match.id}`}>
