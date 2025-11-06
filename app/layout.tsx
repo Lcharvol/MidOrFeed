@@ -37,7 +37,7 @@ export default function RootLayout({
           <I18nProvider>
             <AuthProvider>
               <ConditionalHeader />
-              {children}
+              <main className="px-4 sm:px-6">{children}</main>
               <Toaster />
             </AuthProvider>
           </I18nProvider>

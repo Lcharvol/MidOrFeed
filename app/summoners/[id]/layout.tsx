@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getProfileIconUrl } from "@/constants/ddragon";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
-import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   usePathname,
@@ -16,6 +15,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SummonerByIdLayout({
   children,
@@ -92,7 +92,11 @@ export default function SummonerByIdLayout({
     return getProfileIconUrl(details.profileIconId);
   }, [details]);
 
-  const isActive = (sub: string) => pathname === `/summoners/${puuid}${sub}`;
+  const currentTab = useMemo(() => {
+    if (pathname?.endsWith("/champions")) return "champions";
+    if (pathname?.endsWith("/matches")) return "matches";
+    return "overview";
+  }, [pathname]);
 
   const handleUpdateProfile = async () => {
     if (!puuid || !region) return;
@@ -193,48 +197,31 @@ export default function SummonerByIdLayout({
         </div>
       </div>
 
-      <div className="border-b mb-6">
-        {loading ? (
+      {loading ? (
+        <div className="mb-6">
           <div className="flex gap-8">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-6 w-28" />
-            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-24" />
           </div>
-        ) : (
-          <div className="flex gap-8">
-            <Link
-              href={`/summoners/${puuid}/overview?region=${region || ""}`}
-              className={`pb-4 px-2 font-semibold transition-colors relative ${
-                isActive("/overview")
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Vue d&apos;ensemble
-            </Link>
-            <Link
-              href={`/summoners/${puuid}/champions?region=${region || ""}`}
-              className={`pb-4 px-2 font-semibold transition-colors relative ${
-                isActive("/champions")
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Champions
-            </Link>
-            <Link
-              href={`/summoners/${puuid}/matches?region=${region || ""}`}
-              className={`pb-4 px-2 font-semibold transition-colors relative ${
-                isActive("/matches")
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Matchs
-            </Link>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <Tabs
+          value={currentTab}
+          onValueChange={(value) => {
+            const basePath = `/summoners/${puuid}/${value}`;
+            const query = region ? `?region=${region}` : "";
+            router.push(`${basePath}${query}`);
+          }}
+          className="mb-6"
+        >
+          <TabsList>
+            <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
+            <TabsTrigger value="champions">Champions</TabsTrigger>
+            <TabsTrigger value="matches">Matchs</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {children}
     </div>

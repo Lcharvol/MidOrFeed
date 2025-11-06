@@ -28,26 +28,15 @@ export default function PricingPage() {
   const { t } = useI18n();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleUpgrade = async (tier: "free" | "premium") => {
+  const handleUpgrade = async (_tier?: "free" | "premium") => {
     if (!user) {
       router.push("/login");
       return;
     }
-
-    if (tier === "premium") {
-      setIsProcessing(true);
-      // TODO: Implémenter l'intégration de paiement (Stripe, etc.)
-
-      // Simuler un paiement pour le moment
-      setTimeout(() => {
-        setIsProcessing(false);
-        // TODO: Appeler l'API pour activer l'abonnement
-        alert("Paiement simulé ! (À implémenter avec Stripe)");
-      }, 1500);
-    }
+    alert("Premium temporairement indisponible.");
   };
 
-  const isPremium = user?.subscriptionTier === "premium";
+  const isPremium = false;
 
   return (
     <div className="container mx-auto py-20 px-4">
@@ -112,12 +101,8 @@ export default function PricingPage() {
                 <span className="text-muted-foreground">Assistant in-game</span>
               </li>
             </ul>
-            <Button
-              className="w-full"
-              variant={isPremium ? "outline" : "default"}
-              disabled
-            >
-              {isPremium ? "Actuel" : "Plan actuel"}
+            <Button className="w-full" variant="default" disabled>
+              Plan actuel
             </Button>
           </CardContent>
         </Card>
@@ -181,23 +166,11 @@ export default function PricingPage() {
             </ul>
             <Button
               className="w-full"
-              variant={isPremium ? "outline" : "default"}
-              onClick={() => handleUpgrade("premium")}
-              disabled={isProcessing || isPremium}
+              variant="outline"
+              onClick={() => handleUpgrade()}
+              disabled
             >
-              {isProcessing ? (
-                <>
-                  <Loader2Icon className="mr-2 size-4 animate-spin" />
-                  Traitement...
-                </>
-              ) : isPremium ? (
-                "Abonnement actif"
-              ) : (
-                <>
-                  {t("subscription.upgradeNow")}{" "}
-                  <CrownIcon className="ml-2 size-4" />
-                </>
-              )}
+              Indisponible
             </Button>
           </CardContent>
         </Card>

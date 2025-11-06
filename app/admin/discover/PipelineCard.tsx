@@ -60,7 +60,6 @@ export function PipelineCard() {
     return () => clearInterval(t);
   }, []);
 
-  // Auto-scroll to show latest logs (we prepend newest at the top ⇒ stick to top)
   useEffect(() => {
     if (logRef.current) {
       logRef.current.scrollTop = 0;

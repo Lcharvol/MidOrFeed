@@ -96,7 +96,7 @@ export default function LoginPage() {
               alt="MidOrFeed"
               width={100}
               height={50}
-              className="m-auto w-auto"
+              className="m-auto"
               priority
             />
             <CardDescription className="mt-4">

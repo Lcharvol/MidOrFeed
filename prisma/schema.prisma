@@ -255,3 +255,45 @@ model LeaderboardEntry {
   @@index([region, tier])
   @@map("leaderboard_entries")
 }
+
+model ChampionStats {
+  id         String @id @default(cuid())
+  championId String @unique // ID Riot du champion (ex: "Aatrox")
+
+  // Statistiques globales
+  totalGames  Int   @default(0) // Nombre total de parties
+  totalWins   Int   @default(0) // Nombre de victoires
+  totalLosses Int   @default(0) // Nombre de défaites
+  winRate     Float @default(0) // Taux de victoire (0-100)
+
+  // Statistiques de combat
+  avgKills   Float @default(0) // Kills moyens
+  avgDeaths  Float @default(0) // Morts moyennes
+  avgAssists Float @default(0) // Assistances moyennes
+  avgKDA     Float @default(0) // KDA moyen
+
+  // Statistiques économiques
+  avgGoldEarned Float @default(0) // Or gagné moyen
+  avgGoldSpent  Float @default(0) // Or dépensé moyen
+
+  // Statistiques de dégâts
+  avgDamageDealt Float @default(0) // Dégâts infligés moyens
+  avgDamageTaken Float @default(0) // Dégâts subis moyens
+
+  // Statistiques de vision
+  avgVisionScore Float @default(0) // Score de vision moyen
+
+  // Statistiques par rôle (optionnel, peut être calculé séparément)
+  topRole String? // Rôle le plus joué
+  topLane String? // Lane la plus jouée
+
+  // Métadonnées
+  lastAnalyzedAt DateTime @default(now()) // Dernière analyse
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([championId])
+  @@index([winRate])
+  @@index([totalGames])
+  @@map("champion_stats")
+}

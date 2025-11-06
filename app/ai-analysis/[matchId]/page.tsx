@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -27,12 +27,20 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
 import { useAIAnalysis } from "@/lib/hooks/use-ai-analysis";
+import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const getChampionImageUrl = (championId: string): string => {
+const getChampionImageUrl = (
+  championId: string,
+  championKeyToId?: Map<string, string>
+): string => {
   const version = "15.21.1";
-  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championId}.png`;
+  // Accept numeric champion key or string slug
+  const slug = /^\d+$/.test(String(championId))
+    ? championKeyToId?.get(String(championId)) || String(championId)
+    : String(championId);
+  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${slug}.png`;
 };
 
 interface AIInsight {
@@ -73,6 +81,20 @@ export default function AIAnalysisPage() {
   const { t } = useI18n();
   const matchId = params.matchId as string;
   const { canAnalyze, remainingAnalyses } = useAIAnalysis();
+  const { data: championsData } = useSWR("/api/champions/list", fetcher);
+  const championKeyToId = useMemo(() => {
+    const map = new Map<string, string>();
+    const list =
+      (championsData?.data as Array<{
+        championKey?: number;
+        championId: string;
+      }>) || [];
+    for (const c of list) {
+      if (typeof c.championKey === "number")
+        map.set(String(c.championKey), c.championId);
+    }
+    return map;
+  }, [championsData]);
 
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -272,7 +294,7 @@ export default function AIAnalysisPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button size="lg" asChild>
-                    <Link href="/pricing">Passer à Premium</Link>
+                    {/* Premium hidden per Riot policy */}
                   </Button>
                   <Button size="lg" variant="outline" asChild>
                     <Link href="/summoners/matches">Retour aux matchs</Link>
@@ -369,7 +391,10 @@ export default function AIAnalysisPage() {
         <CardContent>
           <div className="flex items-start gap-6">
             <Image
-              src={getChampionImageUrl(analysis.championPerformance.championId)}
+              src={getChampionImageUrl(
+                analysis.championPerformance.championId,
+                championKeyToId
+              )}
               alt={analysis.championPerformance.championId}
               width={80}
               height={80}

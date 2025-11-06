@@ -53,26 +53,59 @@ interface Champion {
   attackSpeedPerLevel: number;
 }
 
+interface ChampionStats {
+  id: string;
+  championId: string;
+  totalGames: number;
+  totalWins: number;
+  totalLosses: number;
+  winRate: number;
+  avgKills: number;
+  avgDeaths: number;
+  avgAssists: number;
+  avgKDA: number;
+  avgGoldEarned: number;
+  avgGoldSpent: number;
+  avgDamageDealt: number;
+  avgDamageTaken: number;
+  avgVisionScore: number;
+  topRole: string | null;
+  topLane: string | null;
+  lastAnalyzedAt: string;
+}
+
 interface ChampionsResponse {
   success: boolean;
   data: Champion[];
   count: number;
 }
 
+interface ChampionStatsResponse {
+  success: boolean;
+  data: ChampionStats[];
+  count: number;
+}
+
+interface ChampionWithStats extends Champion {
+  stats?: ChampionStats;
+}
+
 type SortColumn =
   | "name"
-  | "attack"
-  | "defense"
-  | "magic"
-  | "difficulty"
-  | "hp"
-  | "moveSpeed";
+  | "winRate"
+  | "totalGames"
+  | "avgKDA"
+  | "avgKills"
+  | "avgDeaths"
+  | "avgAssists"
+  | "avgDamageDealt"
+  | "avgVisionScore";
 type SortDirection = "asc" | "desc" | null;
 
-const fetcher = async (url: string): Promise<ChampionsResponse> => {
+const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error("Erreur lors de la récupération des champions");
+    throw new Error("Erreur lors de la récupération des données");
   }
   return res.json();
 };
@@ -97,14 +130,23 @@ const SortIcon = ({
 
 export default function ChampionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>("winRate");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
-  // Utiliser SWR pour fetch les champions
-  const { data, error, isLoading } = useSWR<ChampionsResponse>(
-    "/api/champions/list",
-    fetcher
-  );
+  // Utiliser SWR pour fetch les champions et leurs stats
+  const {
+    data: championsData,
+    error: championsError,
+    isLoading: championsLoading,
+  } = useSWR<ChampionsResponse>("/api/champions/list", fetcher);
+  const {
+    data: statsData,
+    error: statsError,
+    isLoading: statsLoading,
+  } = useSWR<ChampionStatsResponse>("/api/champions/stats", fetcher);
+
+  const isLoading = championsLoading || statsLoading;
+  const error = championsError || statsError;
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -136,10 +178,25 @@ export default function ChampionsPage() {
     return "Débutant";
   };
 
-  const sortedAndFilteredChampions = useMemo(() => {
-    if (!data?.data) return [];
+  // Combiner les champions avec leurs statistiques
+  const championsWithStats = useMemo<ChampionWithStats[]>(() => {
+    if (!championsData?.data) return [];
 
-    let filtered = data.data.filter((champion) => {
+    const statsMap = new Map<string, ChampionStats>();
+    if (statsData?.data) {
+      for (const stat of statsData.data) {
+        statsMap.set(stat.championId, stat);
+      }
+    }
+
+    return championsData.data.map((champion) => ({
+      ...champion,
+      stats: statsMap.get(champion.championId),
+    }));
+  }, [championsData, statsData]);
+
+  const sortedAndFilteredChampions = useMemo(() => {
+    let filtered = championsWithStats.filter((champion) => {
       const matchesSearch = champion.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -148,8 +205,27 @@ export default function ChampionsPage() {
 
     if (sortColumn && sortDirection) {
       filtered = [...filtered].sort((a, b) => {
-        const aValue = a[sortColumn];
-        const bValue = b[sortColumn];
+        let aValue: number | string;
+        let bValue: number | string;
+
+        if (sortColumn === "name") {
+          aValue = a.name;
+          bValue = b.name;
+        } else if (
+          sortColumn.startsWith("avg") ||
+          sortColumn === "winRate" ||
+          sortColumn === "totalGames"
+        ) {
+          // Statistiques depuis les matches
+          aValue =
+            (a.stats?.[sortColumn as keyof ChampionStats] as number) ?? 0;
+          bValue =
+            (b.stats?.[sortColumn as keyof ChampionStats] as number) ?? 0;
+        } else {
+          // Statistiques de base du champion
+          aValue = (a[sortColumn as keyof Champion] as number) ?? 0;
+          bValue = (b[sortColumn as keyof Champion] as number) ?? 0;
+        }
 
         if (typeof aValue === "number" && typeof bValue === "number") {
           return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
@@ -163,7 +239,7 @@ export default function ChampionsPage() {
     }
 
     return filtered;
-  }, [data, searchTerm, sortColumn, sortDirection]);
+  }, [championsWithStats, searchTerm, sortColumn, sortDirection]);
 
   const getChampionImageUrl = (championId: string): string => {
     // Les images de champions Riot suivent ce pattern:
@@ -175,9 +251,10 @@ export default function ChampionsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-2 text-4xl font-bold">Champions</h1>
+        <h1 className="mb-2 text-4xl font-bold">Tier List - Champions</h1>
         <p className="text-muted-foreground">
-          Tous les champions de League of Legends avec leurs statistiques
+          Classement des champions basé sur les performances réelles dans les
+          matches
         </p>
       </div>
 
@@ -228,12 +305,12 @@ export default function ChampionsPage() {
                 <TableHead>Titre</TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
-                  onClick={() => handleSort("difficulty")}
+                  onClick={() => handleSort("winRate")}
                 >
                   <div className="flex items-center">
-                    Difficulté
+                    Win Rate
                     <SortIcon
-                      column="difficulty"
+                      column="winRate"
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
@@ -241,12 +318,12 @@ export default function ChampionsPage() {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
-                  onClick={() => handleSort("attack")}
+                  onClick={() => handleSort("totalGames")}
                 >
                   <div className="flex items-center">
-                    Attaque
+                    Parties
                     <SortIcon
-                      column="attack"
+                      column="totalGames"
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
@@ -254,12 +331,12 @@ export default function ChampionsPage() {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
-                  onClick={() => handleSort("defense")}
+                  onClick={() => handleSort("avgKDA")}
                 >
                   <div className="flex items-center">
-                    Défense
+                    KDA
                     <SortIcon
-                      column="defense"
+                      column="avgKDA"
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
@@ -267,12 +344,12 @@ export default function ChampionsPage() {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
-                  onClick={() => handleSort("magic")}
+                  onClick={() => handleSort("avgKills")}
                 >
                   <div className="flex items-center">
-                    Magie
+                    Kills
                     <SortIcon
-                      column="magic"
+                      column="avgKills"
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
@@ -280,12 +357,51 @@ export default function ChampionsPage() {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
-                  onClick={() => handleSort("hp")}
+                  onClick={() => handleSort("avgDeaths")}
                 >
                   <div className="flex items-center">
-                    HP
+                    Deaths
                     <SortIcon
-                      column="hp"
+                      column="avgDeaths"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => handleSort("avgAssists")}
+                >
+                  <div className="flex items-center">
+                    Assists
+                    <SortIcon
+                      column="avgAssists"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => handleSort("avgDamageDealt")}
+                >
+                  <div className="flex items-center">
+                    Dégâts
+                    <SortIcon
+                      column="avgDamageDealt"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => handleSort("avgVisionScore")}
+                >
+                  <div className="flex items-center">
+                    Vision
+                    <SortIcon
+                      column="avgVisionScore"
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
@@ -296,41 +412,117 @@ export default function ChampionsPage() {
             <TableBody>
               {sortedAndFilteredChampions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={11} className="text-center py-8">
                     Aucun champion trouvé
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedAndFilteredChampions.map((champion) => (
-                  <TableRow key={champion.id}>
-                    <TableCell>
-                      <Image
-                        src={getChampionImageUrl(champion.championId)}
-                        alt={champion.name}
-                        width={56}
-                        height={56}
-                        className="rounded"
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {champion.name}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {champion.title}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={getDifficultyBadgeVariant(champion.difficulty)}
-                      >
-                        {getDifficultyLabel(champion.difficulty)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{champion.attack}</TableCell>
-                    <TableCell>{champion.defense}</TableCell>
-                    <TableCell>{champion.magic}</TableCell>
-                    <TableCell>{Math.round(champion.hp)}</TableCell>
-                  </TableRow>
-                ))
+                sortedAndFilteredChampions.map((champion) => {
+                  const stats = champion.stats;
+                  const hasStats = stats && stats.totalGames > 0;
+
+                  return (
+                    <TableRow key={champion.id}>
+                      <TableCell>
+                        <Image
+                          src={getChampionImageUrl(champion.championId)}
+                          alt={champion.name}
+                          width={56}
+                          height={56}
+                          className="rounded"
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {champion.name}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {champion.title}
+                      </TableCell>
+                      <TableCell>
+                        {hasStats ? (
+                          <Badge
+                            variant={
+                              stats.winRate >= 55
+                                ? "default"
+                                : stats.winRate >= 50
+                                ? "secondary"
+                                : "outline"
+                            }
+                          >
+                            {stats.winRate.toFixed(1)}%
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasStats ? (
+                          stats.totalGames
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasStats ? (
+                          stats.avgKDA.toFixed(2)
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasStats ? (
+                          stats.avgKills.toFixed(1)
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasStats ? (
+                          stats.avgDeaths.toFixed(1)
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasStats ? (
+                          stats.avgAssists.toFixed(1)
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasStats ? (
+                          Math.round(stats.avgDamageDealt).toLocaleString()
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasStats ? (
+                          stats.avgVisionScore.toFixed(1)
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -341,7 +533,12 @@ export default function ChampionsPage() {
         <div className="mt-4 text-sm text-muted-foreground">
           Affichage de {sortedAndFilteredChampions.length} champion
           {sortedAndFilteredChampions.length > 1 ? "s" : ""}
-          {data && ` sur ${data.count}`}
+          {championsData && ` sur ${championsData.count}`}
+          {statsData && statsData.count > 0 && (
+            <span className="ml-2">
+              • {statsData.count} avec statistiques de performance
+            </span>
+          )}
         </div>
       )}
     </div>

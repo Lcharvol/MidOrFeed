@@ -119,7 +119,7 @@ export default function SignupPage() {
               alt="MidOrFeed"
               width={100}
               height={50}
-              className="m-auto w-auto"
+              className="m-auto"
               priority
             />
             <CardTitle className="text-2xl">{t("signup.title")}</CardTitle>

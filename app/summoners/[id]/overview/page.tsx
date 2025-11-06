@@ -24,10 +24,7 @@ import { useParams } from "next/navigation";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const getChampionImageUrl = (championId: string): string => {
-  const version = "15.21.1";
-  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championId}.png`;
-};
+const DDRAGON_VERSION = "15.21.1";
 
 interface MatchData {
   matches: any[];
@@ -69,20 +66,39 @@ export default function SummonerOverviewByIdPage() {
   const { data, error, isLoading } = useSWR(matchesUrl, fetcher);
   const { data: championsData } = useSWR("/api/champions/list", fetcher);
 
-  const championMap = useMemo(
-    () =>
-      championsData?.data
-        ? new Map(
-            championsData.data.map(
-              (champion: { championId: string; name: string }) => [
-                champion.championId,
-                champion.name,
-              ]
-            )
-          )
-        : new Map(),
-    [championsData]
-  );
+  const { championIdToName, championKeyToId } = useMemo(() => {
+    const empty = {
+      championIdToName: new Map<string, string>(),
+      championKeyToId: new Map<string, string>(),
+    };
+    if (!championsData?.data) return empty;
+    const idToName = new Map<string, string>();
+    const keyToId = new Map<string, string>();
+    for (const c of championsData.data as Array<{
+      championId: string;
+      name: string;
+      championKey?: number;
+    }>) {
+      idToName.set(c.championId, c.name);
+      if (typeof c.championKey === "number") {
+        keyToId.set(String(c.championKey), c.championId);
+      }
+    }
+    return { championIdToName: idToName, championKeyToId: keyToId };
+  }, [championsData]);
+
+  const resolveChampionSlug = (idOrKey: string): string => {
+    // If numeric, try to resolve via championKey -> championId
+    if (/^\d+$/.test(idOrKey)) {
+      return championKeyToId.get(idOrKey) || idOrKey;
+    }
+    return idOrKey;
+  };
+
+  const getChampionImageUrl = (idOrKey: string): string => {
+    const slug = resolveChampionSlug(idOrKey);
+    return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${slug}.png`;
+  };
 
   const matchData: MatchData | null = data?.data || null;
 
@@ -171,14 +187,14 @@ export default function SummonerOverviewByIdPage() {
           type: "positive",
           title: "Champion signature identifié",
           description: `${
-            championMap.get(championId) || championId
+            championIdToName.get(championId) || championId
           } est votre meilleur champion avec ${topWinRate}% de victoires.`,
           confidence: 90,
           recommendation: `Priorisez ${
-            championMap.get(championId) || championId
+            championIdToName.get(championId) || championId
           } lorsque c'est possible pour maximiser vos chances de victoire.`,
           data: {
-            Champion: championMap.get(championId) || championId,
+            Champion: championIdToName.get(championId) || championId,
             "Win rate": `${topWinRate}%`,
           },
         });
@@ -186,7 +202,7 @@ export default function SummonerOverviewByIdPage() {
     }
 
     return insights;
-  }, [matchData, topChampions, championMap, winRateNumber]);
+  }, [matchData, topChampions, championIdToName, winRateNumber]);
 
   if (isLoading) {
     return (
@@ -332,7 +348,7 @@ export default function SummonerOverviewByIdPage() {
                     </div>
                     <div className="flex-1">
                       <p className="font-bold">
-                        {(championMap as any).get(championId) || championId}
+                        {championIdToName.get(championId) || championId}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {s.played || 0} parties • {winRate}% WR

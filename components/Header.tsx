@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
+import { useRecentSearch } from "@/lib/hooks/use-recent-search";
 import { getInitials } from "@/lib/profile-utils";
 import { useI18n } from "@/lib/i18n-context";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
@@ -89,6 +90,7 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchRegion, setSearchRegion] = useState("euw1");
   const [isSearching, setIsSearching] = useState(false);
+  const { recentSearches, addRecentSearch } = useRecentSearch();
   type LocalSearchResult = {
     puuid: string;
     gameName?: string;
@@ -108,6 +110,8 @@ export function Header() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Recent searches logic is handled by useRecentSearch
 
   const handleLogout = () => {
     logout();
@@ -197,6 +201,9 @@ export function Header() {
         toast.error(result.error || t("header.searchError"));
         return;
       }
+
+      // Enregistrer la recherche comme récente
+      addRecentSearch(gameName, tagLine, region);
 
       // Redirect to summoner page with the found PUUID
       router.push(`/summoners?puuid=${result.puuid}&region=${region}`);
@@ -484,38 +491,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Upgrade Button */}
-          {user && user.subscriptionTier !== "premium" && (
-            <>
-              {/* Version mobile : icône uniquement */}
-              <Button
-                variant="outline"
-                size="icon"
-                asChild
-                className="sm:hidden h-9 w-9"
-                title={t("subscription.upgradeNow")}
-              >
-                <Link href="/pricing">
-                  <CrownIcon className="size-4" />
-                  <span className="sr-only">
-                    {t("subscription.upgradeNow")}
-                  </span>
-                </Link>
-              </Button>
-              {/* Version desktop : icône + texte */}
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="hidden sm:inline-flex"
-              >
-                <Link href="/pricing">
-                  <CrownIcon className="mr-2 size-4" />
-                  {t("subscription.upgradeNow")}
-                </Link>
-              </Button>
-            </>
-          )}
+          {/* Premium temporarily hidden to comply with Riot policy */}
 
           {/* Search Bar */}
           <Popover>
@@ -567,8 +543,37 @@ export function Header() {
                         ? t("header.searchEmpty")
                         : "Aucun résultat local"}
                     </CommandEmpty>
-
-                    {/* Résultats locaux */}
+                    {!searchQuery && recentSearches.length > 0 && (
+                      <CommandGroup heading="Recherches récentes">
+                        {recentSearches.map((r) => (
+                          <CommandItem
+                            key={`${r.gameName}#${r.tagLine}-${r.region}`}
+                            value={`${r.gameName}#${r.tagLine}`}
+                            onSelect={() => {
+                              setSearchRegion(r.region);
+                              void handleSummonerSearch(
+                                `${r.gameName}#${r.tagLine}`
+                              );
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Avatar className="size-6 mr-2">
+                              <AvatarFallback>
+                                {r.gameName?.[0] || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">
+                                {r.gameName}#{r.tagLine}
+                              </span>
+                              <Badge variant="outline" className="text-xs">
+                                {r.region}
+                              </Badge>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
                     {searchResults.length > 0 && (
                       <CommandGroup heading="Résultats locaux">
                         {searchResults.map((result) => (
@@ -622,23 +627,6 @@ export function Header() {
                         ))}
                       </CommandGroup>
                     )}
-
-                    {!searchQuery && (
-                      <CommandGroup heading={t("header.searchInstructions")}>
-                        <CommandItem>
-                          <div className="flex flex-col gap-1">
-                            <p className="text-xs text-muted-foreground">
-                              {t("header.searchFormat")}
-                            </p>
-                            <p className="text-xs font-mono bg-muted px-2 py-1 rounded">
-                              GameName#TagLine
-                            </p>
-                          </div>
-                        </CommandItem>
-                      </CommandGroup>
-                    )}
-
-                    {/* Recherche externe */}
                     {searchQuery && (
                       <CommandGroup>
                         <CommandItem
@@ -660,8 +648,6 @@ export function Header() {
               </div>
             </PopoverContent>
           </Popover>
-
-          {/* Theme Toggle */}
           {mounted && (
             <Button
               variant="ghost"

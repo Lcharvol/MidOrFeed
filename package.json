@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "prisma:studio": "prisma studio",
+    "prisma:studio:dev": "bash scripts/studio-dev.sh",
     "prisma:studio:prod": "bash scripts/studio-prod.sh",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

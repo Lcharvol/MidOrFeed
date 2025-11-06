@@ -43,7 +43,20 @@ async function runOneCycle(
       body: JSON.stringify({ region: seedRegion, count: seedCount }),
     });
     const res = await SEED(req as unknown as Request);
-    pushLog("Seed terminé");
+    if (res?.ok) {
+      let json: any = null;
+      try {
+        json = await res.json();
+      } catch {}
+      const matches = json?.data?.matchesAnalyzed ?? "?";
+      const unique = json?.data?.uniquePUUIDs ?? "?";
+      const added = json?.data?.newPlayersAdded ?? "?";
+      pushLog(
+        `Seed terminé · matches=${matches}, uniques=${unique}, ajoutés=${added}`
+      );
+    } else {
+      pushLog(`Seed terminé (réponse ${res?.status ?? "?"})`);
+    }
   } catch (e) {
     console.error("[PIPELINE] Seed error", e);
     pushLog("Erreur seed");
@@ -58,8 +71,18 @@ async function runOneCycle(
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
-    await PROCESS(req as unknown as Request);
-    pushLog("Process terminé");
+    const res = await PROCESS(req as unknown as Request);
+    if (res?.ok) {
+      let json: any = null;
+      try {
+        json = await res.json();
+      } catch {}
+      const players = json?.data?.playersProcessed ?? "?";
+      const matches = json?.data?.matchesCollected ?? "?";
+      pushLog(`Process terminé · joueurs=${players}, matches=${matches}`);
+    } else {
+      pushLog(`Process terminé (réponse ${res?.status ?? "?"})`);
+    }
   } catch (e) {
     console.error("[PIPELINE] Process error", e);
     pushLog("Erreur process");
@@ -75,8 +98,21 @@ async function runOneCycle(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ maxRiotCallsPerCycle }),
     });
-    await SYNC(req as unknown as Request);
-    pushLog("Sync terminé");
+    const res = await SYNC(req as unknown as Request);
+    if (res?.ok) {
+      let json: any = null;
+      try {
+        json = await res.json();
+      } catch {}
+      const total = json?.data?.totalPUUIDs ?? "?";
+      const created = json?.data?.accountsCreated ?? "?";
+      const updated = json?.data?.accountsUpdated ?? "?";
+      pushLog(
+        `Sync terminé · puuids=${total}, créés=${created}, maj=${updated}`
+      );
+    } else {
+      pushLog(`Sync terminé (réponse ${res?.status ?? "?"})`);
+    }
   } catch (e) {
     console.error("[PIPELINE] Sync error", e);
     pushLog("Erreur sync");
