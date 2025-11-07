@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { REGION_TO_ROUTING } from "@/constants/regions";
+import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 
 const collectSchema = z.object({
   puuid: z.string().min(1, "PUUID est requis"),
   region: z.string().min(1, "Région est requise"),
-  count: z.number().optional().default(20),
+  count: z.number().optional().default(MATCHES_FETCH_LIMIT),
 });
 
 // Clé API Riot Games depuis les variables d'environnement
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
 
     // Valider les données
     const validatedData = collectSchema.parse(body);
+    const requestedCount = validatedData.count ?? MATCHES_FETCH_LIMIT;
 
     // Normaliser et vérifier que la région est valide
     const normalizedRegion = validatedData.region.toLowerCase();
@@ -73,19 +75,15 @@ export async function POST(request: Request) {
     );
 
     // Pagination: itérer sur plusieurs pages tant qu'on peut collecter
-    const pageSize = Math.min(validatedData.count, 30);
-    const maxPages = Math.ceil(validatedData.count / pageSize) || 1;
+    const pageSize = Math.min(requestedCount, 30);
+    const maxPages = Math.ceil(requestedCount / pageSize) || 1;
     let matchesCollected = 0;
     let participantsCreated = 0;
     let page = 0;
     let exhausted = false;
     let totalIdsFound = 0;
 
-    while (
-      page < maxPages &&
-      !exhausted &&
-      matchesCollected < validatedData.count
-    ) {
+    while (page < maxPages && !exhausted && matchesCollected < requestedCount) {
       const start = page * pageSize;
       await awaitPermit(routing, 350);
       let matchListResponse = await fetch(

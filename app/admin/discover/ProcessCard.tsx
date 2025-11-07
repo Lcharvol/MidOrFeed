@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Loader2Icon, PlayIcon } from "lucide-react";
 import { toast } from "sonner";
+import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 
 interface ProcessCardProps {
   pendingCount: number;
@@ -194,7 +195,7 @@ export function ProcessCard({
         <div className="rounded-lg border bg-muted/50 p-4">
           <p className="text-sm text-muted-foreground">
             Cette commande traite TOUS les joueurs en attente et collecte
-            jusqu&apos;à 100 matchs par joueur.
+            jusqu&apos;à {MATCHES_FETCH_LIMIT} matchs par joueur.
           </p>
         </div>
       </CardContent>

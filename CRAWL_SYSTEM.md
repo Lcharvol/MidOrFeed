@@ -95,7 +95,7 @@ Cette table est automatiquement remplie depuis les participants de matchs lors d
   "success": true,
   "message": "Seed terminé",
   "data": {
-    "matchesAnalyzed": 100,
+  "matchesAnalyzed": 10,
     "uniquePUUIDs": 850,
     "newPlayersAdded": 50
   }
@@ -104,7 +104,7 @@ Cette table est automatiquement remplie depuis les participants de matchs lors d
 
 **Comment ça marche :**
 
-1. Récupère les 100 derniers matchs de la région spécifiée
+1. Récupère les 10 derniers matchs de la région spécifiée
 2. Extrait tous les PUUID uniques des participants
 3. Enregistre les nouveaux PUUID dans `DiscoveredPlayer` avec le statut `pending`
 
@@ -133,7 +133,7 @@ Cette table est automatiquement remplie depuis les participants de matchs lors d
 
 1. Récupère les 10 prochains joueurs avec `crawlStatus = "pending"`
 2. Les marque comme `crawling`
-3. Appelle `/api/matches/collect` pour chaque joueur (100 matchs max)
+3. Appelle `/api/matches/collect` pour chaque joueur (10 matchs max)
 4. Met à jour le statut en `completed` ou `failed`
 5. Retourne les statistiques
 
@@ -149,7 +149,7 @@ Cette table est automatiquement remplie depuis les participants de matchs lors d
 {
   "puuid": "abc123...",
   "region": "euw1",
-  "count": 100
+  "count": 10
 }
 ```
 
@@ -248,7 +248,7 @@ pnpm crawl:seed euw1 50
 
 Cela va :
 
-- Analyser vos 100 derniers matchs
+- Analyser vos 10 derniers matchs
 - Extraire tous les PUUID des participants
 - Enregistrer 50 nouveaux joueurs dans `DiscoveredPlayer`
 

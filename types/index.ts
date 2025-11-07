@@ -37,6 +37,17 @@ export interface PublicUser {
 // Shared enums/constants
 export type QueueId = number;
 
+// Notifications
+export type NotificationVariant = "info" | "success" | "warning" | "error";
+
+export interface NotificationPayload {
+  id: string;
+  title: string;
+  message: string;
+  variant: NotificationVariant;
+  createdAt: string;
+}
+
 // Re-export structure for future files, e.g., from './riot', './user'
 export type {};
 

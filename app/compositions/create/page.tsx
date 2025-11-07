@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import Image from "next/image";
+import { ChampionIcon } from "@/components/ChampionIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,11 +51,6 @@ const ROLES = [
   { value: "adc", label: "ADC / Bot Carry", icon: "🏹" },
   { value: "support", label: "Support", icon: "🛡️" },
 ];
-
-const getChampionImageUrl = (championId: string): string => {
-  const version = "15.21.1";
-  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championId}.png`;
-};
 
 export default function CreateCompositionPage() {
   const [compositionName, setCompositionName] = useState("");
@@ -168,14 +163,13 @@ export default function CreateCompositionPage() {
                       {selectedChampions[role.value] ? (
                         <div className="flex items-center justify-between rounded-lg border p-3">
                           <div className="flex items-center gap-3">
-                            <Image
-                              src={getChampionImageUrl(
+                            <ChampionIcon
+                              championId={
                                 selectedChampions[role.value]!.championId
-                              )}
+                              }
                               alt={selectedChampions[role.value]!.name}
-                              width={48}
-                              height={48}
-                              className="rounded"
+                              size={48}
+                              shape="rounded"
                             />
                             <div>
                               <div className="font-medium">
@@ -252,12 +246,11 @@ export default function CreateCompositionPage() {
                                 : "hover:shadow-md"
                             }`}
                           >
-                            <Image
-                              src={getChampionImageUrl(champion.championId)}
+                            <ChampionIcon
+                              championId={champion.championId}
                               alt={champion.name}
-                              width={64}
-                              height={64}
-                              className="w-full rounded-t-lg"
+                              size={64}
+                              shape="rounded"
                             />
                             <div className="p-2">
                               <div className="text-center text-sm font-medium">

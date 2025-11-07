@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const stats = await prisma.championStats.findMany({
-      orderBy: [{ totalGames: "desc" }, { winRate: "desc" }],
+      orderBy: [{ score: "desc" }, { totalGames: "desc" }],
     });
 
     return NextResponse.json(

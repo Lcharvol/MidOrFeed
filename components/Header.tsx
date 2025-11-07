@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,8 +56,16 @@ import {
   MoonIcon,
   SunIcon,
   SearchIcon,
-  CrownIcon,
   MenuIcon,
+  LayersIcon,
+  TrophyIcon,
+  BarChartIcon,
+  ShieldCheckIcon,
+  PlusIcon,
+  HeartIcon,
+  SparklesIcon,
+  SwordIcon,
+  PackageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
@@ -79,10 +87,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
+import { NotificationProvider } from "@/components/NotificationProvider";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -105,6 +117,17 @@ export function Header() {
     user?.leagueAccount?.riotRegion
   );
   const { t } = useI18n();
+
+  const navigationTriggerClasses =
+    "group inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary";
+  const navigationLinkClasses =
+    "flex gap-3 select-none rounded-md p-3 leading-none text-sm text-muted-foreground no-underline outline-none transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary";
+  const standaloneNavLinkClasses =
+    "flex items-center gap-2 select-none rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/15 focus:text-primary";
+  const mobileLinkClasses =
+    "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary";
+  const mobilePrimaryLinkClasses =
+    "flex items-center gap-2 rounded-md px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary";
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -221,21 +244,37 @@ export function Header() {
   const NavigationContent = () => (
     <>
       <NavigationMenuItem>
-        <NavigationMenuTrigger>{t("compositions.menu")}</NavigationMenuTrigger>
-        <NavigationMenuContent>
+        <NavigationMenuTrigger
+          className={cn(
+            navigationTriggerClasses,
+            pathname?.startsWith("/compositions") &&
+              "bg-primary/10 text-primary shadow-sm"
+          )}
+        >
+          <LayersIcon className="mr-2 size-4" />
+          {t("compositions.menu")}
+        </NavigationMenuTrigger>
+        <NavigationMenuContent className="rounded-xl shadow-lg">
           <ul className="grid w-[300px] gap-3 p-4">
             <li>
               <NavigationMenuLink asChild>
                 <Link
                   href="/compositions/create"
-                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  className={cn(
+                    navigationLinkClasses,
+                    pathname === "/compositions/create" &&
+                      "border border-primary/40 bg-primary/10 text-primary shadow"
+                  )}
                 >
-                  <div className="text-sm font-medium leading-none">
-                    {t("compositions.create.title")}
+                  <PlusIcon className="mt-0.5 size-5 text-primary shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-medium leading-none">
+                      {t("compositions.create.title")}
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      {t("compositions.create.description")}
+                    </p>
                   </div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    {t("compositions.create.description")}
-                  </p>
                 </Link>
               </NavigationMenuLink>
             </li>
@@ -243,14 +282,21 @@ export function Header() {
               <NavigationMenuLink asChild>
                 <Link
                   href="/compositions/popular"
-                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  className={cn(
+                    navigationLinkClasses,
+                    pathname === "/compositions/popular" &&
+                      "border border-primary/40 bg-primary/10 text-primary shadow"
+                  )}
                 >
-                  <div className="text-sm font-medium leading-none">
-                    {t("compositions.popular.title")}
+                  <SparklesIcon className="mt-0.5 size-5 text-primary shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-medium leading-none">
+                      {t("compositions.popular.title")}
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      {t("compositions.popular.description")}
+                    </p>
                   </div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    {t("compositions.popular.description")}
-                  </p>
                 </Link>
               </NavigationMenuLink>
             </li>
@@ -258,14 +304,21 @@ export function Header() {
               <NavigationMenuLink asChild>
                 <Link
                   href="/compositions/favorites"
-                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  className={cn(
+                    navigationLinkClasses,
+                    pathname === "/compositions/favorites" &&
+                      "border border-primary/40 bg-primary/10 text-primary shadow"
+                  )}
                 >
-                  <div className="text-sm font-medium leading-none">
-                    {t("compositions.favorites.title")}
+                  <HeartIcon className="mt-0.5 size-5 text-primary shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-medium leading-none">
+                      {t("compositions.favorites.title")}
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      {t("compositions.favorites.description")}
+                    </p>
                   </div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    {t("compositions.favorites.description")}
-                  </p>
                 </Link>
               </NavigationMenuLink>
             </li>
@@ -274,21 +327,37 @@ export function Header() {
       </NavigationMenuItem>
 
       <NavigationMenuItem>
-        <NavigationMenuTrigger>{t("tierListMenu.title")}</NavigationMenuTrigger>
-        <NavigationMenuContent>
+        <NavigationMenuTrigger
+          className={cn(
+            navigationTriggerClasses,
+            pathname?.startsWith("/tier-list") &&
+              "bg-primary/10 text-primary shadow-sm"
+          )}
+        >
+          <TrophyIcon className="mr-2 size-4" />
+          {t("tierListMenu.title")}
+        </NavigationMenuTrigger>
+        <NavigationMenuContent className="rounded-xl shadow-lg">
           <ul className="grid w-[300px] gap-3 p-4">
             <li>
               <NavigationMenuLink asChild>
                 <Link
                   href="/tier-list/champions"
-                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  className={cn(
+                    navigationLinkClasses,
+                    pathname === "/tier-list/champions" &&
+                      "border border-primary/40 bg-primary/10 text-primary shadow"
+                  )}
                 >
-                  <div className="text-sm font-medium leading-none">
-                    {t("tierListMenu.champions.title")}
+                  <SwordIcon className="mt-0.5 size-5 text-primary shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-medium leading-none">
+                      {t("tierListMenu.champions.title")}
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      {t("tierListMenu.champions.description")}
+                    </p>
                   </div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    {t("tierListMenu.champions.description")}
-                  </p>
                 </Link>
               </NavigationMenuLink>
             </li>
@@ -296,14 +365,21 @@ export function Header() {
               <NavigationMenuLink asChild>
                 <Link
                   href="/tier-list/items"
-                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  className={cn(
+                    navigationLinkClasses,
+                    pathname === "/tier-list/items" &&
+                      "border border-primary/40 bg-primary/10 text-primary shadow"
+                  )}
                 >
-                  <div className="text-sm font-medium leading-none">
-                    {t("tierListMenu.items.title")}
+                  <PackageIcon className="mt-0.5 size-5 text-primary shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-medium leading-none">
+                      {t("tierListMenu.items.title")}
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      {t("tierListMenu.items.description")}
+                    </p>
                   </div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    {t("tierListMenu.items.description")}
-                  </p>
                 </Link>
               </NavigationMenuLink>
             </li>
@@ -314,8 +390,13 @@ export function Header() {
       <NavigationMenuItem>
         <Link
           href="/leaderboard"
-          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+          className={cn(
+            standaloneNavLinkClasses,
+            pathname === "/leaderboard" &&
+              "bg-primary/10 text-primary shadow-sm"
+          )}
         >
+          <BarChartIcon className="size-4" />
           Leaderboard
         </Link>
       </NavigationMenuItem>
@@ -329,8 +410,13 @@ export function Header() {
                   ? `/summoners/${user.leagueAccount.puuid}/overview?region=${user.leagueAccount.riotRegion}`
                   : "/summoners"
               }
-              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+              className={cn(
+                standaloneNavLinkClasses,
+                pathname?.startsWith("/summoners") &&
+                  "bg-primary/10 text-primary shadow-sm"
+              )}
             >
+              <UserIcon className="size-4" />
               {t("header.monProfil")}
             </Link>
           </NavigationMenuItem>
@@ -338,8 +424,13 @@ export function Header() {
             <NavigationMenuItem>
               <Link
                 href="/admin"
-                className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                className={cn(
+                  standaloneNavLinkClasses,
+                  pathname?.startsWith("/admin") &&
+                    "bg-primary/10 text-primary shadow-sm"
+                )}
               >
+                <ShieldCheckIcon className="size-4" />
                 Admin
               </Link>
             </NavigationMenuItem>
@@ -354,30 +445,36 @@ export function Header() {
     <nav className="flex flex-col space-y-2 px-2">
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="compositions">
-          <AccordionTrigger className="text-base font-medium px-4 py-3">
-            {t("compositions.menu")}
+          <AccordionTrigger className="text-base font-medium px-4 py-3 text-muted-foreground transition-colors hover:text-primary data-[state=open]:text-primary">
+            <div className="flex items-center gap-2">
+              <LayersIcon className="size-4" />
+              {t("compositions.menu")}
+            </div>
           </AccordionTrigger>
           <AccordionContent>
             <div className="flex flex-col space-y-1 pl-6 pr-2 pb-2">
               <Link
                 href="/compositions/create"
-                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className={mobileLinkClasses}
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <PlusIcon className="size-4 text-primary" />
                 {t("compositions.create.title")}
               </Link>
               <Link
                 href="/compositions/popular"
-                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className={mobileLinkClasses}
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <SparklesIcon className="size-4 text-primary" />
                 {t("compositions.popular.title")}
               </Link>
               <Link
                 href="/compositions/favorites"
-                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className={mobileLinkClasses}
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <HeartIcon className="size-4 text-primary" />
                 {t("compositions.favorites.title")}
               </Link>
             </div>
@@ -385,23 +482,28 @@ export function Header() {
         </AccordionItem>
 
         <AccordionItem value="tier-list">
-          <AccordionTrigger className="text-base font-medium px-4 py-3">
-            {t("tierListMenu.title")}
+          <AccordionTrigger className="text-base font-medium px-4 py-3 text-muted-foreground transition-colors hover:text-primary data-[state=open]:text-primary">
+            <div className="flex items-center gap-2">
+              <TrophyIcon className="size-4" />
+              {t("tierListMenu.title")}
+            </div>
           </AccordionTrigger>
           <AccordionContent>
             <div className="flex flex-col space-y-1 pl-6 pr-2 pb-2">
               <Link
                 href="/tier-list/champions"
-                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className={mobileLinkClasses}
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <SwordIcon className="size-4 text-primary" />
                 {t("tierListMenu.champions.title")}
               </Link>
               <Link
                 href="/tier-list/items"
-                className="block rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className={mobileLinkClasses}
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <PackageIcon className="size-4 text-primary" />
                 {t("tierListMenu.items.title")}
               </Link>
             </div>
@@ -411,9 +513,13 @@ export function Header() {
 
       <Link
         href="/leaderboard"
-        className="block rounded-md px-4 py-3 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+        className={cn(
+          mobilePrimaryLinkClasses,
+          pathname === "/leaderboard" && "bg-primary/10 text-primary"
+        )}
         onClick={() => setMobileMenuOpen(false)}
       >
+        <BarChartIcon className="size-4" />
         Leaderboard
       </Link>
 
@@ -426,17 +532,25 @@ export function Header() {
                 ? `/summoners/${user.leagueAccount.puuid}/overview?region=${user.leagueAccount.riotRegion}`
                 : "/summoners"
             }
-            className="block rounded-md px-4 py-3 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+            className={cn(
+              mobilePrimaryLinkClasses,
+              pathname?.startsWith("/summoners") && "bg-primary/10 text-primary"
+            )}
             onClick={() => setMobileMenuOpen(false)}
           >
+            <UserIcon className="size-4" />
             {t("header.monProfil")}
           </Link>
           {isAdmin(user.role) && (
             <Link
               href="/admin"
-              className="block rounded-md px-4 py-3 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              className={cn(
+                mobilePrimaryLinkClasses,
+                pathname?.startsWith("/admin") && "bg-primary/10 text-primary"
+              )}
               onClick={() => setMobileMenuOpen(false)}
             >
+              <ShieldCheckIcon className="size-4" />
               Admin
             </Link>
           )}
@@ -446,7 +560,7 @@ export function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/75">
       <div className="flex h-16 items-center justify-between px-2 sm:px-4">
         <div className="flex items-center gap-2 sm:gap-6">
           <Link href="/" className="flex items-center justify-center">
@@ -473,12 +587,19 @@ export function Header() {
           {isMobile && (
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 hover:bg-muted/60"
+                >
                   <MenuIcon className="h-5 w-5" />
                   <span className="sr-only">Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+              <SheetContent
+                side="left"
+                className="w-[280px] sm:w-[320px] bg-background/95"
+              >
                 <SheetHeader className="pb-4">
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
@@ -491,169 +612,13 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Premium temporarily hidden to comply with Riot policy */}
-
-          {/* Search Bar */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <SearchIcon className="h-5 w-5" />
-                <span className="sr-only">{t("header.searchSummoner")}</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-[calc(100vw-2rem)] sm:w-[400px] p-3"
-              align="end"
-            >
-              <div className="space-y-3">
-                {/* Region Selector */}
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium whitespace-nowrap">
-                    {t("profile.region")}:
-                  </label>
-                  <Select value={searchRegion} onValueChange={setSearchRegion}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RIOT_REGIONS.map((region) => (
-                        <SelectItem key={region.value} value={region.value}>
-                          {region.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Search Input */}
-                <Command className="border rounded-md">
-                  <CommandInput
-                    placeholder={t("header.searchPlaceholder")}
-                    value={searchQuery}
-                    onValueChange={setSearchQuery}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && searchQuery) {
-                        handleSummonerSearch(searchQuery);
-                      }
-                    }}
-                  />
-                  <CommandList>
-                    <CommandEmpty>
-                      {searchQuery.length < 2
-                        ? t("header.searchEmpty")
-                        : "Aucun résultat local"}
-                    </CommandEmpty>
-                    {!searchQuery && recentSearches.length > 0 && (
-                      <CommandGroup heading="Recherches récentes">
-                        {recentSearches.map((r) => (
-                          <CommandItem
-                            key={`${r.gameName}#${r.tagLine}-${r.region}`}
-                            value={`${r.gameName}#${r.tagLine}`}
-                            onSelect={() => {
-                              setSearchRegion(r.region);
-                              void handleSummonerSearch(
-                                `${r.gameName}#${r.tagLine}`
-                              );
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <Avatar className="size-6 mr-2">
-                              <AvatarFallback>
-                                {r.gameName?.[0] || "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">
-                                {r.gameName}#{r.tagLine}
-                              </span>
-                              <Badge variant="outline" className="text-xs">
-                                {r.region}
-                              </Badge>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                    {searchResults.length > 0 && (
-                      <CommandGroup heading="Résultats locaux">
-                        {searchResults.map((result) => (
-                          <CommandItem
-                            key={result.puuid}
-                            value={`${result.gameName || ""}#${
-                              result.tagLine || ""
-                            } ${result.puuid}`}
-                            onSelect={() => {
-                              router.push(
-                                `/summoners/${result.puuid}/overview?region=${result.region}`
-                              );
-                              setSearchQuery("");
-                              setSearchResults([]);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <Avatar className="size-6 mr-2">
-                              {result.profileIconId ? (
-                                <>
-                                  <AvatarImage
-                                    src={getProfileIconUrl(
-                                      result.profileIconId
-                                    )}
-                                    alt="Profile Icon"
-                                  />
-                                  <AvatarFallback>
-                                    {result.gameName?.[0] || "?"}
-                                  </AvatarFallback>
-                                </>
-                              ) : (
-                                <AvatarFallback>
-                                  {result.gameName?.[0] || "?"}
-                                </AvatarFallback>
-                              )}
-                            </Avatar>
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <span className="text-sm font-medium truncate">
-                                {result.gameName}
-                              </span>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-muted-foreground">
-                                  #{result.tagLine}
-                                </span>
-                                <Badge variant="outline" className="text-xs">
-                                  {result.stats?.totalMatches || 0} games
-                                </Badge>
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                    {searchQuery && (
-                      <CommandGroup>
-                        <CommandItem
-                          onSelect={() => handleSummonerSearch(searchQuery)}
-                          className="cursor-pointer"
-                        >
-                          <SearchIcon className="mr-2 h-4 w-4" />
-                          {isSearching
-                            ? t("header.searching")
-                            : `${t("header.searchFor")} "${searchQuery}"`}
-                          {isSearching && (
-                            <Loader2Icon className="ml-auto h-4 w-4 animate-spin" />
-                          )}
-                        </CommandItem>
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <NotificationBell />
           {mounted && (
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="h-9 w-9"
+              className="h-9 w-9 hover:bg-muted/60"
             >
               {theme === "dark" ? (
                 <SunIcon className="size-5" />

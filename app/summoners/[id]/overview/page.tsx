@@ -17,14 +17,12 @@ import {
   UsersIcon,
   Gamepad2Icon,
 } from "lucide-react";
-import Image from "next/image";
+import { ChampionIcon } from "@/components/ChampionIcon";
 import { Progress } from "@/components/ui/progress";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { useParams } from "next/navigation";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-const DDRAGON_VERSION = "15.21.1";
 
 interface MatchData {
   matches: any[];
@@ -93,11 +91,6 @@ export default function SummonerOverviewByIdPage() {
       return championKeyToId.get(idOrKey) || idOrKey;
     }
     return idOrKey;
-  };
-
-  const getChampionImageUrl = (idOrKey: string): string => {
-    const slug = resolveChampionSlug(idOrKey);
-    return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${slug}.png`;
   };
 
   const matchData: MatchData | null = data?.data || null;
@@ -338,12 +331,12 @@ export default function SummonerOverviewByIdPage() {
                       <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                         {index + 1}
                       </div>
-                      <Image
-                        src={getChampionImageUrl(championId)}
-                        alt={championId}
-                        width={64}
-                        height={64}
-                        className="rounded-lg border-2 border-primary/30"
+                      <ChampionIcon
+                        championId={resolveChampionSlug(championId)}
+                        championKey={championId}
+                        championKeyToId={championKeyToId}
+                        size={64}
+                        shape="rounded"
                       />
                     </div>
                     <div className="flex-1">

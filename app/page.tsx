@@ -31,7 +31,7 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b py-20 md:py-32">
+      <section className="relative -mx-4 sm:-mx-6 px-4 sm:px-6 overflow-hidden border-b py-20 md:py-32">
         {/* Background Image */}
         <div className="absolute inset-0 -z-10">
           <Image
@@ -45,7 +45,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90" />
         </div>
 
-        <div className="relative z-10 px-4">
+        <div className="relative z-10">
           <div className="mx-auto max-w-4xl text-center">
             <Badge className="mb-6" variant="secondary">
               <BrainIcon className="mr-2 size-3" />

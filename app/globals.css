@@ -89,11 +89,11 @@
 
 .dark {
   /* 🌑 Dark mode - LoL gold theme */
-  --background: oklch(0.12 0 260); /* Bleu nuit profond #0E1218 */
+  --background: oklch(0.13 0.035 290); /* Violet nuit profond */
   --foreground: oklch(0.95 0 0);
-  --card: oklch(0.18 0 260);
+  --card: oklch(0.19 0.04 290);
   --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.18 0 260);
+  --popover: oklch(0.19 0.04 290);
   --popover-foreground: oklch(0.95 0 0);
 
   /* 💜 Violet LoL */
@@ -103,13 +103,13 @@
   --secondary-foreground: oklch(0.95 0 0);
 
   /* Muted / neutres */
-  --muted: oklch(0.25 0 260);
-  --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.25 0 260);
-  --accent-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.22 0.03 290);
+  --muted-foreground: oklch(0.7 0.01 290);
+  --accent: oklch(0.24 0.035 290);
+  --accent-foreground: oklch(0.94 0 0);
   --destructive: oklch(0.55 0.2 20);
-  --border: oklch(0.3 0 260);
-  --input: oklch(0.3 0 260);
+  --border: oklch(0.28 0.03 290);
+  --input: oklch(0.28 0.03 290);
   --ring: oklch(0.65 0.25 280);
 
   /* Couleurs des rôles */
@@ -120,7 +120,7 @@
   --chart-5: oklch(0.6 0.15 150);
 
   /* Sidebar sombre */
-  --sidebar: oklch(0.18 0 260);
+  --sidebar: oklch(0.19 0.04 290);
   --sidebar-foreground: oklch(0.95 0 0);
   --sidebar-primary: oklch(0.65 0.25 280);
   --sidebar-primary-foreground: oklch(1 0 0);

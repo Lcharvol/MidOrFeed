@@ -20,7 +20,8 @@ type Script = {
   name: string;
   description: string;
   endpoint: string;
-  category: "sync" | "analysis";
+  category: "sync" | "analysis" | "ops";
+  payload?: () => Record<string, unknown>;
 };
 
 const scripts: Script[] = [
@@ -46,6 +47,22 @@ const scripts: Script[] = [
     endpoint: "/api/admin/analyze-champions",
     category: "analysis",
   },
+  {
+    id: "broadcast-notification",
+    name: "Notification de test",
+    description:
+      "Envoie une notification temps réel à toutes les sessions connectées",
+    endpoint: "/api/notifications/send",
+    category: "ops",
+    payload: () => ({
+      title: "Notification de test",
+      message: `Message envoyé à ${new Date().toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`,
+      variant: "info",
+    }),
+  },
 ];
 
 export const DataSyncTab = () => {
@@ -56,8 +73,11 @@ export const DataSyncTab = () => {
 
     setRunningScripts((prev) => new Set(prev).add(script.id));
     try {
+      const body = script.payload?.();
       const res = await authenticatedFetch(script.endpoint, {
         method: "POST",
+        headers: body ? { "Content-Type": "application/json" } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
       });
       const json = await res.json().catch(() => ({}));
 
@@ -79,6 +99,8 @@ export const DataSyncTab = () => {
             } champions analysés (${json?.data?.created ?? 0} créés, ${
               json?.data?.updated ?? 0
             } mis à jour)`
+          : script.id === "broadcast-notification"
+          ? "Notification envoyée"
           : `Script ${script.name} terminé avec succès`;
 
       toast.success(message);
@@ -117,12 +139,18 @@ export const DataSyncTab = () => {
                   <TableCell>
                     <Badge
                       variant={
-                        script.category === "sync" ? "default" : "secondary"
+                        script.category === "sync"
+                          ? "default"
+                          : script.category === "analysis"
+                          ? "secondary"
+                          : "outline"
                       }
                     >
                       {script.category === "sync"
                         ? "Synchronisation"
-                        : "Analyse"}
+                        : script.category === "analysis"
+                        ? "Analyse"
+                        : "Ops"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

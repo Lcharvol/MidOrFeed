@@ -28,16 +28,15 @@ import {
   RefreshCwIcon,
   BrainIcon,
 } from "lucide-react";
-import Image from "next/image";
 import { toast } from "sonner";
 import Link from "next/link";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { QUEUE_NAMES } from "@/constants/queues";
 import { useParams, useSearchParams } from "next/navigation";
+import { ChampionIcon } from "@/components/ChampionIcon";
+import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-import { getChampionImageUrl } from "@/constants/ddragon";
 
 interface Match {
   id: string;
@@ -209,12 +208,15 @@ function MatchDetailsDialog({
                   key={participant.id}
                   className="flex items-center gap-3 p-3 rounded-lg bg-background/50 hover:bg-background transition-colors"
                 >
-                  <Image
-                    src={getChampionImageUrl(participant.championId)}
-                    alt={participant.championId}
-                    width={48}
-                    height={48}
-                    className="rounded-md border-2 border-blue-500/30"
+                  <ChampionIcon
+                    championId={participant.championId}
+                    alt={
+                      championMap.get(participant.championId) ||
+                      participant.championId
+                    }
+                    size={48}
+                    shape="rounded"
+                    className="border-2 border-blue-500/30"
                   />
                   <div className="flex-1">
                     <p className="font-semibold">
@@ -260,12 +262,15 @@ function MatchDetailsDialog({
                   key={participant.id}
                   className="flex items-center gap-3 p-3 rounded-lg bg-background/50 hover:bg-background transition-colors"
                 >
-                  <Image
-                    src={getChampionImageUrl(participant.championId)}
-                    alt={participant.championId}
-                    width={48}
-                    height={48}
-                    className="rounded-md border-2 border-red-500/30"
+                  <ChampionIcon
+                    championId={participant.championId}
+                    alt={
+                      championMap.get(participant.championId) ||
+                      participant.championId
+                    }
+                    size={48}
+                    shape="rounded"
+                    className="border-2 border-red-500/30"
                   />
                   <div className="flex-1">
                     <p className="font-semibold">
@@ -328,7 +333,11 @@ export default function MatchesByIdPage() {
       const response = await fetch("/api/matches/collect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ puuid, region, count: 100 }),
+        body: JSON.stringify({
+          puuid,
+          region,
+          count: MATCHES_FETCH_LIMIT,
+        }),
       });
       const result = await response.json();
       if (!response.ok) {
@@ -607,14 +616,15 @@ export default function MatchesByIdPage() {
                       {userParticipant && (
                         <div className="flex items-center gap-3 flex-1">
                           <div className="relative">
-                            <Image
-                              src={getChampionImageUrl(
+                            <ChampionIcon
+                              championId={userParticipant.championId}
+                              alt={
+                                championMap.get(userParticipant.championId) ||
                                 userParticipant.championId
-                              )}
-                              alt={userParticipant.championId}
-                              width={56}
-                              height={56}
-                              className="rounded-lg border-2 border-primary/20"
+                              }
+                              size={56}
+                              shape="rounded"
+                              className="border-2 border-primary/20"
                             />
                           </div>
                           <div>

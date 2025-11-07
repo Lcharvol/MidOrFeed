@@ -18,7 +18,7 @@ import {
   ArrowUpIcon,
   ChevronsUpDownIcon,
 } from "lucide-react";
-import Image from "next/image";
+import { ChampionIcon } from "@/components/ChampionIcon";
 import {
   Table,
   TableBody,
@@ -31,7 +31,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
-import { getChampionImageUrl } from "@/constants/ddragon";
 import type { ChampionStats } from "@/types";
 import { useParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
@@ -105,20 +104,33 @@ export default function ChampionsByIdPage() {
   const { data, error, isLoading } = useSWR(matchesUrl, fetcher);
   const { data: championsData } = useSWR("/api/champions/list", fetcher);
 
-  const championMap = useMemo(
-    () =>
-      championsData?.data
-        ? new Map(
-            championsData.data.map(
-              (champion: { championId: string; name: string }) => [
-                champion.championId,
-                champion.name,
-              ]
-            )
-          )
-        : new Map(),
-    [championsData]
-  );
+  const { championMap, championKeyToId } = useMemo(() => {
+    const empty = {
+      championMap: new Map<string, string>(),
+      championKeyToId: new Map<string, string>(),
+    };
+    if (!championsData?.data) return empty;
+    const idToName = new Map<string, string>();
+    const keyToId = new Map<string, string>();
+    for (const champion of championsData.data as Array<{
+      championId: string;
+      name: string;
+      championKey?: number;
+    }>) {
+      idToName.set(champion.championId, champion.name);
+      if (typeof champion.championKey === "number") {
+        keyToId.set(String(champion.championKey), champion.championId);
+      }
+    }
+    return { championMap: idToName, championKeyToId: keyToId };
+  }, [championsData]);
+
+  const resolveChampionSlug = (idOrKey: string): string => {
+    if (/^\d+$/.test(idOrKey)) {
+      return championKeyToId.get(idOrKey) || idOrKey;
+    }
+    return idOrKey;
+  };
 
   const championStats = useMemo(
     () => (data?.data?.championStats || {}) as Record<string, ChampionStats>,
@@ -390,12 +402,13 @@ export default function ChampionsByIdPage() {
         <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background to-purple-500/5 min-h-[180px]">
           {bestChampionId && (
             <div className="pointer-events-none absolute inset-0 z-0">
-              <Image
-                src={`https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${bestChampionId}_0.jpg`}
-                alt={bestChampionId}
-                fill
-                priority
-                className="object-cover object-[center_top] opacity-25"
+              <ChampionIcon
+                championId={resolveChampionSlug(bestChampionId)}
+                championKey={bestChampionId}
+                championKeyToId={championKeyToId}
+                fluid
+                showBorder={false}
+                className="opacity-25"
               />
               <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/70 to-background/30" />
             </div>
@@ -409,12 +422,13 @@ export default function ChampionsByIdPage() {
           <CardContent className="relative z-10">
             <div className="flex items-center gap-3">
               {bestChampionId && (
-                <Image
-                  src={getChampionImageUrl(bestChampionId)}
-                  alt={bestChampionId}
-                  width={36}
-                  height={36}
-                  className="rounded-md ring-1 ring-border"
+                <ChampionIcon
+                  championId={resolveChampionSlug(bestChampionId)}
+                  alt={championMap.get(bestChampionId) || bestChampionId}
+                  championKey={bestChampionId}
+                  championKeyToId={championKeyToId}
+                  size={64}
+                  shape="rounded"
                 />
               )}
               <div className="text-2xl font-bold leading-tight drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
@@ -599,12 +613,13 @@ export default function ChampionsByIdPage() {
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Image
-                          src={getChampionImageUrl(champion.championId)}
-                          alt={champion.championId}
-                          width={48}
-                          height={48}
-                          className="rounded-md border-2 border-primary/20"
+                        <ChampionIcon
+                          championId={resolveChampionSlug(champion.championId)}
+                          championKey={champion.championId}
+                          championKeyToId={championKeyToId}
+                          size={48}
+                          shape="rounded"
+                          className="border-2 border-primary/20"
                         />
                         <div>
                           <p className="font-semibold">{champion.name}</p>

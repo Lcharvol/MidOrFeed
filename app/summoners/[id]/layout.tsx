@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getProfileIconUrl } from "@/constants/ddragon";
+import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -107,7 +108,7 @@ export default function SummonerByIdLayout({
       const response = await fetch("/api/matches/collect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ puuid, region, count: 100 }),
+        body: JSON.stringify({ puuid, region, count: MATCHES_FETCH_LIMIT }),
       });
       const result = await response.json();
       if (!response.ok) {

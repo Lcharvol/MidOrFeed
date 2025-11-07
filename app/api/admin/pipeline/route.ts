@@ -10,6 +10,29 @@ type PipelineState = {
   recent?: string[];
 };
 
+type SeedResponse = {
+  data?: {
+    matchesAnalyzed?: number;
+    uniquePUUIDs?: number;
+    newPlayersAdded?: number;
+  };
+};
+
+type ProcessResponse = {
+  data?: {
+    playersProcessed?: number;
+    matchesCollected?: number;
+  };
+};
+
+type SyncResponse = {
+  data?: {
+    totalPUUIDs?: number;
+    accountsCreated?: number;
+    accountsUpdated?: number;
+  };
+};
+
 declare global {
   var __ADMIN_PIPELINE__: PipelineState | undefined;
 }
@@ -44,9 +67,9 @@ async function runOneCycle(
     });
     const res = await SEED(req as unknown as Request);
     if (res?.ok) {
-      let json: any = null;
+      let json: SeedResponse | null = null;
       try {
-        json = await res.json();
+        json = (await res.json()) as SeedResponse;
       } catch {}
       const matches = json?.data?.matchesAnalyzed ?? "?";
       const unique = json?.data?.uniquePUUIDs ?? "?";
@@ -67,15 +90,11 @@ async function runOneCycle(
     state.currentStep = "process";
     pushLog("Process en cours");
     const { POST: PROCESS } = await import("@/app/api/crawl/process/route");
-    const req = new Request("http://internal/api/crawl/process", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-    const res = await PROCESS(req as unknown as Request);
+    const res = await PROCESS();
     if (res?.ok) {
-      let json: any = null;
+      let json: ProcessResponse | null = null;
       try {
-        json = await res.json();
+        json = (await res.json()) as ProcessResponse;
       } catch {}
       const players = json?.data?.playersProcessed ?? "?";
       const matches = json?.data?.matchesCollected ?? "?";
@@ -100,9 +119,9 @@ async function runOneCycle(
     });
     const res = await SYNC(req as unknown as Request);
     if (res?.ok) {
-      let json: any = null;
+      let json: SyncResponse | null = null;
       try {
-        json = await res.json();
+        json = (await res.json()) as SyncResponse;
       } catch {}
       const total = json?.data?.totalPUUIDs ?? "?";
       const created = json?.data?.accountsCreated ?? "?";

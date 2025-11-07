@@ -22,7 +22,7 @@ import {
   ArrowLeftIcon,
   SparklesIcon,
 } from "lucide-react";
-import Image from "next/image";
+import { ChampionIcon } from "@/components/ChampionIcon";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
@@ -30,18 +30,6 @@ import { useAIAnalysis } from "@/lib/hooks/use-ai-analysis";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-const getChampionImageUrl = (
-  championId: string,
-  championKeyToId?: Map<string, string>
-): string => {
-  const version = "15.21.1";
-  // Accept numeric champion key or string slug
-  const slug = /^\d+$/.test(String(championId))
-    ? championKeyToId?.get(String(championId)) || String(championId)
-    : String(championId);
-  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${slug}.png`;
-};
 
 interface AIInsight {
   type: "strength" | "weakness" | "tip";
@@ -390,15 +378,14 @@ export default function AIAnalysisPage() {
         </CardHeader>
         <CardContent>
           <div className="flex items-start gap-6">
-            <Image
-              src={getChampionImageUrl(
-                analysis.championPerformance.championId,
-                championKeyToId
-              )}
+            <ChampionIcon
+              championId={analysis.championPerformance.championId}
+              championKey={analysis.championPerformance.championId}
+              championKeyToId={championKeyToId}
               alt={analysis.championPerformance.championId}
-              width={80}
-              height={80}
-              className="rounded-lg border-2 border-blue-500/30"
+              size={80}
+              shape="rounded"
+              className="border-2 border-blue-500/30"
             />
             <div className="flex-1 space-y-4">
               <div>

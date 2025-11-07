@@ -93,16 +93,98 @@ export async function POST(request: NextRequest) {
       statsByChampion.set(p.championId, existing);
     }
 
+    // Calculer les moyennes et déterminer les min/max pour la normalisation
+    const allStats = Array.from(statsByChampion.entries()).map(
+      ([championId, stats]) => {
+        const games = stats.games;
+        const winRate = games > 0 ? (stats.wins / games) * 100 : 0;
+        const avgKDA =
+          stats.deaths > 0
+            ? (stats.kills + stats.assists) / stats.deaths
+            : stats.kills + stats.assists;
+        const avgDamageDealt = games > 0 ? stats.damageDealt / games : 0;
+        const avgVisionScore = games > 0 ? stats.visionScore / games : 0;
+
+        return {
+          championId,
+          stats,
+          winRate,
+          avgKDA,
+          avgDamageDealt,
+          avgVisionScore,
+        };
+      }
+    );
+
+    // Trouver les min/max pour la normalisation (seulement pour les champions avec au moins 10 parties pour la fiabilité)
+    const reliableStats = allStats.filter((s) => s.stats.games >= 10);
+
+    const maxWinRate = Math.max(...reliableStats.map((s) => s.winRate), 100);
+    const minWinRate = Math.min(...reliableStats.map((s) => s.winRate), 0);
+
+    const maxKDA = Math.max(...reliableStats.map((s) => s.avgKDA), 5);
+    const minKDA = Math.min(...reliableStats.map((s) => s.avgKDA), 0);
+
+    const maxDamage = Math.max(
+      ...reliableStats.map((s) => s.avgDamageDealt),
+      50000
+    );
+    const minDamage = Math.min(
+      ...reliableStats.map((s) => s.avgDamageDealt),
+      0
+    );
+
+    const maxVision = Math.max(
+      ...reliableStats.map((s) => s.avgVisionScore),
+      100
+    );
+    const minVision = Math.min(
+      ...reliableStats.map((s) => s.avgVisionScore),
+      0
+    );
+
+    // Fonction de normalisation (0-100)
+    const normalize = (value: number, min: number, max: number): number => {
+      if (max === min) return 50; // Valeur par défaut si pas de variation
+      return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+    };
+
     // Calculer les moyennes et upsert dans la base
     let created = 0;
     let updated = 0;
 
-    for (const [championId, stats] of statsByChampion.entries()) {
-      const winRate = stats.games > 0 ? (stats.wins / stats.games) * 100 : 0;
-      const avgKDA =
-        stats.deaths > 0
-          ? (stats.kills + stats.assists) / stats.deaths
-          : stats.kills + stats.assists;
+    for (const {
+      championId,
+      stats,
+      winRate,
+      avgKDA,
+      avgDamageDealt,
+      avgVisionScore,
+    } of allStats) {
+      // Calculer le score agrégé
+      // Formule: winRate (40%) + KDA normalisé (30%) + Dégâts normalisés (20%) + Vision normalisée (10%)
+      // Seulement pour les champions avec au moins 10 parties pour la fiabilité
+      let score = 0;
+      if (stats.games >= 10) {
+        const normalizedWinRate = normalize(winRate, minWinRate, maxWinRate);
+        const normalizedKDA = normalize(avgKDA, minKDA, maxKDA);
+        const normalizedDamage = normalize(
+          avgDamageDealt,
+          minDamage,
+          maxDamage
+        );
+        const normalizedVision = normalize(
+          avgVisionScore,
+          minVision,
+          maxVision
+        );
+
+        score =
+          normalizedWinRate * 0.4 +
+          normalizedKDA * 0.3 +
+          normalizedDamage * 0.2 +
+          normalizedVision * 0.1;
+      }
 
       // Trouver le rôle et la lane les plus joués
       let topRole: string | null = null;
@@ -147,6 +229,7 @@ export async function POST(request: NextRequest) {
             avgVisionScore: stats.visionScore / stats.games,
             topRole,
             topLane,
+            score,
             lastAnalyzedAt: new Date(),
           },
         });
@@ -170,6 +253,7 @@ export async function POST(request: NextRequest) {
             avgVisionScore: stats.visionScore / stats.games,
             topRole,
             topLane,
+            score,
             lastAnalyzedAt: new Date(),
           },
         });

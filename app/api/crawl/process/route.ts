@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
+
+type CollectResult = {
+  matchesCollected?: number;
+  [key: string]: unknown;
+};
 
 // Clé API Riot Games depuis les variables d'environnement
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
@@ -8,7 +14,7 @@ const RIOT_API_KEY = process.env.RIOT_API_KEY;
  * POST /api/crawl/process
  * Crawle les prochains joueurs en attente dans la file
  */
-export async function POST(request: Request) {
+export async function POST() {
   try {
     if (!RIOT_API_KEY) {
       return NextResponse.json(
@@ -58,14 +64,14 @@ export async function POST(request: Request) {
             body: JSON.stringify({
               puuid: player.puuid,
               region: player.riotRegion,
-              count: 100,
+              count: MATCHES_FETCH_LIMIT,
             }),
           }
         );
 
         const collectResponse = await POST(mockRequest);
         const status = collectResponse.status;
-        let collectResult: any = {};
+        let collectResult: CollectResult = {};
         try {
           collectResult = await collectResponse.json();
         } catch {}

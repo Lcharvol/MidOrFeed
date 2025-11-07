@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 
 /**
  * Route API pour obtenir la liste des matchs avec leurs statistiques
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
       orderBy: {
         gameCreation: "desc",
       },
-      take: 100, // Limiter à 100 matchs les plus récents
+      take: MATCHES_FETCH_LIMIT,
     });
 
     // Calculer les statistiques agrégées
