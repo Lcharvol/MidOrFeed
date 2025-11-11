@@ -25,11 +25,14 @@ const NotificationContext = createContext<NotificationContextValue | undefined>(
   undefined
 );
 
-const toastByVariant: Record<NotificationVariant, typeof toast> = {
-  info: toast,
-  success: toast.success,
-  warning: toast.warning,
-  error: toast.error,
+const toastByVariant: Record<
+  NotificationVariant,
+  (message: string, options?: Parameters<typeof toast>[1]) => string | number
+> = {
+  info: (message, options) => toast(message, options),
+  success: (message, options) => toast.success(message, options),
+  warning: (message, options) => toast.warning(message, options),
+  error: (message, options) => toast.error(message, options),
 };
 
 const MAX_NOTIFICATIONS_DISPLAYED = 100;

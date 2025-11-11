@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import {
+  normalizeLane,
+  resolveChampionRole,
+} from "@/lib/compositions/roles";
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdmin(request);
@@ -206,6 +210,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      const normalizedLane = normalizeLane(topLane)?.toString() ?? topLane;
+      const resolvedRole = resolveChampionRole(topRole, topLane);
+      const normalizedRole = resolvedRole ?? topRole;
+
       const existing = await prisma.championStats.findUnique({
         where: { championId },
       });
@@ -227,8 +235,8 @@ export async function POST(request: NextRequest) {
             avgDamageDealt: stats.damageDealt / stats.games,
             avgDamageTaken: stats.damageTaken / stats.games,
             avgVisionScore: stats.visionScore / stats.games,
-            topRole,
-            topLane,
+            topRole: normalizedRole,
+            topLane: normalizedLane,
             score,
             lastAnalyzedAt: new Date(),
           },
@@ -251,8 +259,8 @@ export async function POST(request: NextRequest) {
             avgDamageDealt: stats.damageDealt / stats.games,
             avgDamageTaken: stats.damageTaken / stats.games,
             avgVisionScore: stats.visionScore / stats.games,
-            topRole,
-            topLane,
+            topRole: normalizedRole,
+            topLane: normalizedLane,
             score,
             lastAnalyzedAt: new Date(),
           },

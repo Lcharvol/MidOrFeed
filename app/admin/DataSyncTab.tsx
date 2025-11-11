@@ -40,6 +40,14 @@ const scripts: Script[] = [
     category: "sync",
   },
   {
+    id: "sync-riot-versions",
+    name: "Synchroniser les versions du jeu",
+    description:
+      "Récupère la liste des patches via l’API Riot et met à jour la version courante",
+    endpoint: "/api/admin/riot/versions",
+    category: "sync",
+  },
+  {
     id: "analyze-champions",
     name: "Analyser les statistiques de champions",
     description:
@@ -62,6 +70,22 @@ const scripts: Script[] = [
       })}`,
       variant: "info",
     }),
+  },
+  {
+    id: "sync-challenges",
+    name: "Synchroniser les défis Riot",
+    description:
+      "Récupère la configuration et la progression Challenges pour les comptes suivis",
+    endpoint: "/api/challenges/sync",
+    category: "analysis",
+  },
+  {
+    id: "generate-composition-suggestions",
+    name: "Générer les compositions recommandées",
+    description:
+      "Produit des suggestions d’équipe par rôle à partir des statistiques de champions",
+    endpoint: "/api/admin/compositions/generate",
+    category: "analysis",
   },
 ];
 
@@ -93,6 +117,8 @@ export const DataSyncTab = () => {
           ? `Items synchronisés (${
               json?.data?.total ?? json?.data?.created ?? "?"
             })`
+          : script.id === "sync-riot-versions"
+          ? `Versions mises à jour (${json?.data?.totalVersions ?? "?"} au total, patch courant ${json?.data?.currentVersion ?? "?"})`
           : script.id === "analyze-champions"
           ? `Analyse terminée: ${
               json?.data?.totalChampions ?? "?"
@@ -101,6 +127,14 @@ export const DataSyncTab = () => {
             } mis à jour)`
           : script.id === "broadcast-notification"
           ? "Notification envoyée"
+          : script.id === "sync-challenges"
+          ? `Défis synchronisés (${
+              json?.data?.accountsProcessed ?? "?"
+            } comptes)`
+          : script.id === "generate-composition-suggestions"
+          ? `Compositions générées (${
+              json?.data?.totalSuggestions ?? "?"
+            } suggestions)`
           : `Script ${script.name} terminé avec succès`;
 
       toast.success(message);

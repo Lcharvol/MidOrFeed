@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getProfileIconUrl } from "@/constants/ddragon";
-import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,6 +16,7 @@ import {
 } from "next/navigation";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 
 export default function SummonerByIdLayout({
   children,
@@ -43,7 +43,7 @@ export default function SummonerByIdLayout({
   const {
     account,
     isLoading: accLoading,
-    forceRefreshFromRiot,
+    refreshAccountAndMatches,
   } = useAccount(puuid);
 
   // Set details from DB cache-first
@@ -82,6 +82,8 @@ export default function SummonerByIdLayout({
           ? "/champions"
           : pathname.endsWith("matches")
           ? "/matches"
+          : pathname.endsWith("challenges")
+          ? "/challenges"
           : ""
       }?region=${accRegion}`
     );
@@ -94,6 +96,7 @@ export default function SummonerByIdLayout({
   }, [details]);
 
   const currentTab = useMemo(() => {
+    if (pathname?.endsWith("/challenges")) return "challenges";
     if (pathname?.endsWith("/champions")) return "champions";
     if (pathname?.endsWith("/matches")) return "matches";
     return "overview";
@@ -103,19 +106,14 @@ export default function SummonerByIdLayout({
     if (!puuid || !region) return;
     setIsUpdating(true);
     try {
-      await forceRefreshFromRiot(region);
-
-      const response = await fetch("/api/matches/collect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ puuid, region, count: MATCHES_FETCH_LIMIT }),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        toast.error(result.error || "Erreur lors de la collecte");
+      const result = await refreshAccountAndMatches(region);
+      if (!result.success) {
+        toast.error(result.error ?? "Erreur lors de la mise à jour");
         return;
       }
-      toast.success(`Collecte terminée: ${result.matchesCollected} matchs`);
+      toast.success(
+        `Profil mis à jour — ${result.matchesCollected} matchs collectés`
+      );
       router.refresh();
     } catch (e) {
       console.error(e);
@@ -139,7 +137,7 @@ export default function SummonerByIdLayout({
               </Avatar>
             ) : (
               <Avatar className="size-24 border-4 border-primary/20">
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-4xl">
+                <AvatarFallback className="bg-linear-to-br from-primary to-primary/60 text-4xl">
                   {details?.gameName?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
@@ -220,11 +218,22 @@ export default function SummonerByIdLayout({
             <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
             <TabsTrigger value="champions">Champions</TabsTrigger>
             <TabsTrigger value="matches">Matchs</TabsTrigger>
+            <TabsTrigger value="challenges">Défis</TabsTrigger>
           </TabsList>
+          <TabsContent value="overview" className="mt-6">
+            {children}
+          </TabsContent>
+          <TabsContent value="champions" className="mt-6">
+            {children}
+          </TabsContent>
+          <TabsContent value="matches" className="mt-6">
+            {children}
+          </TabsContent>
+          <TabsContent value="challenges" className="mt-6">
+            {children}
+          </TabsContent>
         </Tabs>
       )}
-
-      {children}
     </div>
   );
 }

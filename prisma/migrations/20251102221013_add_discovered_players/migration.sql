@@ -5,11 +5,11 @@ CREATE TABLE "discovered_players" (
     "riotGameName" TEXT,
     "riotTagLine" TEXT,
     "riotRegion" TEXT NOT NULL,
-    "lastCrawledAt" DATETIME,
+    "lastCrawledAt" TIMESTAMP,
     "crawlStatus" TEXT NOT NULL DEFAULT 'pending',
     "matchesCollected" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateIndex

@@ -13,6 +13,9 @@ primary_region = 'cdg'
   NODE_ENV = 'production'
   PORT = '8080'
 
+[deploy]
+  release_command = "pnpm dlx prisma migrate deploy"
+
 [[services]]
   protocol = 'tcp'
   internal_port = 8080

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { DiscoverTab } from "./discover";
 import { DataSyncTab } from "./DataSyncTab";
 import { RightsTab } from "./RightsTab";
+import { MLTab } from "./MLTab";
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@/types/roles";
 //
@@ -74,7 +75,8 @@ function AdminTabs() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab =
-    (searchParams?.get("tab") as "discover" | "sync" | "rights") || "discover";
+    (searchParams?.get("tab") as "discover" | "sync" | "rights" | "ml") ||
+    "discover";
 
   return (
     <Tabs
@@ -86,6 +88,7 @@ function AdminTabs() {
         <TabsTrigger value="discover">Découverte de joueurs</TabsTrigger>
         <TabsTrigger value="sync">Synchronisation de données</TabsTrigger>
         <TabsTrigger value="rights">Gestion des droits</TabsTrigger>
+        <TabsTrigger value="ml">Machine Learning</TabsTrigger>
       </TabsList>
 
       <TabsContent value="discover" className="space-y-6">
@@ -98,6 +101,10 @@ function AdminTabs() {
 
       <TabsContent value="rights">
         <RightsTab />
+      </TabsContent>
+
+      <TabsContent value="ml">
+        <MLTab />
       </TabsContent>
     </Tabs>
   );

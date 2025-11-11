@@ -8,9 +8,7 @@
 ALTER TABLE "match_participants" ADD COLUMN "participantPUuid" TEXT;
 
 -- DropTable
-PRAGMA foreign_keys=off;
-DROP TABLE "riot_accounts";
-PRAGMA foreign_keys=on;
+DROP TABLE IF EXISTS "riot_accounts";
 
 -- CreateIndex
 CREATE INDEX "match_participants_participantPUuid_idx" ON "match_participants"("participantPUuid");

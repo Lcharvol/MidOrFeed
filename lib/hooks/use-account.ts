@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { useCallback, useMemo } from "react";
 import type { ApiResponse } from "@/types";
 import type { LeagueAccount } from "@/types";
+import { MATCHES_REFRESH_LIMIT } from "@/constants/matches";
 
 type LeagueAccountApi = {
   data: {
@@ -75,11 +76,47 @@ export function useAccount(puuid?: string | null) {
           profileIconId?: number | null;
         }>
       >("/api/riot/get-account-details", { puuid, region, force: true });
-      // Revalider le cache local après MAJ
       await mutate();
       return res;
     },
     [mutate, puuid]
+  );
+
+  const refreshAccountAndMatches = useCallback(
+    async (region: string) => {
+      if (!puuid) {
+        return { success: false, error: "Missing puuid" } as const;
+      }
+
+      const accountRes = await forceRefreshFromRiot(region);
+      if (!accountRes.success) {
+        return accountRes;
+      }
+
+      const matchResponse = await postJson<
+        { puuid: string; region: string; count: number },
+        {
+          message: string;
+          matchesCollected: number;
+          participantsCreated: number;
+          totalFound: number;
+        }
+      >("/api/matches/collect", {
+        puuid,
+        region,
+        count: MATCHES_REFRESH_LIMIT,
+      });
+
+      await mutate();
+
+      return {
+        success: true as const,
+        matchesCollected: matchResponse.matchesCollected ?? 0,
+        participantsCreated: matchResponse.participantsCreated ?? 0,
+        totalFound: matchResponse.totalFound ?? 0,
+      };
+    },
+    [forceRefreshFromRiot, mutate, puuid]
   );
 
   return {
@@ -89,5 +126,6 @@ export function useAccount(puuid?: string | null) {
     error: error ? (error as Error) : null,
     mutate,
     forceRefreshFromRiot,
+    refreshAccountAndMatches,
   } as const;
 }

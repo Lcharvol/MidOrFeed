@@ -10,8 +10,8 @@ CREATE TABLE "leaderboard_entries" (
     "leaguePoints" INTEGER NOT NULL,
     "wins" INTEGER NOT NULL,
     "losses" INTEGER NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateIndex

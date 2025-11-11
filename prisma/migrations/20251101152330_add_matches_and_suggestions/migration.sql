@@ -13,8 +13,8 @@ CREATE TABLE "matches" (
     "region" TEXT NOT NULL,
     "blueTeamWon" BOOLEAN,
     "redTeamWon" BOOLEAN,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -44,8 +44,8 @@ CREATE TABLE "match_participants" (
     "item6" INTEGER,
     "summoner1Id" INTEGER,
     "summoner2Id" INTEGER,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "match_participants_matchId_fkey" FOREIGN KEY ("matchId") REFERENCES "matches" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -57,12 +57,12 @@ CREATE TABLE "composition_suggestions" (
     "enemyChampions" TEXT,
     "role" TEXT NOT NULL,
     "suggestedChampion" TEXT NOT NULL,
-    "confidence" REAL NOT NULL DEFAULT 0.0,
+    "confidence" REAL NOT NULL DEFAULT 0,
     "reasoning" TEXT,
     "gameMode" TEXT,
     "tier" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateIndex

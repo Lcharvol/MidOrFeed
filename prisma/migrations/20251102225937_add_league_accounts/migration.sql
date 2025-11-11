@@ -16,8 +16,8 @@ CREATE TABLE "league_accounts" (
     "winRate" REAL NOT NULL DEFAULT 0,
     "avgKDA" REAL NOT NULL DEFAULT 0,
     "mostPlayedChampion" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateIndex

@@ -32,97 +32,110 @@ import {
   EditIcon,
   XIcon,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { useRiotAccountForm } from "@/lib/hooks/use-riot-account-form";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
-import type { UseFormReturn } from "react-hook-form";
-import type { RiotAccountFormValues } from "@/lib/hooks/use-riot-account-form";
+import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
-interface RiotAccountSectionProps {
-  user: {
-    riotGameName?: string | null;
-    riotTagLine?: string | null;
-    riotRegion?: string | null;
-    riotPuuid?: string | null;
-    leagueAccount?: {
-      riotGameName?: string | null;
-      riotTagLine?: string | null;
-      riotRegion?: string | null;
-    } | null;
-    id: string;
-  } | null;
-  form: UseFormReturn<RiotAccountFormValues>;
-  isSaving: boolean;
-  isAnalyzing: boolean;
-  isEditing: boolean;
-  onSave: (values: RiotAccountFormValues) => void;
-  onEdit: () => void;
-  onCancelEdit: () => void;
-  onAnalyzeMatches: () => void;
+export interface RiotAccountSectionProps {
+  className?: string;
+  showAnalyzeButton?: boolean;
 }
 
-export function RiotAccountSection({
-  user,
-  form,
-  isSaving,
-  isAnalyzing,
-  isEditing,
-  onSave,
-  onEdit,
-  onCancelEdit,
-  onAnalyzeMatches,
-}: RiotAccountSectionProps) {
+export const RiotAccountSection = ({
+  className,
+  showAnalyzeButton = true,
+}: RiotAccountSectionProps) => {
+  const { user, login } = useAuth();
+
+  const {
+    form,
+    isSaving,
+    isAnalyzing,
+    isEditing,
+    handleSaveAccount,
+    handleEditAccount,
+    handleCancelEdit,
+    handleAnalyzeMatches,
+  } = useRiotAccountForm({
+    user,
+    login,
+  });
+
+  const accountDisplay = useMemo(() => {
+    if (!user) return null;
+    const gameName = user.leagueAccount?.riotGameName ?? user.riotGameName;
+    const tagLine = user.leagueAccount?.riotTagLine ?? user.riotTagLine;
+    const region = user.leagueAccount?.riotRegion ?? user.riotRegion;
+
+    if (!gameName) return null;
+
+    return {
+      gameName,
+      tagLine,
+      region,
+    };
+  }, [user]);
+
+  if (!user) {
+    return null;
+  }
+
   return (
-    <Card className="mt-6">
+    <Card className={cn("mt-6", className)}>
       <CardHeader>
         <CardTitle>Compte League of Legends</CardTitle>
         <CardDescription>Connectez votre compte Riot Games</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {(user?.leagueAccount?.riotGameName || user?.riotGameName) &&
-        !isEditing ? (
+        {accountDisplay && !isEditing ? (
           <>
             <div className="rounded-lg border bg-muted/50 p-4">
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Gamepad2Icon className="size-5 text-primary" />
                   <span className="font-semibold">
-                    {user.leagueAccount?.riotGameName || user.riotGameName}
-                    {(user.leagueAccount?.riotTagLine || user.riotTagLine) &&
-                      `#${user.leagueAccount?.riotTagLine || user.riotTagLine}`}
+                    {accountDisplay.gameName}
+                    {accountDisplay.tagLine && `#${accountDisplay.tagLine}`}
                   </span>
                 </div>
-                <Button variant="ghost" size="icon" onClick={onEdit}>
+                <Button variant="ghost" size="icon" onClick={handleEditAccount}>
                   <EditIcon className="size-4" />
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Région :{" "}
-                {(
-                  user.leagueAccount?.riotRegion || user.riotRegion
-                )?.toUpperCase()}
+                Région : {accountDisplay.region?.toUpperCase() ?? "—"}
               </p>
             </div>
-            <Button
-              onClick={onAnalyzeMatches}
-              disabled={isAnalyzing}
-              className="w-full"
-              variant="outline"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2Icon className="mr-2 size-4 animate-spin" />
-                  Analyse en cours...
-                </>
-              ) : (
-                <>
-                  <TrendingUpIcon className="mr-2 size-4" />
-                  Analyser mes matchs
-                </>
-              )}
-            </Button>
+
+            {showAnalyzeButton && (
+              <Button
+                onClick={handleAnalyzeMatches}
+                disabled={isAnalyzing}
+                className="w-full"
+                variant="outline"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2Icon className="mr-2 size-4 animate-spin" />
+                    Analyse en cours...
+                  </>
+                ) : (
+                  <>
+                    <TrendingUpIcon className="mr-2 size-4" />
+                    Analyser mes matchs
+                  </>
+                )}
+              </Button>
+            )}
           </>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleSaveAccount)}
+              className="space-y-4"
+            >
               {isEditing && (
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-lg font-semibold">
@@ -132,7 +145,7 @@ export function RiotAccountSection({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={onCancelEdit}
+                    onClick={handleCancelEdit}
                   >
                     <XIcon className="size-4" />
                   </Button>
@@ -163,9 +176,7 @@ export function RiotAccountSection({
                         <FormControl>
                           <Input placeholder="Votre tag..." {...field} />
                         </FormControl>
-                        <FormDescription>
-                          Format: EUW1, NA1, etc.
-                        </FormDescription>
+                        <FormDescription>Format : GOD#1234</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -222,7 +233,7 @@ export function RiotAccountSection({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={onCancelEdit}
+                    onClick={handleCancelEdit}
                     disabled={isSaving}
                   >
                     Annuler
@@ -235,4 +246,4 @@ export function RiotAccountSection({
       </CardContent>
     </Card>
   );
-}
+};

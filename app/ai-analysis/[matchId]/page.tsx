@@ -28,6 +28,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
 import { useAIAnalysis } from "@/lib/hooks/use-ai-analysis";
 import useSWR from "swr";
+import { useChampions } from "@/lib/hooks/use-champions";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -69,20 +70,7 @@ export default function AIAnalysisPage() {
   const { t } = useI18n();
   const matchId = params.matchId as string;
   const { canAnalyze, remainingAnalyses } = useAIAnalysis();
-  const { data: championsData } = useSWR("/api/champions/list", fetcher);
-  const championKeyToId = useMemo(() => {
-    const map = new Map<string, string>();
-    const list =
-      (championsData?.data as Array<{
-        championKey?: number;
-        championId: string;
-      }>) || [];
-    for (const c of list) {
-      if (typeof c.championKey === "number")
-        map.set(String(c.championKey), c.championId);
-    }
-    return map;
-  }, [championsData]);
+  const { championKeyToIdMap } = useChampions();
 
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -381,7 +369,7 @@ export default function AIAnalysisPage() {
             <ChampionIcon
               championId={analysis.championPerformance.championId}
               championKey={analysis.championPerformance.championId}
-              championKeyToId={championKeyToId}
+              championKeyToId={championKeyToIdMap}
               alt={analysis.championPerformance.championId}
               size={80}
               shape="rounded"

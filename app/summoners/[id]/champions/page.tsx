@@ -31,9 +31,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
-import type { ChampionStats } from "@/types";
+import type { SummonerChampionStats } from "@/types";
 import { useParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { useChampions } from "@/lib/hooks/use-champions";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -102,38 +103,18 @@ export default function ChampionsByIdPage() {
     ? `/api/matches/list?puuid=${puuid}`
     : "/api/matches/list";
   const { data, error, isLoading } = useSWR(matchesUrl, fetcher);
-  const { data: championsData } = useSWR("/api/champions/list", fetcher);
-
-  const { championMap, championKeyToId } = useMemo(() => {
-    const empty = {
-      championMap: new Map<string, string>(),
-      championKeyToId: new Map<string, string>(),
-    };
-    if (!championsData?.data) return empty;
-    const idToName = new Map<string, string>();
-    const keyToId = new Map<string, string>();
-    for (const champion of championsData.data as Array<{
-      championId: string;
-      name: string;
-      championKey?: number;
-    }>) {
-      idToName.set(champion.championId, champion.name);
-      if (typeof champion.championKey === "number") {
-        keyToId.set(String(champion.championKey), champion.championId);
-      }
-    }
-    return { championMap: idToName, championKeyToId: keyToId };
-  }, [championsData]);
+  const { championNameMap, championKeyToIdMap } = useChampions();
 
   const resolveChampionSlug = (idOrKey: string): string => {
     if (/^\d+$/.test(idOrKey)) {
-      return championKeyToId.get(idOrKey) || idOrKey;
+      return championKeyToIdMap.get(idOrKey) || idOrKey;
     }
     return idOrKey;
   };
 
   const championStats = useMemo(
-    () => (data?.data?.championStats || {}) as Record<string, ChampionStats>,
+    () =>
+      (data?.data?.championStats || {}) as Record<string, SummonerChampionStats>,
     [data]
   );
 
@@ -157,7 +138,7 @@ export default function ChampionsByIdPage() {
     let filtered = Object.entries(championStats)
       .map(([championId, stats]) => ({
         championId,
-        name: championMap.get(championId) || championId,
+        name: championNameMap.get(championId) || championId,
         ...stats,
         winRate: ((stats.wins / stats.played) * 100).toFixed(1),
         kda: ((stats.kills + stats.assists) / (stats.deaths || 1)).toFixed(2),
@@ -231,7 +212,7 @@ export default function ChampionsByIdPage() {
     }
 
     return filtered;
-  }, [championStats, championMap, searchTerm, sortColumn, sortDirection]);
+  }, [championStats, championNameMap, searchTerm, sortColumn, sortDirection]);
 
   const bestChampionId = useMemo(() => {
     const top = Object.entries(championStats).sort(
@@ -405,7 +386,7 @@ export default function ChampionsByIdPage() {
               <ChampionIcon
                 championId={resolveChampionSlug(bestChampionId)}
                 championKey={bestChampionId}
-                championKeyToId={championKeyToId}
+                championKeyToId={championKeyToIdMap}
                 fluid
                 showBorder={false}
                 className="opacity-25"
@@ -424,16 +405,16 @@ export default function ChampionsByIdPage() {
               {bestChampionId && (
                 <ChampionIcon
                   championId={resolveChampionSlug(bestChampionId)}
-                  alt={championMap.get(bestChampionId) || bestChampionId}
+                  alt={championNameMap.get(bestChampionId) || bestChampionId}
                   championKey={bestChampionId}
-                  championKeyToId={championKeyToId}
+                  championKeyToId={championKeyToIdMap}
                   size={64}
                   shape="rounded"
                 />
               )}
               <div className="text-2xl font-bold leading-tight drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
                 {bestChampionId
-                  ? championMap.get(bestChampionId) || bestChampionId
+                  ? championNameMap.get(bestChampionId) || bestChampionId
                   : "N/A"}
               </div>
             </div>
@@ -616,7 +597,7 @@ export default function ChampionsByIdPage() {
                         <ChampionIcon
                           championId={resolveChampionSlug(champion.championId)}
                           championKey={champion.championId}
-                          championKeyToId={championKeyToId}
+                          championKeyToId={championKeyToIdMap}
                           size={48}
                           shape="rounded"
                           className="border-2 border-primary/20"

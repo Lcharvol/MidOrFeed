@@ -8,19 +8,18 @@ export function GET(request: NextRequest): Response {
     return new Response("Expected websocket", { status: 400 });
   }
 
-  const { 0: client, 1: server } = new WebSocketPair();
+  const { 0: client, 1: server } = new (globalThis as any).WebSocketPair();
 
   server.accept();
   registerNotificationClient(server);
 
-  server.addEventListener("message", (event) => {
+  server.addEventListener("message", (event: MessageEvent) => {
     if (typeof event.data === "string" && event.data === "ping") {
       server.send("pong");
     }
   });
 
-  return new Response(null, {
-    status: 101,
-    webSocket: client,
-  });
+  const response = new Response(null, { status: 101 });
+  (response as any).webSocket = client;
+  return response;
 }

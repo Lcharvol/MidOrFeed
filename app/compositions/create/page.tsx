@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import useSWR from "swr";
+import { useMemo, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,33 +15,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Loader2Icon, PlusIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
-
-// Interface pour les champions
-interface Champion {
-  id: string;
-  championId: string;
-  name: string;
-  title: string;
-  attack: number;
-  defense: number;
-  magic: number;
-  difficulty: number;
-  hp: number;
-}
-
-interface ChampionsResponse {
-  success: boolean;
-  data: Champion[];
-  count: number;
-}
-
-const fetcher = async (url: string): Promise<ChampionsResponse> => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error("Erreur lors de la récupération des champions");
-  }
-  return res.json();
-};
+import { useChampions } from "@/lib/hooks/use-champions";
+import type { ChampionEntity } from "@/types";
 
 const ROLES = [
   { value: "top", label: "Top Lane", icon: "⚔️" },
@@ -56,7 +30,7 @@ export default function CreateCompositionPage() {
   const [compositionName, setCompositionName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedChampions, setSelectedChampions] = useState<
-    Record<string, Champion | null>
+    Record<string, ChampionEntity | null>
   >({
     top: null,
     jungle: null,
@@ -65,19 +39,22 @@ export default function CreateCompositionPage() {
     support: null,
   });
 
-  const { data, error, isLoading } = useSWR<ChampionsResponse>(
-    "/api/champions/list",
-    fetcher
-  );
+  const {
+    champions,
+    isLoading: championsLoading,
+    error: championsError,
+  } = useChampions();
 
-  const champions = data?.data || [];
+  const filteredChampions = useMemo(() => {
+    if (!champions.length) return [];
+    const normalized = searchTerm.trim().toLowerCase();
+    if (!normalized) return champions;
+    return champions.filter((champion) =>
+      champion.name.toLowerCase().includes(normalized)
+    );
+  }, [champions, searchTerm]);
 
-  // Filtrer les champions par recherche
-  const filteredChampions = champions.filter((champion) =>
-    champion.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleChampionSelect = (role: string, champion: Champion) => {
+  const handleChampionSelect = (role: string, champion: ChampionEntity) => {
     setSelectedChampions((prev) => ({
       ...prev,
       [role]: champion,
@@ -216,21 +193,21 @@ export default function CreateCompositionPage() {
                     className="w-full"
                   />
 
-                  {isLoading && (
+                  {championsLoading && (
                     <div className="flex items-center justify-center py-12">
                       <Loader2Icon className="size-8 animate-spin text-primary" />
                     </div>
                   )}
 
-                  {error && (
+                  {championsError ? (
                     <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
                       <p className="text-destructive">
                         Erreur lors du chargement des champions
                       </p>
                     </div>
-                  )}
+                  ) : null}
 
-                  {!isLoading && !error && (
+                  {!championsLoading && !championsError && (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                       {filteredChampions.map((champion) => {
                         const isSelected = Object.values(
@@ -344,7 +321,7 @@ export default function CreateCompositionPage() {
                     className="w-full"
                     size="lg"
                     onClick={handleSave}
-                    disabled={isLoading}
+                    disabled={championsLoading}
                   >
                     <PlusIcon className="mr-2 size-5" />
                     Sauvegarder la composition

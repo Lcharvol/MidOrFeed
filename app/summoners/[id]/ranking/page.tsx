@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2Icon, TrophyIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ColorBadge } from "@/components/ui/color-badge";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { useParams, useSearchParams } from "next/navigation";
 
@@ -201,9 +202,9 @@ export default function RankingByIdPage() {
                 <div className="flex items-center justify-between mb-4">
                   <CardTitle>{queueName}</CardTitle>
                   {league.hotStreak && (
-                    <Badge className="bg-orange-500 hover:bg-orange-500">
+                    <ColorBadge emphasis="positive" variant="solid">
                       🔥 Série chaude
-                    </Badge>
+                    </ColorBadge>
                   )}
                 </div>
                 <div className="flex items-center gap-4">
@@ -251,12 +252,13 @@ export default function RankingByIdPage() {
                   </div>
                 </div>
                 {league.freshBlood && (
-                  <Badge
-                    variant="outline"
-                    className="mt-4 w-full justify-center"
+                  <ColorBadge
+                    emphasis="info"
+                    variant="subtle"
+                    className="mt-4 inline-flex w-full justify-center"
                   >
                     🆕 Sang neuf
-                  </Badge>
+                  </ColorBadge>
                 )}
               </CardContent>
             </Card>

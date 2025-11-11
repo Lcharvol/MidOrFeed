@@ -66,6 +66,9 @@ import {
   SparklesIcon,
   SwordIcon,
   PackageIcon,
+  ChevronDownIcon,
+  RefreshCwIcon,
+  CheckIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
@@ -88,8 +91,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import { NotificationProvider } from "@/components/NotificationProvider";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useGameVersionContext } from "@/components/GameVersionProvider";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -98,6 +101,8 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isVersionOpen, setIsVersionOpen] = useState(false);
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchRegion, setSearchRegion] = useState("euw1");
@@ -117,6 +122,20 @@ export function Header() {
     user?.leagueAccount?.riotRegion
   );
   const { t } = useI18n();
+  const isUserAdmin = Boolean(user && isAdmin(user.role));
+  const {
+    versions,
+    currentVersion,
+    selectedVersion,
+    isLoading: versionsLoading,
+    isValidating: versionsValidating,
+    selectVersion,
+    clearSelection,
+    refresh: refreshVersions,
+  } = useGameVersionContext();
+  const versionLabel = selectedVersion ?? currentVersion ?? "Inconnue";
+  const isCustomVersion =
+    selectedVersion !== null && selectedVersion !== currentVersion;
 
   const navigationTriggerClasses =
     "group inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary";
@@ -184,26 +203,31 @@ export function Header() {
     return () => clearTimeout(timer);
   }, [searchQuery, performLocalSearch]);
 
+  const handleSelectResult = useCallback(
+    (entry: LocalSearchResult) => {
+      if (!entry.puuid) return;
+      addRecentSearch(
+        entry.gameName || entry.puuid,
+        entry.tagLine || entry.region,
+        entry.region
+      );
+      setIsSearchOpen(false);
+      setSearchQuery("");
+      setSearchResults([]);
+      router.push(`/summoners/${entry.puuid}/overview?region=${entry.region}`);
+    },
+    [addRecentSearch, router]
+  );
+
   const handleSummonerSearch = async (query: string) => {
-    if (!query || query.length < 2) return;
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) {
+      toast.error("Entrez au moins 2 caractères");
+      return;
+    }
 
     setIsSearching(true);
     try {
-      // Parse query like "GameName#TagLine" or "GameName #TagLine"
-      const match = query.match(/^([^#]+)#?(\S*)$/);
-      if (!match) {
-        toast.error(t("header.searchInvalidFormat"));
-        return;
-      }
-
-      const [, gameName, tagLine] = match;
-
-      if (!gameName || !tagLine) {
-        toast.error(t("header.searchInvalidFormat"));
-        return;
-      }
-
-      // Try to search for the summoner using selected region
       const region = searchRegion;
 
       const response = await fetch("/api/riot/search-account", {
@@ -212,8 +236,7 @@ export function Header() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          gameName: gameName.trim(),
-          tagLine: tagLine.trim(),
+          query: trimmed,
           region,
         }),
       });
@@ -226,10 +249,17 @@ export function Header() {
       }
 
       // Enregistrer la recherche comme récente
-      addRecentSearch(gameName, tagLine, region);
+      if (result.summary) {
+        addRecentSearch(
+          result.summary.gameName ?? trimmed,
+          result.summary.tagLine ?? region,
+          region
+        );
+      }
 
       // Redirect to summoner page with the found PUUID
       router.push(`/summoners?puuid=${result.puuid}&region=${region}`);
+      setIsSearchOpen(false);
     } catch (error) {
       console.error("Search error:", error);
       toast.error(t("header.searchError"));
@@ -239,6 +269,20 @@ export function Header() {
       setSearchResults([]);
     }
   };
+
+  const handleSelectVersion = useCallback(
+    async (version: string) => {
+      if (version === selectedVersion) {
+        setIsVersionOpen(false);
+        return;
+      }
+
+      selectVersion(version);
+      toast.success(`Version ${version} sélectionnée.`);
+      setIsVersionOpen(false);
+    },
+    [selectedVersion, selectVersion]
+  );
 
   // Menu de navigation pour desktop
   const NavigationContent = () => (
@@ -330,15 +374,39 @@ export function Header() {
         <NavigationMenuTrigger
           className={cn(
             navigationTriggerClasses,
-            pathname?.startsWith("/tier-list") &&
+            (pathname?.startsWith("/tier-list") ||
+              pathname === "/counter-picks" ||
+              pathname === "/leaderboard") &&
               "bg-primary/10 text-primary shadow-sm"
           )}
         >
           <TrophyIcon className="mr-2 size-4" />
-          {t("tierListMenu.title")}
+          Meta & Stats
         </NavigationMenuTrigger>
         <NavigationMenuContent className="rounded-xl shadow-lg">
           <ul className="grid w-[300px] gap-3 p-4">
+            <li>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/counter-picks"
+                  className={cn(
+                    navigationLinkClasses,
+                    pathname === "/counter-picks" &&
+                      "border border-primary/40 bg-primary/10 text-primary shadow"
+                  )}
+                >
+                  <SwordIcon className="mt-0.5 size-5 text-primary shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-medium leading-none">
+                      Counter Picks
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      Trouve les meilleurs contres pour chaque champion.
+                    </p>
+                  </div>
+                </Link>
+              </NavigationMenuLink>
+            </li>
             <li>
               <NavigationMenuLink asChild>
                 <Link
@@ -383,22 +451,30 @@ export function Header() {
                 </Link>
               </NavigationMenuLink>
             </li>
+            <li>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/leaderboard"
+                  className={cn(
+                    navigationLinkClasses,
+                    pathname === "/leaderboard" &&
+                      "border border-primary/40 bg-primary/10 text-primary shadow"
+                  )}
+                >
+                  <BarChartIcon className="mt-0.5 size-5 text-primary shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-medium leading-none">
+                      Leaderboard
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      Consulte les joueurs les mieux classés par région.
+                    </p>
+                  </div>
+                </Link>
+              </NavigationMenuLink>
+            </li>
           </ul>
         </NavigationMenuContent>
-      </NavigationMenuItem>
-
-      <NavigationMenuItem>
-        <Link
-          href="/leaderboard"
-          className={cn(
-            standaloneNavLinkClasses,
-            pathname === "/leaderboard" &&
-              "bg-primary/10 text-primary shadow-sm"
-          )}
-        >
-          <BarChartIcon className="size-4" />
-          Leaderboard
-        </Link>
       </NavigationMenuItem>
 
       {user && (
@@ -481,15 +557,23 @@ export function Header() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="tier-list">
+        <AccordionItem value="meta">
           <AccordionTrigger className="text-base font-medium px-4 py-3 text-muted-foreground transition-colors hover:text-primary data-[state=open]:text-primary">
             <div className="flex items-center gap-2">
               <TrophyIcon className="size-4" />
-              {t("tierListMenu.title")}
+              Meta & Stats
             </div>
           </AccordionTrigger>
           <AccordionContent>
             <div className="flex flex-col space-y-1 pl-6 pr-2 pb-2">
+              <Link
+                href="/counter-picks"
+                className={mobileLinkClasses}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <SwordIcon className="size-4 text-primary" />
+                Counter Picks
+              </Link>
               <Link
                 href="/tier-list/champions"
                 className={mobileLinkClasses}
@@ -506,22 +590,18 @@ export function Header() {
                 <PackageIcon className="size-4 text-primary" />
                 {t("tierListMenu.items.title")}
               </Link>
+              <Link
+                href="/leaderboard"
+                className={mobileLinkClasses}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <BarChartIcon className="size-4 text-primary" />
+                Leaderboard
+              </Link>
             </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-
-      <Link
-        href="/leaderboard"
-        className={cn(
-          mobilePrimaryLinkClasses,
-          pathname === "/leaderboard" && "bg-primary/10 text-primary"
-        )}
-        onClick={() => setMobileMenuOpen(false)}
-      >
-        <BarChartIcon className="size-4" />
-        Leaderboard
-      </Link>
 
       {user && (
         <>
@@ -612,6 +692,272 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          <Popover open={isVersionOpen} onOpenChange={setIsVersionOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border border-border/70 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors",
+                  "hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                  (versionsLoading || versionsValidating) && "cursor-progress"
+                )}
+              >
+                {versionsLoading || versionsValidating ? (
+                  <>
+                    <Loader2Icon className="size-3.5 animate-spin" />
+                    <span>Patch</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="uppercase text-[11px] tracking-wide text-muted-foreground">
+                      Patch
+                    </span>
+                    <span className="text-xs font-semibold text-foreground">
+                      {versionLabel}
+                    </span>
+                    <ChevronDownIcon className="size-3 text-muted-foreground" />
+                  </>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[220px] rounded-xl border border-border/60 bg-background/95 p-3 shadow-lg backdrop-blur"
+              align="end"
+              sideOffset={12}
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-[11px] font-semibold uppercase text-muted-foreground">
+                  Versions du jeu
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-primary"
+                  onClick={() => {
+                    void refreshVersions();
+                  }}
+                >
+                  <RefreshCwIcon className="size-3.5" />
+                  <span className="sr-only">Rafraîchir les versions</span>
+                </Button>
+              </div>
+
+              <div className="max-h-60 space-y-1 overflow-y-auto">
+                {versionsLoading && (
+                  <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-foreground">
+                    <Loader2Icon className="size-3.5 animate-spin" />
+                    Chargement...
+                  </div>
+                )}
+                {!versionsLoading && versions.length === 0 && (
+                  <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                    Aucune version trouvée. Lancez une synchronisation depuis
+                    l’espace admin.
+                  </div>
+                )}
+                {!versionsLoading &&
+                  versions.map((entry) => {
+                    const isActive = entry.version === selectedVersion;
+                    const isGlobal = entry.version === currentVersion;
+                    return (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        onClick={() => handleSelectVersion(entry.version)}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs transition-colors",
+                          isActive
+                            ? "bg-primary/15 text-primary"
+                            : "hover:bg-muted/70"
+                        )}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground">
+                            {entry.version}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {new Date(entry.createdAt).toLocaleDateString("fr-FR")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isGlobal && (
+                            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
+                              Officiel
+                            </span>
+                          )}
+                          {isActive ? (
+                            <CheckIcon className="size-3.5 text-primary" />
+                          ) : (
+                            <span className="text-[10px] uppercase text-muted-foreground">
+                              Utiliser
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+
+              <div className="mt-3 rounded-md bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
+                Patch officiel : {currentVersion ?? "inconnu"}. Sélectionnez un autre patch
+                pour prévisualiser les données avec cette version (stocké sur cet
+                appareil).
+              </div>
+
+              {isCustomVersion && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 w-full text-xs"
+                  onClick={() => {
+                    clearSelection();
+                    toast.success("Patch officiel rétabli.");
+                    setIsVersionOpen(false);
+                  }}
+                >
+                  Revenir au patch officiel ({currentVersion ?? "inconnu"})
+                </Button>
+              )}
+            </PopoverContent>
+          </Popover>
+          <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 hover:bg-muted/60"
+              >
+                <SearchIcon className="size-5" />
+                <span className="sr-only">Rechercher</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[360px] p-0"
+              align="end"
+              sideOffset={12}
+            >
+              <Command shouldFilter={false}>
+                <div className="flex items-center gap-3 px-4 py-3 bg-background/80 backdrop-blur rounded-t-xl shadow-sm ring-1 ring-border/30">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-primary/12 text-primary">
+                    <SearchIcon className="size-4" />
+                  </div>
+                  <CommandInput
+                    placeholder="Rechercher un invocateur..."
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        handleSummonerSearch(searchQuery);
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2 px-4 py-3 bg-background/70 backdrop-blur">
+                  <span className="text-xs text-muted-foreground">Région</span>
+                  <Select value={searchRegion} onValueChange={setSearchRegion}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Région" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RIOT_REGIONS.map((regionOption) => (
+                        <SelectItem
+                          key={regionOption.value}
+                          value={regionOption.value}
+                        >
+                          {regionOption.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <CommandList>
+                  <CommandEmpty>
+                    {searchQuery.length >= 2
+                      ? "Aucun invocateur trouvé."
+                      : "Tapez au moins deux caractères pour rechercher."}
+                  </CommandEmpty>
+                  {searchResults.length > 0 && (
+                    <CommandGroup heading="Résultats">
+                      {searchResults.map((result) => (
+                        <CommandItem
+                          key={result.puuid}
+                          value={result.puuid}
+                          onSelect={() => handleSelectResult(result)}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/80 hover:border-primary/40 hover:bg-background transition-colors"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {result.gameName ?? "Inconnu"}
+                              {result.tagLine && (
+                                <span className="text-muted-foreground">
+                                  #{result.tagLine}
+                                </span>
+                              )}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {result.region.toUpperCase()}
+                              {typeof result.stats?.totalMatches === "number" &&
+                                ` • ${result.stats.totalMatches} matchs`}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                  {recentSearches.length > 0 && (
+                    <CommandGroup heading="Recherches récentes">
+                      {recentSearches.map((recent) => (
+                        <CommandItem
+                          key={`${recent.gameName}#${recent.tagLine}@${recent.region}`}
+                          value={`${recent.gameName}#${recent.tagLine}`}
+                          onSelect={() =>
+                            handleSummonerSearch(
+                              `${recent.gameName}#${recent.tagLine}`
+                            )
+                          }
+                          className="flex items-center justify-between gap-3"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {recent.gameName}
+                              <span className="text-muted-foreground">
+                                #{recent.tagLine}
+                              </span>
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {recent.region.toUpperCase()}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+                <div className="border-t px-3 py-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleSummonerSearch(searchQuery)}
+                    disabled={isSearching || searchQuery.length < 2}
+                  >
+                    {isSearching ? (
+                      <>
+                        <Loader2Icon className="mr-2 size-4 animate-spin" />
+                        Recherche...
+                      </>
+                    ) : (
+                      <>
+                        <SearchIcon className="mr-2 size-4" />
+                        Rechercher
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <NotificationBell />
           {mounted && (
             <Button

@@ -5,10 +5,10 @@ CREATE TABLE "riot_accounts" (
     "tagLine" TEXT NOT NULL,
     "puuid" TEXT,
     "region" TEXT,
-    "lastSearched" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastSearched" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "searchCount" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateIndex

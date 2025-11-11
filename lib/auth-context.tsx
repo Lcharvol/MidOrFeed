@@ -6,6 +6,7 @@ import {
   useState,
   useMemo,
   useCallback,
+  useEffect,
   ReactNode,
 } from "react";
 
@@ -18,6 +19,10 @@ interface User {
   subscriptionExpiresAt?: string | null;
   dailyAnalysesUsed?: number;
   lastDailyReset?: string;
+  riotGameName?: string | null;
+  riotTagLine?: string | null;
+  riotRegion?: string | null;
+  riotPuuid?: string | null;
   leagueAccount?: {
     id: string;
     puuid: string;
@@ -38,22 +43,34 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null;
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-  const [isLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const login = useCallback((userData: unknown) => {
     const castUser = userData as User;
     setUser(castUser);
     localStorage.setItem("user", JSON.stringify(castUser));
+    setIsLoading(false);
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("user");
+    setIsLoading(false);
   }, []);
 
   const contextValue = useMemo(

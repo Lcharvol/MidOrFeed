@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
+import { MATCHES_PAGE_LIMIT } from "@/constants/matches";
 
 /**
  * Route API pour obtenir la liste des matchs avec leurs statistiques
@@ -22,16 +22,26 @@ export async function GET(request: Request) {
           }
         : {},
       include: {
-        participants: puuid
-          ? {
-              where: { participantPUuid: puuid },
-            }
-          : true,
+      participants: {
+        include: {
+          match: {
+            select: {
+              queueId: true,
+              region: true,
+              gameDuration: true,
+              gameMode: true,
+              platformId: true,
+              gameVersion: true,
+              gameCreation: true,
+            },
+          },
+        },
+      },
       },
       orderBy: {
         gameCreation: "desc",
       },
-      take: MATCHES_FETCH_LIMIT,
+      take: MATCHES_PAGE_LIMIT,
     });
 
     // Calculer les statistiques agrégées
@@ -63,12 +73,19 @@ export async function GET(request: Request) {
     > = {};
 
     matches.forEach((match) => {
-      // Ne compter que les matchs où l'utilisateur a participé si un PUUID est fourni
-      if (!puuid || match.participants.length > 0) {
-        totalMatches++;
+      const relevantParticipants = puuid
+        ? match.participants.filter(
+            (participant) => participant.participantPUuid === puuid
+          )
+        : match.participants;
+
+      if (relevantParticipants.length === 0) {
+        return;
       }
 
-      match.participants.forEach((participant) => {
+      totalMatches++;
+
+      relevantParticipants.forEach((participant) => {
         totalKills += participant.kills;
         totalDeaths += participant.deaths;
         totalAssists += participant.assists;
@@ -77,7 +94,6 @@ export async function GET(request: Request) {
           totalWins++;
         }
 
-        // Stats par champion
         if (!championStats[participant.championId]) {
           championStats[participant.championId] = {
             played: 0,
@@ -95,7 +111,6 @@ export async function GET(request: Request) {
           championStats[participant.championId].wins++;
         }
 
-        // Stats par rôle
         if (participant.role) {
           if (!roleStats[participant.role]) {
             roleStats[participant.role] = {
@@ -123,6 +138,15 @@ export async function GET(request: Request) {
     const serializedMatches = matches.map((match) => ({
       ...match,
       gameCreation: match.gameCreation.toString(),
+      participants: match.participants.map((participant) => ({
+        ...participant,
+        match: participant.match
+          ? {
+              ...participant.match,
+              gameCreation: participant.match.gameCreation.toString(),
+            }
+          : undefined,
+      })),
     }));
 
     return NextResponse.json(

@@ -29,8 +29,8 @@ CREATE TABLE "champions" (
     "attackDamagePerLevel" REAL NOT NULL,
     "attackSpeed" REAL NOT NULL,
     "attackSpeedPerLevel" REAL NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateIndex

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import useSWR from "swr";
 import {
   Card,
   CardContent,
@@ -10,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ColorBadge } from "@/components/ui/color-badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,69 +34,14 @@ import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { QUEUE_NAMES } from "@/constants/queues";
 import { useParams, useSearchParams } from "next/navigation";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-interface Match {
-  id: string;
-  matchId: string;
-  gameCreation: string | bigint;
-  gameDuration: number;
-  gameMode: string;
-  queueId: number;
-  blueTeamWon: boolean | null;
-  redTeamWon: boolean | null;
-  participants: Participant[];
-}
-
-interface Participant {
-  id: string;
-  participantId: number;
-  teamId: number;
-  championId: string;
-  role: string | null;
-  lane: string | null;
-  kills: number;
-  deaths: number;
-  assists: number;
-  goldEarned: number;
-  totalDamageDealtToChampions: number;
-  totalDamageTaken: number;
-  visionScore: number;
-  win: boolean;
-  participantPUuid?: string;
-}
-
-interface MatchData {
-  matches: Match[];
-  stats: {
-    totalGames: number;
-    totalWins: number;
-    winRate: string;
-    avgKDA: string;
-    totalKills: number;
-    totalDeaths: number;
-    totalAssists: number;
-  };
-  championStats: Record<
-    string,
-    {
-      played: number;
-      wins: number;
-      kills: number;
-      deaths: number;
-      assists: number;
-    }
-  >;
-  roleStats: Record<
-    string,
-    {
-      played: number;
-      wins: number;
-    }
-  >;
-}
+import { MATCHES_PAGE_LIMIT, MATCHES_REFRESH_LIMIT } from "@/constants/matches";
+import { useChampions } from "@/lib/hooks/use-champions";
+import { useMatches } from "@/lib/hooks/use-matches";
+import type {
+  MatchParticipantSummary,
+  MatchSummary,
+  MatchesPayload,
+} from "@/types";
 
 // QUEUE_NAMES centralized in @/types
 
@@ -104,16 +49,19 @@ function MatchDetailsDialog({
   match,
   championMap,
 }: {
-  match: Match;
+  match: MatchSummary;
   championMap: Map<string, string>;
 }) {
-  const { data: matchDetails } = useSWR(`/api/matches/${match.id}`, fetcher);
-  const fullMatch = matchDetails?.data || match;
+  const fullMatch = match;
 
   const blueTeam =
-    fullMatch.participants?.filter((p: Participant) => p.teamId === 100) || [];
+    fullMatch.participants?.filter(
+      (p: MatchParticipantSummary) => p.teamId === 100
+    ) || [];
   const redTeam =
-    fullMatch.participants?.filter((p: Participant) => p.teamId === 200) || [];
+    fullMatch.participants?.filter(
+      (p: MatchParticipantSummary) => p.teamId === 200
+    ) || [];
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -169,7 +117,10 @@ function MatchDetailsDialog({
                   ? "Victoire"
                   : "Défaite"}{" "}
                 •{" "}
-                {QUEUE_NAMES[fullMatch.queueId] || `Queue ${fullMatch.queueId}`}
+                {fullMatch.queueId !== null && fullMatch.queueId !== undefined
+                  ? QUEUE_NAMES[fullMatch.queueId] ??
+                    `Queue ${fullMatch.queueId}`
+                  : "File inconnue"}
               </div>
               <DialogDescription>
                 {formatDate(fullMatch.gameCreation)} •{" "}
@@ -192,13 +143,13 @@ function MatchDetailsDialog({
             <div className="w-3 h-3 bg-blue-500 rounded-full" />
             <h3 className="font-bold text-lg">Équipe Bleue</h3>
             {fullMatch.blueTeamWon && (
-              <Badge className="bg-green-500 hover:bg-green-500">
+              <ColorBadge emphasis="positive" variant="solid">
                 Victoire
-              </Badge>
+              </ColorBadge>
             )}
           </div>
           <div className="grid gap-2">
-            {blueTeam.map((participant: Participant) => {
+            {blueTeam.map((participant: MatchParticipantSummary) => {
               const kda = `${participant.kills}/${participant.deaths}/${participant.assists}`;
               const kdaRatio =
                 (participant.kills + participant.assists) /
@@ -246,13 +197,13 @@ function MatchDetailsDialog({
             <div className="w-3 h-3 bg-red-500 rounded-full" />
             <h3 className="font-bold text-lg">Équipe Rouge</h3>
             {fullMatch.redTeamWon && (
-              <Badge className="bg-green-500 hover:bg-green-500">
+              <ColorBadge emphasis="positive" variant="solid">
                 Victoire
-              </Badge>
+              </ColorBadge>
             )}
           </div>
           <div className="grid gap-2">
-            {redTeam.map((participant: Participant) => {
+            {redTeam.map((participant: MatchParticipantSummary) => {
               const kda = `${participant.kills}/${participant.deaths}/${participant.assists}`;
               const kdaRatio =
                 (participant.kills + participant.assists) /
@@ -299,29 +250,27 @@ function MatchDetailsDialog({
   );
 }
 
-export default function MatchesByIdPage() {
+const MatchesByIdPageInner = () => {
   const params = useParams();
   const puuid = typeof params?.id === "string" ? params.id : undefined;
   const searchParams = useSearchParams();
   const region = searchParams.get("region") || undefined;
 
-  const matchesUrl = puuid
-    ? `/api/matches/list?puuid=${puuid}`
-    : "/api/matches/list";
-  const { data, error, isLoading, mutate } = useSWR(matchesUrl, fetcher);
-  const { data: championsData } = useSWR("/api/champions/list", fetcher);
+  const {
+    data: matchPayload,
+    matches,
+    stats,
+    championStats,
+    error,
+    isLoading,
+    refresh,
+  } = useMatches({ puuid });
+  const { championNameMap } = useChampions();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const championMap = championsData?.data
-    ? new Map(
-        championsData.data.map(
-          (champion: { championId: string; name: string }) => [
-            champion.championId,
-            champion.name,
-          ]
-        )
-      )
-    : new Map();
+  const matchData: MatchesPayload | null = matchPayload;
+  const aggregateStats = stats ?? matchData?.stats ?? null;
+  const championMap = championNameMap;
 
   const handleRefresh = async () => {
     if (!puuid || !region) {
@@ -336,7 +285,7 @@ export default function MatchesByIdPage() {
         body: JSON.stringify({
           puuid,
           region,
-          count: MATCHES_FETCH_LIMIT,
+          count: MATCHES_REFRESH_LIMIT,
         }),
       });
       const result = await response.json();
@@ -347,7 +296,7 @@ export default function MatchesByIdPage() {
       toast.success(
         `Collecte terminée: ${result.matchesCollected} matchs collectés`
       );
-      mutate();
+      await refresh();
     } catch (e) {
       console.error(e);
       toast.error("Une erreur est survenue");
@@ -356,37 +305,10 @@ export default function MatchesByIdPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center py-20">
-          <Loader2Icon className="size-12 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !data?.success) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">
-            Erreur lors du chargement des matchs
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const matchData: MatchData = data.data;
-
-  const topChampions = Object.entries(matchData.championStats)
-    .sort((a, b) => b[1].played - a[1].played)
-    .slice(0, 5);
-
   const aiInsights = useMemo<AIInsight[]>(() => {
+    if (!matchData || matches.length === 0) return [];
     const insights: AIInsight[] = [];
-    const recentMatches = matchData.matches.slice(0, 10);
+    const recentMatches = matches.slice(0, 10);
     const recentWins = recentMatches.filter(
       (m) => m.participants?.[0]?.win
     ).length;
@@ -426,17 +348,51 @@ export default function MatchesByIdPage() {
         });
       }
     }
-    if (matchData.stats.totalGames >= 50) {
+    if ((aggregateStats?.totalGames ?? 0) >= 50) {
       insights.push({
         type: "positive",
         title: "Volume de jeu important",
-        description: `Avec ${matchData.stats.totalGames} matchs analysés, nos insights IA sont très précis pour votre profil.`,
+        description: `Avec ${
+          aggregateStats?.totalGames ?? 0
+        } matchs analysés, nos insights IA sont très précis pour votre profil.`,
         confidence: 95,
-        data: { "Matchs analysés": matchData.stats.totalGames },
+        data: { "Matchs analysés": aggregateStats?.totalGames ?? 0 },
       });
     }
     return insights;
-  }, [matchData]);
+  }, [matchData, aggregateStats, matches]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex items-center justify-center py-20">
+          <Loader2Icon className="size-12 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-center py-20">
+          <p className="text-muted-foreground">
+            Erreur lors du chargement des matchs
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!matchData) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-center py-20">
+          <p className="text-muted-foreground">Aucune donnée disponible</p>
+        </div>
+      </div>
+    );
+  }
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -455,16 +411,16 @@ export default function MatchesByIdPage() {
     }).format(date);
   };
 
-  return (
+  const content = (
     <div className="container mx-auto py-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 rounded-full bg-gradient-to-br from-primary to-primary/60">
+            <div className="p-3 rounded-full bg-linear-to-br from-primary to-primary/60">
               <TrophyIcon className="size-8 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 Matchs
               </h1>
               <p className="text-muted-foreground">Analyse des performances</p>
@@ -474,7 +430,7 @@ export default function MatchesByIdPage() {
         <Button
           onClick={handleRefresh}
           disabled={isRefreshing || !puuid || !region}
-          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+          className="bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
         >
           {isRefreshing ? (
             <>
@@ -491,7 +447,7 @@ export default function MatchesByIdPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card className="relative overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-background to-primary/5">
+        <Card className="relative overflow-hidden border-2 border-primary/20 bg-linear-to-br from-background to-primary/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
@@ -500,16 +456,16 @@ export default function MatchesByIdPage() {
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              {matchData.stats.winRate}%
+            <div className="text-3xl font-bold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              {aggregateStats?.winRate}%
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {matchData.stats.totalWins} wins sur {matchData.stats.totalGames}{" "}
+              {aggregateStats?.totalWins} wins sur {aggregateStats?.totalGames}{" "}
               matchs
             </p>
           </CardContent>
         </Card>
-        <Card className="relative overflow-hidden border-2 border-red-500/20 bg-gradient-to-br from-background to-red-500/5">
+        <Card className="relative overflow-hidden border-2 border-red-500/20 bg-linear-to-br from-background to-red-500/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-3xl" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <CardTitle className="text-sm font-medium">KDA Moyen</CardTitle>
@@ -518,13 +474,13 @@ export default function MatchesByIdPage() {
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-3xl font-bold bg-gradient-to-r from-red-500 to-red-500/60 bg-clip-text text-transparent">
-              {matchData.stats.avgKDA}
+            <div className="text-3xl font-bold bg-linear-to-r from-red-500 to-red-500/60 bg-clip-text text-transparent">
+              {aggregateStats?.avgKDA}
             </div>
             <p className="text-xs text-muted-foreground mt-2">Par match</p>
           </CardContent>
         </Card>
-        <Card className="relative overflow-hidden border-2 border-blue-500/20 bg-gradient-to-br from-background to-blue-500/5">
+        <Card className="relative overflow-hidden border-2 border-blue-500/20 bg-linear-to-br from-background to-blue-500/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-3xl" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <CardTitle className="text-sm font-medium">Total Matchs</CardTitle>
@@ -533,15 +489,15 @@ export default function MatchesByIdPage() {
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-blue-500/60 bg-clip-text text-transparent">
-              {matchData.stats.totalGames}
+            <div className="text-3xl font-bold bg-linear-to-r from-blue-500 to-blue-500/60 bg-clip-text text-transparent">
+              {aggregateStats?.totalGames}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Matchs collectés
             </p>
           </CardContent>
         </Card>
-        <Card className="relative overflow-hidden border-2 border-green-500/20 bg-gradient-to-br from-background to-green-500/5">
+        <Card className="relative overflow-hidden border-2 border-green-500/20 bg-linear-to-br from-background to-green-500/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full blur-3xl" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <CardTitle className="text-sm font-medium">Champions</CardTitle>
@@ -550,8 +506,8 @@ export default function MatchesByIdPage() {
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-3xl font-bold bg-gradient-to-r from-green-500 to-green-500/60 bg-clip-text text-transparent">
-              {Object.keys(matchData.championStats).length}
+            <div className="text-3xl font-bold bg-linear-to-r from-green-500 to-green-500/60 bg-clip-text text-transparent">
+              {Object.keys(championStats).length}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Champions différents
@@ -569,20 +525,24 @@ export default function MatchesByIdPage() {
       )}
 
       <Card className="mt-8 border-2 border-purple-500/10">
-        <CardHeader className="bg-gradient-to-r from-purple-500/5 to-transparent">
+        <CardHeader className="bg-linear-to-r from-purple-500/5 to-transparent">
           <CardTitle className="flex items-center gap-2">
             <Gamepad2Icon className="size-5 text-purple-500" />
             Historique récent
           </CardTitle>
-          <CardDescription>Vos 20 derniers matchs</CardDescription>
+          <CardDescription>
+            Vos {Math.min(MATCHES_PAGE_LIMIT, matches.length)} derniers matchs
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {matchData.matches.slice(0, 20).map((match) => {
+            {matches.slice(0, MATCHES_PAGE_LIMIT).map((match) => {
               const userParticipant =
                 (puuid
                   ? match.participants.find(
-                      (p) => (p as Participant).participantPUuid === puuid
+                      (p) =>
+                        (p as MatchParticipantSummary).participantPUuid ===
+                        puuid
                     )
                   : match.participants[0]) || match.participants[0];
               const isWin = userParticipant?.win;
@@ -595,8 +555,8 @@ export default function MatchesByIdPage() {
                     <div
                       className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all hover:scale-[1.02] hover:shadow-lg cursor-pointer ${
                         isWin
-                          ? "border-green-500/30 bg-gradient-to-r from-green-500/5 to-background"
-                          : "border-red-500/30 bg-gradient-to-r from-red-500/5 to-background"
+                          ? "border-green-500/30 bg-linear-to-r from-green-500/5 to-background"
+                          : "border-red-500/30 bg-linear-to-r from-red-500/5 to-background"
                       }`}
                     >
                       <div className="flex flex-col items-center min-w-[100px]">
@@ -640,8 +600,10 @@ export default function MatchesByIdPage() {
                       )}
                       <div className="flex flex-col items-end gap-2">
                         <Badge variant="outline">
-                          {QUEUE_NAMES[match.queueId] ||
-                            `Queue ${match.queueId}`}
+                          {match.queueId !== null && match.queueId !== undefined
+                            ? QUEUE_NAMES[match.queueId] ??
+                              `Queue ${match.queueId}`
+                            : "File inconnue"}
                         </Badge>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(match.gameCreation)}
@@ -666,4 +628,8 @@ export default function MatchesByIdPage() {
       </Card>
     </div>
   );
-}
+
+  return content;
+};
+
+export default MatchesByIdPageInner;
