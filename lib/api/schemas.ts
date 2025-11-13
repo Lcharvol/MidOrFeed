@@ -166,6 +166,151 @@ export const validateCounterPickResponse = (
   return { ok: true, value: parsed.data.data };
 };
 
+const buildItemReferenceSchema = z.object({
+  itemId: z.string(),
+  name: z.string(),
+  image: z.string().nullable(),
+});
+
+const championBuildItemSchema = buildItemReferenceSchema.extend({
+  picks: z.number(),
+  wins: z.number(),
+  pickRate: z.number(),
+  winRate: z.number(),
+});
+
+const championBuildVariantSchema = z.object({
+  items: z.array(buildItemReferenceSchema),
+  picks: z.number(),
+  wins: z.number(),
+  pickRate: z.number(),
+  winRate: z.number(),
+});
+
+const championBuildSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    data: z.object({
+      championId: z.string(),
+      sampleSize: z.number(),
+      lastMatchAt: z.string().nullable(),
+      coreItems: z.array(championBuildItemSchema),
+      situationalItems: z.array(championBuildItemSchema),
+      bootOptions: z.array(championBuildItemSchema),
+      popularBuilds: z.array(championBuildVariantSchema),
+    }),
+  })
+  .passthrough();
+
+const championBuildErrorSchema = z
+  .object({ success: z.literal(false), error: z.string() })
+  .passthrough();
+
+const championBuildResponseSchema = z.union([
+  championBuildSuccessSchema,
+  championBuildErrorSchema,
+]);
+
+type ChampionBuildSuccess = z.infer<typeof championBuildSuccessSchema>;
+
+export const validateChampionBuildResponse = (
+  input: unknown
+): ValidationResult<ChampionBuildSuccess["data"]> => {
+  const parsed = championBuildResponseSchema.safeParse(input);
+  if (!parsed.success) {
+    return buildInvalidFormatResult(parsed.error);
+  }
+  if (!parsed.data.success) {
+    return { ok: false, error: parsed.data.error };
+  }
+  return { ok: true, value: parsed.data.data };
+};
+
+const championAdviceVoteValueSchema = z.union([
+  z.literal(-1),
+  z.literal(0),
+  z.literal(1),
+]);
+
+const championAdviceEntrySchema = z.object({
+  id: z.string(),
+  championId: z.string(),
+  authorId: z.string().nullable(),
+  authorName: z.string().nullable(),
+  content: z.string(),
+  score: z.number(),
+  upvotes: z.number(),
+  downvotes: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  viewerVote: championAdviceVoteValueSchema.nullable(),
+  canDelete: z.boolean().optional(),
+});
+
+const championAdviceListSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    data: z.object({
+      championId: z.string(),
+      advices: z.array(championAdviceEntrySchema),
+    }),
+  })
+  .passthrough();
+
+const championAdviceSingleSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    data: z.object({
+      advice: championAdviceEntrySchema,
+    }),
+  })
+  .passthrough();
+
+const championAdviceErrorSchema = z
+  .object({ success: z.literal(false), error: z.string() })
+  .passthrough();
+
+const championAdviceListResponseSchema = z.union([
+  championAdviceListSuccessSchema,
+  championAdviceErrorSchema,
+]);
+
+const championAdviceSingleResponseSchema = z.union([
+  championAdviceSingleSuccessSchema,
+  championAdviceErrorSchema,
+]);
+
+type ChampionAdviceListSuccess = z.infer<typeof championAdviceListSuccessSchema>;
+type ChampionAdviceSingleSuccess = z.infer<
+  typeof championAdviceSingleSuccessSchema
+>;
+
+export const validateChampionAdviceListResponse = (
+  input: unknown
+): ValidationResult<ChampionAdviceListSuccess["data"]> => {
+  const parsed = championAdviceListResponseSchema.safeParse(input);
+  if (!parsed.success) {
+    return buildInvalidFormatResult(parsed.error);
+  }
+  if (!parsed.data.success) {
+    return { ok: false, error: parsed.data.error };
+  }
+  return { ok: true, value: parsed.data.data };
+};
+
+export const validateChampionAdviceSingleResponse = (
+  input: unknown
+): ValidationResult<ChampionAdviceSingleSuccess["data"]> => {
+  const parsed = championAdviceSingleResponseSchema.safeParse(input);
+  if (!parsed.success) {
+    return buildInvalidFormatResult(parsed.error);
+  }
+  if (!parsed.data.success) {
+    return { ok: false, error: parsed.data.error };
+  }
+  return { ok: true, value: parsed.data.data };
+};
+
 const matchParticipantSummarySchema = z
   .object({
     id: z.string(),

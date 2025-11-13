@@ -3,7 +3,11 @@ import { stat } from "fs/promises";
 import { resolve } from "path";
 import { prisma } from "@/lib/prisma";
 
-const DATA_FILE = resolve(process.cwd(), "ml/data/match_participants.csv");
+const MATCHES_FILE = resolve(process.cwd(), "ml/data/match_participants.csv");
+const COMPOSITIONS_FILE = resolve(
+  process.cwd(),
+  "ml/data/composition_samples.csv"
+);
 
 const safeStat = async (path: string) => {
   try {
@@ -19,9 +23,20 @@ const safeStat = async (path: string) => {
   }
 };
 
+const parseChampionArray = (value?: string | null): string[] => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map((item) => String(item)) : [];
+  } catch {
+    return [];
+  }
+};
+
 export async function GET() {
-  const [dataset, runs] = await Promise.all([
-    safeStat(DATA_FILE),
+  const [matchesDataset, compositionsDataset, runs] = await Promise.all([
+    safeStat(MATCHES_FILE),
+    safeStat(COMPOSITIONS_FILE),
     prisma.mlTrainingRun.findMany({
       orderBy: { startedAt: "desc" },
       take: 5,
@@ -99,13 +114,36 @@ export async function GET() {
     }));
   }
 
+  const compositionSuggestions = await prisma.compositionSuggestion.findMany({
+    where: { userId: null },
+    orderBy: [{ confidence: "desc" }],
+    take: 10,
+    select: {
+      id: true,
+      teamChampions: true,
+      enemyChampions: true,
+      role: true,
+      confidence: true,
+      updatedAt: true,
+    },
+  });
+
   return NextResponse.json({
     success: true,
     data: {
-      dataset,
+      matchesDataset,
+      compositionsDataset,
       runs,
       championSummary,
       matchSamples,
+      compositionSuggestions: compositionSuggestions.map((suggestion) => ({
+        id: suggestion.id,
+        teamChampions: parseChampionArray(suggestion.teamChampions),
+        enemyChampions: parseChampionArray(suggestion.enemyChampions ?? null),
+        role: suggestion.role,
+        confidence: suggestion.confidence,
+        updatedAt: suggestion.updatedAt.toISOString(),
+      })),
     },
   });
 }

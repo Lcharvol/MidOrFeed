@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +19,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type MlStatus = {
-  dataset: FileStatus;
+  matchesDataset: FileStatus;
+  compositionsDataset: FileStatus;
   runs: Array<{
     id: string;
     startedAt: string;
@@ -37,6 +38,14 @@ type MlStatus = {
     participantPUuid: string | null;
     championId: string;
     winProbability: number;
+  }>;
+  compositionSuggestions: Array<{
+    id: string;
+    teamChampions: string[];
+    enemyChampions: string[];
+    role: string;
+    confidence: number;
+    updatedAt: string;
   }>;
 };
 
@@ -63,9 +72,15 @@ const formatDate = (value?: string) => {
 
 const infoCards = [
   {
-    key: "dataset" as const,
-    title: "Dataset",
-    description: "Extraction CSV des matchs",
+    key: "matchesDataset" as const,
+    title: "Dataset matchs",
+    description: "Extraction CSV des participants",
+    icon: DatabaseIcon,
+  },
+  {
+    key: "compositionsDataset" as const,
+    title: "Dataset compositions",
+    description: "Échantillons pour l’IA de compositions",
     icon: DatabaseIcon,
   },
 ];
@@ -81,6 +96,9 @@ export const MLTab = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
   const [lastLogs, setLastLogs] = useState<string | null>(null);
+  const [isCompositionExporting, setIsCompositionExporting] = useState(false);
+  const [isCompositionTraining, setIsCompositionTraining] = useState(false);
+  const [compositionLogs, setCompositionLogs] = useState<string | null>(null);
 
   const triggerExport = async () => {
     setIsExporting(true);
@@ -126,8 +144,60 @@ export const MLTab = () => {
     }
   };
 
+  const triggerCompositionExport = async () => {
+    setIsCompositionExporting(true);
+    try {
+      const response = await fetch("/api/admin/ml/compositions/export", {
+        method: "POST",
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        toast.error(json.error || "Échec de l'export des compositions");
+        return;
+      }
+      toast.success(
+        `Export compositions terminé (${json.data?.total ?? "?"} lignes).`
+      );
+      await mutate();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur réseau");
+    } finally {
+      setIsCompositionExporting(false);
+    }
+  };
+
+  const triggerCompositionTraining = async () => {
+    setIsCompositionTraining(true);
+    setCompositionLogs(null);
+    try {
+      const response = await fetch("/api/admin/ml/compositions/train", {
+        method: "POST",
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        toast.error(json.error || "Échec du pipeline compositions");
+        return;
+      }
+      setCompositionLogs(json.data?.stdout ?? null);
+      toast.success(
+        `Suggestions mises à jour (${json.data?.totalSuggestions ?? "?"}).`
+      );
+      await mutate();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur réseau lors du pipeline compositions");
+    } finally {
+      setIsCompositionTraining(false);
+    }
+  };
+
   const status = data?.data;
   const latestRun = status?.runs?.[0];
+  const compositionSuggestions = useMemo(
+    () => status?.compositionSuggestions ?? [],
+    [status?.compositionSuggestions]
+  );
 
   return (
     <div className="space-y-6">
@@ -135,58 +205,117 @@ export const MLTab = () => {
         <CardHeader>
           <CardTitle>Pipeline Machine Learning</CardTitle>
           <CardDescription>
-            Orchestration de l&apos;export des matches, entraînement Python et
-            publication des prédictions.
+            Orchestration des exports, entraînements Python et génération de compositions IA.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={triggerExport} disabled={isExporting} size="sm">
-              {isExporting ? (
-                <>
-                  <Loader2Icon className="mr-2 size-4 animate-spin" />
-                  Export en cours...
-                </>
-              ) : (
-                "Exporter les matches"
-              )}
-            </Button>
-            <Button
-              onClick={triggerTraining}
-              disabled={
-                isExporting ||
-                isTraining ||
-                latestRun?.status?.toLowerCase() === "running"
-              }
-              size="sm"
-              variant="secondary"
-            >
-              {isTraining ? (
-                <>
-                  <Loader2Icon className="mr-2 size-4 animate-spin" />
-                  Entraînement…
-                </>
-              ) : (
-                "Lancer entraînement ML"
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  "cd ml && source .venv/bin/activate && pnpm ml:train"
-                );
-                toast.success("Commande locale copiée dans le presse-papiers");
-              }}
-            >
-              Copier la commande locale
-            </Button>
+        <CardContent className="space-y-5">
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs uppercase text-muted-foreground mb-2">
+                Modèle probabilité de victoire
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={triggerExport} disabled={isExporting} size="sm">
+                  {isExporting ? (
+                    <>
+                      <Loader2Icon className="mr-2 size-4 animate-spin" />
+                      Export en cours...
+                    </>
+                  ) : (
+                    "Exporter les matches"
+                  )}
+                </Button>
+                <Button
+                  onClick={triggerTraining}
+                  disabled={
+                    isExporting ||
+                    isTraining ||
+                    latestRun?.status?.toLowerCase() === "running"
+                  }
+                  size="sm"
+                  variant="secondary"
+                >
+                  {isTraining ? (
+                    <>
+                      <Loader2Icon className="mr-2 size-4 animate-spin" />
+                      Entraînement…
+                    </>
+                  ) : (
+                    "Lancer entraînement ML"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      "cd ml && source .venv/bin/activate && pnpm ml:train"
+                    );
+                    toast.success(
+                      "Commande locale copiée dans le presse-papiers"
+                    );
+                  }}
+                >
+                  Copier la commande locale
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs uppercase text-muted-foreground mb-2">
+                Modèle suggestions de compositions
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={triggerCompositionExport}
+                  disabled={isCompositionExporting}
+                  size="sm"
+                >
+                  {isCompositionExporting ? (
+                    <>
+                      <Loader2Icon className="mr-2 size-4 animate-spin" />
+                      Export en cours...
+                    </>
+                  ) : (
+                    "Exporter les compositions"
+                  )}
+                </Button>
+                <Button
+                  onClick={triggerCompositionTraining}
+                  disabled={isCompositionExporting || isCompositionTraining}
+                  size="sm"
+                  variant="secondary"
+                >
+                  {isCompositionTraining ? (
+                    <>
+                      <Loader2Icon className="mr-2 size-4 animate-spin" />
+                      Génération…
+                    </>
+                  ) : (
+                    "Mettre à jour les compositions"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      "cd ml && source .venv/bin/activate && pnpm ml:train:compositions"
+                    );
+                    toast.success(
+                      "Commande locale (compositions) copiée dans le presse-papiers"
+                    );
+                  }}
+                >
+                  Copier la commande locale (compositions)
+                </Button>
+              </div>
+            </div>
           </div>
           <p className="text-sm text-muted-foreground">
-            Le bouton ci-dessus exécute le pipeline complet en production
-            (export, entraînement, insertion des prédictions). Pour expérimenter
-            en local, utilise la commande copiée (nécessite un venv Python).
+            Les actions ci-dessus exécutent les pipelines en production (export,
+            entraînement et publication). Pour expérimenter en local, active ton
+            environnement Python puis utilise les commandes copiées.
           </p>
           {lastLogs && (
             <div className="rounded-md bg-muted/30 p-3">
@@ -195,6 +324,16 @@ export const MLTab = () => {
               </p>
               <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs">
                 {lastLogs}
+              </pre>
+            </div>
+          )}
+          {compositionLogs && (
+            <div className="rounded-md bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground mb-2">
+                Logs génération compositions
+              </p>
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs">
+                {compositionLogs}
               </pre>
             </div>
           )}
@@ -334,6 +473,49 @@ export const MLTab = () => {
           ) : (
             <p className="text-sm text-muted-foreground">
               Aucun run n'a encore été exécuté.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Suggestions de compositions IA</CardTitle>
+          <CardDescription>
+            Aperçu des dernières compositions générées automatiquement.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {compositionSuggestions.length ? (
+            <div className="grid gap-3">
+              {compositionSuggestions.map((suggestion) => (
+                <div
+                  key={suggestion.id}
+                  className="rounded-lg border border-border/50 bg-background/70 p-3 text-sm"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold">
+                      {suggestion.role} • confiance{" "}
+                      {(suggestion.confidence * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(suggestion.updatedAt)}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Équipe : {suggestion.teamChampions.join(" · ")}
+                  </p>
+                  {suggestion.enemyChampions.length ? (
+                    <p className="text-xs text-muted-foreground">
+                      Contre : {suggestion.enemyChampions.join(" · ")}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Aucune suggestion générée pour le moment. Lance le pipeline compositions.
             </p>
           )}
         </CardContent>

@@ -7,23 +7,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { RolePerformanceEntry } from "@/lib/summoners/overview";
 
 interface RolePerformanceSectionProps {
   entries: RolePerformanceEntry[];
 }
-
-const formatPercent = (value: number) =>
-  `${(Number.isFinite(value) ? value : 0).toFixed(1)}%`;
 
 export const RolePerformanceSection = ({
   entries,
@@ -31,61 +19,22 @@ export const RolePerformanceSection = ({
   if (entries.length === 0) return null;
 
   return (
-    <Card className="border-border/80 bg-background/95 shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">
+    <Card className="border-border/70 bg-background/90 shadow-sm">
+      <CardHeader className="pb-3 pt-4">
+        <CardTitle className="text-base font-semibold text-foreground">
           Performance par rôle
         </CardTitle>
-        <CardDescription>
-          Comparaison de vos statistiques selon la position jouée.
+        <CardDescription className="text-xs">
+          Win rate moyen par position (surface proportionnelle aux
+          performances).
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-hidden rounded-lg border border-border/70">
-          <Table>
-            <TableHeader className="bg-muted/40">
-              <TableRow className="border-border/60">
-                <TableHead className="text-xs uppercase text-muted-foreground">
-                  Rôle
-                </TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground text-right">
-                  Matchs
-                </TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground text-right">
-                  Victoires
-                </TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground text-right">
-                  Win rate
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map(({ role, stats, winRate }) => (
-                <TableRow key={role} className="border-border/60">
-                  <TableCell className="text-sm font-medium text-foreground">
-                    {role}
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground">
-                    {stats.played}
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground">
-                    {stats.wins}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "text-right text-sm font-medium",
-                      winRate >= 50
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
-                    )}
-                  >
-                    {formatPercent(winRate)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      <CardContent className="pb-4 pt-0">
+        {/* Le radar chart est maintenant affiché dans une card séparée en haut de la page */}
+        <p className="text-sm text-muted-foreground">
+          Consultez le graphique radar en haut de la page pour visualiser les
+          performances par rôle.
+        </p>
       </CardContent>
     </Card>
   );

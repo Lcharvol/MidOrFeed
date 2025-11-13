@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import {
+  GoogleOAuthProvider,
+  GoogleLogin,
+  type CredentialResponse,
+} from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,12 +32,20 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n-context";
 import { useAuth } from "@/lib/auth-context";
+import { Loader2Icon } from "lucide-react";
+import { useGoogleClientId } from "@/lib/hooks/use-google-client-id";
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
   const { t } = useI18n();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
+  const {
+    clientId: googleClientId,
+    isConfigured: isGoogleConfigured,
+    isLoading: isGoogleConfigLoading,
+  } = useGoogleClientId();
 
   // Redirect authenticated users away from signup
   useEffect(() => {
@@ -57,6 +70,44 @@ export default function SignupPage() {
     });
 
   type SignupFormValues = z.infer<typeof signupSchema>;
+
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse
+  ) => {
+    if (!credentialResponse.credential) {
+      toast.error("Connexion Google impossible");
+      return;
+    }
+
+    setIsGoogleLoading(true);
+    try {
+      const response = await fetch("/api/auth/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.user) {
+        toast.error(result?.error ?? "Connexion Google impossible");
+        return;
+      }
+
+      login(result.user);
+      toast.success(t("login.connectionSuccessful"));
+      router.push("/");
+    } catch (error) {
+      console.error("Google signup error:", error);
+      toast.error("Connexion Google impossible");
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error("Connexion Google impossible");
+  };
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -249,13 +300,40 @@ export default function SignupPage() {
                 </span>
               </div>
             </div>
-            <div className="grid w-full grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full" disabled>
-                Google
-              </Button>
-              <Button variant="outline" className="w-full" disabled>
-                GitHub
-              </Button>
+            <div className="w-full">
+              {isGoogleConfigLoading ? (
+                <Button variant="outline" className="w-full" disabled>
+                  Chargement...
+                </Button>
+              ) : isGoogleConfigured && googleClientId ? (
+                <GoogleOAuthProvider clientId={googleClientId}>
+                  <div className="relative flex w-full justify-center">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      theme="outline"
+                      shape="rectangular"
+                      text="signin_with"
+                      type="standard"
+                      logo_alignment="left"
+                      size="large"
+                      width="100%"
+                      locale="fr"
+                      auto_select={false}
+                      useOneTap={false}
+                    />
+                    {isGoogleLoading ? (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-md bg-background/70">
+                        <Loader2Icon className="size-5 animate-spin text-primary" />
+                      </div>
+                    ) : null}
+                  </div>
+                </GoogleOAuthProvider>
+              ) : (
+                <Button variant="outline" className="w-full" disabled>
+                  Google (non configuré)
+                </Button>
+              )}
             </div>
             <p className="text-center text-sm text-muted-foreground">
               {t("signup.hasAccount")}{" "}

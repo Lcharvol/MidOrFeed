@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getChampionDataUrl, getVersionsUrl } from "@/constants/ddragon";
 
 interface RiotChampion {
   id: string;
@@ -44,9 +45,7 @@ interface RiotChampionData {
 export async function POST(request: Request) {
   try {
     // Récupérer la version la plus récente de Data Dragon
-    const versionsResponse = await fetch(
-      "https://ddragon.leagueoflegends.com/api/versions.json"
-    );
+    const versionsResponse = await fetch(getVersionsUrl());
     if (!versionsResponse.ok) {
       throw new Error("Impossible de récupérer les versions");
     }
@@ -55,7 +54,7 @@ export async function POST(request: Request) {
 
     // Récupérer les données des champions (utiliser EN pour avoir le champ 'key')
     const championsResponse = await fetch(
-      `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/champion.json`
+      getChampionDataUrl(latestVersion, "en_US")
     );
     if (!championsResponse.ok) {
       throw new Error("Impossible de récupérer les champions");

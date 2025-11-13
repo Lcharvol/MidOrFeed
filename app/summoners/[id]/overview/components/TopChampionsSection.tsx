@@ -36,33 +36,33 @@ export const TopChampionsSection = ({
   if (champions.length === 0) return null;
 
   return (
-    <Card className="border-border/80 bg-background/95 shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">
+    <Card className="border-border/70 bg-background/90 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-foreground">
           Top champions
         </CardTitle>
-        <CardDescription>
-          Vos meilleurs champions sur les {champions.length} dernières sélections.
+        <CardDescription className="text-xs">
+          Vos meilleurs choix sur les {champions.length} dernières sélections.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-hidden rounded-lg border border-border/70">
+      <CardContent className="pb-3">
+        <div className="overflow-hidden rounded-lg border border-border/60">
           <Table>
-            <TableHeader className="bg-muted/40">
-              <TableRow className="border-border/60">
-                <TableHead className="w-[60px] text-xs uppercase text-muted-foreground">
+            <TableHeader className="bg-muted/30">
+              <TableRow className="border-border/50">
+                <TableHead className="w-[50px] text-[11px] uppercase text-muted-foreground">
                   Rang
                 </TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">
+                <TableHead className="text-[11px] uppercase text-muted-foreground">
                   Champion
                 </TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground text-right">
+                <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
                   Matchs
                 </TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground text-right">
+                <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
                   Victoires
                 </TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground text-right">
+                <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
                   Win rate
                 </TableHead>
               </TableRow>
@@ -77,8 +77,8 @@ export const TopChampionsSection = ({
                   championIdToName.get(championId) ?? championId;
 
                 return (
-                  <TableRow key={championId} className="border-border/60">
-                    <TableCell className="text-sm font-medium text-muted-foreground">
+                  <TableRow key={championId} className="border-border/50">
+                    <TableCell className="text-xs font-medium text-muted-foreground">
                       #{index + 1}
                     </TableCell>
                     <TableCell>
@@ -87,9 +87,9 @@ export const TopChampionsSection = ({
                           championId={resolveSlug(championId)}
                           championKey={championId}
                           championKeyToId={championKeyToId}
-                          size={40}
+                          size={36}
                           shape="rounded"
-                          className="rounded-xl border border-border/60"
+                          className="rounded-lg border border-border/60"
                         />
                         <span className="text-sm font-semibold text-foreground">
                           {championName}

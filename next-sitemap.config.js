@@ -1,4 +1,6 @@
-const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://mid-or-feed.com").replace(/\/$/, "");
+const { getSiteUrl } = require("./constants/site");
+
+const siteUrl = getSiteUrl();
 
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {

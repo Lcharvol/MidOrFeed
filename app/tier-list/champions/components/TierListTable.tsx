@@ -29,6 +29,7 @@ import {
 import { SortIndicator } from "./SortIndicator";
 import { Loader2Icon } from "lucide-react";
 import { ColorBadge } from "@/components/ui/color-badge";
+import Link from "next/link";
 
 type TierListTableProps = {
   champions: TierListChampionWithStats[];
@@ -165,31 +166,33 @@ export const TierListTable = ({
               <TableRow key={champion.id}>
                 <TableCell className="font-semibold">#{index + 1}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <RoleIcon className="size-4 text-primary" />
-                    <span className="text-muted-foreground">
-                      {roleMeta.label}
-                    </span>
+                  <div className="flex items-center">
+                    <RoleIcon
+                      className="size-5 text-primary"
+                      aria-hidden="true"
+                    />
+                    <span className="sr-only">{roleMeta.label}</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-3">
+                  <Link
+                    href={`/champions/${encodeURIComponent(champion.championId)}`}
+                    className="flex items-center gap-3 transition hover:text-primary"
+                  >
                     <ChampionIcon
                       championId={champion.championId}
                       size={48}
                       alt={champion.name}
                     />
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold leading-none">
-                          {champion.name}
-                        </p>
-                      </div>
+                      <p className="font-semibold leading-none">
+                        {champion.name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {champion.title}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 </TableCell>
                 <TableCell>
                   <ColorBadge

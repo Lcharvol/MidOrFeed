@@ -2,78 +2,99 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { StatTile as SummaryStatTile } from "@/components/ui/stat-tile";
-import type { SummonerOverviewAggregate } from "@/types";
+import type { SummonerOverviewAggregate, ChampionIdToStats } from "@/types";
+import { BestChampionCard } from "./BestChampionCard";
 
 interface StatsGridProps {
   stats: SummonerOverviewAggregate;
   winRateValue: number;
+  championStats: ChampionIdToStats;
+  championNameMap: Map<string, string>;
+  championKeyToId: Map<string, string>;
+  resolveSlug: (idOrKey: string) => string;
 }
 
-export const StatsGrid = ({ stats, winRateValue }: StatsGridProps) => {
-  const avgKda = parseFloat(stats.avgKDA);
+export const StatsGrid = ({
+  stats,
+  winRateValue,
+  championStats,
+  championNameMap,
+  championKeyToId,
+  resolveSlug,
+}: StatsGridProps) => {
   const winRatio = stats.totalWins / Math.max(stats.totalGames, 1);
 
   return (
-    <Card className="border-border/80 bg-background/95 shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">
-          Vue d’ensemble
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-lg border border-primary/30 bg-linear-to-br from-background to-primary/10 p-4 shadow-inner">
-            <p className="text-xs font-medium uppercase text-muted-foreground">
-              Win rate
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-primary">
-              {stats.winRate}
-            </p>
-            <Progress value={winRateValue} className="mt-3 h-2" />
-            <p className="mt-2 text-xs text-muted-foreground">
-              {stats.totalWins} victoires •{" "}
-              {stats.totalGames - stats.totalWins} défaites
-            </p>
-          </div>
-          <SummaryStatTile
-            label="KDA moyen"
-            value={stats.avgKDA}
-            hint="par partie"
-            emphasis={
-              avgKda >= 3 ? "positive" : avgKda >= 2.5 ? "info" : avgKda >= 2 ? "warning" : "danger"
-            }
+    <div className="grid gap-2 md:grid-cols-4">
+      <Card
+        variant="gradient"
+        className="border-blue-500/25 from-background to-blue-500/10 dark:border-blue-500/25 dark:from-background dark:to-blue-500/10"
+      >
+        <CardHeader className="pb-1.5 pt-2">
+          <CardTitle className="text-xs font-semibold text-blue-700 dark:text-blue-100">
+            Win rate global
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 pb-2.5 pt-0">
+          <p className="text-lg font-semibold text-foreground">
+            {stats.winRate}
+          </p>
+          <Progress
+            value={winRateValue}
+            className="h-1 bg-blue-500/30"
+            indicatorClassName="bg-blue-600 dark:bg-blue-400"
           />
-          <SummaryStatTile
-            label="Matchs analysés"
-            value={stats.totalGames.toLocaleString("fr-FR")}
-            hint="toutes files confondues"
-            emphasis={
-              stats.totalGames >= 200
-                ? "positive"
-                : stats.totalGames >= 100
-                  ? "info"
-                  : stats.totalGames >= 50
-                    ? "neutral"
-                    : "warning"
-            }
-          />
-          <SummaryStatTile
-            label="Victoires totales"
-            value={stats.totalWins.toLocaleString("fr-FR")}
-            hint={`${(winRatio * 100).toFixed(1)}% de win rate`}
-            emphasis={
-              winRatio >= 0.55
-                ? "positive"
-                : winRatio >= 0.5
-                  ? "info"
-                  : winRatio >= 0.45
-                    ? "warning"
-                    : "danger"
-            }
-          />
-        </div>
-      </CardContent>
-    </Card>
+          <p className="text-[10px] text-muted-foreground">
+            {stats.totalWins} victoires · {stats.totalGames - stats.totalWins}{" "}
+            défaites
+          </p>
+        </CardContent>
+      </Card>
+
+      <BestChampionCard
+        championStats={championStats}
+        championNameMap={championNameMap}
+        championKeyToId={championKeyToId}
+        resolveSlug={resolveSlug}
+      />
+
+      <Card
+        variant="gradient"
+        className="border-purple-500/25 from-background to-purple-500/10 dark:border-purple-500/25 dark:from-background dark:to-purple-500/10"
+      >
+        <CardHeader className="pb-1.5 pt-2">
+          <CardTitle className="text-xs font-semibold text-purple-700 dark:text-purple-100">
+            Matchs analysés
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 pb-2.5 pt-0">
+          <p className="text-lg font-semibold text-foreground">
+            {stats.totalGames.toLocaleString("fr-FR")}
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            Toutes files confondues
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card
+        variant="gradient"
+        className="border-amber-500/25 from-background to-amber-500/10 dark:border-amber-500/25 dark:from-background dark:to-amber-500/10"
+      >
+        <CardHeader className="pb-1.5 pt-2">
+          <CardTitle className="text-xs font-semibold text-amber-700 dark:text-amber-100">
+            Victoires
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 pb-2.5 pt-0">
+          <p className="text-lg font-semibold text-foreground">
+            {stats.totalWins.toLocaleString("fr-FR")}
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            {(winRatio * 100).toFixed(1)}% de win rate
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

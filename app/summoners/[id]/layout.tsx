@@ -80,8 +80,6 @@ export default function SummonerByIdLayout({
           ? "/overview"
           : pathname.endsWith("champions")
           ? "/champions"
-          : pathname.endsWith("matches")
-          ? "/matches"
           : pathname.endsWith("challenges")
           ? "/challenges"
           : ""
@@ -98,7 +96,6 @@ export default function SummonerByIdLayout({
   const currentTab = useMemo(() => {
     if (pathname?.endsWith("/challenges")) return "challenges";
     if (pathname?.endsWith("/champions")) return "champions";
-    if (pathname?.endsWith("/matches")) return "matches";
     return "overview";
   }, [pathname]);
 
@@ -217,16 +214,12 @@ export default function SummonerByIdLayout({
           <TabsList>
             <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
             <TabsTrigger value="champions">Champions</TabsTrigger>
-            <TabsTrigger value="matches">Matchs</TabsTrigger>
             <TabsTrigger value="challenges">Défis</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="mt-6">
             {children}
           </TabsContent>
           <TabsContent value="champions" className="mt-6">
-            {children}
-          </TabsContent>
-          <TabsContent value="matches" className="mt-6">
             {children}
           </TabsContent>
           <TabsContent value="challenges" className="mt-6">

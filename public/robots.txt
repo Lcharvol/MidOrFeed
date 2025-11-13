@@ -5,7 +5,7 @@ Disallow: /api
 Disallow: /admin
 
 # Host
-Host: https://mid-or-feed.com
+Host: https://midorfeed.gg
 
 # Sitemaps
-Sitemap: https://mid-or-feed.com/sitemap.xml
+Sitemap: https://midorfeed.gg/sitemap.xml

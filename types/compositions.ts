@@ -25,7 +25,7 @@ export interface CompositionSuggestionDTO {
 export interface CompositionSuggestionsPayload {
   compositions: CompositionSuggestionDTO[];
   total: number;
-  generatedAt: string;
+  generatedAt: string | null;
 }
 
 

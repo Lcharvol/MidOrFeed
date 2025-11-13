@@ -49,12 +49,14 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const latestUpdate = suggestions[0]?.updatedAt ?? null;
+
     return NextResponse.json({
       success: true,
       data: {
         compositions,
         total: suggestions.length,
-        generatedAt: new Date().toISOString(),
+        generatedAt: latestUpdate ? latestUpdate.toISOString() : null,
       },
     });
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -44,8 +44,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { getProfileIconUrl } from "@/constants/ddragon";
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@/types/roles";
 import {
@@ -70,6 +68,7 @@ import {
   RefreshCwIcon,
   CheckIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
 import { useRecentSearch } from "@/lib/hooks/use-recent-search";
@@ -93,6 +92,23 @@ import {
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useGameVersionContext } from "@/components/GameVersionProvider";
+
+type NavEntry = {
+  key: string;
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  isActive: (path?: string | null) => boolean;
+};
+
+type NavGroup = {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  entries: NavEntry[];
+  isActive: (path?: string | null) => boolean;
+};
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -122,7 +138,6 @@ export function Header() {
     user?.leagueAccount?.riotRegion
   );
   const { t } = useI18n();
-  const isUserAdmin = Boolean(user && isAdmin(user.role));
   const {
     versions,
     currentVersion,
@@ -147,6 +162,151 @@ export function Header() {
     "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary";
   const mobilePrimaryLinkClasses =
     "flex items-center gap-2 rounded-md px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary";
+  const activeTriggerClass = "bg-primary/10 text-primary shadow-sm";
+  const activeLinkClass =
+    "border border-primary/40 bg-primary/10 text-primary shadow";
+  const desktopIconClass = "mt-0.5 size-5 text-primary shrink-0";
+  const mobileIconClass = "size-4 text-primary";
+  const pathEquals =
+    (target: string) =>
+    (path?: string | null): boolean =>
+      path === target;
+  const pathStartsWith =
+    (prefix: string) =>
+    (path?: string | null): boolean =>
+      Boolean(path?.startsWith(prefix));
+
+  const dropdownGroups = useMemo<NavGroup[]>(() => {
+    const compositions: NavEntry[] = [
+      {
+        key: "compositions-create",
+        href: "/compositions/create",
+        icon: PlusIcon,
+        title: t("compositions.create.title"),
+        description: t("compositions.create.description"),
+        isActive: pathEquals("/compositions/create"),
+      },
+      {
+        key: "compositions-popular",
+        href: "/compositions/popular",
+        icon: SparklesIcon,
+        title: t("compositions.popular.title"),
+        description: t("compositions.popular.description"),
+        isActive: pathEquals("/compositions/popular"),
+      },
+      {
+        key: "compositions-favorites",
+        href: "/compositions/favorites",
+        icon: HeartIcon,
+        title: t("compositions.favorites.title"),
+        description: t("compositions.favorites.description"),
+        isActive: pathEquals("/compositions/favorites"),
+      },
+    ];
+
+    const meta: NavEntry[] = [
+      {
+        key: "meta-counter-picks",
+        href: "/counter-picks",
+        icon: SwordIcon,
+        title: "Counter Picks",
+        description: "Trouve les meilleurs contres pour chaque champion.",
+        isActive: pathEquals("/counter-picks"),
+      },
+      {
+        key: "meta-tier-list-champions",
+        href: "/tier-list/champions",
+        icon: SwordIcon,
+        title: t("tierListMenu.champions.title"),
+        description: t("tierListMenu.champions.description"),
+        isActive: pathEquals("/tier-list/champions"),
+      },
+      {
+        key: "meta-tier-list-items",
+        href: "/tier-list/items",
+        icon: PackageIcon,
+        title: t("tierListMenu.items.title"),
+        description: t("tierListMenu.items.description"),
+        isActive: pathEquals("/tier-list/items"),
+      },
+      {
+        key: "meta-leaderboard",
+        href: "/leaderboard",
+        icon: BarChartIcon,
+        title: "Leaderboard",
+        description: "Consulte les joueurs les mieux classés par région.",
+        isActive: pathEquals("/leaderboard"),
+      },
+    ];
+
+    return [
+      {
+        key: "compositions",
+        label: t("compositions.menu"),
+        icon: LayersIcon,
+        entries: compositions,
+        isActive: pathStartsWith("/compositions"),
+      },
+      {
+        key: "meta",
+        label: "Meta & Stats",
+        icon: TrophyIcon,
+        entries: meta,
+        isActive: (path) =>
+          Boolean(
+            path &&
+              (path.startsWith("/tier-list") ||
+                path === "/counter-picks" ||
+                path === "/leaderboard")
+          ),
+      },
+    ];
+  }, [t]);
+
+  const renderDesktopEntry = (entry: NavEntry) => {
+    const IconComponent = entry.icon;
+    return (
+      <li key={entry.key}>
+        <NavigationMenuLink
+          href={entry.href}
+          icon={<IconComponent className={desktopIconClass} />}
+          className={cn(
+            navigationLinkClasses,
+            entry.isActive(pathname) && activeLinkClass
+          )}
+        >
+          <div className="flex-1 space-y-1">
+            <div className="text-sm font-medium leading-none">
+              {entry.title}
+            </div>
+            {entry.description ? (
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                {entry.description}
+              </p>
+            ) : null}
+          </div>
+        </NavigationMenuLink>
+      </li>
+    );
+  };
+
+  const renderMobileEntry = (entry: NavEntry) => {
+    const IconComponent = entry.icon;
+    return (
+      <Link
+        key={entry.key}
+        href={entry.href}
+        className={cn(
+          mobileLinkClasses,
+          entry.isActive(pathname) && "bg-primary/10 text-primary"
+        )}
+        onClick={() => setMobileMenuOpen(false)}
+      >
+        <IconComponent className={mobileIconClass} />
+        {entry.title}
+      </Link>
+    );
+  };
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -287,195 +447,27 @@ export function Header() {
   // Menu de navigation pour desktop
   const NavigationContent = () => (
     <>
-      <NavigationMenuItem>
-        <NavigationMenuTrigger
-          className={cn(
-            navigationTriggerClasses,
-            pathname?.startsWith("/compositions") &&
-              "bg-primary/10 text-primary shadow-sm"
-          )}
-        >
-          <LayersIcon className="mr-2 size-4" />
-          {t("compositions.menu")}
-        </NavigationMenuTrigger>
-        <NavigationMenuContent className="rounded-xl shadow-lg">
-          <ul className="grid w-[300px] gap-3 p-4">
-            <li>
-              <NavigationMenuLink asChild>
-                <Link
-                  href="/compositions/create"
-                  className={cn(
-                    navigationLinkClasses,
-                    pathname === "/compositions/create" &&
-                      "border border-primary/40 bg-primary/10 text-primary shadow"
-                  )}
-                >
-                  <PlusIcon className="mt-0.5 size-5 text-primary shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-medium leading-none">
-                      {t("compositions.create.title")}
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      {t("compositions.create.description")}
-                    </p>
-                  </div>
-                </Link>
-              </NavigationMenuLink>
-            </li>
-            <li>
-              <NavigationMenuLink asChild>
-                <Link
-                  href="/compositions/popular"
-                  className={cn(
-                    navigationLinkClasses,
-                    pathname === "/compositions/popular" &&
-                      "border border-primary/40 bg-primary/10 text-primary shadow"
-                  )}
-                >
-                  <SparklesIcon className="mt-0.5 size-5 text-primary shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-medium leading-none">
-                      {t("compositions.popular.title")}
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      {t("compositions.popular.description")}
-                    </p>
-                  </div>
-                </Link>
-              </NavigationMenuLink>
-            </li>
-            <li>
-              <NavigationMenuLink asChild>
-                <Link
-                  href="/compositions/favorites"
-                  className={cn(
-                    navigationLinkClasses,
-                    pathname === "/compositions/favorites" &&
-                      "border border-primary/40 bg-primary/10 text-primary shadow"
-                  )}
-                >
-                  <HeartIcon className="mt-0.5 size-5 text-primary shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-medium leading-none">
-                      {t("compositions.favorites.title")}
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      {t("compositions.favorites.description")}
-                    </p>
-                  </div>
-                </Link>
-              </NavigationMenuLink>
-            </li>
-          </ul>
-        </NavigationMenuContent>
-      </NavigationMenuItem>
-
-      <NavigationMenuItem>
-        <NavigationMenuTrigger
-          className={cn(
-            navigationTriggerClasses,
-            (pathname?.startsWith("/tier-list") ||
-              pathname === "/counter-picks" ||
-              pathname === "/leaderboard") &&
-              "bg-primary/10 text-primary shadow-sm"
-          )}
-        >
-          <TrophyIcon className="mr-2 size-4" />
-          Meta & Stats
-        </NavigationMenuTrigger>
-        <NavigationMenuContent className="rounded-xl shadow-lg">
-          <ul className="grid w-[300px] gap-3 p-4">
-            <li>
-              <NavigationMenuLink asChild>
-                <Link
-                  href="/counter-picks"
-                  className={cn(
-                    navigationLinkClasses,
-                    pathname === "/counter-picks" &&
-                      "border border-primary/40 bg-primary/10 text-primary shadow"
-                  )}
-                >
-                  <SwordIcon className="mt-0.5 size-5 text-primary shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-medium leading-none">
-                      Counter Picks
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Trouve les meilleurs contres pour chaque champion.
-                    </p>
-                  </div>
-                </Link>
-              </NavigationMenuLink>
-            </li>
-            <li>
-              <NavigationMenuLink asChild>
-                <Link
-                  href="/tier-list/champions"
-                  className={cn(
-                    navigationLinkClasses,
-                    pathname === "/tier-list/champions" &&
-                      "border border-primary/40 bg-primary/10 text-primary shadow"
-                  )}
-                >
-                  <SwordIcon className="mt-0.5 size-5 text-primary shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-medium leading-none">
-                      {t("tierListMenu.champions.title")}
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      {t("tierListMenu.champions.description")}
-                    </p>
-                  </div>
-                </Link>
-              </NavigationMenuLink>
-            </li>
-            <li>
-              <NavigationMenuLink asChild>
-                <Link
-                  href="/tier-list/items"
-                  className={cn(
-                    navigationLinkClasses,
-                    pathname === "/tier-list/items" &&
-                      "border border-primary/40 bg-primary/10 text-primary shadow"
-                  )}
-                >
-                  <PackageIcon className="mt-0.5 size-5 text-primary shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-medium leading-none">
-                      {t("tierListMenu.items.title")}
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      {t("tierListMenu.items.description")}
-                    </p>
-                  </div>
-                </Link>
-              </NavigationMenuLink>
-            </li>
-            <li>
-              <NavigationMenuLink asChild>
-                <Link
-                  href="/leaderboard"
-                  className={cn(
-                    navigationLinkClasses,
-                    pathname === "/leaderboard" &&
-                      "border border-primary/40 bg-primary/10 text-primary shadow"
-                  )}
-                >
-                  <BarChartIcon className="mt-0.5 size-5 text-primary shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-medium leading-none">
-                      Leaderboard
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Consulte les joueurs les mieux classés par région.
-                    </p>
-                  </div>
-                </Link>
-              </NavigationMenuLink>
-            </li>
-          </ul>
-        </NavigationMenuContent>
-      </NavigationMenuItem>
+      {dropdownGroups.map((group) => {
+        const GroupIcon = group.icon;
+        return (
+          <NavigationMenuItem key={group.key}>
+            <NavigationMenuTrigger
+              className={cn(
+                navigationTriggerClasses,
+                group.isActive(pathname) && activeTriggerClass
+              )}
+            >
+              <GroupIcon className="mr-2 size-4" />
+              {group.label}
+            </NavigationMenuTrigger>
+            <NavigationMenuContent className="rounded-xl shadow-lg">
+              <ul className="grid w-[300px] gap-3 p-4">
+                {group.entries.map(renderDesktopEntry)}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        );
+      })}
 
       {user && (
         <>
@@ -488,8 +480,7 @@ export function Header() {
               }
               className={cn(
                 standaloneNavLinkClasses,
-                pathname?.startsWith("/summoners") &&
-                  "bg-primary/10 text-primary shadow-sm"
+                pathname?.startsWith("/summoners") && activeTriggerClass
               )}
             >
               <UserIcon className="size-4" />
@@ -502,8 +493,7 @@ export function Header() {
                 href="/admin"
                 className={cn(
                   standaloneNavLinkClasses,
-                  pathname?.startsWith("/admin") &&
-                    "bg-primary/10 text-primary shadow-sm"
+                  pathname?.startsWith("/admin") && activeTriggerClass
                 )}
               >
                 <ShieldCheckIcon className="size-4" />
@@ -520,87 +510,24 @@ export function Header() {
   const MobileMenuContent = () => (
     <nav className="flex flex-col space-y-2 px-2">
       <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="compositions">
-          <AccordionTrigger className="text-base font-medium px-4 py-3 text-muted-foreground transition-colors hover:text-primary data-[state=open]:text-primary">
-            <div className="flex items-center gap-2">
-              <LayersIcon className="size-4" />
-              {t("compositions.menu")}
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="flex flex-col space-y-1 pl-6 pr-2 pb-2">
-              <Link
-                href="/compositions/create"
-                className={mobileLinkClasses}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <PlusIcon className="size-4 text-primary" />
-                {t("compositions.create.title")}
-              </Link>
-              <Link
-                href="/compositions/popular"
-                className={mobileLinkClasses}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <SparklesIcon className="size-4 text-primary" />
-                {t("compositions.popular.title")}
-              </Link>
-              <Link
-                href="/compositions/favorites"
-                className={mobileLinkClasses}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <HeartIcon className="size-4 text-primary" />
-                {t("compositions.favorites.title")}
-              </Link>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="meta">
-          <AccordionTrigger className="text-base font-medium px-4 py-3 text-muted-foreground transition-colors hover:text-primary data-[state=open]:text-primary">
-            <div className="flex items-center gap-2">
-              <TrophyIcon className="size-4" />
-              Meta & Stats
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="flex flex-col space-y-1 pl-6 pr-2 pb-2">
-              <Link
-                href="/counter-picks"
-                className={mobileLinkClasses}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <SwordIcon className="size-4 text-primary" />
-                Counter Picks
-              </Link>
-              <Link
-                href="/tier-list/champions"
-                className={mobileLinkClasses}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <SwordIcon className="size-4 text-primary" />
-                {t("tierListMenu.champions.title")}
-              </Link>
-              <Link
-                href="/tier-list/items"
-                className={mobileLinkClasses}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <PackageIcon className="size-4 text-primary" />
-                {t("tierListMenu.items.title")}
-              </Link>
-              <Link
-                href="/leaderboard"
-                className={mobileLinkClasses}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <BarChartIcon className="size-4 text-primary" />
-                Leaderboard
-              </Link>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        {dropdownGroups.map((group) => {
+          const GroupIcon = group.icon;
+          return (
+            <AccordionItem value={group.key} key={group.key}>
+              <AccordionTrigger className="text-base font-medium px-4 py-3 text-muted-foreground transition-colors hover:text-primary data-[state=open]:text-primary">
+                <div className="flex items-center gap-2">
+                  <GroupIcon className="size-4" />
+                  {group.label}
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="flex flex-col space-y-1 pl-6 pr-2 pb-2">
+                  {group.entries.map(renderMobileEntry)}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
       </Accordion>
 
       {user && (
@@ -647,9 +574,8 @@ export function Header() {
             <Image
               src="/logo.png"
               alt="MidOrFeed"
-              width={50}
-              height={140}
-              className="h-auto w-10 sm:w-12"
+              width={45}
+              height={80}
               priority
             />
           </Link>
@@ -776,7 +702,9 @@ export function Header() {
                             {entry.version}
                           </span>
                           <span className="text-[11px] text-muted-foreground">
-                            {new Date(entry.createdAt).toLocaleDateString("fr-FR")}
+                            {new Date(entry.createdAt).toLocaleDateString(
+                              "fr-FR"
+                            )}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -799,9 +727,9 @@ export function Header() {
               </div>
 
               <div className="mt-3 rounded-md bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
-                Patch officiel : {currentVersion ?? "inconnu"}. Sélectionnez un autre patch
-                pour prévisualiser les données avec cette version (stocké sur cet
-                appareil).
+                Patch officiel : {currentVersion ?? "inconnu"}. Sélectionnez un
+                autre patch pour prévisualiser les données avec cette version
+                (stocké sur cet appareil).
               </div>
 
               {isCustomVersion && (

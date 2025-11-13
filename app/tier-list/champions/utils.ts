@@ -1,10 +1,10 @@
 import {
-  MountainIcon,
-  TreePineIcon,
-  SwordsIcon,
-  TargetIcon,
-  SparklesIcon,
-} from "lucide-react";
+  BottomRoleIcon,
+  JungleRoleIcon,
+  MidRoleIcon,
+  SupportRoleIcon,
+  TopRoleIcon,
+} from "@/components/icons/role-icons";
 import type {
   RoleFilterOption,
   RoleKey,
@@ -16,23 +16,23 @@ import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 export const PATCH_VERSION = "15.21" as const;
 
 export const ROLE_META: Record<RoleKey, RoleMeta> = {
-  TOP: { label: "Top", Icon: MountainIcon },
-  JUNGLE: { label: "Jungle", Icon: TreePineIcon },
-  MIDDLE: { label: "Mid", Icon: SwordsIcon },
-  MID: { label: "Mid", Icon: SwordsIcon },
-  BOTTOM: { label: "Bot", Icon: TargetIcon },
-  BOT: { label: "Bot", Icon: TargetIcon },
-  ADC: { label: "Bot", Icon: TargetIcon },
-  UTILITY: { label: "Support", Icon: SparklesIcon },
-  SUPPORT: { label: "Support", Icon: SparklesIcon },
+  TOP: { label: "Top", Icon: TopRoleIcon },
+  JUNGLE: { label: "Jungle", Icon: JungleRoleIcon },
+  MIDDLE: { label: "Mid", Icon: MidRoleIcon },
+  MID: { label: "Mid", Icon: MidRoleIcon },
+  BOTTOM: { label: "Bot", Icon: BottomRoleIcon },
+  BOT: { label: "Bot", Icon: BottomRoleIcon },
+  ADC: { label: "Bot", Icon: BottomRoleIcon },
+  UTILITY: { label: "Support", Icon: SupportRoleIcon },
+  SUPPORT: { label: "Support", Icon: SupportRoleIcon },
 };
 
 export const ROLE_FILTER_OPTIONS: RoleFilterOption[] = [
-  { key: "TOP", label: "Top", Icon: MountainIcon },
-  { key: "JUNGLE", label: "Jungle", Icon: TreePineIcon },
-  { key: "MID", label: "Mid", Icon: SwordsIcon },
-  { key: "BOT", label: "Bot", Icon: TargetIcon },
-  { key: "SUPPORT", label: "Support", Icon: SparklesIcon },
+  { key: "TOP", label: "Top", Icon: TopRoleIcon },
+  { key: "JUNGLE", label: "Jungle", Icon: JungleRoleIcon },
+  { key: "MID", label: "Mid", Icon: MidRoleIcon },
+  { key: "BOT", label: "Bot", Icon: BottomRoleIcon },
+  { key: "SUPPORT", label: "Support", Icon: SupportRoleIcon },
 ];
 
 export const fetcher = async <T>(url: string): Promise<T> => {

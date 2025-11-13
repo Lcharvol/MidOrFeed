@@ -324,6 +324,8 @@ export async function POST(request: Request) {
       page++;
     }
 
+    await recordSummonerHistory(validatedData.puuid);
+
     return NextResponse.json(
       {
         message: "Collecte terminée avec succès",
@@ -347,4 +349,50 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+async function recordSummonerHistory(puuid: string) {
+  const account = await prisma.leagueOfLegendsAccount.findUnique({
+    where: { puuid },
+    select: { id: true },
+  });
+
+  if (!account) {
+    return;
+  }
+
+  const [totalGames, totalWins] = await Promise.all([
+    prisma.matchParticipant.count({
+      where: { participantPUuid: puuid },
+    }),
+    prisma.matchParticipant.count({
+      where: { participantPUuid: puuid, win: true },
+    }),
+  ]);
+
+  const winRate = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
+
+  const lastEntry = await prisma.summonerOverviewHistory.findFirst({
+    where: { summonerId: account.id },
+    orderBy: { recordedAt: "desc" },
+  });
+
+  const hasChanges =
+    !lastEntry ||
+    lastEntry.totalGames !== totalGames ||
+    lastEntry.totalWins !== totalWins ||
+    Math.abs(lastEntry.winRate - winRate) > 0.01;
+
+  if (!hasChanges) {
+    return;
+  }
+
+  await prisma.summonerOverviewHistory.create({
+    data: {
+      summonerId: account.id,
+      totalGames,
+      totalWins,
+      winRate,
+    },
+  });
 }

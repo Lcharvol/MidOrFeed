@@ -11,8 +11,6 @@ const ChampionsPage = () => {
 
   const metrics: TierListMetrics = {
     totalMatches: derived.totalMatches,
-    reliableChampionCount: derived.reliableChampionCount,
-    averageWinRate: derived.averageWinRate,
     formattedLastUpdated: derived.formattedLastUpdated,
     championsCount: derived.championsWithStats.length,
   };

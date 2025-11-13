@@ -10,8 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  TrophyIcon,
-  TargetIcon,
   SwordsIcon,
   Loader2Icon,
   ArrowDownIcon,
@@ -33,7 +31,6 @@ import { Progress } from "@/components/ui/progress";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import type { SummonerChampionStats } from "@/types";
 import { useParams } from "next/navigation";
-import { Separator } from "@/components/ui/separator";
 import { useChampions } from "@/lib/hooks/use-champions";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -214,36 +211,6 @@ export default function ChampionsByIdPage() {
     return filtered;
   }, [championStats, championNameMap, searchTerm, sortColumn, sortDirection]);
 
-  const bestChampionId = useMemo(() => {
-    const top = Object.entries(championStats).sort(
-      (a, b) => b[1].played - a[1].played
-    )[0]?.[0];
-    return top || null;
-  }, [championStats]);
-
-  const bestChampionStats = useMemo(() => {
-    if (!bestChampionId)
-      return null as null | {
-        played: number;
-        wins: number;
-        winRate: string;
-        kda: string;
-      };
-    const s = (championStats as any)[bestChampionId] as {
-      played: number;
-      wins: number;
-      kills: number;
-      deaths: number;
-      assists: number;
-    };
-    if (!s) return null;
-    const winRate = ((s.wins / (s.played || 1)) * 100).toFixed(1);
-    const kda = ((s.kills + s.assists) / (s.deaths || 1)).toFixed(2);
-    return { played: s.played, wins: s.wins, winRate, kda };
-  }, [bestChampionId, championStats]);
-
-  // Best champion id for background splash in the card
-
   const aiInsights = useMemo<AIInsight[]>(() => {
     if (!champions || champions.length === 0) return [];
     const insights: AIInsight[] = [];
@@ -344,128 +311,6 @@ export default function ChampionsByIdPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-2 border-primary/20 bg-gradient-to-br from-background to-primary/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Champions joués
-            </CardTitle>
-            <SwordsIcon className="size-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Object.keys(championStats).length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-background to-blue-500/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Champions uniques
-            </CardTitle>
-            <TargetIcon className="size-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {
-                Object.values(championStats).filter(
-                  (s) => (s.wins / (s.played || 1)) * 100 >= 50
-                ).length
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">
-              avec 50%+ de win rate
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background to-purple-500/5 min-h-[180px]">
-          {bestChampionId && (
-            <div className="pointer-events-none absolute inset-0 z-0">
-              <ChampionIcon
-                championId={resolveChampionSlug(bestChampionId)}
-                championKey={bestChampionId}
-                championKeyToId={championKeyToIdMap}
-                fluid
-                showBorder={false}
-                className="opacity-25"
-              />
-              <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/70 to-background/30" />
-            </div>
-          )}
-          <CardHeader className="relative z-10 flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Meilleur champion
-            </CardTitle>
-            <TrophyIcon className="size-4 text-purple-500" />
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="flex items-center gap-3">
-              {bestChampionId && (
-                <ChampionIcon
-                  championId={resolveChampionSlug(bestChampionId)}
-                  alt={championNameMap.get(bestChampionId) || bestChampionId}
-                  championKey={bestChampionId}
-                  championKeyToId={championKeyToIdMap}
-                  size={64}
-                  shape="rounded"
-                />
-              )}
-              <div className="text-2xl font-bold leading-tight drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
-                {bestChampionId
-                  ? championNameMap.get(bestChampionId) || bestChampionId
-                  : "N/A"}
-              </div>
-            </div>
-            {bestChampionStats && (
-              <>
-                <Separator className="my-3" />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Parties</p>
-                    <p className="font-semibold tabular-nums">
-                      {bestChampionStats.played}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Win rate</p>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={parseFloat(bestChampionStats.winRate)}
-                        className="h-2 w-full max-w-[120px]"
-                      />
-                      <Badge
-                        className={
-                          parseFloat(bestChampionStats.winRate) >= 50
-                            ? "bg-green-500 hover:bg-green-500 text-white"
-                            : "bg-red-500 hover:bg-red-500 text-white"
-                        }
-                      >
-                        {bestChampionStats.winRate}%
-                      </Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">KDA moyen</p>
-                    <p
-                      className={`font-semibold tabular-nums ${
-                        parseFloat(bestChampionStats.kda) >= 3
-                          ? "text-green-600 dark:text-green-400"
-                          : parseFloat(bestChampionStats.kda) >= 2
-                          ? "text-amber-600 dark:text-amber-400"
-                          : ""
-                      }`}
-                    >
-                      {bestChampionStats.kda}
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
 
       {aiInsights.length > 0 && (
         <div className="space-y-4">

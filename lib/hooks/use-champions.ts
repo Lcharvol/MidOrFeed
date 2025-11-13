@@ -35,13 +35,16 @@ export const useChampions = () => {
     [champions]
   );
 
-  const championNameMap = useMemo(
-    () =>
-      new Map(
-        championSummaries.map(({ championId, name }) => [championId, name])
-      ),
-    [championSummaries]
-  );
+  const championNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    champions.forEach(({ championId, championKey, name }) => {
+      map.set(championId, name);
+      if (championKey !== undefined && championKey !== null) {
+        map.set(String(championKey), name);
+      }
+    });
+    return map;
+  }, [champions]);
 
   const championKeyToIdMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -62,11 +65,8 @@ export const useChampions = () => {
   }, [champions]);
 
   const resolveSlug = useCallback(
-    (value: string) =>
-      championNameMap.has(value)
-        ? value
-        : championKeyToIdMap.get(value) ?? value,
-    [championNameMap, championKeyToIdMap]
+    (value: string) => championKeyToIdMap.get(value) ?? value,
+    [championKeyToIdMap]
   );
 
   const resolveName = useCallback(

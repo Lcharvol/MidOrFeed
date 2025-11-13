@@ -6,14 +6,36 @@ import {
   resolveChampionRole,
 } from "@/lib/compositions/roles";
 
+const clampMatchLimit = (value: unknown): number | null => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  const normalized = Math.round(parsed);
+  if (normalized <= 0) return null;
+  return Math.min(Math.max(normalized, 50), 1000);
+};
+
 export async function POST(request: NextRequest) {
   const authError = await requireAdmin(request);
   if (authError) return authError;
 
   try {
-    console.log("[ANALYZE-CHAMPIONS] Début de l'analyse...");
+    const body = await request.json().catch(() => null);
+    const matchLimit = clampMatchLimit(body?.matchLimit);
 
-    // Récupérer tous les participants de matchs
+    console.log("[ANALYZE-CHAMPIONS] Début de l'analyse...", {
+      matchLimit,
+    });
+
+    let matchIds: string[] | null = null;
+    if (matchLimit) {
+      const latestMatches = await prisma.match.findMany({
+        select: { id: true },
+        orderBy: { gameCreation: "desc" },
+        take: matchLimit,
+      });
+      matchIds = latestMatches.map((match) => match.id);
+    }
+
     const participants = await prisma.matchParticipant.findMany({
       select: {
         championId: true,
@@ -29,6 +51,7 @@ export async function POST(request: NextRequest) {
         role: true,
         lane: true,
       },
+      where: matchIds ? { matchId: { in: matchIds } } : undefined,
     });
 
     if (participants.length === 0) {
@@ -282,6 +305,7 @@ export async function POST(request: NextRequest) {
           created,
           updated,
           totalParticipants: participants.length,
+          matchLimit: matchLimit ?? null,
         },
       },
       { status: 200 }

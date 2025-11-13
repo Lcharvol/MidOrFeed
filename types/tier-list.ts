@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { ReactElement, SVGProps } from "react";
 import type { ChampionEntity } from "./champions";
 
 export interface TierListChampionStats {
@@ -43,6 +43,9 @@ export type SortColumn =
 
 export type SortDirection = "asc" | "desc" | null;
 
+// RoleIconComponent re-export kept above for compatibility.
+export type RoleIconComponent = (props: SVGProps<SVGSVGElement>) => ReactElement;
+
 export type RoleKey =
   | "TOP"
   | "JUNGLE"
@@ -56,19 +59,17 @@ export type RoleKey =
 
 export interface RoleMeta {
   label: string;
-  Icon: LucideIcon;
+  Icon: RoleIconComponent;
 }
 
 export interface RoleFilterOption {
   key: RoleKey;
   label: string;
-  Icon: LucideIcon;
+  Icon: RoleIconComponent;
 }
 
 export interface TierListMetrics {
   totalMatches: number;
-  reliableChampionCount: number;
-  averageWinRate: number;
   formattedLastUpdated: string;
   championsCount: number;
 }

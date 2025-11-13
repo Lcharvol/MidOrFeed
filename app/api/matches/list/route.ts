@@ -63,6 +63,41 @@ export async function GET(request: Request) {
       }
     > = {};
 
+    // Fonction de normalisation des rôles
+    const normalizeRole = (role: string | null, lane: string | null): string | null => {
+      if (!role) return null;
+
+      const upperRole = role.toUpperCase();
+      const upperLane = lane?.toUpperCase() || "";
+
+      // Mapper les rôles Riot vers nos clés internes
+      // Riot API utilise: TOP, JUNGLE, MIDDLE, DUO_CARRY (ADC), DUO_SUPPORT (Support), UTILITY (Support)
+      switch (upperRole) {
+        case "TOP":
+          return "TOP";
+        case "JUNGLE":
+          return "JUNGLE";
+        case "MIDDLE":
+        case "MID":
+          return "MID";
+        case "DUO_CARRY":
+        case "ADC":
+          return "ADC";
+        case "DUO_SUPPORT":
+        case "UTILITY":
+        case "SUPPORT":
+          return "SUPPORT";
+        case "BOTTOM":
+          // BOTTOM peut être ambigu, mais généralement c'est ADC si lane est BOTTOM
+          // Sinon on considère comme SUPPORT par défaut
+          // Note: Cette logique peut être ajustée selon les données réelles
+          return upperLane === "BOTTOM" ? "ADC" : "SUPPORT";
+        default:
+          // Si le rôle n'est pas reconnu, essayer de le retourner tel quel en majuscules
+          return upperRole;
+      }
+    };
+
     // Statistiques par rôle
     const roleStats: Record<
       string,
@@ -111,16 +146,17 @@ export async function GET(request: Request) {
           championStats[participant.championId].wins++;
         }
 
-        if (participant.role) {
-          if (!roleStats[participant.role]) {
-            roleStats[participant.role] = {
+        const normalizedRole = normalizeRole(participant.role, participant.lane);
+        if (normalizedRole) {
+          if (!roleStats[normalizedRole]) {
+            roleStats[normalizedRole] = {
               played: 0,
               wins: 0,
             };
           }
-          roleStats[participant.role].played++;
+          roleStats[normalizedRole].played++;
           if (participant.win) {
-            roleStats[participant.role].wins++;
+            roleStats[normalizedRole].wins++;
           }
         }
       });

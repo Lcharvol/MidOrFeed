@@ -22,7 +22,9 @@
     "make-admin": "tsx scripts/make-admin.ts",
     "ml:export": "tsx scripts/export-matches.ts",
     "ml:train": "python ml/train_model.py",
-    "ml:predict": "python ml/predict_win_probability.py"
+    "ml:predict": "python ml/predict_win_probability.py",
+    "ml:export:compositions": "tsx scripts/export-compositions.ts",
+    "ml:train:compositions": "python ml/train_composition_model.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -76,7 +78,9 @@
     "swr": "^2.3.6",
     "tailwind-merge": "^3.3.1",
     "vaul": "^1.1.2",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "@react-oauth/google": "^0.12.1",
+    "google-auth-library": "^9.14.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

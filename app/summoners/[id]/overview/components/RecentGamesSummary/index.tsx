@@ -1,0 +1,77 @@
+"use client";
+
+import { CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { SearchIcon } from "lucide-react";
+import { useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { WinRateChart } from "./WinRateChart";
+import { KDAStats } from "./KDAStats";
+import { ChampionsPlayed } from "./ChampionsPlayed";
+import { PreferredRoleChart } from "./PreferredRoleChart";
+import { createWinRateChartConfig } from "./constants";
+import {
+  calculateSummaryStats,
+  calculateChampionStats,
+  calculateRoleData,
+} from "./utils";
+import type { RecentGamesSummaryProps } from "./types";
+
+export const RecentGamesSummary = ({
+  matches,
+  championKeyToId,
+  resolveSlug,
+  rolePerformance = [],
+}: RecentGamesSummaryProps) => {
+  const winRateChartConfig = useMemo(() => {
+    const winsColor = "var(--primary)";
+    const lossesColor = "var(--destructive)";
+    return createWinRateChartConfig(winsColor, lossesColor);
+  }, []);
+
+  const summaryStats = useMemo(() => calculateSummaryStats(matches), [matches]);
+
+  const championStats = useMemo(
+    () => calculateChampionStats(matches),
+    [matches]
+  );
+
+  const roleData = useMemo(
+    () => calculateRoleData(rolePerformance),
+    [rolePerformance]
+  );
+
+  if (!summaryStats || matches.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card className="bg-background/90">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Parties récentes</CardTitle>
+        <div className="relative w-55">
+          <SearchIcon className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un champion"
+            className="h-8 pl-8 text-xs"
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-row gap-4 justify-between">
+          <div className="flex items-center gap-2">
+            <WinRateChart stats={summaryStats} config={winRateChartConfig} />
+            <KDAStats stats={summaryStats} />
+          </div>
+          <ChampionsPlayed
+            champions={championStats}
+            totalMatches={matches.length}
+            championKeyToId={championKeyToId}
+            resolveSlug={resolveSlug}
+          />
+          <PreferredRoleChart roleData={roleData} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

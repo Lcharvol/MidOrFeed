@@ -21,6 +21,8 @@ model User {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   leagueAccount         LeagueOfLegendsAccount? @relation(fields: [leagueAccountId], references: [id])
+  championAdvices       ChampionAdvice[]
+  championAdviceVotes   ChampionAdviceVote[]
 
   @@map("users")
 }
@@ -200,6 +202,7 @@ model LeagueOfLegendsAccount {
   updatedAt          DateTime          @updatedAt
   playerChallenges   PlayerChallenge[]
   User               User[]
+  overviewHistory    SummonerOverviewHistory[]
 
   @@index([puuid])
   @@index([riotRegion])
@@ -254,6 +257,53 @@ model ChampionStats {
   @@index([totalGames])
   @@index([score])
   @@map("champion_stats")
+}
+
+model SummonerOverviewHistory {
+  id          String   @id @default(cuid())
+  summonerId  String
+  totalGames  Int
+  totalWins   Int
+  winRate     Float
+  recordedAt  DateTime @default(now())
+
+  summoner    LeagueOfLegendsAccount @relation(fields: [summonerId], references: [id], onDelete: Cascade)
+
+  @@index([summonerId, recordedAt])
+  @@map("summoner_overview_history")
+}
+
+model ChampionAdvice {
+  id         String   @id @default(cuid())
+  championId String
+  authorId   String?
+  authorName String?
+  content    String
+  score      Int      @default(0)
+  upvotes    Int      @default(0)
+  downvotes  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  author     User?    @relation(fields: [authorId], references: [id])
+  votes      ChampionAdviceVote[]
+
+  @@index([championId])
+  @@index([score, createdAt])
+  @@map("champion_advices")
+}
+
+model ChampionAdviceVote {
+  id        String   @id @default(cuid())
+  adviceId  String
+  userId    String
+  value     Int
+  advice    ChampionAdvice @relation(fields: [adviceId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([adviceId, userId])
+  @@map("champion_advice_votes")
 }
 
 model Challenge {

@@ -40,4 +40,59 @@ export interface ChampionSummary {
 
 export type QueueId = number;
 
+export interface BuildItemReference {
+  itemId: string;
+  name: string;
+  image: string | null;
+}
+
+export interface ChampionBuildItemStat extends BuildItemReference {
+  picks: number;
+  wins: number;
+  pickRate: number;
+  winRate: number;
+}
+
+export interface ChampionBuildVariant {
+  items: BuildItemReference[];
+  picks: number;
+  wins: number;
+  pickRate: number;
+  winRate: number;
+}
+
+export interface ChampionBuildSummary {
+  championId: ChampionId;
+  sampleSize: number;
+  lastMatchAt: string | null;
+  coreItems: ChampionBuildItemStat[];
+  situationalItems: ChampionBuildItemStat[];
+  bootOptions: ChampionBuildItemStat[];
+  popularBuilds: ChampionBuildVariant[];
+}
+
+export type ChampionAdviceVoteValue = -1 | 0 | 1;
+
+export interface ChampionAdviceEntry {
+  id: string;
+  championId: ChampionId;
+  authorId: string | null;
+  authorName: string | null;
+  content: string;
+  score: number;
+  upvotes: number;
+  downvotes: number;
+  createdAt: string;
+  updatedAt: string;
+  viewerVote: ChampionAdviceVoteValue | null;
+  language?: string | null;
+  patchVersion?: string | null;
+  canDelete?: boolean;
+}
+
+export interface ChampionAdviceSummary {
+  championId: ChampionId;
+  advices: ChampionAdviceEntry[];
+}
+
 

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import { getVersionsUrl } from "@/constants/ddragon";
 
-const VERSIONS_ENDPOINT = "https://ddragon.leagueoflegends.com/api/versions.json";
+const VERSIONS_ENDPOINT = getVersionsUrl();
 
 const parseVersions = (input: unknown): string[] => {
   if (!Array.isArray(input)) {
@@ -53,9 +54,13 @@ export const POST = async (request: NextRequest) => {
       const existingVersions = await tx.gameVersion.findMany({
         select: { version: true },
       });
-      const existingSet = new Set(existingVersions.map(({ version }) => version));
+      const existingSet = new Set(
+        existingVersions.map(({ version }) => version)
+      );
 
-      const newVersions = versions.filter((version) => !existingSet.has(version));
+      const newVersions = versions.filter(
+        (version) => !existingSet.has(version)
+      );
 
       if (newVersions.length > 0) {
         await tx.gameVersion.createMany({
@@ -94,7 +99,10 @@ export const POST = async (request: NextRequest) => {
       { status: 200 }
     );
   } catch (error) {
-    console.error("[RIOT-VERSIONS] Erreur lors de la synchronisation des versions:", error);
+    console.error(
+      "[RIOT-VERSIONS] Erreur lors de la synchronisation des versions:",
+      error
+    );
     return NextResponse.json(
       {
         success: false,
@@ -104,4 +112,3 @@ export const POST = async (request: NextRequest) => {
     );
   }
 };
-

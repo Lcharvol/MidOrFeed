@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getItemDataUrl, getVersionsUrl } from "@/constants/ddragon";
 
 interface RiotItem {
   id: string;
@@ -23,9 +24,7 @@ interface RiotItemData {
 export async function POST(request: Request) {
   try {
     // Récupérer la version la plus récente de Data Dragon
-    const versionsResponse = await fetch(
-      "https://ddragon.leagueoflegends.com/api/versions.json"
-    );
+    const versionsResponse = await fetch(getVersionsUrl());
     if (!versionsResponse.ok) {
       throw new Error("Impossible de récupérer les versions");
     }
@@ -34,7 +33,7 @@ export async function POST(request: Request) {
 
     // Récupérer les données des items
     const itemsResponse = await fetch(
-      `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/fr_FR/item.json`
+      getItemDataUrl(latestVersion, "fr_FR")
     );
     if (!itemsResponse.ok) {
       throw new Error("Impossible de récupérer les items");

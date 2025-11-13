@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DDRAGON_VERSION, getProfileIconUrl as buildProfileIconUrl } from "@/constants/ddragon";
 
 interface RiotAccountDetails {
   puuid: string;
@@ -57,15 +58,9 @@ export function useRiotProfileIcon(
     fetchRiotDetails();
   }, [riotPuuid, riotRegion]);
 
-  const getProfileIconUrl = (iconId: number | null) => {
-    if (!iconId) return null;
-    const version = "15.21.1";
-    return `https://ddragon.leagueoflegends.com/cdn/${version}/img/profileicon/${iconId}.png`;
-  };
-
   return {
     profileIconUrl: riotDetails?.profileIconId
-      ? getProfileIconUrl(riotDetails.profileIconId)
+      ? buildProfileIconUrl(riotDetails.profileIconId, DDRAGON_VERSION)
       : null,
     isLoading,
   };

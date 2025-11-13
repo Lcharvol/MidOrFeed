@@ -18,6 +18,8 @@ import {
   ChevronsUpDownIcon,
   Loader2Icon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DDRAGON_VERSION, getItemImageUrl as buildItemImageUrl } from "@/constants/ddragon";
 
 // Interface basée sur les données Riot
 interface Item {
@@ -39,7 +41,7 @@ interface ItemsResponse {
 type SortColumn = "name" | "gold";
 type SortDirection = "asc" | "desc" | null;
 
-const fetcher = async (url: string): Promise<ItemsResponse> => {
+const itemsFetcher = async (url: string): Promise<ItemsResponse> => {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error("Erreur lors de la récupération des items");
@@ -72,7 +74,7 @@ export default function ItemsPage() {
 
   const { data, error, isLoading } = useSWR<ItemsResponse>(
     "/api/items/list",
-    fetcher
+    itemsFetcher
   );
 
   const handleSort = (column: SortColumn) => {
@@ -160,14 +162,8 @@ export default function ItemsPage() {
     return name.replace(/<[^>]*>/g, "");
   };
 
-  const getItemImageUrl = (image: string | null): string => {
-    if (!image) return "";
-    // L'image de Riot contient déjà le nom complet (ex: "1001.png")
-    // On construit l'URL complète Data Dragon
-    // Pour obtenir la version, on pourrait la récupérer depuis l'API ou utiliser une version fixe
-    const version = "15.21.1"; // Version actuelle, à faire dynamique si besoin
-    return `https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${image}`;
-  };
+  const getItemImageUrl = (image: string | null): string =>
+    image ? buildItemImageUrl(image, DDRAGON_VERSION) : "";
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { getItemDataUrl, getVersionsUrl } from "@/constants/ddragon";
 
 const prisma = new PrismaClient();
 
@@ -26,9 +27,7 @@ async function syncItems() {
     console.log("🔄 Début de la synchronisation des items...");
 
     // Récupérer la version la plus récente de Data Dragon
-    const versionsResponse = await fetch(
-      "https://ddragon.leagueoflegends.com/api/versions.json"
-    );
+    const versionsResponse = await fetch(getVersionsUrl());
     if (!versionsResponse.ok) {
       throw new Error("Impossible de récupérer les versions");
     }
@@ -38,7 +37,7 @@ async function syncItems() {
 
     // Récupérer les données des items
     const itemsResponse = await fetch(
-      `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/fr_FR/item.json`
+      getItemDataUrl(latestVersion, "fr_FR")
     );
     if (!itemsResponse.ok) {
       throw new Error("Impossible de récupérer les items");

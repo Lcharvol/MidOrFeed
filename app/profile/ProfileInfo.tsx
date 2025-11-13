@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/profile-utils";
 import { Loader2Icon } from "lucide-react";
 import Image from "next/image";
+import { DDRAGON_VERSION, getProfileIconUrl } from "@/constants/ddragon";
 
 interface ProfileInfoProps {
   user: {
@@ -75,14 +76,8 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
     fetchRiotDetails();
   }, [user?.riotPuuid, user?.riotRegion]);
 
-  const getProfileIconUrl = (iconId: number | null) => {
-    if (!iconId) return null;
-    const version = "15.21.1";
-    return `https://ddragon.leagueoflegends.com/cdn/${version}/img/profileicon/${iconId}.png`;
-  };
-
   const profileIconUrl = riotDetails?.profileIconId
-    ? getProfileIconUrl(riotDetails.profileIconId)
+    ? getProfileIconUrl(riotDetails.profileIconId, DDRAGON_VERSION)
     : null;
 
   return (

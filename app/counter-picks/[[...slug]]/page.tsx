@@ -1,45 +1,31 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getChampionSplashUrl } from "@/constants/ddragon";
+import { buildSiteUrl } from "@/constants/site";
 import CounterPicksPageClient from "../CounterPicksPageClient";
+import {
+  SITE_NAME,
+  type CounterPicksPageParams,
+  generateMetadata as generateCounterPicksMetadata,
+  findChampion,
+} from "./metadata";
 
-const SITE_NAME = "Mid or Feed";
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://mid-or-feed.com").replace(/\/$/, "");
+export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
-const buildUrl = (path: string) =>
-  path.startsWith("http")
-    ? path
-    : `${BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+const buildUrl = (path: string) => buildSiteUrl(path);
 
-type PageParams = {
-  slug?: string[];
-};
+type PageParams = CounterPicksPageParams;
 
 type PageSearchParams = {
   championId?: string | string[];
 };
 
-const findChampion = async (identifier: string) => {
-  const cleaned = identifier.trim();
-  if (!cleaned) return null;
-  const championById = await prisma.champion.findFirst({
-    where: { championId: { equals: cleaned, mode: "insensitive" } },
-  });
-
-  if (championById) {
-    return championById;
+export async function generateStaticParams(): Promise<PageParams[]> {
+  if (!process.env.DATABASE_URL) {
+    return [];
   }
 
-  const championByName = await prisma.champion.findFirst({
-    where: { name: { equals: cleaned.replace(/-/g, " "), mode: "insensitive" } },
-  });
-
-  return championByName;
-};
-
-export const revalidate = 3600;
-
-export async function generateStaticParams(): Promise<PageParams[]> {
   const champions = await prisma.champion.findMany({
     select: { championId: true },
   });
@@ -47,84 +33,7 @@ export async function generateStaticParams(): Promise<PageParams[]> {
   return champions.map(({ championId }) => ({ slug: [championId] }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<PageParams>;
-}): Promise<Metadata> {
-  const resolvedParams = await params;
-  const slugId = resolvedParams.slug?.[0];
-
-  const defaultTitle = "Counter picks League of Legends | Mid or Feed";
-  const defaultDescription =
-    "Découvrez comment contrer vos adversaires sur League of Legends grâce aux analyses Mid or Feed.";
-
-  if (!slugId) {
-    const canonicalUrl = buildUrl("/counter-picks");
-    return {
-      title: defaultTitle,
-      description: defaultDescription,
-      alternates: { canonical: canonicalUrl },
-      openGraph: {
-        title: defaultTitle,
-        description: defaultDescription,
-        url: canonicalUrl,
-        type: "website",
-        siteName: SITE_NAME,
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: defaultTitle,
-        description: defaultDescription,
-      },
-    };
-  }
-
-  const championId = decodeURIComponent(slugId);
-  const champion = await findChampion(championId);
-  const championName = champion?.name ?? championId;
-  const resolvedChampionId = champion?.championId ?? championId;
-  const canonicalPath = `/counter-picks/${encodeURIComponent(resolvedChampionId)}`;
-  const canonicalUrl = buildUrl(canonicalPath);
-  const ogImage = champion
-    ? `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champion.championId}_0.jpg`
-    : buildUrl("/logo.png");
-
-  const title = `Counter picks ${championName} | ${SITE_NAME}`;
-  const description = `Analyse Mid or Feed : découvrez les meilleurs counter picks, statistiques et conseils pour vaincre ${championName} sur League of Legends.`;
-
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      title,
-      description,
-      url: canonicalUrl,
-      type: "article",
-      siteName: SITE_NAME,
-      locale: "fr_FR",
-      images: [
-        {
-          url: ogImage,
-          width: 1215,
-          height: 717,
-          alt: `Illustration de ${championName} pour les counter picks` ,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-      site: "@MidOrFeed",
-      creator: "@MidOrFeed",
-    },
-  };
-}
+export { generateCounterPicksMetadata as generateMetadata };
 
 const CounterPicksPage = async ({
   params,
@@ -148,13 +57,19 @@ const CounterPicksPage = async ({
     redirect(`/counter-picks/${encodeURIComponent(queryChampion)}`);
   }
 
-  const championRecord = slugId ? await findChampion(slugId) : null;
+  const championRecord =
+    slugId && process.env.DATABASE_URL !== undefined
+      ? await findChampion(slugId)
+      : null;
   const initialChampionId = championRecord?.championId ?? slugId;
   const initialChampionName = championRecord?.name ?? (slugId || null);
   const canonicalPath = initialChampionId
     ? `/counter-picks/${encodeURIComponent(initialChampionId)}`
     : "/counter-picks";
   const canonicalUrl = buildUrl(canonicalPath);
+  const championSplashUrl = initialChampionId
+    ? getChampionSplashUrl(initialChampionId)
+    : buildUrl("/logo.png");
 
   const structuredData = initialChampionId
     ? {
@@ -179,6 +94,7 @@ const CounterPicksPage = async ({
             "@type": "ImageObject",
             url: buildUrl("/logo.png"),
           },
+          image: initialChampionName ? championSplashUrl : buildUrl("/logo.png"),
         },
         keywords: [
           `counter picks ${initialChampionName ?? initialChampionId}`,
@@ -188,9 +104,7 @@ const CounterPicksPage = async ({
           SITE_NAME,
         ],
         articleSection: "League of Legends Counter Picks",
-        image: championRecord
-          ? `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${championRecord.championId}_0.jpg`
-          : buildUrl("/logo.png"),
+        image: championRecord ? championSplashUrl : buildUrl("/logo.png"),
       }
     : {
         "@context": "https://schema.org",
