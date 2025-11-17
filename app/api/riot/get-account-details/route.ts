@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { REGION_TO_ROUTING, REGION_TO_BASE_URL } from "@/constants/regions";
 import { prisma } from "@/lib/prisma";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { z } from "zod";
 
 const getAccountDetailsSchema = z.object({
@@ -40,38 +41,34 @@ export async function POST(request: Request) {
 
     // 1) Si pas force: tenter de retourner le cache DB
     if (!validatedData.force) {
-      const existing = await prisma.leagueOfLegendsAccount.findFirst({
-        where: { puuid: validatedData.puuid },
-        select: {
-          id: true,
-          puuid: true,
-          riotRegion: true,
-          riotGameName: true,
-          riotTagLine: true,
-          summonerLevel: true,
-          profileIconId: true,
-          riotSummonerId: true,
-          riotAccountId: true,
-          revisionDate: true,
-          updatedAt: true,
-        },
-      });
-      if (existing) {
+      // Chercher dans la table shardée de la région spécifiée
+      const existing = await ShardedLeagueAccounts.findUniqueByPuuid(
+        validatedData.puuid,
+        normalizedRegion
+      );
+      // Si pas trouvé, chercher dans toutes les régions (en passant la région connue)
+      const existingGlobal = existing
+        ? existing
+        : await ShardedLeagueAccounts.findUniqueByPuuidGlobal(
+            validatedData.puuid,
+            normalizedRegion
+          );
+      if (existingGlobal) {
         return NextResponse.json(
           {
             success: true,
             data: {
-              puuid: existing.puuid,
-              gameName: existing.riotGameName,
-              tagLine: existing.riotTagLine,
-              summonerLevel: existing.summonerLevel,
-              profileIconId: existing.profileIconId,
-              summonerId: existing.riotSummonerId,
-              accountId: existing.riotAccountId,
+              puuid: existingGlobal.puuid,
+              gameName: existingGlobal.riotGameName,
+              tagLine: existingGlobal.riotTagLine,
+              summonerLevel: existingGlobal.summonerLevel,
+              profileIconId: existingGlobal.profileIconId,
+              summonerId: existingGlobal.riotSummonerId,
+              accountId: existingGlobal.riotAccountId,
               revisionDate:
-                existing.revisionDate !== null &&
-                existing.revisionDate !== undefined
-                  ? Number(existing.revisionDate)
+                existingGlobal.revisionDate !== null &&
+                existingGlobal.revisionDate !== undefined
+                  ? Number(existingGlobal.revisionDate)
                   : null,
             },
             cached: true,
@@ -179,31 +176,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Upsert en base pour persister les infos
-    await prisma.leagueOfLegendsAccount.upsert({
-      where: { puuid: validatedData.puuid },
-      update: {
-        riotRegion: normalizedRegion,
-        riotGameName: accountData.gameName ?? null,
-        riotTagLine: accountData.tagLine ?? null,
-        summonerLevel: summonerData?.summonerLevel ?? null,
-        profileIconId: summonerData?.profileIconId ?? null,
-        riotSummonerId: summonerData?.id ?? null,
-        riotAccountId: summonerData?.accountId ?? null,
-        revisionDate: summonerData?.revisionDate ?? null,
-        updatedAt: new Date(),
-      },
-      create: {
-        puuid: validatedData.puuid,
-        riotRegion: normalizedRegion,
-        riotGameName: accountData.gameName ?? null,
-        riotTagLine: accountData.tagLine ?? null,
-        summonerLevel: summonerData?.summonerLevel ?? null,
-        profileIconId: summonerData?.profileIconId ?? null,
-        riotSummonerId: summonerData?.id ?? null,
-        riotAccountId: summonerData?.accountId ?? null,
-        revisionDate: summonerData?.revisionDate ?? null,
-      },
+    // Upsert en base pour persister les infos dans la table shardée
+    await ShardedLeagueAccounts.upsert({
+      puuid: validatedData.puuid,
+      riotRegion: normalizedRegion,
+      riotGameName: accountData.gameName ?? null,
+      riotTagLine: accountData.tagLine ?? null,
+      summonerLevel: summonerData?.summonerLevel ?? null,
+      profileIconId: summonerData?.profileIconId ?? null,
+      riotSummonerId: summonerData?.id ?? null,
+      riotAccountId: summonerData?.accountId ?? null,
+      revisionDate: summonerData?.revisionDate
+        ? BigInt(summonerData.revisionDate)
+        : null,
     });
 
     // Retourner les données complètes du compte

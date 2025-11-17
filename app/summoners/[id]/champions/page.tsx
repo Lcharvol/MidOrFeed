@@ -79,6 +79,7 @@ export default function ChampionsByIdPage() {
   // Scoring configuration
   const MIN_GAMES_FOR_SCORE = 3; // en dessous: pas de score affiché
   const VOLUME_REF_GAMES = 10; // nombre de parties pour atteindre le volume max
+  const KDA_REF_VALUE = 3.5; // KDA de référence pour normalisation (ajusté de 5 à 3.5 pour être plus accessible)
 
   const getScoreBadgeClass = (score: number) => {
     if (score >= 80) return "bg-green-600 hover:bg-green-600 text-white";
@@ -145,13 +146,30 @@ export default function ChampionsByIdPage() {
         // Score agrégé pour classer les meilleurs champions
         score: (() => {
           if (stats.played < MIN_GAMES_FOR_SCORE) return null as number | null;
-          const winRate01 = stats.played > 0 ? stats.wins / stats.played : 0; // 0..1
-          const kdaNum = (stats.kills + stats.assists) / (stats.deaths || 1); // 0..+
-          const kda01 = Math.min(1, kdaNum / 5); // clamp à 5 pour normaliser
-          const volume01 = Math.min(1, stats.played / VOLUME_REF_GAMES); // pondération par volume
-          const raw = 0.6 * winRate01 + 0.4 * kda01; // base sur perf
-          const weighted = raw * (0.6 + 0.4 * volume01); // boost si volume élevé
-          return Number((weighted * 100).toFixed(1)); // 0..100
+          
+          // Win rate normalisé (0..1)
+          const winRate01 = stats.played > 0 ? stats.wins / stats.played : 0;
+          
+          // KDA normalisé (0..1+) - clamp à KDA_REF_VALUE pour normaliser
+          const kdaNum = (stats.kills + stats.assists) / (stats.deaths || 1);
+          const kda01 = Math.min(1, kdaNum / KDA_REF_VALUE);
+          
+          // Volume normalisé (0..1) - représente la confiance dans les statistiques
+          const volume01 = Math.min(1, stats.played / VOLUME_REF_GAMES);
+          
+          // Score de performance de base (60% win rate, 40% KDA)
+          const performanceScore = 0.65 * winRate01 + 0.35 * kda01;
+          
+          // Bonus de confiance basé sur le volume (mais moins pénalisant)
+          // Volume faible (3 parties) : bonus de 0.95 (pénalité de 5%)
+          // Volume moyen (7 parties) : bonus de 0.98 (pénalité de 2%)
+          // Volume élevé (10+ parties) : bonus de 1.0 (pas de pénalité)
+          const confidenceBonus = 0.95 + 0.05 * volume01;
+          
+          // Score final avec bonus de confiance plus généreux
+          const finalScore = performanceScore * confidenceBonus * 100;
+          
+          return Number(finalScore.toFixed(1)); // 0..100
         })(),
       }))
       .filter((champion) => {
@@ -446,6 +464,7 @@ export default function ChampionsByIdPage() {
                           size={48}
                           shape="rounded"
                           className="border-2 border-primary/20"
+                          clickable
                         />
                         <div>
                           <p className="font-semibold">{champion.name}</p>

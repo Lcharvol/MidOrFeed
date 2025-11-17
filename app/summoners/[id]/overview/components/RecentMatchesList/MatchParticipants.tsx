@@ -57,6 +57,7 @@ export const MatchParticipants = ({
                 size={16}
                 shape="circle"
                 className="border border-border/50"
+                clickable
               />
               <span className="truncate text-[11px] text-muted-foreground">
                 {participantChampionName}
@@ -85,6 +86,7 @@ export const MatchParticipants = ({
                 size={16}
                 shape="circle"
                 className="border border-border/50"
+                clickable
               />
               <span className="truncate text-[11px] text-muted-foreground">
                 {participantChampionName}

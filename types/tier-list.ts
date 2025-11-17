@@ -1,6 +1,20 @@
 import type { ReactElement, SVGProps } from "react";
 import type { ChampionEntity } from "./champions";
 
+export interface WeakAgainstItem {
+  enemyChampionId: string;
+  games: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  lastPlayedAt: string;
+}
+
+export interface WinRateTrend {
+  trend: "up" | "down" | "stable";
+  change: number;
+}
+
 export interface TierListChampionStats {
   id: string;
   championId: string;
@@ -19,6 +33,8 @@ export interface TierListChampionStats {
   avgVisionScore: number;
   topRole: string | null;
   topLane: string | null;
+  weakAgainst?: WeakAgainstItem[] | null;
+  winRateTrend?: WinRateTrend | null;
   score: number;
   lastAnalyzedAt: string;
 }

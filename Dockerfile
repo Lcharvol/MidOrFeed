@@ -50,6 +50,16 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/ml ./ml
 COPY --from=builder /opt/ml-venv /opt/ml-venv
 
+# Copy scripts directory (for migration scripts)
+COPY --from=builder /app/scripts ./scripts
+
+# Copy lib directory (for prisma-sharded-accounts and other utilities)
+COPY --from=builder /app/lib ./lib
+
+# Copy package.json and tsconfig.json (needed for scripts and TypeScript path resolution)
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+
 # Copy startup script
 COPY --from=builder /app/scripts/start.sh /app/start.sh
 RUN chmod +x /app/start.sh

@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n-context";
 
 const riotAccountSchema = z.object({
   gameName: z.string().min(1, "Le nom de jeu est requis"),
@@ -34,6 +35,7 @@ interface UseRiotAccountFormProps {
 }
 
 export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
+  const { t } = useI18n();
   const riotGameName =
     user?.leagueAccount?.riotGameName || user?.riotGameName || "";
   const riotTagLine =
@@ -52,6 +54,8 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSaveAccount = async (values: RiotAccountFormValues) => {
     const { gameName, tagLine, region } = values;
@@ -174,15 +178,67 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
     }
   };
 
+  const handleDeleteAccount = () => {
+    if (!user) {
+      toast.error("Utilisateur non trouvé");
+      return;
+    }
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (!user) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setShowDeleteConfirm(false);
+    try {
+      const response = await fetch("/api/user/remove-riot-account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": user.id,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || t("profile.deleteAccountError"));
+        return;
+      }
+
+      // Mettre à jour l'utilisateur dans le contexte
+      if (result.user) {
+        login(result.user as unknown);
+      }
+
+      toast.success(t("profile.deleteAccountSuccess"));
+      setIsEditing(false);
+      form.reset();
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast.error(t("profile.deleteAccountError"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return {
     form,
     isSaving,
     isAnalyzing,
     isEditing,
+    isDeleting,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
     setIsEditing,
     handleSaveAccount,
     handleEditAccount,
     handleCancelEdit,
     handleAnalyzeMatches,
+    handleDeleteAccount,
+    confirmDeleteAccount,
   };
 }

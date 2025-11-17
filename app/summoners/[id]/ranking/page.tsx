@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2Icon, TrophyIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { ColorBadge } from "@/components/ui/color-badge";
+import { ColorBadge } from "@/components/ui/badge";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { useParams, useSearchParams } from "next/navigation";
 

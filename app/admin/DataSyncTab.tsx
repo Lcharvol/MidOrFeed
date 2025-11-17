@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { authenticatedFetch } from "@/lib/api-client";
+import { useI18n } from "@/lib/i18n-context";
 import {
   Table,
   TableBody,
@@ -42,6 +43,7 @@ type Script = {
 };
 
 export const DataSyncTab = () => {
+  const { t } = useI18n();
   const [runningScripts, setRunningScripts] = useState<Set<string>>(new Set());
   const [championAnalysisLimit, setChampionAnalysisLimit] = useState<number>(250);
   const [pendingScript, setPendingScript] = useState<Script | null>(null);
@@ -57,44 +59,41 @@ export const DataSyncTab = () => {
     () => [
       {
         id: "sync-champions",
-        name: "Synchroniser les champions",
-        description: "Récupère la dernière liste depuis Data Dragon",
+        name: t("admin.dataSync.scripts.syncChampions"),
+        description: t("admin.dataSync.scripts.syncChampionsDesc"),
         endpoint: "/api/champions/sync",
         category: "sync",
       },
       {
         id: "sync-items",
-        name: "Synchroniser les items",
-        description: "Met à jour les objets (icônes, coûts, descriptions)",
+        name: t("admin.dataSync.scripts.syncItems"),
+        description: t("admin.dataSync.scripts.syncItemsDesc"),
         endpoint: "/api/items/sync",
         category: "sync",
       },
       {
         id: "sync-riot-versions",
-        name: "Synchroniser les versions du jeu",
-        description:
-          "Récupère la liste des patches via l’API Riot et met à jour la version courante",
+        name: t("admin.dataSync.scripts.syncVersions"),
+        description: t("admin.dataSync.scripts.syncVersionsDesc"),
         endpoint: "/api/admin/riot/versions",
         category: "sync",
       },
       {
         id: "analyze-champions",
-        name: "Analyser les statistiques de champions",
-        description:
-          "Analyse les matches et calcule les statistiques de performance par champion",
+        name: t("admin.dataSync.scripts.analyzeChampions"),
+        description: t("admin.dataSync.scripts.analyzeChampionsDesc"),
         endpoint: "/api/admin/analyze-champions",
         category: "analysis",
         payload: () => ({ matchLimit: championAnalysisLimit || undefined }),
       },
       {
         id: "broadcast-notification",
-        name: "Notification de test",
-        description:
-          "Envoie une notification temps réel à toutes les sessions connectées",
+        name: t("admin.dataSync.scripts.testNotification"),
+        description: t("admin.dataSync.scripts.testNotificationDesc"),
         endpoint: "/api/notifications/send",
         category: "ops",
         payload: () => ({
-          title: "Notification de test",
+          title: t("admin.dataSync.scripts.testNotification"),
           message: `Message envoyé à ${new Date().toLocaleTimeString("fr-FR", {
             hour: "2-digit",
             minute: "2-digit",
@@ -104,22 +103,20 @@ export const DataSyncTab = () => {
       },
       {
         id: "sync-challenges",
-        name: "Synchroniser les défis Riot",
-        description:
-          "Récupère la configuration et la progression Challenges pour les comptes suivis",
+        name: t("admin.dataSync.scripts.syncChallenges"),
+        description: t("admin.dataSync.scripts.syncChallengesDesc"),
         endpoint: "/api/challenges/sync",
         category: "analysis",
       },
       {
         id: "generate-composition-suggestions",
-        name: "Générer les compositions recommandées",
-        description:
-          "Produit des suggestions d’équipe par rôle à partir des statistiques de champions",
+        name: t("admin.dataSync.scripts.generateCompositions"),
+        description: t("admin.dataSync.scripts.generateCompositionsDesc"),
         endpoint: "/api/admin/compositions/generate",
         category: "analysis",
       },
     ],
-    [championAnalysisLimit]
+    [championAnalysisLimit, t]
   );
 
   const filteredScripts = useMemo(() => {
@@ -196,7 +193,7 @@ export const DataSyncTab = () => {
           : script.id === "analyze-champions"
           ? `Analyse terminée: ${json?.data?.totalChampions ?? "?"} champions analysés (${json?.data?.created ?? 0} créés, ${json?.data?.updated ?? 0} mis à jour)`
           : script.id === "broadcast-notification"
-          ? "Notification envoyée"
+          ? t("admin.dataSync.notificationSent")
           : script.id === "sync-challenges"
           ? `Défis synchronisés (${json?.data?.accountsProcessed ?? "?"} comptes)`
           : script.id === "generate-composition-suggestions"
@@ -205,7 +202,7 @@ export const DataSyncTab = () => {
 
       toast.success(message);
     } catch {
-      toast.error("Erreur réseau");
+      toast.error(t("admin.dataSync.networkError"));
     } finally {
       setRunningScripts((prev) => {
         const next = new Set(prev);
@@ -232,7 +229,7 @@ export const DataSyncTab = () => {
             }
           })
           .catch(() => {
-            toast.error("Impossible de récupérer le nombre de matchs disponibles");
+            toast.error(t("admin.dataSync.errorFetchingMatches"));
           })
           .finally(() => setIsLoadingMatches(false));
       }
@@ -246,7 +243,17 @@ export const DataSyncTab = () => {
     setIsPromptOpen(false);
     setPendingScript(null);
     if (!script) return;
-    void executeScript(script);
+    // Créer un script avec le payload mis à jour avec la valeur actuelle
+    const scriptWithUpdatedPayload = {
+      ...script,
+      payload: () => ({
+        matchLimit:
+          championAnalysisLimit && championAnalysisLimit > 0
+            ? championAnalysisLimit
+            : undefined,
+      }),
+    };
+    void executeScript(scriptWithUpdatedPayload);
   };
 
   return (
@@ -255,31 +262,31 @@ export const DataSyncTab = () => {
         <div className="flex flex-col gap-3 rounded-md border bg-muted/20 p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
             <FilterIcon className="size-4" />
-            <span>Filtrer les scripts</span>
+            <span>{t("admin.dataSync.filterScripts")}</span>
           </div>
           <div className="flex flex-wrap gap-3">
             <div className="flex flex-1 min-w-[220px] flex-col gap-1">
-              <span className="text-xs font-medium text-muted-foreground">Recherche</span>
+              <span className="text-xs font-medium text-muted-foreground">{t("admin.dataSync.search")}</span>
               <Input
-                placeholder="Rechercher par nom ou description"
+                placeholder={t("admin.dataSync.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </div>
             <div className="flex min-w-[180px] flex-col gap-1">
-              <span className="text-xs font-medium text-muted-foreground">Catégorie</span>
+              <span className="text-xs font-medium text-muted-foreground">{t("admin.dataSync.category")}</span>
               <Select
                 value={categoryFilter}
                 onValueChange={(value: 'all' | Script['category']) => setCategoryFilter(value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Toutes les catégories" />
+                  <SelectValue placeholder={t("admin.dataSync.allCategories")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes</SelectItem>
-                  <SelectItem value="sync">Synchronisation</SelectItem>
-                  <SelectItem value="analysis">Analyse</SelectItem>
-                  <SelectItem value="ops">Ops</SelectItem>
+                  <SelectItem value="all">{t("admin.dataSync.all")}</SelectItem>
+                  <SelectItem value="sync">{t("admin.dataSync.sync")}</SelectItem>
+                  <SelectItem value="analysis">{t("admin.dataSync.analysis")}</SelectItem>
+                  <SelectItem value="ops">{t("admin.dataSync.ops")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -298,17 +305,17 @@ export const DataSyncTab = () => {
                     {renderSortIcon('name')}
                   </span>
                 </TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>{t("admin.dataSync.description")}</TableHead>
                 <TableHead
                   className="w-[120px] cursor-pointer select-none"
                   onClick={() => toggleSort('category')}
                 >
                   <span className="inline-flex items-center">
-                    Catégorie
+                    {t("admin.dataSync.category")}
                     {renderSortIcon('category')}
                   </span>
                 </TableHead>
-                <TableHead className="w-[120px] text-right">Actions</TableHead>
+                <TableHead className="w-[120px] text-right">{t("admin.dataSync.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -331,10 +338,10 @@ export const DataSyncTab = () => {
                         }
                       >
                         {script.category === "sync"
-                          ? "Synchronisation"
+                          ? t("admin.dataSync.sync")
                           : script.category === "analysis"
-                          ? "Analyse"
-                          : "Ops"}
+                          ? t("admin.dataSync.analysis")
+                          : t("admin.dataSync.ops")}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -346,10 +353,10 @@ export const DataSyncTab = () => {
                         {isRunning ? (
                           <>
                             <Loader2Icon className="mr-2 size-4 animate-spin" />
-                            En cours...
+                            {t("admin.dataSync.loading")}
                           </>
                         ) : (
-                          "Lancer"
+                          t("admin.dataSync.run")
                         )}
                       </Button>
                     </TableCell>
@@ -364,14 +371,14 @@ export const DataSyncTab = () => {
       <Dialog open={isPromptOpen} onOpenChange={setIsPromptOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Configurer l’analyse</DialogTitle>
+            <DialogTitle>{t("admin.dataSync.configureAnalysis")}</DialogTitle>
             <DialogDescription>
-              Définis le nombre de matchs récents à inclure dans l’analyse des champions.
+              Définis le nombre de matchs récents à inclure dans l'analyse des champions.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <label className="flex flex-col gap-2 text-sm">
-              <span>Matches analysés</span>
+              <span>{t("admin.dataSync.matchesAnalyzed")}</span>
               <Input
                 type="number"
                 value={championAnalysisLimit}
@@ -383,18 +390,18 @@ export const DataSyncTab = () => {
                   }
                   setChampionAnalysisLimit(Number.isFinite(value) ? value : 0);
                 }}
-                placeholder="Ex: 250"
+                placeholder={t("admin.dataSync.matchesAnalyzedPlaceholder")}
               />
               <span className="text-xs text-muted-foreground space-y-1">
                 <span className="block">
-                  Laisse vide pour analyser l’ensemble de la base.
+                  Laisse vide pour analyser l'ensemble de la base.
                 </span>
                 <span className="block">
                   Matches disponibles :
                   <span className={cn("ml-1 font-semibold", isLoadingMatches && "opacity-60")}
                   >
                     {isLoadingMatches
-                      ? "Chargement..."
+                      ? t("admin.dataSync.loading")
                       : availableMatches !== null
                         ? availableMatches.toLocaleString("fr-FR")
                         : "—"}
@@ -411,9 +418,9 @@ export const DataSyncTab = () => {
                 setPendingScript(null);
               }}
             >
-              Annuler
+              {t("common.cancel")}
             </Button>
-            <Button onClick={confirmChampionAnalysis}>Lancer l’analyse</Button>
+            <Button onClick={confirmChampionAnalysis}>{t("admin.dataSync.runAnalysis")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

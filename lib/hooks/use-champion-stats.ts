@@ -26,12 +26,18 @@ export const useChampionStats = () => {
     return validation.value.stats;
   }, [validation]);
 
+  const totalUniqueMatches = useMemo(() => {
+    if (!validation || !validation.ok) return undefined;
+    return validation.value.totalUniqueMatches;
+  }, [validation]);
+
   return {
     championStats,
     count:
       validation && validation.ok && validation.value.count !== undefined
         ? validation.value.count
         : championStats.length,
+    totalUniqueMatches,
     error: error ?? (validation && !validation.ok ? validation.error : undefined),
     isLoading,
     isValidating,

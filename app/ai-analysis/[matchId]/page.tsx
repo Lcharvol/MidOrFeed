@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -24,13 +24,9 @@ import {
 } from "lucide-react";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
 import { useAIAnalysis } from "@/lib/hooks/use-ai-analysis";
-import useSWR from "swr";
 import { useChampions } from "@/lib/hooks/use-champions";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface AIInsight {
   type: "strength" | "weakness" | "tip";
@@ -38,7 +34,7 @@ interface AIInsight {
   title: string;
   description: string;
   impact: "high" | "medium" | "low";
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 interface AIAnalysis {
@@ -65,21 +61,17 @@ interface AIAnalysis {
 
 export default function AIAnalysisPage() {
   const params = useParams();
-  const router = useRouter();
-  const { user } = useAuth();
   const { t } = useI18n();
   const matchId = params.matchId as string;
   const { canAnalyze, remainingAnalyses } = useAIAnalysis();
   const { championKeyToIdMap } = useChampions();
 
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoading, setIsLoading] = useState(!canAnalyze);
 
   // Simuler une analyse IA avec de fausses données
   useEffect(() => {
     if (!canAnalyze) {
-      setIsLoading(false);
       return;
     }
 
@@ -261,10 +253,10 @@ export default function AIAnalysisPage() {
               <div className="text-center max-w-2xl mx-auto">
                 <AlertTriangleIcon className="size-16 mx-auto text-primary mb-4" />
                 <h3 className="text-2xl font-semibold mb-2">
-                  Limite d'analyses atteinte
+                  Limite d&apos;analyses atteinte
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Vous avez utilisé toutes vos analyses gratuites aujourd'hui.
+                  Vous avez utilisé toutes vos analyses gratuites aujourd&apos;hui.
                   Revenez demain ou passez à Premium pour des analyses
                   illimitées.
                 </p>
@@ -293,7 +285,7 @@ export default function AIAnalysisPage() {
                 Aucune analyse disponible
               </h3>
               <p className="text-muted-foreground">
-                Impossible de charger l'analyse pour ce match
+                Impossible de charger l&apos;analyse pour ce match
               </p>
             </div>
           </CardContent>
@@ -411,7 +403,7 @@ export default function AIAnalysisPage() {
 
               <div>
                 <h4 className="font-semibold mb-2 text-blue-600 dark:text-blue-400">
-                  Suggestions d'amélioration
+                  Suggestions d&apos;amélioration
                 </h4>
                 <ul className="space-y-1">
                   {analysis.championPerformance.suggestions.map(

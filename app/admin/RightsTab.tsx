@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { authenticatedFetch } from "@/lib/api-client";
+import { useI18n } from "@/lib/i18n-context";
 
 type UserRow = {
   id: string;
@@ -25,6 +26,7 @@ type UserRow = {
 };
 
 export const RightsTab = () => {
+  const { t } = useI18n();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,9 +43,9 @@ export const RightsTab = () => {
         users?: UserRow[];
       };
       if (res.ok && json.users) setUsers(json.users);
-      else toast.error("Erreur lors du chargement des utilisateurs");
+      else toast.error(t("admin.rights.errorLoadingUsers"));
     } catch {
-      toast.error("Erreur réseau");
+      toast.error(t("admin.rights.networkError"));
     } finally {
       setLoading(false);
     }
@@ -73,15 +75,15 @@ export const RightsTab = () => {
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json?.error || "Échec mise à jour");
+        toast.error(json?.error || t("admin.rights.updateFailed"));
         return;
       }
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, role } : u))
       );
-      toast.success("Rôle mis à jour");
+      toast.success(t("admin.rights.roleUpdated"));
     } catch {
-      toast.error("Erreur réseau");
+      toast.error(t("admin.rights.networkError"));
     } finally {
       setUpdatingId(null);
     }
@@ -91,27 +93,27 @@ export const RightsTab = () => {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Filtrer par email ou nom"
+          placeholder={t("admin.rights.filterPlaceholder")}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
         <Button variant="outline" onClick={fetchUsers} disabled={loading}>
-          Recharger
+          {t("admin.rights.reload")}
         </Button>
       </div>
 
       <div className="rounded-md border overflow-hidden">
         <div className="grid grid-cols-12 px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/40">
-          <div className="col-span-4">Email</div>
-          <div className="col-span-2">Nom</div>
-          <div className="col-span-2">Rôle</div>
-          <div className="col-span-2">Abonnement</div>
-          <div className="col-span-2 text-right">Actions</div>
+          <div className="col-span-4">{t("admin.rights.email")}</div>
+          <div className="col-span-2">{t("admin.rights.name")}</div>
+          <div className="col-span-2">{t("admin.rights.role")}</div>
+          <div className="col-span-2">{t("admin.rights.subscription")}</div>
+          <div className="col-span-2 text-right">{t("admin.rights.actions")}</div>
         </div>
         {filtered.length === 0 ? (
           <div className="px-3 py-6 text-sm text-muted-foreground">
-            Aucun utilisateur
+            {t("admin.rights.noUsers")}
           </div>
         ) : (
           <ul>

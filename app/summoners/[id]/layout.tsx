@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useAccount } from "@/lib/hooks/use-account";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getProfileIconUrl } from "@/constants/ddragon";
-import { Loader2Icon, RefreshCwIcon } from "lucide-react";
+import { useSummonerRanked } from "@/lib/hooks/use-summoner-ranked";
+import { useSummonerDetails } from "./hooks/useSummonerDetails";
+import { useLadderRank } from "./hooks/useLadderRank";
+import { SummonerHeader } from "./components/SummonerHeader";
+import { RiotConnectionBanner } from "./components/RiotConnectionBanner";
+import { SummonerActions } from "./components/SummonerActions";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   usePathname,
@@ -15,8 +15,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { toast } from "sonner";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function SummonerByIdLayout({
   children,
@@ -32,41 +31,16 @@ export default function SummonerByIdLayout({
   const region = searchParams.get("region") || undefined;
 
   const [isUpdating, setIsUpdating] = useState(false);
-  const [details, setDetails] = useState<{
-    puuid: string;
-    gameName?: string;
-    tagLine?: string;
-    summonerLevel?: number | null;
-    profileIconId?: number | null;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const {
-    account,
-    isLoading: accLoading,
-    refreshAccountAndMatches,
-  } = useAccount(puuid);
 
-  // Set details from DB cache-first
-  useEffect(() => {
-    if (!puuid) {
-      setLoading(false);
-      return;
-    }
-    if (accLoading) {
-      setLoading(true);
-      return;
-    }
-    if (account) {
-      setDetails({
-        puuid,
-        gameName: account.riotGameName || undefined,
-        tagLine: account.riotTagLine || undefined,
-        summonerLevel: account.summonerLevel || null,
-        profileIconId: account.profileIconId || null,
-      });
-    }
-    setLoading(false);
-  }, [puuid, accLoading, account]);
+  const {
+    details,
+    loading,
+    account,
+    profileIconUrl,
+    refreshAccountAndMatches,
+  } = useSummonerDetails(puuid);
+  const { solo } = useSummonerRanked(puuid, region);
+  const { ladderRank, topPercentage } = useLadderRank(solo);
 
   // If region missing in URL but present in DB, propagate it once
   useEffect(() => {
@@ -87,11 +61,6 @@ export default function SummonerByIdLayout({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puuid, region, account]);
-
-  const profileIconUrl = useMemo(() => {
-    if (!details?.profileIconId) return null;
-    return getProfileIconUrl(details.profileIconId);
-  }, [details]);
 
   const currentTab = useMemo(() => {
     if (pathname?.endsWith("/challenges")) return "challenges";
@@ -120,77 +89,30 @@ export default function SummonerByIdLayout({
     }
   };
 
+  const hasConnectedAccount = Boolean(
+    account?.riotGameName && account?.riotTagLine
+  );
+
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-8">
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-6 flex-1">
-            {loading ? (
-              <Skeleton className="size-24 rounded-full" aria-busy="true" />
-            ) : profileIconUrl ? (
-              <Avatar className="size-24 border-4 border-primary/20">
-                <AvatarImage src={profileIconUrl} alt="Profile" />
-                <AvatarFallback>?</AvatarFallback>
-              </Avatar>
-            ) : (
-              <Avatar className="size-24 border-4 border-primary/20">
-                <AvatarFallback className="bg-linear-to-br from-primary to-primary/60 text-4xl">
-                  {details?.gameName?.[0]?.toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
-            )}
+      <div className="mb-8 space-y-4">
+        <SummonerHeader
+          loading={loading}
+          details={details}
+          profileIconUrl={profileIconUrl}
+          region={region}
+          ladderRank={ladderRank}
+          topPercentage={topPercentage}
+        />
 
-            <div className="flex-1">
-              {loading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-7 w-64" />
-                  <Skeleton className="h-5 w-32" />
-                </div>
-              ) : (
-                <>
-                  <h1 className="text-4xl font-bold mb-2">
-                    {details?.gameName || puuid}
-                    {details?.tagLine && (
-                      <span className="text-muted-foreground">
-                        #{details.tagLine}
-                      </span>
-                    )}
-                  </h1>
-                  {region && (
-                    <Badge variant="outline" className="text-lg px-3 py-1">
-                      {region.toUpperCase()}
-                    </Badge>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+        <RiotConnectionBanner hasConnectedAccount={hasConnectedAccount} />
 
-          <div>
-            {loading ? (
-              <Skeleton className="h-9 w-36" />
-            ) : (
-              <Button
-                onClick={handleUpdateProfile}
-                disabled={isUpdating || !puuid || !region}
-                variant="outline"
-                size="sm"
-              >
-                {isUpdating ? (
-                  <>
-                    <Loader2Icon className="mr-2 size-4 animate-spin" />
-                    Mise à jour...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCwIcon className="mr-2 size-4" />
-                    Mettre à jour
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        </div>
+        <SummonerActions
+          isUpdating={isUpdating}
+          puuid={puuid}
+          region={region}
+          onUpdate={handleUpdateProfile}
+        />
       </div>
 
       {loading ? (

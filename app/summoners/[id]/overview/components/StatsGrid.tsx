@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useI18n } from "@/lib/i18n-context";
 import type { SummonerOverviewAggregate, ChampionIdToStats } from "@/types";
 import { BestChampionCard } from "./BestChampionCard";
 
@@ -22,31 +23,32 @@ export const StatsGrid = ({
   championKeyToId,
   resolveSlug,
 }: StatsGridProps) => {
+  const { t } = useI18n();
   const winRatio = stats.totalWins / Math.max(stats.totalGames, 1);
 
   return (
-    <div className="grid gap-2 md:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-4">
       <Card
         variant="gradient"
         className="border-blue-500/25 from-background to-blue-500/10 dark:border-blue-500/25 dark:from-background dark:to-blue-500/10"
       >
-        <CardHeader className="pb-1.5 pt-2">
-          <CardTitle className="text-xs font-semibold text-blue-700 dark:text-blue-100">
-            Win rate global
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>{t("summoners.globalWinRate")}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1 pb-2.5 pt-0">
-          <p className="text-lg font-semibold text-foreground">
-            {stats.winRate}
-          </p>
+        <CardContent className="space-y-2">
+          <p className="text-lg font-semibold">{stats.winRate}</p>
           <Progress
             value={winRateValue}
             className="h-1 bg-blue-500/30"
             indicatorClassName="bg-blue-600 dark:bg-blue-400"
           />
-          <p className="text-[10px] text-muted-foreground">
-            {stats.totalWins} victoires · {stats.totalGames - stats.totalWins}{" "}
-            défaites
+          <p className="text-sm text-muted-foreground">
+            {t("summoners.victoriesAndDefeats")
+              .replace("{wins}", stats.totalWins.toString())
+              .replace(
+                "{losses}",
+                (stats.totalGames - stats.totalWins).toString()
+              )}
           </p>
         </CardContent>
       </Card>
@@ -62,17 +64,15 @@ export const StatsGrid = ({
         variant="gradient"
         className="border-purple-500/25 from-background to-purple-500/10 dark:border-purple-500/25 dark:from-background dark:to-purple-500/10"
       >
-        <CardHeader className="pb-1.5 pt-2">
-          <CardTitle className="text-xs font-semibold text-purple-700 dark:text-purple-100">
-            Matchs analysés
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>{t("summoners.analyzedMatches")}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1 pb-2.5 pt-0">
-          <p className="text-lg font-semibold text-foreground">
+        <CardContent className="space-y-2">
+          <p className="text-lg font-semibold">
             {stats.totalGames.toLocaleString("fr-FR")}
           </p>
-          <p className="text-[10px] text-muted-foreground">
-            Toutes files confondues
+          <p className="text-sm text-muted-foreground">
+            {t("summoners.allQueues")}
           </p>
         </CardContent>
       </Card>
@@ -81,17 +81,18 @@ export const StatsGrid = ({
         variant="gradient"
         className="border-amber-500/25 from-background to-amber-500/10 dark:border-amber-500/25 dark:from-background dark:to-amber-500/10"
       >
-        <CardHeader className="pb-1.5 pt-2">
-          <CardTitle className="text-xs font-semibold text-amber-700 dark:text-amber-100">
-            Victoires
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>{t("summoners.victoriesTitle")}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1 pb-2.5 pt-0">
-          <p className="text-lg font-semibold text-foreground">
+        <CardContent className="space-y-2">
+          <p className="text-lg font-semibold">
             {stats.totalWins.toLocaleString("fr-FR")}
           </p>
-          <p className="text-[10px] text-muted-foreground">
-            {(winRatio * 100).toFixed(1)}% de win rate
+          <p className="text-sm text-muted-foreground">
+            {t("summoners.winRatePercent").replace(
+              "{percent}",
+              (winRatio * 100).toFixed(1)
+            )}
           </p>
         </CardContent>
       </Card>

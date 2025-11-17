@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { SearchIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { WinRateChart } from "./WinRateChart";
+import dynamic from "next/dynamic";
+import { LazyLoadingFallback } from "@/lib/lazy-components";
 import { KDAStats } from "./KDAStats";
 import { ChampionsPlayed } from "./ChampionsPlayed";
-import { PreferredRoleChart } from "./PreferredRoleChart";
 import { createWinRateChartConfig } from "./constants";
 import {
   calculateSummaryStats,
@@ -16,6 +16,20 @@ import {
   calculateRoleData,
 } from "./utils";
 import type { RecentGamesSummaryProps } from "./types";
+
+// Lazy load les composants de chart (bibliothèque recharts lourde)
+const WinRateChart = dynamic(
+  () => import("./WinRateChart").then((mod) => ({ default: mod.WinRateChart })),
+  { loading: () => <div className="w-[150px] h-[150px]" />, ssr: false }
+);
+
+const PreferredRoleChart = dynamic(
+  () =>
+    import("./PreferredRoleChart").then((mod) => ({
+      default: mod.PreferredRoleChart,
+    })),
+  { loading: () => <div className="w-full h-[80px]" />, ssr: false }
+);
 
 export const RecentGamesSummary = ({
   matches,

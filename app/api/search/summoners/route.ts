@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ShardedLeagueAccounts, getLeagueAccountsTableName } from "@/lib/prisma-sharded-accounts";
+import { validateRegion, validateTableName, escapeSqlIdentifier } from "@/lib/sql-sanitization";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -21,48 +23,118 @@ export async function POST(request: Request) {
 
     console.log("[SEARCH/SUMMONERS] Recherche:", { query, region, limit });
 
-    // Normaliser la requête: supporter "GameName#Tag" en extrayant le nom
+    // Normaliser et valider la requête: supporter "GameName#Tag" en extrayant le nom
     const namePart = query.split("#")[0].trim();
+    
+    // Valider que la requête ne contient pas de caractères dangereux pour SQL
+    if (namePart.length > 100) {
+      return NextResponse.json(
+        { error: "Requête trop longue" },
+        { status: 400 }
+      );
+    }
 
-    // Fonction de recherche
-    const runSearch = async (scopedRegion?: string) => {
-      const where: any = {
-        AND: [
-          scopedRegion ? { riotRegion: scopedRegion } : {},
-          {
-            OR: [
-              // SQLite: contains est généralement case-insensitive ASCII
-              { riotGameName: { contains: namePart } },
-              { puuid: { startsWith: namePart } },
-            ],
-          },
-        ],
-      };
-
-      const rows = await prisma.leagueOfLegendsAccount.findMany({
-        where,
-        take: limit,
-        orderBy: { totalMatches: "desc" },
-        select: {
-          puuid: true,
-          riotGameName: true,
-          riotTagLine: true,
-          riotRegion: true,
-          summonerLevel: true,
-          profileIconId: true,
-          totalMatches: true,
-          winRate: true,
-          avgKDA: true,
-        },
-      });
-      return rows;
-    };
-
+    // Note: La recherche par nom de jeu nécessite des requêtes SQL brutes
+    // car les tables shardées ne supportent pas facilement les recherches textuelles
+    // On utilise des paramètres préparés pour éviter les injections SQL
+    
     // 1) Essayer avec région si fournie
-    let rows = await runSearch(region);
-    // 2) Si rien trouvé et région fournie, re-tenter sans filtre de région
-    if (rows.length === 0 && region) {
-      rows = await runSearch(undefined);
+    let rows: Array<{
+      puuid: string;
+      riotGameName: string | null;
+      riotTagLine: string | null;
+      riotRegion: string;
+      summonerLevel: number | null;
+      profileIconId: number | null;
+      totalMatches: number;
+      winRate: number;
+      avgKDA: number;
+    }> = [];
+    
+    if (region) {
+      // Valider la région
+      if (!validateRegion(region)) {
+        return NextResponse.json(
+          { error: "Région invalide" },
+          { status: 400 }
+        );
+      }
+      
+      const tableName = getLeagueAccountsTableName(region);
+      
+      // Valider le nom de table
+      if (!validateTableName(tableName)) {
+        return NextResponse.json(
+          { error: "Nom de table invalide" },
+          { status: 500 }
+        );
+      }
+      
+      try {
+        // Utiliser des paramètres préparés pour éviter les injections SQL
+        const escapedTableName = escapeSqlIdentifier(tableName);
+        rows = await prisma.$queryRawUnsafe<
+          Array<{
+            puuid: string;
+            riotGameName: string | null;
+            riotTagLine: string | null;
+            riotRegion: string;
+            summonerLevel: number | null;
+            profileIconId: number | null;
+            totalMatches: number;
+            winRate: number;
+            avgKDA: number;
+          }>
+        >(
+          `SELECT "puuid", "riotGameName", "riotTagLine", "riotRegion", "summonerLevel", "profileIconId", "totalMatches", "winRate", "avgKDA" FROM ${escapedTableName} WHERE ("riotGameName" ILIKE $1 OR "puuid" LIKE $2) ORDER BY "totalMatches" DESC LIMIT $3`,
+          `%${namePart}%`,
+          `${namePart}%`,
+          limit
+        );
+      } catch (error) {
+        console.error(`[SEARCH/SUMMONERS] Erreur recherche dans ${tableName}:`, error);
+      }
+    }
+    
+    // 2) Si rien trouvé, chercher dans toutes les régions
+    if (rows.length === 0) {
+      const { MAIN_REGIONS } = await import("@/constants/riot-regions");
+      for (const reg of MAIN_REGIONS) {
+        if (rows.length >= limit) break;
+        
+        const tableName = getLeagueAccountsTableName(reg);
+        
+        // Valider le nom de table
+        if (!validateTableName(tableName)) {
+          continue; // Skip cette région si le nom de table est invalide
+        }
+        
+        try {
+          // Utiliser des paramètres préparés pour éviter les injections SQL
+          const escapedTableName = escapeSqlIdentifier(tableName);
+          const results = await prisma.$queryRawUnsafe<
+            Array<{
+              puuid: string;
+              riotGameName: string | null;
+              riotTagLine: string | null;
+              riotRegion: string;
+              summonerLevel: number | null;
+              profileIconId: number | null;
+              totalMatches: number;
+              winRate: number;
+              avgKDA: number;
+            }>
+          >(
+            `SELECT "puuid", "riotGameName", "riotTagLine", "riotRegion", "summonerLevel", "profileIconId", "totalMatches", "winRate", "avgKDA" FROM ${escapedTableName} WHERE ("riotGameName" ILIKE $1 OR "puuid" LIKE $2) ORDER BY "totalMatches" DESC LIMIT $3`,
+            `%${namePart}%`,
+            `${namePart}%`,
+            limit - rows.length
+          );
+          rows.push(...results);
+        } catch (error) {
+          console.error(`[SEARCH/SUMMONERS] Erreur recherche dans ${tableName}:`, error);
+        }
+      }
     }
 
     return NextResponse.json(

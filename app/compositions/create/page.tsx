@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2Icon, PlusIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useChampions } from "@/lib/hooks/use-champions";
+import { useI18n } from "@/lib/i18n-context";
 import type { ChampionEntity } from "@/types";
 
 const ROLES = [
@@ -27,6 +28,7 @@ const ROLES = [
 ];
 
 export default function CreateCompositionPage() {
+  const { t } = useI18n();
   const [compositionName, setCompositionName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedChampions, setSelectedChampions] = useState<
@@ -59,8 +61,11 @@ export default function CreateCompositionPage() {
       ...prev,
       [role]: champion,
     }));
+    const roleLabel = ROLES.find((r) => r.value === role)?.label || role;
     toast.success(
-      `${champion.name} ajouté en ${ROLES.find((r) => r.value === role)?.label}`
+      t("compositions.addedToRole")
+        .replace("{championName}", champion.name)
+        .replace("{role}", roleLabel)
     );
   };
 
@@ -77,26 +82,26 @@ export default function CreateCompositionPage() {
     ).length;
 
     if (selectedCount === 0) {
-      toast.error("Veuillez sélectionner au moins un champion");
+      toast.error(t("compositions.atLeastOneChampion"));
       return;
     }
 
     if (!compositionName.trim()) {
-      toast.error("Veuillez donner un nom à votre composition");
+      toast.error(t("compositions.compositionNameRequired"));
       return;
     }
 
     // TODO: Sauvegarder la composition
-    toast.success("Composition sauvegardée avec succès!");
+    toast.success(t("compositions.compositionSaved"));
     console.log("Composition:", { compositionName, selectedChampions });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-2 text-4xl font-bold">Créer une composition</h1>
+        <h1 className="mb-2 text-4xl font-bold">{t("compositions.createTitle")}</h1>
         <p className="text-muted-foreground">
-          Construisez votre équipe idéale pour League of Legends
+          {t("compositions.buildYourTeam")}
         </p>
       </div>
 
@@ -107,14 +112,14 @@ export default function CreateCompositionPage() {
             {/* Nom de la composition */}
             <Card>
               <CardHeader>
-                <CardTitle>Nom de la composition</CardTitle>
+                <CardTitle>{t("compositions.compositionName")}</CardTitle>
                 <CardDescription>
-                  Donnez un nom à votre composition
+                  {t("compositions.giveNameToComposition")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Input
-                  placeholder="Ex: Composition Meta du patch 15.21"
+                  placeholder={t("compositions.compositionNamePlaceholder")}
                   value={compositionName}
                   onChange={(e) => setCompositionName(e.target.value)}
                 />
@@ -124,9 +129,9 @@ export default function CreateCompositionPage() {
             {/* Rôles et champions sélectionnés */}
             <Card>
               <CardHeader>
-                <CardTitle>Équipe</CardTitle>
+                <CardTitle>{t("compositions.team")}</CardTitle>
                 <CardDescription>
-                  Sélectionnez les champions pour chaque position
+                  {t("compositions.selectChampionsForEachPosition")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -167,7 +172,7 @@ export default function CreateCompositionPage() {
                         </div>
                       ) : (
                         <div className="flex h-16 items-center justify-center rounded-lg border border-dashed text-muted-foreground">
-                          Aucun champion sélectionné
+                          {t("compositions.noChampionSelected")}
                         </div>
                       )}
                     </div>
@@ -179,15 +184,15 @@ export default function CreateCompositionPage() {
             {/* Liste des champions disponibles */}
             <Card>
               <CardHeader>
-                <CardTitle>Champions disponibles</CardTitle>
+                <CardTitle>{t("compositions.availableChampions")}</CardTitle>
                 <CardDescription>
-                  Recherchez et sélectionnez un champion
+                  {t("compositions.searchAndSelectChampion")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <Input
-                    placeholder="Rechercher un champion..."
+                    placeholder={t("compositions.searchChampionPlaceholder")}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full"
@@ -202,7 +207,7 @@ export default function CreateCompositionPage() {
                   {championsError ? (
                     <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
                       <p className="text-destructive">
-                        Erreur lors du chargement des champions
+                        {t("compositions.errorLoadingChampions")}
                       </p>
                     </div>
                   ) : null}
@@ -248,7 +253,10 @@ export default function CreateCompositionPage() {
                                         )
                                       }
                                       className="flex size-10 items-center justify-center rounded border transition-colors hover:bg-primary hover:text-primary-foreground"
-                                      title={`Ajouter en ${role.label}`}
+                                      title={t("compositions.addToRole").replace(
+                                        "{role}",
+                                        role.label
+                                      )}
                                     >
                                       <span className="text-xs">
                                         {role.icon}
@@ -273,15 +281,15 @@ export default function CreateCompositionPage() {
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
-              <CardTitle>Aperçu</CardTitle>
-              <CardDescription>Votre composition actuelle</CardDescription>
+              <CardTitle>{t("compositions.preview")}</CardTitle>
+              <CardDescription>{t("compositions.previewDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 {/* Résumé des champions */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Champions</span>
+                    <span className="text-muted-foreground">{t("summoners.champions")}</span>
                     <Badge variant="secondary">
                       {
                         Object.values(selectedChampions).filter(
@@ -310,7 +318,7 @@ export default function CreateCompositionPage() {
                     (champ) => champ === null
                   ) && (
                     <p className="text-center text-sm text-muted-foreground">
-                      Aucun champion sélectionné
+                      {t("compositions.noChampionSelected")}
                     </p>
                   )}
                 </div>
@@ -324,7 +332,7 @@ export default function CreateCompositionPage() {
                     disabled={championsLoading}
                   >
                     <PlusIcon className="mr-2 size-5" />
-                    Sauvegarder la composition
+                    {t("compositions.save")}
                   </Button>
                   <Button
                     variant="outline"
@@ -338,10 +346,10 @@ export default function CreateCompositionPage() {
                         support: null,
                       });
                       setCompositionName("");
-                      toast.success("Composition réinitialisée");
+                      toast.success(t("compositions.resetComposition"));
                     }}
                   >
-                    Réinitialiser
+                    {t("compositions.reset")}
                   </Button>
                 </div>
 
@@ -351,11 +359,13 @@ export default function CreateCompositionPage() {
                 ) && (
                   <div className="rounded-lg border bg-muted/30 p-4">
                     <div className="mb-3 text-sm font-medium">
-                      Statistiques moyennes
+                      {t("compositions.averageStats")}
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Attaque</span>
+                        <span className="text-muted-foreground">
+                          {t("compositions.attack")}
+                        </span>
                         <span className="font-medium">
                           {Math.round(
                             Object.values(selectedChampions)
@@ -368,7 +378,9 @@ export default function CreateCompositionPage() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Défense</span>
+                        <span className="text-muted-foreground">
+                          {t("compositions.defense")}
+                        </span>
                         <span className="font-medium">
                           {Math.round(
                             Object.values(selectedChampions)
@@ -381,7 +393,9 @@ export default function CreateCompositionPage() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Magie</span>
+                        <span className="text-muted-foreground">
+                          {t("compositions.magic")}
+                        </span>
                         <span className="font-medium">
                           {Math.round(
                             Object.values(selectedChampions)

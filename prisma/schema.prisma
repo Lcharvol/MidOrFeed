@@ -182,8 +182,8 @@ model DiscoveredPlayer {
 }
 
 model LeagueOfLegendsAccount {
-  id                 String            @id @default(cuid())
-  puuid              String            @unique
+  id                 String                    @id @default(cuid())
+  puuid              String                    @unique
   riotGameName       String?
   riotTagLine        String?
   riotRegion         String
@@ -192,14 +192,14 @@ model LeagueOfLegendsAccount {
   summonerLevel      Int?
   profileIconId      Int?
   revisionDate       BigInt?
-  totalMatches       Int               @default(0)
-  totalWins          Int               @default(0)
-  totalLosses        Int               @default(0)
-  winRate            Float             @default(0)
-  avgKDA             Float             @default(0)
+  totalMatches       Int                       @default(0)
+  totalWins          Int                       @default(0)
+  totalLosses        Int                       @default(0)
+  winRate            Float                     @default(0)
+  avgKDA             Float                     @default(0)
   mostPlayedChampion String?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
   playerChallenges   PlayerChallenge[]
   User               User[]
   overviewHistory    SummonerOverviewHistory[]
@@ -247,6 +247,7 @@ model ChampionStats {
   avgVisionScore Float    @default(0)
   topRole        String?
   topLane        String?
+  weakAgainst    Json?
   lastAnalyzedAt DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -260,31 +261,31 @@ model ChampionStats {
 }
 
 model SummonerOverviewHistory {
-  id          String   @id @default(cuid())
-  summonerId  String
-  totalGames  Int
-  totalWins   Int
-  winRate     Float
-  recordedAt  DateTime @default(now())
+  id         String   @id @default(cuid())
+  summonerId String
+  totalGames Int
+  totalWins  Int
+  winRate    Float
+  recordedAt DateTime @default(now())
 
-  summoner    LeagueOfLegendsAccount @relation(fields: [summonerId], references: [id], onDelete: Cascade)
+  summoner LeagueOfLegendsAccount @relation(fields: [summonerId], references: [id], onDelete: Cascade)
 
   @@index([summonerId, recordedAt])
   @@map("summoner_overview_history")
 }
 
 model ChampionAdvice {
-  id         String   @id @default(cuid())
+  id         String               @id @default(cuid())
   championId String
   authorId   String?
   authorName String?
   content    String
-  score      Int      @default(0)
-  upvotes    Int      @default(0)
-  downvotes  Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  author     User?    @relation(fields: [authorId], references: [id])
+  score      Int                  @default(0)
+  upvotes    Int                  @default(0)
+  downvotes  Int                  @default(0)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  author     User?                @relation(fields: [authorId], references: [id])
   votes      ChampionAdviceVote[]
 
   @@index([championId])
@@ -293,14 +294,14 @@ model ChampionAdvice {
 }
 
 model ChampionAdviceVote {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   adviceId  String
   userId    String
   value     Int
   advice    ChampionAdvice @relation(fields: [adviceId], references: [id], onDelete: Cascade)
   user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@unique([adviceId, userId])
   @@map("champion_advice_votes")
@@ -384,4 +385,19 @@ model GameVersion {
   updatedAt DateTime @updatedAt
 
   @@map("game_versions")
+}
+
+model ChampionWinRateHistory {
+  id          String   @id @default(cuid())
+  championId  String
+  winRate     Float
+  totalGames  Int
+  totalWins   Int
+  totalLosses Int
+  recordedAt  DateTime @default(now())
+
+  @@index([championId])
+  @@index([championId, recordedAt])
+  @@index([recordedAt])
+  @@map("champion_win_rate_history")
 }

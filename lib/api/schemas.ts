@@ -56,6 +56,23 @@ export const validateChampionListResponse = (
   };
 };
 
+const weakAgainstItemSchema = z.object({
+  enemyChampionId: z.string(),
+  games: z.number(),
+  wins: z.number(),
+  losses: z.number(),
+  winRate: z.number(),
+  lastPlayedAt: z.string(),
+});
+
+const winRateTrendSchema = z
+  .object({
+    trend: z.enum(["up", "down", "stable"]),
+    change: z.number(),
+  })
+  .nullable()
+  .optional();
+
 const tierListChampionStatsSchema = z
   .object({
     id: z.string(),
@@ -75,6 +92,8 @@ const tierListChampionStatsSchema = z
     avgVisionScore: z.number(),
     topRole: z.string().nullable(),
     topLane: z.string().nullable(),
+    weakAgainst: z.array(weakAgainstItemSchema).nullable().optional(),
+    winRateTrend: winRateTrendSchema,
     score: z.number(),
     lastAnalyzedAt: z.string(),
   })
@@ -85,6 +104,7 @@ const championStatsSuccessSchema = z
     success: z.literal(true),
     data: z.array(tierListChampionStatsSchema),
     count: z.number().int().nonnegative().optional(),
+    totalUniqueMatches: z.number().int().nonnegative().optional(),
   })
   .passthrough();
 
@@ -101,7 +121,11 @@ type ChampionStatsSuccess = z.infer<typeof championStatsSuccessSchema>;
 
 export const validateChampionStatsResponse = (
   input: unknown
-): ValidationResult<{ stats: ChampionStatsSuccess["data"]; count: number | undefined }> => {
+): ValidationResult<{
+  stats: ChampionStatsSuccess["data"];
+  count: number | undefined;
+  totalUniqueMatches: number | undefined;
+}> => {
   const parsed = championStatsResponseSchema.safeParse(input);
   if (!parsed.success) {
     return buildInvalidFormatResult(parsed.error);
@@ -114,6 +138,7 @@ export const validateChampionStatsResponse = (
     value: {
       stats: parsed.data.data,
       count: parsed.data.count,
+      totalUniqueMatches: parsed.data.totalUniqueMatches,
     },
   };
 };

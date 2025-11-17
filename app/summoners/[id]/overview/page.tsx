@@ -12,6 +12,7 @@ import { RankInfoSection } from "./components/RankInfoSection";
 import { RecentGamesSummary } from "./components/RecentGamesSummary";
 import { RecentMatchesList } from "./components/RecentMatchesList";
 import { useSummonerOverview } from "@/lib/hooks/use-summoner-overview";
+
 const SummonerOverviewByIdPage = () => {
   const params = useParams();
   const searchParams = useSearchParams();

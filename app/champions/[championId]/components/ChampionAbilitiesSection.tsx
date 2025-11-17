@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Fragment } from 'react';
 import { ChampionAbility } from '@/lib/champions/get-champion-abilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ColorBadge } from '@/components/ui/color-badge';
+import { ColorBadge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const SLOT_LABELS: Record<string, string> = {

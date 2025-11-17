@@ -1,6 +1,7 @@
 "use client";
 
 import { ChampionIcon } from "@/components/ChampionIcon";
+import { useI18n } from "@/lib/i18n-context";
 import type { ChampionStat } from "./types";
 
 interface ChampionsPlayedProps {
@@ -16,6 +17,7 @@ export const ChampionsPlayed = ({
   championKeyToId,
   resolveSlug,
 }: ChampionsPlayedProps) => {
+  const { t } = useI18n();
   if (champions.length === 0) {
     return null;
   }
@@ -23,7 +25,10 @@ export const ChampionsPlayed = ({
   return (
     <div className="space-y-2">
       <div className="text-xs font-medium text-muted-foreground pb-2">
-        Champions joués dans les {totalMatches} dernières parties
+        {t("summoners.championsPlayedInLastMatches").replace(
+          "{count}",
+          totalMatches.toString()
+        )}
       </div>
       <div className="flex flex-col gap-5">
         {champions.map((champStat) => (
@@ -33,6 +38,7 @@ export const ChampionsPlayed = ({
               championKey={champStat.championId}
               championKeyToId={championKeyToId}
               size={30}
+              clickable
             />
             <div className="text-xs">
               <div className="font-semibold text-foreground">

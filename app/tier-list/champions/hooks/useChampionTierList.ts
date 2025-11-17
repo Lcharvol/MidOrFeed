@@ -12,12 +12,16 @@ import { useChampions } from "@/lib/hooks/use-champions";
 import { useChampionStats } from "@/lib/hooks/use-champion-stats";
 
 type RoleFilter = RoleKey | "ALL";
+type TierFilter = "S+" | "S" | "A" | "B" | "C" | "D" | "ALL";
+type QueueTypeFilter = "ALL" | "SOLO" | "FLEX";
 
 export type TierListState = {
   searchTerm: string;
   sortColumn: SortColumn | null;
   sortDirection: SortDirection;
   roleFilter: RoleFilter;
+  tierFilter: TierFilter;
+  queueTypeFilter: QueueTypeFilter;
   reliabilityOnly: boolean;
   eliteOnly: boolean;
 };
@@ -25,6 +29,8 @@ export type TierListState = {
 export type TierListActions = {
   setSearchTerm: (value: string) => void;
   setRoleFilter: (value: RoleFilter) => void;
+  setTierFilter: (value: TierFilter) => void;
+  setQueueTypeFilter: (value: QueueTypeFilter) => void;
   setReliabilityOnly: (value: boolean) => void;
   toggleEliteOnly: () => void;
   resetFilters: () => void;
@@ -56,6 +62,8 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
   const [sortColumn, setSortColumn] = useState<SortColumn | null>("score");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("ALL");
+  const [tierFilter, setTierFilter] = useState<TierFilter>("ALL");
+  const [queueTypeFilter, setQueueTypeFilter] = useState<QueueTypeFilter>("ALL");
   const [reliabilityOnly, setReliabilityOnly] = useState(false);
   const [eliteOnly, setEliteOnly] = useState(false);
 
@@ -68,6 +76,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
 
   const {
     championStats,
+    totalUniqueMatches: statsTotalUniqueMatches,
     isLoading: statsLoading,
     error: statsError,
   } = useChampionStats();
@@ -89,10 +98,20 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     [champions, statsMap]
   );
 
-  const totalMatches = useMemo(
-    () => championStats.reduce((acc, stat) => acc + (stat.totalGames ?? 0), 0),
-    [championStats]
-  );
+  // Utiliser le nombre réel de matchs uniques depuis l'API si disponible
+  // Sinon, calculer approximativement en divisant la somme des totalGames par 10
+  // (car chaque match a environ 10 participants)
+  const totalMatches = useMemo(() => {
+    if (statsTotalUniqueMatches !== undefined) {
+      return statsTotalUniqueMatches;
+    }
+    // Fallback : diviser par 10 pour obtenir une approximation
+    const totalParticipations = championStats.reduce(
+      (acc, stat) => acc + (stat.totalGames ?? 0),
+      0
+    );
+    return Math.round(totalParticipations / 10);
+  }, [championStats, statsTotalUniqueMatches]);
 
   const reliableChampionCount = useMemo(
     () =>
@@ -170,6 +189,15 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
           return false;
         }
       }
+      if (tierFilter !== "ALL") {
+        const tier = resolveTier(stats);
+        if (tier !== tierFilter) {
+          return false;
+        }
+      }
+      // Note: queueTypeFilter n'est pas encore implémenté car les stats actuelles
+      // ne distinguent pas les types de match (solo/flex)
+      // Ce filtre sera préparé pour une future implémentation
       const displayName =
         championNameMap.get(champion.championId) ?? champion.name;
       return displayName
@@ -228,16 +256,25 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     sortColumn,
     sortDirection,
     roleFilter,
+    tierFilter,
+    queueTypeFilter,
     reliabilityOnly,
     eliteOnly,
   ]);
 
-  const filtersActive = reliabilityOnly || eliteOnly || roleFilter !== "ALL";
+  const filtersActive =
+    reliabilityOnly ||
+    eliteOnly ||
+    roleFilter !== "ALL" ||
+    tierFilter !== "ALL" ||
+    queueTypeFilter !== "ALL";
   const isWinRateSort = sortColumn === "winRate";
 
   const resetFilters = useCallback(() => {
     setReliabilityOnly(false);
     setRoleFilter("ALL");
+    setTierFilter("ALL");
+    setQueueTypeFilter("ALL");
     setEliteOnly(false);
     setSortColumn("score");
     setSortDirection("desc");
@@ -267,12 +304,16 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
       sortColumn,
       sortDirection,
       roleFilter,
+      tierFilter,
+      queueTypeFilter,
       reliabilityOnly,
       eliteOnly,
     },
     actions: {
       setSearchTerm,
       setRoleFilter,
+      setTierFilter,
+      setQueueTypeFilter,
       setReliabilityOnly,
       toggleEliteOnly,
       resetFilters,

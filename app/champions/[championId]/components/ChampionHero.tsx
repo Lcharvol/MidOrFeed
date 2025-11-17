@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { ColorBadge } from '@/components/ui/color-badge';
+import { ColorBadge } from '@/components/ui/badge';
+import { TierBadge } from '@/components/TierBadge';
 import type { ChampionEntity } from '@/types';
 import type { ChampionSummary } from '@/app/champions/hooks/useChampionSummary';
 import { cn } from '@/lib/utils';
@@ -115,13 +116,7 @@ export const ChampionHero = ({
           >
             {summary.roleMeta.label}
           </ColorBadge>
-          <ColorBadge
-            variant="subtle"
-            emphasis="neutral"
-            className="text-xs font-semibold uppercase tracking-wide"
-          >
-            Tier {summary.tier}
-          </ColorBadge>
+          <TierBadge tier={summary.tier} variant="subtle" />
           {summary.score !== null ? (
             <ColorBadge variant="subtle" emphasis={summary.scoreEmphasis}>
               Score {summary.scoreLabel}

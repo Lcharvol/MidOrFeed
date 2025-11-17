@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { TopChampionEntry } from "@/lib/summoners/overview";
+import { useI18n } from "@/lib/i18n-context";
 import {
   Table,
   TableBody,
@@ -33,16 +34,17 @@ export const TopChampionsSection = ({
   championKeyToId,
   resolveSlug,
 }: TopChampionsSectionProps) => {
+  const { t } = useI18n();
   if (champions.length === 0) return null;
 
   return (
     <Card className="border-border/70 bg-background/90 shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-foreground">
-          Top champions
+          {t("summoners.topChampionsTitle")}
         </CardTitle>
         <CardDescription className="text-xs">
-          Vos meilleurs choix sur les {champions.length} dernières sélections.
+          {t("summoners.topChampionsDescription").replace("{count}", champions.length.toString())}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-3">
@@ -51,19 +53,19 @@ export const TopChampionsSection = ({
             <TableHeader className="bg-muted/30">
               <TableRow className="border-border/50">
                 <TableHead className="w-[50px] text-[11px] uppercase text-muted-foreground">
-                  Rang
+                  {t("summoners.rank")}
                 </TableHead>
                 <TableHead className="text-[11px] uppercase text-muted-foreground">
-                  Champion
+                  {t("summoners.champion")}
                 </TableHead>
                 <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
-                  Matchs
+                  {t("summoners.matches")}
                 </TableHead>
                 <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
-                  Victoires
+                  {t("summoners.victories")}
                 </TableHead>
                 <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
-                  Win rate
+                  {t("summoners.winRate")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -90,6 +92,7 @@ export const TopChampionsSection = ({
                           size={36}
                           shape="rounded"
                           className="rounded-lg border border-border/60"
+                          clickable
                         />
                         <span className="text-sm font-semibold text-foreground">
                           {championName}

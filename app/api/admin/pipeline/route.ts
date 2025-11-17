@@ -60,12 +60,12 @@ async function runOneCycle(
     state.currentStep = "seed";
     pushLog(`Seed (${seedRegion}, ${seedCount})`);
     const { POST: SEED } = await import("@/app/api/crawl/seed/route");
-    const req = new Request("http://internal/api/crawl/seed", {
+    const req = new NextRequest("http://internal/api/crawl/seed", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ region: seedRegion, count: seedCount }),
     });
-    const res = await SEED(req as unknown as Request);
+    const res = await SEED(req);
     if (res?.ok) {
       let json: SeedResponse | null = null;
       try {
@@ -112,12 +112,12 @@ async function runOneCycle(
     state.currentStep = "sync";
     pushLog(`Sync (quota ${maxRiotCallsPerCycle})`);
     const { POST: SYNC } = await import("@/app/api/admin/sync-accounts/route");
-    const req = new Request("http://internal/api/admin/sync-accounts", {
+    const req = new NextRequest("http://internal/api/admin/sync-accounts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ maxRiotCallsPerCycle }),
     });
-    const res = await SYNC(req as unknown as Request);
+    const res = await SYNC(req);
     if (res?.ok) {
       let json: SyncResponse | null = null;
       try {

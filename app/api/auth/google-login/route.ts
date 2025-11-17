@@ -3,6 +3,7 @@ import { OAuth2Client } from "google-auth-library";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import type { User } from "@prisma/client";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
@@ -10,7 +11,18 @@ const oauthClient = GOOGLE_CLIENT_ID
   ? new OAuth2Client(GOOGLE_CLIENT_ID)
   : null;
 
-const serializeUser = (user: any) => ({
+type UserWithLeagueAccount = User & {
+  leagueAccount: {
+    id: string;
+    puuid: string;
+    riotRegion: string | null;
+    riotGameName: string | null;
+    riotTagLine: string | null;
+    profileIconId: number | null;
+  } | null;
+};
+
+const serializeUser = (user: UserWithLeagueAccount) => ({
   id: user.id,
   email: user.email,
   name: user.name,

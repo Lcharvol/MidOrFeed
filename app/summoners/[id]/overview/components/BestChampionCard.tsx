@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { TrophyIcon } from "lucide-react";
 import { getChampionSplashUrl } from "@/constants/ddragon";
+import { useI18n } from "@/lib/i18n-context";
 import Image from "next/image";
 import type { ChampionIdToStats } from "@/types";
 
@@ -23,6 +24,7 @@ export const BestChampionCard = ({
   championKeyToId,
   resolveSlug,
 }: BestChampionCardProps) => {
+  const { t } = useI18n();
   // Trouver le meilleur champion (le plus joué)
   const bestChampion = Object.entries(championStats).sort(
     (a, b) => b[1].played - a[1].played
@@ -54,7 +56,7 @@ export const BestChampionCard = ({
       </div>
       <CardHeader className="relative z-10 pb-1.5 pt-2">
         <CardTitle className="text-xs font-semibold text-purple-700 dark:text-purple-100">
-          Meilleur champion
+          {t("summoners.bestChampion")}
         </CardTitle>
       </CardHeader>
       <CardContent className="relative z-10 space-y-1 pb-2.5 pt-0">
@@ -67,6 +69,7 @@ export const BestChampionCard = ({
             size={36}
             shape="rounded"
             className="border border-white/30 shadow-lg"
+            clickable
           />
           <div className="text-base font-bold leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
             {championName}
@@ -75,13 +78,13 @@ export const BestChampionCard = ({
         <Separator className="my-1.5" />
         <div className="flex items-center justify-between gap-2 text-xs">
           <div>
-            <p className="text-[10px] text-muted-foreground">Parties</p>
+            <p className="text-[10px] text-muted-foreground">{t("summoners.games")}</p>
             <p className="font-semibold tabular-nums text-foreground text-sm">
               {stats.played}
             </p>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-muted-foreground">Win rate</p>
+            <p className="text-[10px] text-muted-foreground">{t("summoners.winRate")}</p>
             <div className="flex items-center gap-1.5">
               <Progress
                 value={parseFloat(winRate)}
@@ -100,7 +103,7 @@ export const BestChampionCard = ({
             </div>
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground">KDA</p>
+            <p className="text-[10px] text-muted-foreground">{t("summoners.kda")}</p>
             <p
               className={`font-semibold tabular-nums text-sm ${
                 parseFloat(kda) >= 3

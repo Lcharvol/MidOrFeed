@@ -24,7 +24,11 @@
     "ml:train": "python ml/train_model.py",
     "ml:predict": "python ml/predict_win_probability.py",
     "ml:export:compositions": "tsx scripts/export-compositions.ts",
-    "ml:train:compositions": "python ml/train_composition_model.py"
+    "ml:train:compositions": "python ml/train_composition_model.py",
+    "sharding:migrate": "npx tsx scripts/migrate-to-sharded-accounts.ts",
+    "sharding:verify": "npx tsx scripts/verify-sharding.ts",
+    "sharding:test": "bash scripts/test-sharded-endpoints.sh",
+    "sharding:drop-backup": "npx tsx scripts/drop-backup-table.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

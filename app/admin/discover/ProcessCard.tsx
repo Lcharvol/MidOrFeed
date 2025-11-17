@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Loader2Icon, PlayIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n-context";
 import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 
 interface ProcessCardProps {
@@ -31,6 +32,7 @@ export function ProcessCard({
   failedCount = 0,
   onProcessComplete,
 }: ProcessCardProps) {
+  const { t } = useI18n();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [processController, setProcessController] =
@@ -52,17 +54,17 @@ export function ProcessCard({
       const result = await response.json();
 
       if (response.ok) {
-        toast.success(`${result.data.matchesCollected} matchs collectés`);
+        toast.success(t("admin.discover.processCard.matchesCollected").replace("{count}", result.data.matchesCollected.toString()));
         onProcessComplete();
       } else {
-        toast.error(result.error || "Erreur lors du traitement");
+        toast.error(result.error || t("admin.discover.processCard.errorProcessing"));
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
-        toast.info("Traitement annulé");
+        toast.info(t("admin.discover.processCard.processingCancelled"));
       } else {
         console.error("Erreur:", error);
-        toast.error("Une erreur est survenue");
+        toast.error(t("admin.discover.processCard.errorOccurred"));
       }
     } finally {
       setIsProcessing(false);
@@ -77,7 +79,7 @@ export function ProcessCard({
       setProcessController(null);
       setIsCancelling(false);
       setIsProcessing(false);
-      toast.info("Arrêt du traitement en cours...");
+      toast.info(t("admin.discover.processCard.stopping"));
     }
   };
 
@@ -88,8 +90,8 @@ export function ProcessCard({
   return (
     <Card variant="gradient">
       <CardHeader withGlow>
-        <CardTitle>Traitement des joueurs</CardTitle>
-        <CardDescription>Crawler tous les joueurs en attente</CardDescription>
+        <CardTitle>{t("admin.discover.processCard.title")}</CardTitle>
+        <CardDescription>{t("admin.discover.processCard.description")}</CardDescription>
         <CardAction>
           <div className="flex gap-2">
             <Button
@@ -101,12 +103,12 @@ export function ProcessCard({
               {isProcessing ? (
                 <>
                   <Loader2Icon className="mr-2 size-4 animate-spin" />
-                  Traitement...
+                  {t("admin.discover.processCard.processing")}
                 </>
               ) : (
                 <>
                   <PlayIcon className="mr-2 size-4" />
-                  Démarrer
+                  {t("admin.discover.processCard.start")}
                 </>
               )}
             </Button>
@@ -120,10 +122,10 @@ export function ProcessCard({
                 {isCancelling ? (
                   <>
                     <Loader2Icon className="mr-2 size-4 animate-spin" />
-                    Arrêt...
+                    {t("admin.discover.processCard.stopping")}
                   </>
                 ) : (
-                  <>Arrêter</>
+                  <>{t("admin.discover.processCard.stop")}</>
                 )}
               </Button>
             )}
@@ -137,17 +139,17 @@ export function ProcessCard({
                   const data = await res.json();
                   if (res.ok) {
                     toast.success(
-                      data.message || "Joueurs failed remis en pending"
+                      data.message || t("admin.discover.processCard.failedPlayersReset")
                     );
                     onProcessComplete();
                   } else {
                     toast.error(
-                      data.error || "Erreur lors de la réinitialisation"
+                      data.error || t("admin.discover.processCard.errorReset")
                     );
                   }
                 } catch (e) {
                   console.error(e);
-                  toast.error("Une erreur est survenue");
+                  toast.error(t("admin.discover.processCard.errorOccurred"));
                 } finally {
                   setIsRetryingFailed(false);
                 }
@@ -162,7 +164,7 @@ export function ProcessCard({
                   Relance...
                 </>
               ) : (
-                <>Relancer failed</>
+                <>{t("admin.discover.processCard.restartFailed")}</>
               )}
             </Button>
           </div>
@@ -170,12 +172,12 @@ export function ProcessCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
-          <Badge variant="warning">Joueurs en attente: {pendingCount}</Badge>
+          <Badge variant="warning">{t("admin.discover.processCard.pendingPlayers")}: {pendingCount}</Badge>
           {crawlingCount > 0 && (
-            <Badge variant="info">En cours: {crawlingCount}</Badge>
+            <Badge variant="info">{t("admin.discover.processCard.inProgress")}: {crawlingCount}</Badge>
           )}
           {failedCount > 0 && (
-            <Badge variant="destructive">En échec: {failedCount}</Badge>
+            <Badge variant="destructive">{t("admin.discover.processCard.failed")}: {failedCount}</Badge>
           )}
         </div>
 
@@ -183,7 +185,7 @@ export function ProcessCard({
         {isProcessing && totalInProgress > 0 && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Progression</span>
+              <span className="text-muted-foreground">{t("admin.discover.processCard.progress")}</span>
               <span className="font-medium">
                 {Math.round(progressPercent)}%
               </span>
@@ -194,8 +196,7 @@ export function ProcessCard({
 
         <div className="rounded-lg border bg-muted/50 p-4">
           <p className="text-sm text-muted-foreground">
-            Cette commande traite TOUS les joueurs en attente et collecte
-            jusqu&apos;à {MATCHES_FETCH_LIMIT} matchs par joueur.
+            {t("admin.discover.processCard.commandDescription").replace("{limit}", MATCHES_FETCH_LIMIT.toString())}
           </p>
         </div>
       </CardContent>

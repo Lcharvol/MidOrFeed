@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getTierIconUrl } from "@/constants/ddragon";
+import { useSummonerRanked } from "@/lib/hooks/use-summoner-ranked";
+import { useI18n } from "@/lib/i18n-context";
 
 const TIER_NAMES: Record<string, string> = {
   IRON: "Fer",
@@ -46,6 +48,7 @@ interface RankData {
     lp: number;
     wins: number;
     losses: number;
+    winRate?: number;
   };
   best: {
     tier: string;
@@ -55,64 +58,80 @@ interface RankData {
   seasonHistory: SeasonHistory[];
 }
 
-// Données factices pour l'instant
-const MOCK_SOLO_DATA: RankData = {
-  current: {
-    tier: "EMERALD",
-    rank: "II",
-    lp: 1,
-    wins: 169,
-    losses: 148,
-  },
-  best: {
-    tier: "DIAMOND",
-    rank: "IV",
-    lp: 20,
-  },
-  seasonHistory: [
-    { season: "S2024 S3", tier: "PLATINUM", rank: "IV", lp: 96 },
-    { season: "S2024 S2", tier: "PLATINUM", rank: "IV", lp: 0 },
-    { season: "S2024 S1", tier: "PLATINUM", rank: "III", lp: 81 },
-    { season: "S2023 S2", tier: "PLATINUM", rank: "III", lp: 57 },
-    { season: "S2023 S1", tier: "GOLD", rank: "III", lp: 62 },
-  ],
-};
-
-const MOCK_FLEX_DATA: RankData = {
-  current: {
-    tier: "PLATINUM",
-    rank: "II",
-    lp: 55,
-    wins: 17,
-    losses: 7,
-  },
-  best: {
-    tier: "PLATINUM",
-    rank: "II",
-    lp: 55,
-  },
-  seasonHistory: [
-    { season: "S2024 S3", tier: "PLATINUM", rank: "III", lp: 48 },
-    { season: "S2024 S1", tier: "EMERALD", rank: "IV", lp: 52 },
-    { season: "S2023 S2", tier: "PLATINUM", rank: "I", lp: 0 },
-  ],
-};
-
 interface RankInfoSectionProps {
   puuid: string;
   region?: string | null;
 }
 
 export const RankInfoSection = ({ puuid, region }: RankInfoSectionProps) => {
-  // Pour l'instant, on utilise les données factices
-  // TODO: Remplacer par de vraies données quand l'API sera disponible
-  const soloData = MOCK_SOLO_DATA;
-  const flexData = MOCK_FLEX_DATA;
+  const { t } = useI18n();
+  const { solo, flex, isLoading } = useSummonerRanked(puuid, region);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <Card className="border-border/70 bg-background/90 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold text-foreground">
+              {t("summoners.rankedSolo")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-8">
+            <div className="text-center text-sm text-muted-foreground">
+              {t("summoners.loading")}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/70 bg-background/90 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold text-foreground">
+              {t("summoners.rankedFlex")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-8">
+            <div className="text-center text-sm text-muted-foreground">
+              {t("summoners.loading")}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
-      <RankCard title="Classé en solo/duo" data={soloData} queueType="solo" />
-      <RankCard title="Classé flexible" data={flexData} queueType="flex" />
+      {solo ? (
+        <RankCard title={t("summoners.rankedSolo")} data={solo} queueType="solo" />
+      ) : (
+        <Card className="border-border/70 bg-background/90 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold text-foreground">
+              {t("summoners.rankedSolo")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-8">
+            <div className="text-center text-sm text-muted-foreground">
+              {t("summoners.unranked")}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {flex ? (
+        <RankCard title={t("summoners.rankedFlex")} data={flex} queueType="flex" />
+      ) : (
+        <Card className="border-border/70 bg-background/90 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold text-foreground">
+              {t("summoners.rankedFlex")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-8">
+            <div className="text-center text-sm text-muted-foreground">
+              {t("summoners.unranked")}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
@@ -140,10 +159,8 @@ const getTierColorClass = (tier: string): string => {
 };
 
 const RankCard = ({ title, data, queueType }: RankCardProps) => {
-  const winRate =
-    data.current.wins + data.current.losses === 0
-      ? 0
-      : (data.current.wins / (data.current.wins + data.current.losses)) * 100;
+  const { t } = useI18n();
+  const winRate = data.current.winRate ?? 0;
 
   const currentTierName = TIER_NAMES[data.current.tier] || data.current.tier;
   const currentRankDisplay = data.current.rank
@@ -197,7 +214,7 @@ const RankCard = ({ title, data, queueType }: RankCardProps) => {
               {data.current.wins}V {data.current.losses}D
             </div>
             <div className="font-semibold text-foreground">
-              Taux de victoire {winRate.toFixed(0)}%
+              {t("summoners.winRateLabel")} {winRate.toFixed(0)}%
             </div>
           </div>
         </div>
@@ -222,31 +239,31 @@ const RankCard = ({ title, data, queueType }: RankCardProps) => {
                 {bestRankDisplay}
               </div>
               <div className="text-[10px] text-muted-foreground">
-                {data.best.lp} LP
+                {data.best.lp} {t("summoners.lp")}
               </div>
             </div>
           </div>
-          <div className="text-[10px] text-muted-foreground">Meilleur tier</div>
+          <div className="text-[10px] text-muted-foreground">{t("summoners.bestTier")}</div>
         </div>
 
         {/* Historique des saisons */}
         {data.seasonHistory.length > 0 && (
           <div className="space-y-2 border-t border-border/50 pt-3">
             <div className="text-xs font-semibold text-foreground">
-              {queueType === "solo" ? "Classé en solo/duo" : "Classé flexible"}
+              {queueType === "solo" ? t("summoners.rankedSolo") : t("summoners.rankedFlex")}
             </div>
             <div className="overflow-hidden rounded border border-border/60">
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow className="border-border/50">
                     <TableHead className="h-8 text-[10px] uppercase text-muted-foreground">
-                      Saison
+                      {t("summoners.season")}
                     </TableHead>
                     <TableHead className="h-8 text-[10px] uppercase text-muted-foreground">
-                      Tier
+                      {t("summoners.tier")}
                     </TableHead>
                     <TableHead className="h-8 text-right text-[10px] uppercase text-muted-foreground">
-                      LP
+                      {t("summoners.lp")}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -292,7 +309,7 @@ const RankCard = ({ title, data, queueType }: RankCardProps) => {
               </Table>
             </div>
             <div className="text-[10px] text-muted-foreground">
-              Voir tous les tiers des saisons
+              {t("summoners.viewAllSeasonTiers")}
             </div>
           </div>
         )}

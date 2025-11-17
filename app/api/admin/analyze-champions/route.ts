@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth-utils";
 import {
   normalizeLane,
@@ -176,6 +177,117 @@ export async function POST(request: NextRequest) {
       return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
     };
 
+    // Calculer les contre-picks pour chaque champion
+    const weakAgainstByChampion = new Map<
+      string,
+      Array<{
+        enemyChampionId: string;
+        games: number;
+        wins: number;
+        losses: number;
+        winRate: number;
+        lastPlayedAt: string;
+      }>
+    >();
+
+    console.log("[ANALYZE-CHAMPIONS] Calcul des contre-picks...");
+
+    // Pour chaque champion, calculer les contre-picks
+    for (const { championId } of allStats) {
+      const championMatches = await prisma.match.findMany({
+        where: {
+          participants: {
+            some: {
+              championId,
+            },
+          },
+          ...(matchIds ? { id: { in: matchIds } } : {}),
+        },
+        include: {
+          participants: true,
+        },
+        take: 500, // Limiter pour performance
+      });
+
+      if (championMatches.length === 0) continue;
+
+      const counterStats = new Map<
+        string,
+        {
+          wins: number;
+          losses: number;
+          total: number;
+          lastPlayed: number;
+        }
+      >();
+
+      for (const match of championMatches) {
+        const targetParticipant = match.participants.find(
+          (participant) => participant.championId === championId
+        );
+        if (!targetParticipant) continue;
+
+        const enemyTeamId = targetParticipant.teamId === 100 ? 200 : 100;
+        const targetRole = resolveChampionRole(
+          targetParticipant.role,
+          targetParticipant.lane
+        );
+        const enemyParticipants = match.participants.filter((participant) => {
+          if (participant.teamId !== enemyTeamId) return false;
+          if (!targetRole) return true;
+          const enemyRole = resolveChampionRole(
+            participant.role,
+            participant.lane
+          );
+          return enemyRole === targetRole;
+        });
+
+        for (const enemy of enemyParticipants) {
+          const current = counterStats.get(enemy.championId) ?? {
+            wins: 0,
+            losses: 0,
+            total: 0,
+            lastPlayed: 0,
+          };
+
+          const enemyWon = enemy.win ?? false;
+          const updated = {
+            wins: current.wins + (enemyWon ? 1 : 0),
+            losses: current.losses + (enemyWon ? 0 : 1),
+            total: current.total + 1,
+            lastPlayed:
+              Number(match.gameCreation) > current.lastPlayed
+                ? Number(match.gameCreation)
+                : current.lastPlayed,
+          };
+
+          counterStats.set(enemy.championId, updated);
+        }
+      }
+
+      // Convertir en tableau et trier par winRate décroissant (enemies avec le plus haut winRate sont les plus forts contre ce champion)
+      const pairs = Array.from(counterStats.entries())
+        .filter(([, stats]) => stats.total >= 5)
+        .map(([enemyChampionId, stats]) => ({
+          enemyChampionId,
+          games: stats.total,
+          wins: stats.wins,
+          losses: stats.losses,
+          winRate: stats.total > 0 ? stats.wins / stats.total : 0,
+          lastPlayedAt: stats.lastPlayed.toString(),
+        }))
+        .sort((a, b) => b.winRate - a.winRate)
+        .slice(0, 3); // Top 3 seulement
+
+      if (pairs.length > 0) {
+        weakAgainstByChampion.set(championId, pairs);
+      }
+    }
+
+    console.log(
+      `[ANALYZE-CHAMPIONS] Contre-picks calculés pour ${weakAgainstByChampion.size} champions`
+    );
+
     // Calculer les moyennes et upsert dans la base
     let created = 0;
     let updated = 0;
@@ -237,9 +349,13 @@ export async function POST(request: NextRequest) {
       const resolvedRole = resolveChampionRole(topRole, topLane);
       const normalizedRole = resolvedRole ?? topRole;
 
+      const weakAgainst = weakAgainstByChampion.get(championId) ?? null;
+
       const existing = await prisma.championStats.findUnique({
         where: { championId },
       });
+
+      const now = new Date();
 
       if (existing) {
         await prisma.championStats.update({
@@ -260,8 +376,11 @@ export async function POST(request: NextRequest) {
             avgVisionScore: stats.visionScore / stats.games,
             topRole: normalizedRole,
             topLane: normalizedLane,
+            weakAgainst: weakAgainst
+              ? (weakAgainst as Prisma.InputJsonValue)
+              : Prisma.JsonNull,
             score,
-            lastAnalyzedAt: new Date(),
+            lastAnalyzedAt: now,
           },
         });
         updated++;
@@ -284,12 +403,27 @@ export async function POST(request: NextRequest) {
             avgVisionScore: stats.visionScore / stats.games,
             topRole: normalizedRole,
             topLane: normalizedLane,
+            weakAgainst: weakAgainst
+              ? (weakAgainst as Prisma.InputJsonValue)
+              : Prisma.JsonNull,
             score,
-            lastAnalyzedAt: new Date(),
+            lastAnalyzedAt: now,
           },
         });
         created++;
       }
+
+      // Sauvegarder l'historique du win rate
+      await prisma.championWinRateHistory.create({
+        data: {
+          championId,
+          winRate,
+          totalGames: stats.games,
+          totalWins: stats.wins,
+          totalLosses: stats.games - stats.wins,
+          recordedAt: now,
+        },
+      });
     }
 
     console.log(

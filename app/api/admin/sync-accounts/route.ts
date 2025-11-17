@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 
 // Mapping des platformId vers les regions
 const PLATFORM_TO_REGION: Record<string, string> = {
@@ -171,15 +172,10 @@ export async function POST(request?: Request | NextRequest) {
         // Récupérer les détails du compte Riot depuis l'API UNIQUEMENT si les données sont manquantes ou anciennes
         let riotDetails = null;
         if (region) {
-          const existing = await prisma.leagueOfLegendsAccount.findUnique({
-            where: { puuid: participant.participantPUuid },
-            select: {
-              updatedAt: true,
-              riotGameName: true,
-              riotTagLine: true,
-              profileIconId: true,
-            },
-          });
+          const existing = await ShardedLeagueAccounts.findUniqueByPuuid(
+            participant.participantPUuid,
+            region.toLowerCase()
+          );
           const freshEnough =
             existing &&
             Date.now() - new Date(existing.updatedAt).getTime() <
@@ -275,46 +271,25 @@ export async function POST(request?: Request | NextRequest) {
           }
         }
 
-        // Créer ou mettre à jour le compte
-        const account = await prisma.leagueOfLegendsAccount.upsert({
-          where: { puuid: participant.participantPUuid },
-          create: {
-            puuid: participant.participantPUuid,
-            riotRegion: region || platformId,
-            riotGameName: riotDetails?.data?.gameName || null,
-            riotTagLine: riotDetails?.data?.tagLine || null,
-            riotSummonerId: riotDetails?.data?.summonerId || null,
-            riotAccountId: riotDetails?.data?.accountId || null,
-            summonerLevel: riotDetails?.data?.summonerLevel || null,
-            profileIconId: riotDetails?.data?.profileIconId || null,
-            revisionDate: riotDetails?.data?.revisionDate
-              ? BigInt(riotDetails.data.revisionDate)
-              : null,
-            totalMatches,
-            totalWins: wins,
-            totalLosses: losses,
-            winRate,
-            avgKDA,
-            mostPlayedChampion,
-          },
-          update: {
-            // n'écrase que si on a récupéré des données Riot
-            riotGameName: riotDetails?.data?.gameName ?? undefined,
-            riotTagLine: riotDetails?.data?.tagLine ?? undefined,
-            riotSummonerId: riotDetails?.data?.summonerId ?? undefined,
-            riotAccountId: riotDetails?.data?.accountId ?? undefined,
-            summonerLevel: riotDetails?.data?.summonerLevel ?? undefined,
-            profileIconId: riotDetails?.data?.profileIconId ?? undefined,
-            revisionDate: riotDetails?.data?.revisionDate
-              ? BigInt(riotDetails.data.revisionDate)
-              : undefined,
-            totalMatches,
-            totalWins: wins,
-            totalLosses: losses,
-            winRate,
-            avgKDA,
-            mostPlayedChampion,
-          },
+        // Créer ou mettre à jour le compte dans la table shardée
+        const account = await ShardedLeagueAccounts.upsert({
+          puuid: participant.participantPUuid,
+          riotRegion: (region || platformId).toLowerCase(),
+          riotGameName: riotDetails?.data?.gameName ?? undefined,
+          riotTagLine: riotDetails?.data?.tagLine ?? undefined,
+          riotSummonerId: riotDetails?.data?.summonerId ?? undefined,
+          riotAccountId: riotDetails?.data?.accountId ?? undefined,
+          summonerLevel: riotDetails?.data?.summonerLevel ?? undefined,
+          profileIconId: riotDetails?.data?.profileIconId ?? undefined,
+          revisionDate: riotDetails?.data?.revisionDate
+            ? BigInt(riotDetails.data.revisionDate)
+            : undefined,
+          totalMatches,
+          totalWins: wins,
+          totalLosses: losses,
+          winRate,
+          avgKDA,
+          mostPlayedChampion,
         });
 
         accountsCreated++;

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -38,7 +38,7 @@ const REGION_TO_PLATFORM: Record<string, string> = {
  * Découvre de nouveaux joueurs en crawlant les matchs les plus récents
  * via Riot API (Challenger/Master/GrandMaster)
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     if (!RIOT_API_KEY) {
       return NextResponse.json(
@@ -47,7 +47,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
+    // Lire et valider la taille du body
+    const { readAndValidateBody } = await import("@/lib/request-validation");
+    const body = await readAndValidateBody(request);
     const validatedData = seedSchema.parse(body);
 
     const routing = REGION_TO_ROUTING[validatedData.region];
@@ -76,11 +78,13 @@ export async function POST(request: Request) {
 
     if (recentMatches.length === 0) {
       // Si pas de matchs, utiliser les utilisateurs enregistrés comme seed
-      const accounts = await prisma.leagueOfLegendsAccount.findMany({
-        where: { riotRegion: validatedData.region },
-        select: { puuid: true },
-        take: 50,
-      });
+      const { ShardedLeagueAccounts } = await import(
+        "@/lib/prisma-sharded-accounts"
+      );
+      const tableName = `league_accounts_${validatedData.region.toLowerCase().replace(/[^a-z0-9]/g, "_")}`;
+      const accounts = await prisma.$queryRawUnsafe<Array<{ puuid: string }>>(
+        `SELECT "puuid" FROM "${tableName}" LIMIT 50`
+      );
       for (const acc of accounts) {
         if (acc.puuid) discoveredPUUIDs.add(acc.puuid);
       }

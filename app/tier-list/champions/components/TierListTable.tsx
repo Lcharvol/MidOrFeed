@@ -22,14 +22,59 @@ import {
   formatPercentage,
   getRoleMeta,
   getScoreEmphasis,
-  getTierBadgeEmphasis,
-  getWinRateEmphasis,
   resolveTier,
 } from "../utils";
 import { SortIndicator } from "./SortIndicator";
-import { Loader2Icon } from "lucide-react";
-import { ColorBadge } from "@/components/ui/color-badge";
+import { Loader2Icon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
+import { ColorBadge } from "@/components/ui/badge";
+import { TierBadge } from "@/components/TierBadge";
 import Link from "next/link";
+import { WeakAgainst } from "./WeakAgainst";
+import { useChampions } from "@/lib/hooks/use-champions";
+import { useI18n } from "@/lib/i18n-context";
+import { cn } from "@/lib/utils";
+import type { WinRateTrend } from "@/types";
+
+const getWinRateColorClasses = (winRate?: number | null) => {
+  if (winRate === undefined || winRate === null) return "text-muted-foreground";
+  if (winRate >= 56) return "text-emerald-400 font-semibold";
+  if (winRate >= 52) return "text-sky-400 font-semibold";
+  if (winRate >= 50) return "text-amber-400 font-semibold";
+  return "text-rose-400 font-semibold";
+};
+
+const WinRateTrendIndicator = ({ trend }: { trend?: WinRateTrend | null }) => {
+  // Ne rien afficher si pas de tendance ou si stable
+  if (!trend || trend.trend === "stable" || trend.change === 0) {
+    return null;
+  }
+
+  const isUp = trend.trend === "up";
+  const Icon = isUp ? TrendingUpIcon : TrendingDownIcon;
+  const colorClass = isUp ? "text-emerald-400" : "text-rose-400";
+
+  return (
+    <span
+      className={cn("ml-1.5 inline-flex items-center", colorClass)}
+      title={
+        isUp
+          ? `+${trend.change.toFixed(1)}% par rapport à la dernière analyse`
+          : `-${trend.change.toFixed(1)}% par rapport à la dernière analyse`
+      }
+      aria-label={
+        isUp
+          ? `Hausse de ${trend.change.toFixed(
+              1
+            )}% par rapport à la dernière analyse`
+          : `Baisse de ${trend.change.toFixed(
+              1
+            )}% par rapport à la dernière analyse`
+      }
+    >
+      <Icon className="size-3.5" />
+    </span>
+  );
+};
 
 type TierListTableProps = {
   champions: TierListChampionWithStats[];
@@ -50,6 +95,8 @@ export const TierListTable = ({
   isLoading,
   error,
 }: TierListTableProps) => {
+  const { t } = useI18n();
+  const { championNameMap } = useChampions();
   if (isLoading) {
     return (
       <div className="flex items-center justify-center rounded-2xl border bg-background/80 py-12">
@@ -81,16 +128,16 @@ export const TierListTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-16">Rank</TableHead>
-            <TableHead className="w-24">Rôle</TableHead>
-            <TableHead>Champion</TableHead>
-            <TableHead>Tier</TableHead>
+            <TableHead className="w-16">{t("tierListChampions.rank")}</TableHead>
+            <TableHead className="w-24">{t("tierListChampions.role")}</TableHead>
+            <TableHead>{t("tierListChampions.champion")}</TableHead>
+            <TableHead>{t("tierListChampions.tier")}</TableHead>
             <TableHead
               className="cursor-pointer select-none"
               onClick={() => onSort("score")}
             >
               <div className="flex items-center">
-                Score
+                {t("tierListChampions.score")}
                 <SortIndicator
                   column="score"
                   sortColumn={sortColumn}
@@ -103,7 +150,7 @@ export const TierListTable = ({
               onClick={() => onSort("winRate")}
             >
               <div className="flex items-center">
-                Win Rate
+                {t("tierListChampions.winRate")}
                 <SortIndicator
                   column="winRate"
                   sortColumn={sortColumn}
@@ -116,7 +163,7 @@ export const TierListTable = ({
               onClick={() => onSort("totalGames")}
             >
               <div className="flex items-center">
-                Pick Rate
+                {t("tierListChampions.pickRate")}
                 <SortIndicator
                   column="totalGames"
                   sortColumn={sortColumn}
@@ -129,7 +176,7 @@ export const TierListTable = ({
               onClick={() => onSort("avgKDA")}
             >
               <div className="flex items-center">
-                KDA moyen
+                {t("tierListChampions.avgKDA")}
                 <SortIndicator
                   column="avgKDA"
                   sortColumn={sortColumn}
@@ -137,7 +184,8 @@ export const TierListTable = ({
                 />
               </div>
             </TableHead>
-            <TableHead className="text-right">Matches</TableHead>
+            <TableHead>{t("tierListChampions.weakAgainst")}</TableHead>
+            <TableHead className="text-right">{t("tierListChampions.matches")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -164,7 +212,7 @@ export const TierListTable = ({
 
             return (
               <TableRow key={champion.id}>
-                <TableCell className="font-semibold">#{index + 1}</TableCell>
+                <TableCell className="font-semibold">{index + 1}</TableCell>
                 <TableCell>
                   <div className="flex items-center">
                     <RoleIcon
@@ -176,7 +224,9 @@ export const TierListTable = ({
                 </TableCell>
                 <TableCell>
                   <Link
-                    href={`/champions/${encodeURIComponent(champion.championId)}`}
+                    href={`/champions/${encodeURIComponent(
+                      champion.championId
+                    )}`}
                     className="flex items-center gap-3 transition hover:text-primary"
                   >
                     <ChampionIcon
@@ -195,13 +245,7 @@ export const TierListTable = ({
                   </Link>
                 </TableCell>
                 <TableCell>
-                  <ColorBadge
-                    emphasis={getTierBadgeEmphasis(tier)}
-                    variant="subtle"
-                    className="px-3 py-1 text-xs font-semibold uppercase tracking-wide"
-                  >
-                    {tier}
-                  </ColorBadge>
+                  <TierBadge tier={tier} />
                 </TableCell>
                 <TableCell>
                   {reliableStats ? (
@@ -218,19 +262,31 @@ export const TierListTable = ({
                 </TableCell>
                 <TableCell>
                   {hasStats ? (
-                    <ColorBadge
-                      emphasis={getWinRateEmphasis(winRateValue ?? undefined)}
-                      variant="subtle"
-                      className="px-3 py-1 text-xs font-semibold"
+                    <span
+                      className={cn(
+                        "text-sm inline-flex items-center",
+                        getWinRateColorClasses(winRateValue)
+                      )}
                     >
                       {formatPercentage(winRateValue ?? undefined)}
-                    </ColorBadge>
+                      <WinRateTrendIndicator trend={stats?.winRateTrend} />
+                    </span>
                   ) : (
                     <span className="text-muted-foreground text-sm">—</span>
                   )}
                 </TableCell>
                 <TableCell>{formatPercentage(pickRate)}</TableCell>
                 <TableCell>{formatKDA(stats?.avgKDA)}</TableCell>
+                <TableCell>
+                  {reliableStats ? (
+                    <WeakAgainst
+                      weakAgainst={stats?.weakAgainst ?? null}
+                      championNameMap={championNameMap}
+                    />
+                  ) : (
+                    <span className="text-muted-foreground text-sm">—</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   {hasStats ? formatNumber(stats?.totalGames) : "—"}
                 </TableCell>

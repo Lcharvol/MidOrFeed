@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 
 const schema = z.object({ puuid: z.string().min(1) });
 
@@ -9,18 +9,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { puuid } = schema.parse(body);
 
-    const account = await prisma.leagueOfLegendsAccount.findUnique({
-      where: { puuid },
-      select: {
-        id: true,
-        puuid: true,
-        riotRegion: true,
-        riotGameName: true,
-        riotTagLine: true,
-        profileIconId: true,
-        summonerLevel: true,
-      },
-    });
+    // Chercher dans toutes les régions si la région n'est pas fournie
+    const account = await ShardedLeagueAccounts.findUniqueByPuuidGlobal(puuid);
 
     if (!account) {
       return NextResponse.json(
@@ -29,7 +19,21 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, data: account }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          id: account.id,
+          puuid: account.puuid,
+          riotRegion: account.riotRegion,
+          riotGameName: account.riotGameName,
+          riotTagLine: account.riotTagLine,
+          profileIconId: account.profileIconId,
+          summonerLevel: account.summonerLevel,
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

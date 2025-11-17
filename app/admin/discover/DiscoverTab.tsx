@@ -14,6 +14,7 @@ import {
   TrendingUpIcon,
 } from "lucide-react";
 import { authenticatedFetch } from "@/lib/api-client";
+import { useI18n } from "@/lib/i18n-context";
 
 type Stats = {
   totalPlayers: number;
@@ -24,6 +25,7 @@ type Stats = {
 };
 
 export const DiscoverTab = () => {
+  const { t } = useI18n();
   const [stats, setStats] = useState<Stats>({
     totalPlayers: 0,
     totalMatches: 0,
@@ -98,33 +100,33 @@ export const DiscoverTab = () => {
       {/* Statistiques globales */}
       <div className="grid gap-4 md:grid-cols-5">
         <StatCard
-          title="Total Joueurs"
+          title={t("admin.discover.totalPlayers")}
           value={stats.totalPlayers}
-          description="Joueurs découverts"
+          description={t("admin.discover.totalPlayersDesc")}
           icon={<UsersIcon className="size-4 text-primary" />}
           loading={stats.loading}
           variant="default"
         />
         <StatCard
-          title="Total Matchs"
+          title={t("admin.discover.totalMatches")}
           value={stats.totalMatches}
-          description="Matchs collectés"
+          description={t("admin.discover.totalMatchesDesc")}
           icon={<DatabaseIcon className="size-4 text-primary" />}
           loading={stats.loading}
           variant="default"
         />
         <StatCard
-          title="Comptes LOL"
+          title={t("admin.discover.lolAccounts")}
           value={stats.totalAccounts}
-          description="Comptes créés"
+          description={t("admin.discover.lolAccountsDesc")}
           icon={<UsersIcon className="size-4 text-primary" />}
           loading={stats.loading}
           variant="default"
         />
         <StatCard
-          title="En Attente"
+          title={t("admin.discover.pending")}
           value={pending}
-          description="Joueurs pending"
+          description={t("admin.discover.pendingDesc")}
           icon={
             <RefreshCwIcon className="size-4 text-amber-600 dark:text-amber-500" />
           }
@@ -132,9 +134,9 @@ export const DiscoverTab = () => {
           variant="amber"
         />
         <StatCard
-          title="Complétés"
+          title={t("admin.discover.completed")}
           value={completed}
-          description="Crawl terminés"
+          description={t("admin.discover.completedDesc")}
           icon={
             <TrendingUpIcon className="size-4 text-green-600 dark:text-green-500" />
           }

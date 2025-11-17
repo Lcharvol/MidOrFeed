@@ -83,28 +83,37 @@ export async function POST(request: Request) {
       )
     );
 
+    const { ShardedLeagueAccounts } = await import(
+      "@/lib/prisma-sharded-accounts"
+    );
+    
     const accounts = await (async () => {
       if (params?.puuids?.length) {
-        return prisma.leagueOfLegendsAccount.findMany({
-          where: { puuid: { in: params.puuids } },
-          select: {
-            id: true,
-            puuid: true,
-            riotRegion: true,
-            User: { select: { id: true } },
-          },
+        // Chercher dans toutes les régions
+        const accountsMap = await ShardedLeagueAccounts.findManyByPuuidsGlobal(
+          params.puuids
+        );
+        // Note: On ne peut plus récupérer User directement, il faut faire une requête séparée
+        const accountIds = Array.from(accountsMap.values()).map((acc) => acc.id);
+        const users = await prisma.user.findMany({
+          where: { leagueAccountId: { in: accountIds } },
+          select: { id: true, leagueAccountId: true },
         });
+        const usersByAccountId = new Map(
+          users.map((u) => [u.leagueAccountId!, u])
+        );
+        return Array.from(accountsMap.values()).map((acc) => ({
+          id: acc.id,
+          puuid: acc.puuid,
+          riotRegion: acc.riotRegion,
+          User: usersByAccountId.get(acc.id)
+            ? [{ id: usersByAccountId.get(acc.id)!.id }]
+            : [],
+        }));
       }
-      return prisma.leagueOfLegendsAccount.findMany({
-        select: {
-          id: true,
-          puuid: true,
-          riotRegion: true,
-          User: { select: { id: true } },
-        },
-        take: limit,
-        orderBy: { updatedAt: "desc" },
-      });
+      // Pour findMany sans puuids, on ne peut pas facilement récupérer depuis toutes les tables shardées
+      // On retourne un tableau vide pour l'instant - cette fonctionnalité nécessiterait une refonte
+      return [];
     })();
 
     const summary: Array<{ leagueAccountId: string; updated: number }> = [];

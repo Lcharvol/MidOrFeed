@@ -24,11 +24,21 @@ export async function generateStaticParams(): Promise<PageParams[]> {
     return [];
   }
 
-  const champions = await prisma.champion.findMany({
-    select: { championId: true },
-  });
+  try {
+    const champions = await prisma.champion.findMany({
+      select: { championId: true },
+    });
 
-  return champions.map(({ championId }) => ({ championId }));
+    return champions.map(({ championId }) => ({ championId }));
+  } catch (error) {
+    // Si la base de données n'est pas accessible pendant le build (credentials invalides, etc.)
+    // On retourne un tableau vide et on laissera Next.js générer les pages dynamiquement
+    console.warn(
+      "Failed to generate static params for champions, falling back to dynamic generation:",
+      error
+    );
+    return [];
+  }
 }
 
 export { generateChampionMetadata as generateMetadata };

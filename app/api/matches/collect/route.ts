@@ -243,9 +243,28 @@ export async function POST(request: Request) {
           const blueTeamWon = team100?.win || false;
           const redTeamWon = team200?.win || false;
 
-          // Créer le match
-          const match = await prisma.match.create({
-            data: {
+          // Créer ou mettre à jour le match (upsert pour éviter les doublons)
+          const match = await prisma.match.upsert({
+            where: {
+              matchId: metadata.matchId,
+            },
+            update: {
+              gameCreation: BigInt(info.gameCreation),
+              gameDuration: info.gameDuration,
+              gameMode: info.gameMode,
+              gameType: info.gameType,
+              gameVersion: info.gameVersion,
+              mapId: info.mapId,
+              platformId:
+                info.platformId ||
+                metadata.platformId ||
+                normalizedRegion.toUpperCase(),
+              queueId: info.queueId,
+              region: normalizedRegion,
+              blueTeamWon,
+              redTeamWon,
+            },
+            create: {
               matchId: metadata.matchId,
               gameCreation: BigInt(info.gameCreation),
               gameDuration: info.gameDuration,
@@ -266,15 +285,47 @@ export async function POST(request: Request) {
 
           matchesCollected++;
 
-          // Créer les participants
+          // Créer ou mettre à jour les participants (upsert pour éviter les doublons)
           for (const participant of info.participants) {
             try {
               const championId =
                 championKeyToId.get(participant.championId) ||
                 String(participant.championId);
 
-              await prisma.matchParticipant.create({
-                data: {
+              await prisma.matchParticipant.upsert({
+                where: {
+                  matchId_participantId: {
+                    matchId: match.id,
+                    participantId: participant.participantId,
+                  },
+                },
+                update: {
+                  participantPUuid: participant.puuid || null,
+                  teamId: participant.teamId,
+                  championId,
+                  role: participant.teamPosition,
+                  lane: participant.lane,
+                  kills: participant.kills,
+                  deaths: participant.deaths,
+                  assists: participant.assists,
+                  goldEarned: participant.goldEarned,
+                  goldSpent: participant.goldSpent,
+                  totalDamageDealtToChampions:
+                    participant.totalDamageDealtToChampions,
+                  totalDamageTaken: participant.totalDamageTaken,
+                  visionScore: participant.visionScore,
+                  win: participant.win,
+                  item0: participant.item0,
+                  item1: participant.item1,
+                  item2: participant.item2,
+                  item3: participant.item3,
+                  item4: participant.item4,
+                  item5: participant.item5,
+                  item6: participant.item6,
+                  summoner1Id: participant.summoner1Id,
+                  summoner2Id: participant.summoner2Id,
+                },
+                create: {
                   matchId: match.id,
                   participantId: participant.participantId,
                   participantPUuid: participant.puuid || null,
@@ -306,7 +357,7 @@ export async function POST(request: Request) {
               participantsCreated++;
             } catch (participantError) {
               console.error(
-                `Erreur lors de la création du participant ${participant.participantId} pour le match ${matchId}:`,
+                `Erreur lors de la création/ mise à jour du participant ${participant.participantId} pour le match ${matchId}:`,
                 participantError
               );
             }
@@ -324,7 +375,7 @@ export async function POST(request: Request) {
       page++;
     }
 
-    await recordSummonerHistory(validatedData.puuid);
+    await recordSummonerHistory(validatedData.puuid, normalizedRegion);
 
     return NextResponse.json(
       {
@@ -351,11 +402,12 @@ export async function POST(request: Request) {
   }
 }
 
-async function recordSummonerHistory(puuid: string) {
-  const account = await prisma.leagueOfLegendsAccount.findUnique({
-    where: { puuid },
-    select: { id: true },
-  });
+async function recordSummonerHistory(puuid: string, region?: string) {
+  const { ShardedLeagueAccounts } = await import(
+    "@/lib/prisma-sharded-accounts"
+  );
+  // Utiliser la région connue si disponible pour optimiser la recherche
+  const account = await ShardedLeagueAccounts.findUniqueByPuuidGlobal(puuid, region);
 
   if (!account) {
     return;

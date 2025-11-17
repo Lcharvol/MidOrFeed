@@ -22,8 +22,10 @@ import { Loader2Icon, PlayIcon, SquareIcon } from "lucide-react";
 import { toast } from "sonner";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
 import { authenticatedFetch } from "@/lib/api-client";
+import { useI18n } from "@/lib/i18n-context";
 
 export function PipelineCard() {
+  const { t } = useI18n();
   const [running, setRunning] = useState(false);
   const [cycles, setCycles] = useState<number>(0);
   const [lastCycleAt, setLastCycleAt] = useState<string | undefined>();
@@ -81,14 +83,14 @@ export function PipelineCard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data?.error || "Erreur au démarrage du pipeline");
+        toast.error(data?.error || t("admin.discover.pipelineCard.errorStart"));
         return;
       }
-      toast.success("Pipeline démarré");
+      toast.success(t("admin.discover.pipelineCard.started"));
       setRunning(true);
     } catch (e) {
       console.error(e);
-      toast.error("Erreur réseau");
+      toast.error(t("admin.discover.pipelineCard.networkError"));
     } finally {
       setPolling(false);
     }
@@ -104,14 +106,14 @@ export function PipelineCard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data?.error || "Erreur à l'arrêt du pipeline");
+        toast.error(data?.error || t("admin.discover.pipelineCard.errorStop"));
         return;
       }
-      toast.success("Pipeline arrêté");
+      toast.success(t("admin.discover.pipelineCard.stoppedSuccess"));
       setRunning(false);
     } catch (e) {
       console.error(e);
-      toast.error("Erreur réseau");
+      toast.error(t("admin.discover.pipelineCard.networkError"));
     } finally {
       setPolling(false);
     }
@@ -120,25 +122,25 @@ export function PipelineCard() {
   return (
     <Card variant="gradient" className="md:col-span-2">
       <CardHeader withGlow>
-        <CardTitle>Pipeline continu</CardTitle>
+        <CardTitle>{t("admin.discover.pipelineCard.continuousPipeline")}</CardTitle>
         <CardDescription>
-          Enchaîne découverte → traitement → synchronisation en boucle
+          {t("admin.discover.pipelineCard.continuousPipelineDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
           <Badge variant={running ? "success" : "destructive"}>
-            {running ? "Actif" : "Arrêté"}
+            {running ? t("admin.discover.pipelineCard.active") : t("admin.discover.pipelineCard.stopped")}
           </Badge>
-          <Badge variant="outline">Cycles: {cycles}</Badge>
+          <Badge variant="outline">{t("admin.discover.pipelineCard.cycles")}: {cycles}</Badge>
           {lastCycleAt && (
             <span className="text-xs text-muted-foreground">
-              Dernier: {new Date(lastCycleAt).toLocaleTimeString()}
+              {t("admin.discover.pipelineCard.lastCycle")}: {new Date(lastCycleAt).toLocaleTimeString()}
             </span>
           )}
           {currentStep && (
             <span className="text-xs text-muted-foreground">
-              Étape: {currentStep}
+              {t("admin.discover.pipelineCard.step")}: {currentStep}
             </span>
           )}
           {lastMessage && (
@@ -150,7 +152,7 @@ export function PipelineCard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Région seed</label>
+            <label className="text-sm font-medium">{t("admin.discover.pipelineCard.seedRegion")}</label>
             <Select
               value={seedRegion}
               onValueChange={setSeedRegion}
@@ -169,7 +171,7 @@ export function PipelineCard() {
             </Select>
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Nombre seed/cycle</label>
+            <label className="text-sm font-medium">{t("admin.discover.pipelineCard.seedsPerCycle")}</label>
             <Input
               type="number"
               min={1}
@@ -179,7 +181,7 @@ export function PipelineCard() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Max appels Riot/cycle</label>
+            <label className="text-sm font-medium">{t("admin.discover.pipelineCard.maxRiotCallsPerCycle")}</label>
             <Input
               type="number"
               min={0}
@@ -200,11 +202,11 @@ export function PipelineCard() {
               {polling ? (
                 <>
                   <Loader2Icon className="mr-2 size-4 animate-spin" />{" "}
-                  Démarrage...
+                  {t("admin.discover.pipelineCard.starting")}
                 </>
               ) : (
                 <>
-                  <PlayIcon className="mr-2 size-4" /> Démarrer
+                  <PlayIcon className="mr-2 size-4" /> {t("admin.discover.pipelineCard.startPipeline")}
                 </>
               )}
             </Button>
@@ -212,11 +214,11 @@ export function PipelineCard() {
             <Button onClick={stop} disabled={polling} variant="destructive">
               {polling ? (
                 <>
-                  <Loader2Icon className="mr-2 size-4 animate-spin" /> Arrêt...
+                  <Loader2Icon className="mr-2 size-4 animate-spin" /> {t("admin.discover.processCard.stopping")}
                 </>
               ) : (
                 <>
-                  <SquareIcon className="mr-2 size-4" /> Arrêter
+                  <SquareIcon className="mr-2 size-4" /> {t("admin.discover.pipelineCard.stopPipeline")}
                 </>
               )}
             </Button>
@@ -230,8 +232,7 @@ export function PipelineCard() {
         >
           {logs.length === 0 ? (
             <div className="text-xs text-muted-foreground">
-              Aucun événement récent. Lancez le pipeline pour voir
-              l&apos;activité.
+              {t("admin.discover.pipelineCard.noRecentEvents")}
             </div>
           ) : (
             <ul className="space-y-1 text-xs leading-relaxed">

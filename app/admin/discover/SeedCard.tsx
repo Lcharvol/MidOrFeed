@@ -22,12 +22,14 @@ import {
 import { Loader2Icon, PlayIcon } from "lucide-react";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n-context";
 
 interface SeedCardProps {
   onSeedComplete: () => void;
 }
 
 export function SeedCard({ onSeedComplete }: SeedCardProps) {
+  const { t } = useI18n();
   const [seedRegion, setSeedRegion] = useState("euw1");
   const [seedCount, setSeedCount] = useState("50");
   const [isSeeding, setIsSeeding] = useState(false);
@@ -48,15 +50,15 @@ export function SeedCard({ onSeedComplete }: SeedCardProps) {
 
       if (response.ok) {
         toast.success(
-          `${result.data.newPlayersAdded} nouveaux joueurs découverts`
+          t("admin.discover.seedCard.newPlayersDiscovered").replace("{count}", result.data.newPlayersAdded.toString())
         );
         onSeedComplete();
       } else {
-        toast.error(result.error || "Erreur lors du seed");
+        toast.error(result.error || t("admin.discover.seedCard.seedError"));
       }
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error("Une erreur est survenue");
+      toast.error(t("admin.discover.seedCard.errorOccurred"));
     } finally {
       setIsSeeding(false);
     }
@@ -65,9 +67,9 @@ export function SeedCard({ onSeedComplete }: SeedCardProps) {
   return (
     <Card variant="gradient">
       <CardHeader withGlow>
-        <CardTitle>Découverte de joueurs</CardTitle>
+        <CardTitle>{t("admin.discover.seedCard.title")}</CardTitle>
         <CardDescription>
-          Découvrir de nouveaux joueurs depuis les matchs existants
+          {t("admin.discover.seedCard.discoverNewPlayers")}
         </CardDescription>
         <CardAction>
           <Button
@@ -79,12 +81,12 @@ export function SeedCard({ onSeedComplete }: SeedCardProps) {
             {isSeeding ? (
               <>
                 <Loader2Icon className="mr-2 size-4 animate-spin" />
-                Découverte...
+                {t("admin.discover.seedCard.discovering")}
               </>
             ) : (
               <>
                 <PlayIcon className="mr-2 size-4" />
-                Démarrer
+                {t("admin.discover.processCard.start")}
               </>
             )}
           </Button>
@@ -92,7 +94,7 @@ export function SeedCard({ onSeedComplete }: SeedCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="region">Région</Label>
+          <Label htmlFor="region">{t("admin.discover.seedCard.region")}</Label>
           <Select value={seedRegion} onValueChange={setSeedRegion}>
             <SelectTrigger id="region">
               <SelectValue />
@@ -108,7 +110,7 @@ export function SeedCard({ onSeedComplete }: SeedCardProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="count">Nombre de joueurs</Label>
+          <Label htmlFor="count">{t("admin.discover.seedCard.playerCount")}</Label>
           <Input
             id="count"
             type="number"

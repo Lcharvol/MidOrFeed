@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getChampionImageUrl } from "@/constants/ddragon";
 
@@ -19,6 +20,8 @@ export type ChampionIconProps = {
   /** override ddragon version if needed */
   version?: string;
   className?: string;
+  /** make the icon clickable and redirect to champion page */
+  clickable?: boolean;
 };
 
 export const ChampionIcon = ({
@@ -32,6 +35,7 @@ export const ChampionIcon = ({
   fluid = false,
   version,
   className,
+  clickable = false,
 }: ChampionIconProps) => {
   const radiusClass = shape === "circle" ? "rounded-full" : "rounded-xl";
   const borderClass = showBorder ? "border border-border/40" : "";
@@ -52,13 +56,14 @@ export const ChampionIcon = ({
       ? { width: size, height: size }
       : undefined;
 
-  return (
+  const iconContent = (
     <div
       className={cn(
         "relative overflow-hidden",
         radiusClass,
         borderClass,
         fluid ? "w-full h-full" : undefined,
+        clickable && "transition-transform hover:scale-105 cursor-pointer",
         className
       )}
       style={dimensions}
@@ -88,4 +93,18 @@ export const ChampionIcon = ({
       )}
     </div>
   );
+
+  if (clickable && slug) {
+    return (
+      <Link
+        href={`/champions/${encodeURIComponent(slug)}`}
+        className="inline-block"
+        aria-label={`Voir les détails de ${alt ?? slug}`}
+      >
+        {iconContent}
+      </Link>
+    );
+  }
+
+  return iconContent;
 };

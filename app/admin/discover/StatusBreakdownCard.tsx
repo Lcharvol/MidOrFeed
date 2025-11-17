@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2Icon } from "lucide-react";
+import { useI18n } from "@/lib/i18n-context";
 
 interface StatusBreakdownCardProps {
   byStatus: Record<string, number>;
@@ -36,12 +37,13 @@ export function StatusBreakdownCard({
   byStatus,
   loading = false,
 }: StatusBreakdownCardProps) {
+  const { t } = useI18n();
   return (
     <Card variant="gradient">
       <CardHeader withGlow>
-        <CardTitle>Répartition par statut</CardTitle>
+        <CardTitle>{t("admin.discover.statusBreakdownCard.title")}</CardTitle>
         <CardDescription>
-          État actuel de tous les joueurs découverts
+          {t("admin.discover.statusBreakdownCard.description")}
         </CardDescription>
       </CardHeader>
       <CardContent>

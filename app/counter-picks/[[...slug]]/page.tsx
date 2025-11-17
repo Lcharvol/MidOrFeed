@@ -26,11 +26,21 @@ export async function generateStaticParams(): Promise<PageParams[]> {
     return [];
   }
 
-  const champions = await prisma.champion.findMany({
-    select: { championId: true },
-  });
+  try {
+    const champions = await prisma.champion.findMany({
+      select: { championId: true },
+    });
 
-  return champions.map(({ championId }) => ({ slug: [championId] }));
+    return champions.map(({ championId }) => ({ slug: [championId] }));
+  } catch (error) {
+    // Si la base de données n'est pas accessible pendant le build (credentials invalides, etc.)
+    // On retourne un tableau vide et on laissera Next.js générer les pages dynamiquement
+    console.warn(
+      "Failed to generate static params for counter-picks, falling back to dynamic generation:",
+      error
+    );
+    return [];
+  }
 }
 
 export { generateCounterPicksMetadata as generateMetadata };
@@ -53,7 +63,11 @@ const CounterPicksPage = async ({
     ? resolvedSearchParams.championId[0]
     : resolvedSearchParams.championId;
 
-  if (!slugId && typeof queryChampion === "string" && queryChampion.length > 0) {
+  if (
+    !slugId &&
+    typeof queryChampion === "string" &&
+    queryChampion.length > 0
+  ) {
     redirect(`/counter-picks/${encodeURIComponent(queryChampion)}`);
   }
 
@@ -76,7 +90,9 @@ const CounterPicksPage = async ({
         "@context": "https://schema.org",
         "@type": "Article",
         headline: `Counter picks ${initialChampionName ?? initialChampionId}`,
-        description: `Conseils, statistiques et matchups efficaces pour contrer ${initialChampionName ?? initialChampionId} sur League of Legends.`,
+        description: `Conseils, statistiques et matchups efficaces pour contrer ${
+          initialChampionName ?? initialChampionId
+        } sur League of Legends.`,
         mainEntityOfPage: {
           "@type": "WebPage",
           "@id": canonicalUrl,
@@ -94,7 +110,9 @@ const CounterPicksPage = async ({
             "@type": "ImageObject",
             url: buildUrl("/logo.png"),
           },
-          image: initialChampionName ? championSplashUrl : buildUrl("/logo.png"),
+          image: initialChampionName
+            ? championSplashUrl
+            : buildUrl("/logo.png"),
         },
         keywords: [
           `counter picks ${initialChampionName ?? initialChampionId}`,
@@ -110,7 +128,8 @@ const CounterPicksPage = async ({
         "@context": "https://schema.org",
         "@type": "Article",
         headline: "Counter picks League of Legends",
-        description: "Analyse des meilleurs counter picks Mid or Feed pour League of Legends.",
+        description:
+          "Analyse des meilleurs counter picks Mid or Feed pour League of Legends.",
         mainEntityOfPage: {
           "@type": "WebPage",
           "@id": canonicalUrl,
@@ -148,5 +167,3 @@ const CounterPicksPage = async ({
 };
 
 export default CounterPicksPage;
-
-

@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
+import { readAndValidateBody } from "@/lib/request-validation";
 
 const saveRiotAccountSchema = z.object({
   gameName: z.string().min(1, "Le nom de jeu est requis"),
@@ -9,9 +11,10 @@ const saveRiotAccountSchema = z.object({
   region: z.string().min(1, "La région est requise"),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Lire et valider la taille du body
+    const body = await readAndValidateBody(request);
 
     // Valider les données
     const validatedData = saveRiotAccountSchema.parse(body);
@@ -51,19 +54,12 @@ export async function POST(request: Request) {
     };
 
     if (validatedData.puuid) {
-      const upserted = await prisma.leagueOfLegendsAccount.upsert({
-        where: { puuid: validatedData.puuid },
-        update: {
-          riotRegion: validatedData.region,
-          riotGameName: validatedData.gameName,
-          riotTagLine: validatedData.tagLine,
-        },
-        create: {
-          puuid: validatedData.puuid,
-          riotRegion: validatedData.region,
-          riotGameName: validatedData.gameName,
-          riotTagLine: validatedData.tagLine,
-        },
+      // Utiliser ShardedLeagueAccounts pour upsert dans la bonne table
+      const upserted = await ShardedLeagueAccounts.upsert({
+        puuid: validatedData.puuid,
+        riotRegion: validatedData.region,
+        riotGameName: validatedData.gameName,
+        riotTagLine: validatedData.tagLine,
       });
       leagueAccount = {
         id: upserted.id,
@@ -74,28 +70,18 @@ export async function POST(request: Request) {
         profileIconId: upserted.profileIconId ?? null,
       };
     } else {
-      // Pas de PUUID: tenter de trouver par (gameName, tagLine, region)
-      const existing = await prisma.leagueOfLegendsAccount.findFirst({
-        where: {
-          riotGameName: validatedData.gameName,
-          riotTagLine: validatedData.tagLine,
-          riotRegion: validatedData.region,
-        },
-      });
-      if (!existing) {
-        return NextResponse.json(
-          { error: "PUUID manquant et aucun compte correspondant trouvé" },
-          { status: 400 }
-        );
-      }
-      leagueAccount = {
-        id: existing.id,
-        puuid: existing.puuid,
-        riotRegion: existing.riotRegion,
-        riotGameName: existing.riotGameName,
-        riotTagLine: existing.riotTagLine,
-        profileIconId: existing.profileIconId ?? null,
-      };
+      // Pas de PUUID: chercher dans la table shardée de la région
+      const accounts = await ShardedLeagueAccounts.findManyByPuuids(
+        [],
+        validatedData.region
+      );
+      // Note: findManyByPuuids ne peut pas chercher par gameName/tagLine
+      // On doit chercher dans toutes les régions ou utiliser une autre approche
+      // Pour l'instant, on retourne une erreur si PUUID manquant
+      return NextResponse.json(
+        { error: "PUUID requis pour créer ou trouver un compte" },
+        { status: 400 }
+      );
     }
 
     if (!leagueAccount) {
@@ -105,6 +91,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Mettre à jour l'utilisateur avec l'ID du compte
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -114,19 +101,11 @@ export async function POST(request: Request) {
         id: true,
         email: true,
         name: true,
-        leagueAccount: {
-          select: {
-            id: true,
-            puuid: true,
-            riotRegion: true,
-            riotGameName: true,
-            riotTagLine: true,
-            profileIconId: true,
-          },
-        },
       },
     });
 
+    // Note: On ne peut plus utiliser include: { leagueAccount: true } avec les tables shardées
+    // On retourne directement les données du compte qu'on a déjà
     return NextResponse.json(
       {
         message: "Compte Riot sauvegardé avec succès",
@@ -134,14 +113,14 @@ export async function POST(request: Request) {
           id: updatedUser.id,
           email: updatedUser.email,
           name: updatedUser.name,
-          leagueAccount: updatedUser.leagueAccount
+          leagueAccount: leagueAccount
             ? {
-                id: updatedUser.leagueAccount.id,
-                puuid: updatedUser.leagueAccount.puuid,
-                riotRegion: updatedUser.leagueAccount.riotRegion,
-                riotGameName: updatedUser.leagueAccount.riotGameName,
-                riotTagLine: updatedUser.leagueAccount.riotTagLine,
-                profileIconId: updatedUser.leagueAccount.profileIconId,
+                id: leagueAccount.id,
+                puuid: leagueAccount.puuid,
+                riotRegion: leagueAccount.riotRegion,
+                riotGameName: leagueAccount.riotGameName,
+                riotTagLine: leagueAccount.riotTagLine,
+                profileIconId: leagueAccount.profileIconId,
               }
             : null,
         },

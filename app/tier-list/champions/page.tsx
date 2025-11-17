@@ -24,7 +24,6 @@ const ChampionsPage = () => {
           state={state}
           actions={actions}
           filtersActive={derived.filtersActive}
-          isWinRateSort={derived.isWinRateSort}
         />
 
         <TierListTable
