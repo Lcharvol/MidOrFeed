@@ -8,13 +8,21 @@ import { measureTiming } from "@/lib/metrics";
 import { readAndValidateBody } from "@/lib/request-validation";
 import { withApiMonitoring } from "@/lib/api-monitoring";
 import { logger } from "@/lib/logger";
-import { alerting } from "@/lib/alerting";
+import { generateToken } from "@/lib/jwt";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
+import {
+  getRequestContext,
+  handleZodError,
+  handleApiError,
+  errorResponse,
+} from "@/lib/api-helpers";
 import type { LoginRequest, LoginResponse } from "@/types/api";
 
-const loginSchema = z.object({
-  email: z.string().email("Email invalide"),
-  password: z.string().min(1, "Le mot de passe est requis"),
-}) satisfies z.ZodType<LoginRequest>;
+const createLoginSchema = (t: (key: string) => string) =>
+  z.object({
+    email: z.string().email(t("login.invalidEmail")),
+    password: z.string().min(1, t("login.passwordRequired")),
+  }) satisfies z.ZodType<LoginRequest>;
 
 export async function POST(request: NextRequest) {
   return withApiMonitoring(
@@ -26,9 +34,15 @@ export async function POST(request: NextRequest) {
         return rateLimitResponse;
       }
 
+      // Récupérer le contexte de la requête une seule fois
+      const { t } = getRequestContext(request);
+
       try {
         // Lire et valider la taille du body
         const body = await readAndValidateBody(request);
+
+        // Créer le schéma avec les traductions
+        const loginSchema = createLoginSchema(t);
 
         // Valider les données
         const validatedData = loginSchema.parse(body);
@@ -52,6 +66,8 @@ export async function POST(request: NextRequest) {
                     dailyAnalysesUsed: true,
                     lastDailyReset: true,
                     leagueAccountId: true,
+                    riotPuuid: true,
+                    riotRegion: true,
                   },
                 }),
               10000 // 10 secondes
@@ -63,9 +79,9 @@ export async function POST(request: NextRequest) {
           logger.warn("Tentative de connexion avec email inexistant", {
             email: validatedData.email,
           });
-          return NextResponse.json(
-            { error: "Email ou mot de passe incorrect" },
-            { status: 401 }
+          return errorResponse(
+            t("login.error") ?? "Email ou mot de passe incorrect",
+            401
           );
         }
 
@@ -80,26 +96,52 @@ export async function POST(request: NextRequest) {
             email: validatedData.email,
             userId: user.id,
           });
-          return NextResponse.json(
-            { error: "Email ou mot de passe incorrect" },
-            { status: 401 }
+          return errorResponse(
+            t("login.error") ?? "Email ou mot de passe incorrect",
+            401
           );
         }
 
         // Récupérer le compte League of Legends depuis les tables shardées si disponible
         let leagueAccount = null;
-        if (user.leagueAccountId) {
-          // Note: On ne peut plus utiliser include avec les tables shardées
-          // On doit chercher par PUUID dans toutes les régions
-          // Pour optimiser, on pourrait stocker le PUUID dans User
-          // Pour l'instant, on retourne null - l'utilisateur peut reconnecter son compte
-          // TODO: Stocker puuid et riotRegion dans User pour optimiser cette recherche
+        if (user.riotPuuid && user.riotRegion) {
+          // Utiliser les champs puuid et riotRegion stockés dans User pour un lookup direct
+          const account = await ShardedLeagueAccounts.findUniqueByPuuid(
+            user.riotPuuid,
+            user.riotRegion
+          );
+
+          if (account) {
+            leagueAccount = {
+              id: account.id,
+              puuid: account.puuid,
+              riotRegion: account.riotRegion,
+              riotGameName: account.riotGameName ?? null,
+              riotTagLine: account.riotTagLine ?? null,
+              profileIconId: account.profileIconId ?? null,
+            };
+          }
+        } else if (user.leagueAccountId) {
+          // Fallback: chercher globalement si puuid/region ne sont pas stockés
+          // (pour les anciens comptes)
+          logger.warn("User avec leagueAccountId mais sans puuid/region", {
+            userId: user.id,
+            leagueAccountId: user.leagueAccountId,
+          });
           leagueAccount = null;
         }
+
+        // Générer un token JWT
+        const token = await generateToken({
+          userId: user.id,
+          email: user.email,
+          role: user.role,
+        });
 
         // Retourner les informations utilisateur (sans le mot de passe)
         const response: LoginResponse = {
           message: "Connexion réussie",
+          token,
           user: {
             id: user.id,
             email: user.email,
@@ -110,7 +152,7 @@ export async function POST(request: NextRequest) {
               user.subscriptionExpiresAt?.toISOString() ?? null,
             dailyAnalysesUsed: user.dailyAnalysesUsed,
             lastDailyReset: user.lastDailyReset.toISOString(),
-            leagueAccount: null, // Note: Le compte doit être récupéré séparément maintenant
+            leagueAccount,
           },
         };
 
@@ -121,25 +163,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(response, { status: 200 });
       } catch (error) {
         if (error instanceof z.ZodError) {
-          logger.warn("Erreur de validation lors de la connexion", {
-            errors: error.errors,
-          });
-          return NextResponse.json(
-            { error: "Données invalides", details: error.errors },
-            { status: 400 }
-          );
+          return handleZodError(error);
         }
-
-        logger.error("Erreur lors de la connexion", error as Error);
-        alerting.medium(
-          "Erreur lors de la connexion",
-          error instanceof Error ? error.message : "Erreur inconnue",
-          "auth"
-        );
-        return NextResponse.json(
-          { error: "Erreur lors de la connexion" },
-          { status: 500 }
-        );
+        return handleApiError(error, "Connexion", "auth");
       }
     },
     "POST /api/auth/login"

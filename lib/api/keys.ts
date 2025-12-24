@@ -1,5 +1,15 @@
 export const apiKeys = {
-  champions: () => "/api/champions/list",
+  champions: (params?: { page?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) {
+      searchParams.set("page", params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set("limit", params.limit.toString());
+    }
+    const query = searchParams.toString();
+    return `/api/champions/list${query ? `?${query}` : ""}`;
+  },
   championStats: () => "/api/champions/stats",
   matches: (params?: { puuid?: string }) =>
     params?.puuid ? `/api/matches/list?puuid=${params.puuid}` : "/api/matches/list",

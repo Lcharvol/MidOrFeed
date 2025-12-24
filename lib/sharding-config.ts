@@ -1,4 +1,4 @@
-import { getEnv } from "./env";
+import { logger } from "./logger";
 
 /**
  * Configuration pour l'optimisation du sharding
@@ -10,16 +10,16 @@ import { getEnv } from "./env";
  * Défaut: 4 (équilibré entre performance et charge)
  */
 export const getShardingBatchSize = (): number => {
-  const env = getEnv();
   const batchSize = process.env.SHARDING_BATCH_SIZE
     ? parseInt(process.env.SHARDING_BATCH_SIZE, 10)
     : 4;
 
   // Valider que la taille est raisonnable (entre 1 et 16)
   if (batchSize < 1 || batchSize > 16) {
-    console.warn(
-      `SHARDING_BATCH_SIZE invalide (${batchSize}), utilisation de la valeur par défaut (4)`
-    );
+    logger.warn(`SHARDING_BATCH_SIZE invalide (${batchSize}), utilisation de la valeur par défaut (4)`, {
+      batchSize,
+      default: 4,
+    });
     return 4;
   }
 
@@ -38,9 +38,10 @@ export const getShardingCountBatchSize = (): number => {
 
   // Valider que la taille est raisonnable (entre 1 et 16)
   if (batchSize < 1 || batchSize > 16) {
-    console.warn(
-      `SHARDING_COUNT_BATCH_SIZE invalide (${batchSize}), utilisation de la valeur par défaut (8)`
-    );
+    logger.warn(`SHARDING_COUNT_BATCH_SIZE invalide (${batchSize}), utilisation de la valeur par défaut (8)`, {
+      batchSize,
+      default: 8,
+    });
     return 8;
   }
 
@@ -59,9 +60,10 @@ export const getShardingRegionCacheSize = (): number => {
 
   // Valider que la taille est raisonnable (entre 100 et 1000000)
   if (cacheSize < 100 || cacheSize > 1000000) {
-    console.warn(
-      `SHARDING_REGION_CACHE_SIZE invalide (${cacheSize}), utilisation de la valeur par défaut (10000)`
-    );
+    logger.warn(`SHARDING_REGION_CACHE_SIZE invalide (${cacheSize}), utilisation de la valeur par défaut (10000)`, {
+      cacheSize,
+      default: 10000,
+    });
     return 10000;
   }
 
@@ -80,9 +82,10 @@ export const getShardingRegionCacheTTL = (): number => {
 
   // Valider que le TTL est raisonnable (entre 1 heure et 7 jours)
   if (ttl < 3600000 || ttl > 7 * 24 * 60 * 60 * 1000) {
-    console.warn(
-      `SHARDING_REGION_CACHE_TTL_MS invalide (${ttl}), utilisation de la valeur par défaut (24h)`
-    );
+    logger.warn(`SHARDING_REGION_CACHE_TTL_MS invalide (${ttl}), utilisation de la valeur par défaut (24h)`, {
+      ttl,
+      default: "24h",
+    });
     return 24 * 60 * 60 * 1000;
   }
 

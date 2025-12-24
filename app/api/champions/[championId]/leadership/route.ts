@@ -176,7 +176,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération du leadership:", error);
     return NextResponse.json(
       {
         success: false,

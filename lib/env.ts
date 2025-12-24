@@ -35,6 +35,64 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((val) => (val ? parseInt(val, 10) : 10000)),
+
+  // JWT Secret (optionnel, génère une clé par défaut pour le développement)
+  JWT_SECRET: z.string().optional(),
+
+  // Redis URL (optionnel, pour cache et rate limiting distribués)
+  REDIS_URL: z.string().url().optional(),
+
+  // Slack Webhook URL (optionnel, pour les alertes)
+  SLACK_WEBHOOK_URL: z.string().url().optional(),
+
+  // Rate limiting (configurable par environnement)
+  RATE_LIMIT_AUTH_LIMIT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 5)),
+  RATE_LIMIT_AUTH_WINDOW_MS: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 15 * 60 * 1000)),
+  RATE_LIMIT_API_LIMIT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 100)),
+  RATE_LIMIT_API_WINDOW_MS: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 60 * 1000)),
+  RATE_LIMIT_ADMIN_LIMIT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 50)),
+  RATE_LIMIT_ADMIN_WINDOW_MS: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 60 * 1000)),
+
+  // Cache TTL (en secondes)
+  CACHE_TTL_SHORT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 60)),
+  CACHE_TTL_MEDIUM: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 300)),
+  CACHE_TTL_LONG: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 3600)),
+
+  // Region par defaut pour Riot API
+  DEFAULT_RIOT_REGION: z.string().optional().default("euw1"),
+
+  // Taille maximale des requêtes (en bytes)
+  MAX_REQUEST_SIZE: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 1024 * 1024)),
 });
 
 type Env = z.infer<typeof envSchema>;

@@ -5,13 +5,14 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n-context";
 
-const riotAccountSchema = z.object({
-  gameName: z.string().min(1, "Le nom de jeu est requis"),
-  tagLine: z.string().min(1, "Le tag est requis"),
-  region: z.string().min(1, "La région est requise"),
-});
+// Note: Ce schéma est utilisé côté client, donc on utilise useI18n
+// Le schéma sera créé dynamiquement dans le hook
 
-export type RiotAccountFormValues = z.infer<typeof riotAccountSchema>;
+export type RiotAccountFormValues = {
+  gameName: string;
+  tagLine: string;
+  region: string;
+};
 
 interface User {
   id: string;
@@ -41,6 +42,13 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
   const riotTagLine =
     user?.leagueAccount?.riotTagLine || user?.riotTagLine || "";
   const riotRegion = user?.leagueAccount?.riotRegion || user?.riotRegion || "";
+
+  // Créer le schéma dynamiquement avec les traductions
+  const riotAccountSchema = z.object({
+    gameName: z.string().min(1, t("profile.gameNameRequired")),
+    tagLine: z.string().min(1, t("profile.tagLineRequired")),
+    region: z.string().min(1, t("profile.regionRequired")),
+  });
 
   const form = useForm<RiotAccountFormValues>({
     resolver: zodResolver(riotAccountSchema),

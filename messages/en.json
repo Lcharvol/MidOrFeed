@@ -143,6 +143,7 @@
     "passwordMinCharacters": "Password must contain at least 8 characters",
     "mustAcceptConditions": "You must accept the conditions",
     "passwordsDoNotMatch": "Passwords do not match",
+    "emailAlreadyUsed": "This email is already in use",
     "errorAccountCreation": "Error creating account",
     "validationError": "Validation error"
   },
@@ -167,7 +168,10 @@
     "updateAccount": "Update account",
     "saving": "Saving...",
     "analyzing": "Analyzing...",
-    "analyzeMatches": "Analyze my matches"
+    "analyzeMatches": "Analyze my matches",
+    "gameNameRequired": "Game name is required",
+    "tagLineRequired": "Tag is required",
+    "regionRequired": "Region is required"
   },
   "settings": {
     "title": "Settings",
@@ -363,6 +367,7 @@
     "atLeastOneChampion": "Please select at least one champion",
     "compositionNameRequired": "Please give a name to your composition",
     "compositionSaved": "Composition saved successfully!",
+    "errorSaving": "Error saving composition",
     "buildYourTeam": "Build your ideal team for League of Legends",
     "giveNameToComposition": "Give a name to your composition",
     "selectChampionsForEachPosition": "Select champions for each position",

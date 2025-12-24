@@ -22,14 +22,14 @@ export const useGameVersions = () => {
   });
 
   const versions = useMemo<GameVersion[]>(() => {
-    if (!data || !("success" in data) || !data.success) {
+    if (!data || !("success" in data) || !data.success || !data.data) {
       return [];
     }
     return data.data.versions;
   }, [data]);
 
   const currentVersion = useMemo<string | null>(() => {
-    if (!data || !("success" in data) || !data.success) {
+    if (!data || !("success" in data) || !data.success || !data.data) {
       return null;
     }
     return data.data.currentVersion;

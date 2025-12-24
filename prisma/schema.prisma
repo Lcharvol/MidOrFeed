@@ -13,6 +13,8 @@ model User {
   name                  String?
   password              String
   leagueAccountId       String?
+  riotPuuid             String?
+  riotRegion            String?
   role                  String                  @default("user")
   subscriptionTier      String                  @default("free")
   subscriptionExpiresAt DateTime?
@@ -23,7 +25,9 @@ model User {
   leagueAccount         LeagueOfLegendsAccount? @relation(fields: [leagueAccountId], references: [id])
   championAdvices       ChampionAdvice[]
   championAdviceVotes   ChampionAdviceVote[]
+  compositions          Composition[]
 
+  @@index([riotPuuid, riotRegion])
   @@map("users")
 }
 
@@ -161,6 +165,23 @@ model CompositionSuggestion {
   @@index([role])
   @@index([userId])
   @@map("composition_suggestions")
+}
+
+model Composition {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  top       String?
+  jungle    String?
+  mid       String?
+  adc       String?
+  support   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("compositions")
 }
 
 model DiscoveredPlayer {

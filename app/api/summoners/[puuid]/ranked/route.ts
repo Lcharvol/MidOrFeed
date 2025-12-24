@@ -7,6 +7,7 @@ import { prismaWithTimeout } from "@/lib/timeout";
 import { measureTiming } from "@/lib/metrics";
 import { riotApiRequest } from "@/lib/riot-api";
 import { CacheTTL } from "@/lib/cache";
+import { createLogger } from "@/lib/logger";
 import type { RankedResponse, ApiResponse } from "@/types/api";
 
 const getRiotApiKey = (): string => {
@@ -105,13 +106,14 @@ export async function GET(
     return rateLimitResponse;
   }
 
+  let puuid = "";
   try {
     // Vérifier que la clé API est disponible
     const RIOT_API_KEY = getRiotApiKey();
     const env = getEnv();
 
     const resolvedParams = await params;
-    const puuid = resolvedParams.puuid;
+    puuid = resolvedParams.puuid || "";
 
     if (!puuid) {
       return NextResponse.json({ error: "PUUID requis" }, { status: 400 });
@@ -236,7 +238,10 @@ export async function GET(
 
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error("[RANKED] Erreur:", error);
+    const rankedLogger = createLogger("ranked");
+    rankedLogger.error("Erreur lors de la récupération du classement", error as Error, {
+      puuid,
+    });
     return NextResponse.json(
       {
         error: "Erreur lors de la récupération du classement",

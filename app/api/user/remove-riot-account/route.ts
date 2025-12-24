@@ -1,36 +1,39 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { prismaWithTimeout } from "@/lib/timeout";
+import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { errorResponse, handleApiError } from "@/lib/api-helpers";
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
-    // Récupérer l'utilisateur depuis les headers
-    const userId = request.headers.get("x-user-id");
+    // Vérifier l'authentification via JWT
+    const authUser = await getAuthenticatedUser(request);
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Utilisateur non authentifié" },
-        { status: 401 }
-      );
+    if (!authUser) {
+      return errorResponse("Utilisateur non authentifié", 401);
     }
 
-    // Vérifier que l'utilisateur existe
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, leagueAccountId: true },
-    });
+    // Vérifier que l'utilisateur existe (avec timeout)
+    const user = await prismaWithTimeout(
+      () =>
+        prisma.user.findUnique({
+          where: { id: authUser.id },
+          select: { id: true, leagueAccountId: true },
+        }),
+      10000
+    );
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Utilisateur non trouvé" },
-        { status: 404 }
-      );
+      return errorResponse("Utilisateur non trouvé", 404);
     }
 
-    // Supprimer l'association du compte League of Legends
+    // Supprimer l'association du compte League of Legends, puuid et région
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id: authUser.id },
       data: {
         leagueAccountId: null,
+        riotPuuid: null,
+        riotRegion: null,
       },
       select: {
         id: true,
@@ -62,14 +65,7 @@ export async function DELETE(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error(
-      "Erreur lors de la suppression de l'association au compte Riot:",
-      error
-    );
-    return NextResponse.json(
-      { error: "Erreur lors de la suppression de l'association" },
-      { status: 500 }
-    );
+    return handleApiError(error, "Suppression de l'association au compte Riot", "database");
   }
 }
 

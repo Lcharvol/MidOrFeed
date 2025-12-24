@@ -3,7 +3,15 @@ import { OAuth2Client } from "google-auth-library";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import type { User } from "@prisma/client";
+import { generateToken } from "@/lib/jwt";
+import { logger } from "@/lib/logger";
+import {
+  serializeUser,
+  safeParseJson,
+  errorResponse,
+  handleApiError,
+  type UserForSerialization,
+} from "@/lib/api-helpers";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
@@ -11,69 +19,29 @@ const oauthClient = GOOGLE_CLIENT_ID
   ? new OAuth2Client(GOOGLE_CLIENT_ID)
   : null;
 
-type UserWithLeagueAccount = User & {
-  leagueAccount: {
-    id: string;
-    puuid: string;
-    riotRegion: string | null;
-    riotGameName: string | null;
-    riotTagLine: string | null;
-    profileIconId: number | null;
-  } | null;
-};
-
-const serializeUser = (user: UserWithLeagueAccount) => ({
-  id: user.id,
-  email: user.email,
-  name: user.name,
-  role: user.role,
-  subscriptionTier: user.subscriptionTier,
-  subscriptionExpiresAt: user.subscriptionExpiresAt?.toISOString?.() ?? null,
-  dailyAnalysesUsed: user.dailyAnalysesUsed,
-  lastDailyReset: user.lastDailyReset?.toISOString?.() ?? null,
-  leagueAccount: user.leagueAccount
-    ? {
-        id: user.leagueAccount.id,
-        puuid: user.leagueAccount.puuid,
-        riotRegion: user.leagueAccount.riotRegion,
-        riotGameName: user.leagueAccount.riotGameName,
-        riotTagLine: user.leagueAccount.riotTagLine,
-        profileIconId: user.leagueAccount.profileIconId,
-      }
-    : null,
-});
-
 export async function POST(request: Request) {
   if (!oauthClient || !GOOGLE_CLIENT_ID) {
-    return NextResponse.json(
-      { success: false, error: "Google OAuth non configuré" },
-      { status: 500 }
-    );
+    return errorResponse("Google OAuth non configuré", 500);
   }
 
   try {
-    const body = await request.json().catch(() => null);
-    const token = body?.token;
+    const { data: body, error: parseError } = await safeParseJson<{ token?: string }>(request);
 
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: "Jeton Google manquant" },
-        { status: 400 }
-      );
+    if (parseError || !body?.token) {
+      return errorResponse(parseError ?? "Jeton Google manquant", 400);
     }
 
+    const googleToken = body.token;
+
     const ticket = await oauthClient.verifyIdToken({
-      idToken: token,
+      idToken: googleToken,
       audience: GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
 
     if (!payload?.email) {
-      return NextResponse.json(
-        { success: false, error: "Impossible de valider l'adresse e-mail" },
-        { status: 400 }
-      );
+      return errorResponse("Impossible de valider l'adresse e-mail", 400);
     }
 
     const email = payload.email;
@@ -97,15 +65,26 @@ export async function POST(request: Request) {
       });
     }
 
+    // Générer un token JWT
+    const jwtToken = await generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // Cast pour la sérialisation
+    const userForSerialization: UserForSerialization = {
+      ...user,
+      leagueAccount: user.leagueAccount ?? null,
+    };
+
     return NextResponse.json({
       success: true,
-      user: serializeUser(user),
+      token: jwtToken,
+      user: serializeUser(userForSerialization),
     });
   } catch (error) {
-    console.error("[GOOGLE-AUTH] Error", error);
-    return NextResponse.json(
-      { success: false, error: "Authentification Google impossible" },
-      { status: 500 }
-    );
+    logger.error("Erreur lors de l'authentification Google", error as Error);
+    return handleApiError(error, "Authentification Google", "auth");
   }
 }

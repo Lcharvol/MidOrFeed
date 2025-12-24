@@ -324,7 +324,7 @@ export const ChampionAdviceSection = ({
       }
 
       await mutate?.((current) => {
-        if (!current || !('success' in current) || !current.success) {
+        if (!current || !('success' in current) || !current.success || !current.data) {
           return current;
         }
         return {
@@ -381,7 +381,7 @@ export const ChampionAdviceSection = ({
       }
 
       await mutate?.((current) => {
-        if (!current || !('success' in current) || !current.success) {
+        if (!current || !('success' in current) || !current.success || !current.data) {
           return current;
         }
         return {
@@ -426,7 +426,7 @@ export const ChampionAdviceSection = ({
       }
 
       await mutate?.((current) => {
-        if (!current || !('success' in current) || !current.success) {
+        if (!current || !('success' in current) || !current.success || !current.data) {
           return current;
         }
         return {

@@ -17,6 +17,7 @@ import { Loader2Icon, PlusIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useChampions } from "@/lib/hooks/use-champions";
 import { useI18n } from "@/lib/i18n-context";
+import { authenticatedFetch } from "@/lib/api-client";
 import type { ChampionEntity } from "@/types";
 
 const ROLES = [
@@ -56,6 +57,30 @@ export default function CreateCompositionPage() {
     );
   }, [champions, searchTerm]);
 
+  // Calcul des stats moyennes memoizé pour éviter les recalculs répétés
+  const averageStats = useMemo(() => {
+    const selectedList = Object.values(selectedChampions).filter(
+      (champ): champ is ChampionEntity => champ !== null
+    );
+
+    if (selectedList.length === 0) {
+      return null;
+    }
+
+    const count = selectedList.length;
+    return {
+      attack: Math.round(
+        selectedList.reduce((sum, champ) => sum + champ.attack, 0) / count
+      ),
+      defense: Math.round(
+        selectedList.reduce((sum, champ) => sum + champ.defense, 0) / count
+      ),
+      magic: Math.round(
+        selectedList.reduce((sum, champ) => sum + champ.magic, 0) / count
+      ),
+    };
+  }, [selectedChampions]);
+
   const handleChampionSelect = (role: string, champion: ChampionEntity) => {
     setSelectedChampions((prev) => ({
       ...prev,
@@ -76,7 +101,7 @@ export default function CreateCompositionPage() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const selectedCount = Object.values(selectedChampions).filter(
       (champ) => champ !== null
     ).length;
@@ -91,9 +116,37 @@ export default function CreateCompositionPage() {
       return;
     }
 
-    // TODO: Sauvegarder la composition
-    toast.success(t("compositions.compositionSaved"));
-    console.log("Composition:", { compositionName, selectedChampions });
+    // Sauvegarder la composition
+    try {
+      const response = await authenticatedFetch("/api/compositions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: compositionName,
+          top: selectedChampions.top?.championId ?? null,
+          jungle: selectedChampions.jungle?.championId ?? null,
+          mid: selectedChampions.mid?.championId ?? null,
+          adc: selectedChampions.adc?.championId ?? null,
+          support: selectedChampions.support?.championId ?? null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || t("compositions.errorSaving"));
+        return;
+      }
+
+      toast.success(t("compositions.compositionSaved"));
+      
+      // Optionnel: rediriger vers la liste des compositions
+      // router.push("/compositions/my");
+    } catch {
+      toast.error(t("compositions.errorSaving"));
+    }
   };
 
   return (
@@ -354,9 +407,7 @@ export default function CreateCompositionPage() {
                 </div>
 
                 {/* Stats moyennes */}
-                {Object.values(selectedChampions).some(
-                  (champ) => champ !== null
-                ) && (
+                {averageStats && (
                   <div className="rounded-lg border bg-muted/30 p-4">
                     <div className="mb-3 text-sm font-medium">
                       {t("compositions.averageStats")}
@@ -366,46 +417,19 @@ export default function CreateCompositionPage() {
                         <span className="text-muted-foreground">
                           {t("compositions.attack")}
                         </span>
-                        <span className="font-medium">
-                          {Math.round(
-                            Object.values(selectedChampions)
-                              .filter((champ) => champ !== null)
-                              .reduce((sum, champ) => sum + champ!.attack, 0) /
-                              Object.values(selectedChampions).filter(
-                                (champ) => champ !== null
-                              ).length
-                          )}
-                        </span>
+                        <span className="font-medium">{averageStats.attack}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">
                           {t("compositions.defense")}
                         </span>
-                        <span className="font-medium">
-                          {Math.round(
-                            Object.values(selectedChampions)
-                              .filter((champ) => champ !== null)
-                              .reduce((sum, champ) => sum + champ!.defense, 0) /
-                              Object.values(selectedChampions).filter(
-                                (champ) => champ !== null
-                              ).length
-                          )}
-                        </span>
+                        <span className="font-medium">{averageStats.defense}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">
                           {t("compositions.magic")}
                         </span>
-                        <span className="font-medium">
-                          {Math.round(
-                            Object.values(selectedChampions)
-                              .filter((champ) => champ !== null)
-                              .reduce((sum, champ) => sum + champ!.magic, 0) /
-                              Object.values(selectedChampions).filter(
-                                (champ) => champ !== null
-                              ).length
-                          )}
-                        </span>
+                        <span className="font-medium">{averageStats.magic}</span>
                       </div>
                     </div>
                   </div>

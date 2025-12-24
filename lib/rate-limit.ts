@@ -132,42 +132,73 @@ export const rateLimit = async (
   record.count++;
   store.set(key, record);
 
-  const remaining = Math.max(0, limit - record.count);
-  
-  return null; // OK avec headers
+  return null; // OK
 };
 
 /**
- * Presets de rate limiting courants
+ * Récupère les presets de rate limiting depuis les variables d'environnement
+ * avec des valeurs par défaut raisonnables
+ */
+const getRateLimitConfig = () => {
+  // Import dynamique pour éviter les problèmes de circular dependency
+  const env = process.env;
+
+  return {
+    auth: {
+      limit: parseInt(env.RATE_LIMIT_AUTH_LIMIT || "5", 10),
+      windowMs: parseInt(env.RATE_LIMIT_AUTH_WINDOW_MS || String(15 * 60 * 1000), 10),
+    },
+    api: {
+      limit: parseInt(env.RATE_LIMIT_API_LIMIT || "100", 10),
+      windowMs: parseInt(env.RATE_LIMIT_API_WINDOW_MS || String(60 * 1000), 10),
+    },
+    admin: {
+      limit: parseInt(env.RATE_LIMIT_ADMIN_LIMIT || "50", 10),
+      windowMs: parseInt(env.RATE_LIMIT_ADMIN_WINDOW_MS || String(60 * 1000), 10),
+    },
+  };
+};
+
+/**
+ * Presets de rate limiting courants (configurables via env vars)
  */
 export const rateLimitPresets = {
   /**
-   * Rate limiting strict pour l'authentification (5 requêtes par 15 minutes)
+   * Rate limiting strict pour l'authentification
+   * Configurable via RATE_LIMIT_AUTH_LIMIT et RATE_LIMIT_AUTH_WINDOW_MS
    */
-  auth: {
-    limit: 5,
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    message: "Trop de tentatives de connexion, veuillez réessayer dans quelques minutes",
+  get auth() {
+    const config = getRateLimitConfig();
+    return {
+      ...config.auth,
+      message: "Trop de tentatives de connexion, veuillez réessayer dans quelques minutes",
+    };
   },
-  
+
   /**
-   * Rate limiting modéré pour les API publiques (100 requêtes par minute)
+   * Rate limiting modéré pour les API publiques
+   * Configurable via RATE_LIMIT_API_LIMIT et RATE_LIMIT_API_WINDOW_MS
    */
-  api: {
-    limit: 100,
-    windowMs: 60 * 1000, // 1 minute
-    message: "Trop de requêtes, veuillez ralentir",
+  get api() {
+    const config = getRateLimitConfig();
+    return {
+      ...config.api,
+      message: "Trop de requêtes, veuillez ralentir",
+    };
   },
-  
+
   /**
-   * Rate limiting pour les endpoints admin (50 requêtes par minute)
+   * Rate limiting pour les endpoints admin
+   * Configurable via RATE_LIMIT_ADMIN_LIMIT et RATE_LIMIT_ADMIN_WINDOW_MS
    */
-  admin: {
-    limit: 50,
-    windowMs: 60 * 1000, // 1 minute
-    message: "Trop de requêtes, veuillez ralentir",
+  get admin() {
+    const config = getRateLimitConfig();
+    return {
+      ...config.admin,
+      message: "Trop de requêtes, veuillez ralentir",
+    };
   },
-  
+
   /**
    * Rate limiting très strict pour les endpoints sensibles (10 requêtes par heure)
    */

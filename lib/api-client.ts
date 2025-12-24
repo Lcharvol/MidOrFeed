@@ -1,23 +1,21 @@
 // Utilitaire pour faire des requêtes API avec authentification automatique
 
 /**
- * Fait une requête fetch avec l'authentification automatique
- * pour les routes admin
+ * Fait une requête fetch avec l'authentification automatique via JWT
+ * pour les routes protégées
  */
 export const authenticatedFetch = async (
   url: string,
   options: RequestInit = {}
 ): Promise<Response> => {
-  // Récupérer l'utilisateur depuis localStorage
-  const user =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user") || "null")
-      : null;
+  // Récupérer le token JWT depuis localStorage
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  // Ajouter l'Authorization header si l'utilisateur est connecté
+  // Ajouter l'Authorization header si un token existe
   const headers = new Headers(options.headers);
-  if (user?.id) {
-    headers.set("Authorization", `Bearer ${user.id}`);
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   return fetch(url, {

@@ -10,11 +10,18 @@ type ChampionsApiResponse = ApiResponse<ChampionEntity[]> & {
   count?: number;
 };
 
-export const useChampions = () => {
+export const useChampions = (options?: { limit?: number }) => {
+  // Par défaut, récupérer tous les champions (200 devrait suffire pour LoL)
+  // La limite maximum de l'API est maintenant 1000, donc on peut tout récupérer en une fois
+  const limit = options?.limit ?? 200;
+  
   const { data, error, isLoading, mutate, isValidating } =
-    useApiSWR<ChampionsApiResponse>(apiKeys.champions(), {
-      revalidateOnFocus: false,
-    });
+    useApiSWR<ChampionsApiResponse>(
+      apiKeys.champions({ page: 1, limit }),
+      {
+        revalidateOnFocus: false,
+      }
+    );
 
   const validation = useMemo(
     () => (data ? validateChampionListResponse(data) : null),

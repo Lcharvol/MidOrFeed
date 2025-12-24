@@ -1,36 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/types/roles";
-
-interface AuthenticatedRequest extends NextRequest {
-  user?: {
-    id: string;
-    email: string;
-    role: string;
-  };
-}
+import { verifyToken, extractTokenFromHeader } from "@/lib/jwt";
+import { logger } from "@/lib/logger";
 
 /**
- * Récupère l'utilisateur depuis le header Authorization ou depuis les cookies
- * Pour l'instant, on utilise localStorage côté client, donc on passe l'ID utilisateur
- * dans un header personnalisé ou dans le body de la requête
+ * Récupère l'utilisateur authentifié depuis le header Authorization
+ * Utilise JWT pour valider l'authentification
+ * Format: "Bearer <jwt-token>"
  */
 export const getAuthenticatedUser = async (
   request: NextRequest
 ): Promise<{ id: string; email: string; role: string } | null> => {
   try {
-    // Récupérer l'ID utilisateur depuis le header Authorization
-    // Format: "Bearer {userId}" ou juste "{userId}"
+    // Extraire le token JWT depuis le header Authorization
     const authHeader = request.headers.get("authorization");
-    const userId = authHeader?.replace("Bearer ", "") || null;
+    const token = extractTokenFromHeader(authHeader);
 
-    if (!userId) {
+    if (!token) {
       return null;
     }
 
-    // Récupérer l'utilisateur depuis la base de données
+    // Vérifier et décoder le token JWT
+    const payload = await verifyToken(token);
+
+    if (!payload || !payload.userId) {
+      return null;
+    }
+
+    // Optionnel: Vérifier que l'utilisateur existe toujours dans la base
+    // (utile si un utilisateur est supprimé mais son token est encore valide)
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: payload.userId },
       select: {
         id: true,
         email: true,
@@ -38,11 +39,28 @@ export const getAuthenticatedUser = async (
       },
     });
 
+    if (!user) {
+      logger.warn("Token JWT valide mais utilisateur introuvable", {
+        userId: payload.userId,
+      });
+      return null;
+    }
+
+    // Vérifier que l'email correspond (sécurité supplémentaire)
+    if (user.email !== payload.email) {
+      logger.warn("Email mismatch entre token et base de données", {
+        userId: payload.userId,
+        tokenEmail: payload.email,
+        dbEmail: user.email,
+      });
+      return null;
+    }
+
     return user;
   } catch (error) {
-    console.error(
-      "[AUTH] Erreur lors de la récupération de l'utilisateur:",
-      error
+    logger.error(
+      "Erreur lors de la récupération de l'utilisateur",
+      error as Error
     );
     return null;
   }

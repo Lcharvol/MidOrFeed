@@ -59,6 +59,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   message: string;
+  token: string;
   user: {
     id: string;
     email: string;
@@ -68,7 +69,14 @@ export interface LoginResponse {
     subscriptionExpiresAt: string | null;
     dailyAnalysesUsed: number;
     lastDailyReset: string;
-    leagueAccount: null | unknown;
+    leagueAccount: null | {
+      id: string;
+      puuid: string;
+      riotRegion: string;
+      riotGameName: string | null;
+      riotTagLine: string | null;
+      profileIconId: number | null;
+    };
   };
 }
 

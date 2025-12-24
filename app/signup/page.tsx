@@ -94,7 +94,7 @@ export default function SignupPage() {
         return;
       }
 
-      login(result.user);
+      login(result.user, result.token);
       toast.success(t("login.connectionSuccessful"));
       router.push("/");
     } catch (error) {

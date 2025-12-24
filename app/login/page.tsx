@@ -80,8 +80,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Connecter l'utilisateur
-      login(result.user);
+      // Connecter l'utilisateur avec le token JWT
+      login(result.user, result.token);
       toast.success(t("login.connectionSuccessful"));
       router.push("/");
     } catch (error) {
@@ -113,7 +113,7 @@ export default function LoginPage() {
         return;
       }
 
-      login(result.user);
+      login(result.user, result.token);
       toast.success(t("login.connectionSuccessful"));
       router.push("/");
     } catch (error) {

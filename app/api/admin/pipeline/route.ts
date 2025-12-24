@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-utils";
+import { createLogger } from "@/lib/logger";
 
 type PipelineState = {
   running: boolean;
@@ -81,7 +82,8 @@ async function runOneCycle(
       pushLog(`Seed terminé (réponse ${res?.status ?? "?"})`);
     }
   } catch (e) {
-    console.error("[PIPELINE] Seed error", e);
+    const pipelineLogger = createLogger("pipeline");
+    pipelineLogger.error("Seed error", e as Error, { step: "seed" });
     pushLog("Erreur seed");
   }
 
@@ -103,7 +105,8 @@ async function runOneCycle(
       pushLog(`Process terminé (réponse ${res?.status ?? "?"})`);
     }
   } catch (e) {
-    console.error("[PIPELINE] Process error", e);
+    const pipelineLogger = createLogger("pipeline");
+    pipelineLogger.error("Process error", e as Error, { step: "process" });
     pushLog("Erreur process");
   }
 
@@ -133,7 +136,8 @@ async function runOneCycle(
       pushLog(`Sync terminé (réponse ${res?.status ?? "?"})`);
     }
   } catch (e) {
-    console.error("[PIPELINE] Sync error", e);
+    const pipelineLogger = createLogger("pipeline");
+    pipelineLogger.error("Sync error", e as Error, { step: "sync" });
     pushLog("Erreur sync");
   }
 }
@@ -231,7 +235,8 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error("[PIPELINE] Error:", error);
+    const pipelineLogger = createLogger("pipeline");
+    pipelineLogger.error("Pipeline command error", error as Error);
     return NextResponse.json(
       { error: "Erreur lors de la commande pipeline" },
       { status: 500 }

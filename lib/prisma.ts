@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { getEnv } from "./env";
+import { logger } from "./logger";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -44,9 +45,9 @@ let env: ReturnType<typeof getEnv>;
 try {
   env = getEnv();
 } catch (error) {
-  console.error(
-    "❌ Erreur de configuration des variables d'environnement:",
-    error
+  logger.error(
+    "Erreur de configuration des variables d'environnement",
+    error as Error
   );
   throw error;
 }
@@ -75,9 +76,9 @@ export const prisma =
     } catch {
       // Si les variables d'environnement ne sont pas disponibles (par exemple pendant le build),
       // on crée un client Prisma avec les variables d'environnement directement
-      console.warn(
-        "⚠️ Variables d'environnement non validées, utilisation directe de process.env"
-      );
+      logger.warn("Variables d'environnement non validées, utilisation directe de process.env", {
+        context: "prisma-init",
+      });
       const databaseUrl = process.env.DATABASE_URL ?? "";
       const optimizedUrl = databaseUrl
         ? buildDatabaseUrl(databaseUrl)

@@ -16,12 +16,3 @@ export function getInitials(name: string | null, email: string): string {
   }
   return email[0].toUpperCase();
 }
-
-/**
- * Parse game name and tag from a combined string (e.g., "Faker#EUW1" -> ["Faker", "EUW1"])
- */
-export function parseGameNameAndTag(value: string): [string, string] {
-  if (!value.includes("#")) return [value, ""];
-  const [name, ...tagParts] = value.split("#");
-  return [name, tagParts.join("#")];
-}

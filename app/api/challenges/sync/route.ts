@@ -6,10 +6,12 @@ import {
   fetchPlayerChallenges,
 } from "@/lib/riot/challenges";
 import { broadcastNotification } from "@/lib/server/notification-hub";
+import { logger } from "@/lib/logger";
+import { errorResponse, handleApiError } from "@/lib/api-helpers";
 import type { NotificationPayload } from "@/types";
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
-const DEFAULT_REGION = "euw1";
+const DEFAULT_REGION = process.env.DEFAULT_RIOT_REGION ?? "euw1";
 const MAX_ACCOUNTS_PER_SYNC = 40;
 
 const requestSchema = z
@@ -39,15 +41,11 @@ const toDate = (value: unknown): Date | null => {
 export async function POST(request: Request) {
   try {
     if (!RIOT_API_KEY) {
-      return NextResponse.json(
-        { success: false, error: "Clé API Riot non configurée" },
-        { status: 500 }
-      );
+      return errorResponse("Clé API Riot non configurée", 500);
     }
 
     const body = await request.json().catch(() => undefined);
     const params = requestSchema.parse(body);
-    const limit = params?.limit ?? 10;
 
     const challengeConfig = await fetchChallengeConfig(
       RIOT_API_KEY,
@@ -86,7 +84,7 @@ export async function POST(request: Request) {
     const { ShardedLeagueAccounts } = await import(
       "@/lib/prisma-sharded-accounts"
     );
-    
+
     const accounts = await (async () => {
       if (params?.puuids?.length) {
         // Chercher dans toutes les régions
@@ -94,7 +92,9 @@ export async function POST(request: Request) {
           params.puuids
         );
         // Note: On ne peut plus récupérer User directement, il faut faire une requête séparée
-        const accountIds = Array.from(accountsMap.values()).map((acc) => acc.id);
+        const accountIds = Array.from(accountsMap.values()).map(
+          (acc) => acc.id
+        );
         const users = await prisma.user.findMany({
           where: { leagueAccountId: { in: accountIds } },
           select: { id: true, leagueAccountId: true },
@@ -129,81 +129,108 @@ export async function POST(request: Request) {
       const seenIds: number[] = [];
       let updatedCount = 0;
 
+      // Récupérer tous les challenges existants pour ce compte en une seule requête
+      const existingChallenges = await prisma.playerChallenge.findMany({
+        where: {
+          leagueAccountId: account.id,
+        },
+        select: {
+          challengeId: true,
+          currentLevel: true,
+        },
+      });
+
+      const existingChallengesMap = new Map(
+        existingChallenges.map((c) => [c.challengeId, c])
+      );
+
+      // Préparer tous les upserts à exécuter en batch
+      const upsertPromises: Promise<unknown>[] = [];
+      const newLevelNotifications: Array<{
+        challengeId: number;
+        currentLevel: string;
+      }> = [];
+
       for (const challenge of playerData.challenges) {
         if (!challenge.challengeId) continue;
         seenIds.push(challenge.challengeId);
         const achievedAt = toDate(challenge.achievedTime);
-
-        const previous = await prisma.playerChallenge.findUnique({
-          where: {
-            leagueAccountId_challengeId: {
-              leagueAccountId: account.id,
-              challengeId: challenge.challengeId,
-            },
-          },
-          select: { currentLevel: true },
-        });
-
+        const previous = existingChallengesMap.get(challenge.challengeId);
         const currentLevel = challenge.level ?? "NONE";
 
-        await prisma.playerChallenge.upsert({
-          where: {
-            leagueAccountId_challengeId: {
-              leagueAccountId: account.id,
-              challengeId: challenge.challengeId,
-            },
-          },
-          update: {
-            currentValue: challenge.value ?? 0,
-            currentLevel,
-            highestLevel:
-              challenge.highestLevel ?? previous?.currentLevel ?? undefined,
-            percentile: challenge.percentile ?? undefined,
-            achievedTime: achievedAt ?? undefined,
-            nextLevelValue: challenge.nextLevel ?? undefined,
-            progress: challenge.progress ?? undefined,
-            pointsEarned: challenge.pointsEarned ?? undefined,
-            completedLevels: challenge.completedObjectives
-              ? JSON.stringify(challenge.completedObjectives)
-              : undefined,
-            lastUpdatedByRiot: achievedAt ?? undefined,
-          },
-          create: {
-            leagueAccountId: account.id,
-            challengeId: challenge.challengeId,
-            currentValue: challenge.value ?? 0,
-            currentLevel,
-            highestLevel: challenge.highestLevel ?? undefined,
-            percentile: challenge.percentile ?? undefined,
-            achievedTime: achievedAt ?? undefined,
-            nextLevelValue: challenge.nextLevel ?? undefined,
-            progress: challenge.progress ?? undefined,
-            pointsEarned: challenge.pointsEarned ?? undefined,
-            completedLevels: challenge.completedObjectives
-              ? JSON.stringify(challenge.completedObjectives)
-              : undefined,
-            lastUpdatedByRiot: achievedAt ?? undefined,
-          },
-        });
-
+        // Vérifier si on doit envoyer une notification
         if (
           previous &&
           previous.currentLevel !== currentLevel &&
           currentLevel !== "NONE"
         ) {
-          notificationsSent += 1;
-          const payload: NotificationPayload = {
-            id: crypto.randomUUID(),
-            title: "Nouveau palier de défi",
-            message: `Votre compte a atteint le palier ${currentLevel} pour le challenge ${challenge.challengeId}.`,
-            variant: "success",
-            createdAt: new Date().toISOString(),
-          };
-          broadcastNotification(payload);
+          newLevelNotifications.push({
+            challengeId: challenge.challengeId,
+            currentLevel,
+          });
         }
 
-        updatedCount += 1;
+        // Ajouter l'upsert à la liste
+        upsertPromises.push(
+          prisma.playerChallenge.upsert({
+            where: {
+              leagueAccountId_challengeId: {
+                leagueAccountId: account.id,
+                challengeId: challenge.challengeId,
+              },
+            },
+            update: {
+              currentValue: challenge.value ?? 0,
+              currentLevel,
+              highestLevel:
+                challenge.highestLevel ?? previous?.currentLevel ?? undefined,
+              percentile: challenge.percentile ?? undefined,
+              achievedTime: achievedAt ?? undefined,
+              nextLevelValue: challenge.nextLevel ?? undefined,
+              progress: challenge.progress ?? undefined,
+              pointsEarned: challenge.pointsEarned ?? undefined,
+              completedLevels: challenge.completedObjectives
+                ? JSON.stringify(challenge.completedObjectives)
+                : undefined,
+              lastUpdatedByRiot: achievedAt ?? undefined,
+            },
+            create: {
+              leagueAccountId: account.id,
+              challengeId: challenge.challengeId,
+              currentValue: challenge.value ?? 0,
+              currentLevel,
+              highestLevel: challenge.highestLevel ?? undefined,
+              percentile: challenge.percentile ?? undefined,
+              achievedTime: achievedAt ?? undefined,
+              nextLevelValue: challenge.nextLevel ?? undefined,
+              progress: challenge.progress ?? undefined,
+              pointsEarned: challenge.pointsEarned ?? undefined,
+              completedLevels: challenge.completedObjectives
+                ? JSON.stringify(challenge.completedObjectives)
+                : undefined,
+              lastUpdatedByRiot: achievedAt ?? undefined,
+            },
+          })
+        );
       }
+
+      // Exécuter tous les upserts en parallèle
+      await Promise.all(upsertPromises);
+
+      // Envoyer les notifications
+      for (const notification of newLevelNotifications) {
+        const payload: NotificationPayload = {
+          id: crypto.randomUUID(),
+          title: "Nouveau palier de défi",
+          message: `Votre compte a atteint le palier ${notification.currentLevel} pour le challenge ${notification.challengeId}.`,
+          variant: "success",
+          createdAt: new Date().toISOString(),
+        };
+        broadcastNotification(payload);
+        notificationsSent += 1;
+      }
+
+      updatedCount = upsertPromises.length;
 
       await prisma.playerChallenge.deleteMany({
         where: {
@@ -226,12 +253,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Challenge sync error", error);
-    const message =
-      error instanceof Error ? error.message : "Échec de la synchronisation";
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
-    );
+    logger.error("Erreur lors de la synchronisation des challenges", error as Error);
+    return handleApiError(error, "Synchronisation des challenges", "external");
   }
 }

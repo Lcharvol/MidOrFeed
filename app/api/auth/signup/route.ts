@@ -5,21 +5,26 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prismaWithTimeout } from "@/lib/timeout";
 import { readAndValidateBody } from "@/lib/request-validation";
-import type { SignupRequest, SignupResponse, ApiResponse } from "@/types/api";
+import {
+  getRequestContext,
+  handleZodError,
+  handleApiError,
+  errorResponse,
+} from "@/lib/api-helpers";
+import type { SignupRequest, SignupResponse } from "@/types/api";
 
-const signupSchema = z
-  .object({
-    name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-    email: z.string().email("Email invalide"),
-    password: z
-      .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Les mots de passe ne correspondent pas",
-    path: ["confirmPassword"],
-  }) satisfies z.ZodType<SignupRequest>;
+const createSignupSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      name: z.string().min(2, t("signup.nameMinCharacters")),
+      email: z.string().email(t("signup.invalidEmail")),
+      password: z.string().min(8, t("signup.passwordMinCharacters")),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("signup.passwordsDoNotMatch"),
+      path: ["confirmPassword"],
+    }) satisfies z.ZodType<SignupRequest>;
 
 export async function POST(request: NextRequest) {
   // Rate limiting strict pour l'inscription
@@ -28,9 +33,15 @@ export async function POST(request: NextRequest) {
     return rateLimitResponse;
   }
 
+  // Récupérer le contexte de la requête une seule fois
+  const { t } = getRequestContext(request);
+
   try {
     // Lire et valider la taille du body
     const body = await readAndValidateBody(request);
+
+    // Créer le schéma avec les traductions
+    const signupSchema = createSignupSchema(t);
 
     // Valider les données
     const validatedData = signupSchema.parse(body);
@@ -45,9 +56,9 @@ export async function POST(request: NextRequest) {
     );
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Cet email est déjà utilisé" },
-        { status: 400 }
+      return errorResponse(
+        t("signup.emailAlreadyUsed") ?? "Cet email est déjà utilisé",
+        400
       );
     }
 
@@ -75,16 +86,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
-        { status: 400 }
-      );
+      return handleZodError(error);
     }
-
-    console.error("Erreur lors de l'inscription:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la création du compte" },
-      { status: 500 }
-    );
+    return handleApiError(error, "Création du compte", "auth");
   }
 }

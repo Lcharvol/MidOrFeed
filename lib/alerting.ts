@@ -1,5 +1,4 @@
 import { logger } from "./logger";
-import { isProduction } from "./env";
 
 /**
  * Niveaux de sévérité pour les alertes
@@ -43,43 +42,115 @@ class AlertStore {
       this.alerts.shift();
     }
 
-    // En production, envoyer l'alerte à un service externe
-    if (isProduction()) {
-      this.sendToExternalService(alert);
+    // Envoyer l'alerte à un service externe si configuré (production ou si SLACK_WEBHOOK_URL est défini)
+    // Permet aussi de tester en développement si le webhook est configuré
+    this.sendToExternalService(alert);
+  }
+
+  /**
+   * Retourne la couleur pour un niveau de sévérité (pour Slack)
+   */
+  private getSeverityColor(severity: AlertSeverity): string {
+    switch (severity) {
+      case AlertSeverity.LOW:
+        return "#36a64f"; // Vert
+      case AlertSeverity.MEDIUM:
+        return "#ff9800"; // Orange
+      case AlertSeverity.HIGH:
+        return "#f44336"; // Rouge
+      case AlertSeverity.CRITICAL:
+        return "#d32f2f"; // Rouge foncé
+      default:
+        return "#9e9e9e"; // Gris
     }
   }
 
   /**
    * Envoie l'alerte à un service externe
-   * TODO: Intégrer avec PagerDuty, Opsgenie, Slack, etc.
+   * Supporte Slack via webhook, et peut être étendu pour PagerDuty/Opsgenie
    */
   private sendToExternalService(alert: Alert): void {
-    // Exemple d'intégration avec un webhook Slack
-    // const webhookUrl = process.env.SLACK_WEBHOOK_URL;
-    // if (webhookUrl) {
-    //   fetch(webhookUrl, {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({
-    //       text: `🚨 ${alert.severity.toUpperCase()}: ${alert.title}`,
-    //       attachments: [{
-    //         color: this.getSeverityColor(alert.severity),
-    //         fields: [
-    //           { title: "Service", value: alert.service, short: true },
-    //           { title: "Message", value: alert.message, short: false },
-    //         ],
-    //       }],
-    //     }),
-    //   }).catch((error) => {
-    //     logger.error("Failed to send alert to external service", error);
-    //   });
+    // Intégration Slack via webhook
+    const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
+    if (slackWebhookUrl) {
+      // Ne pas attendre la réponse pour ne pas bloquer l'exécution
+      fetch(slackWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: `🚨 ${alert.severity.toUpperCase()}: ${alert.title}`,
+          attachments: [
+            {
+              color: this.getSeverityColor(alert.severity),
+              fields: [
+                { title: "Service", value: alert.service, short: true },
+                { title: "Message", value: alert.message, short: false },
+                {
+                  title: "Timestamp",
+                  value: new Date(alert.timestamp).toISOString(),
+                  short: true,
+                },
+                ...(alert.metadata
+                  ? [
+                      {
+                        title: "Metadata",
+                        value: JSON.stringify(alert.metadata, null, 2),
+                        short: false,
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          ],
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            logger.warn("Slack webhook returned error", {
+              status: response.status,
+              statusText: response.statusText,
+              alertId: alert.id,
+            });
+          }
+        })
+        .catch((error) => {
+          logger.error("Failed to send alert to Slack", error as Error, {
+            alertId: alert.id,
+          });
+        });
+    }
+
+    // TODO: Intégration PagerDuty/Opsgenie pour les alertes critiques
+    // if (alert.severity === AlertSeverity.CRITICAL || alert.severity === AlertSeverity.HIGH) {
+    //   const pagerDutyKey = process.env.PAGERDUTY_API_KEY;
+    //   if (pagerDutyKey) {
+    //     // Envoyer à PagerDuty...
+    //   }
     // }
 
-    // Pour l'instant, on log juste l'alerte
-    logger.error(`ALERT [${alert.severity.toUpperCase()}]: ${alert.title}`, new Error(alert.message), {
+    // Log l'alerte dans tous les cas
+    // Pour les alertes critiques et hautes, utiliser error, sinon warn/info
+    const logMessage = `ALERT [${alert.severity.toUpperCase()}]: ${
+      alert.title
+    }`;
+    const logData = {
       service: alert.service,
-      metadata: alert.metadata,
-    });
+      message: alert.message,
+      ...(alert.metadata && { metadata: alert.metadata }),
+    };
+
+    switch (alert.severity) {
+      case AlertSeverity.CRITICAL:
+      case AlertSeverity.HIGH:
+        logger.error(logMessage, undefined, logData);
+        break;
+      case AlertSeverity.MEDIUM:
+        logger.warn(logMessage, logData);
+        break;
+      case AlertSeverity.LOW:
+        logger.info(logMessage, logData);
+        break;
+    }
   }
 
   /**
@@ -147,28 +218,48 @@ export const alerting = {
   /**
    * Alerte critique - nécessite une action immédiate
    */
-  critical: (title: string, message: string, service?: string, metadata?: Record<string, unknown>) => {
+  critical: (
+    title: string,
+    message: string,
+    service?: string,
+    metadata?: Record<string, unknown>
+  ) => {
     sendAlert(AlertSeverity.CRITICAL, title, message, service, metadata);
   },
 
   /**
    * Alerte haute - nécessite une attention rapide
    */
-  high: (title: string, message: string, service?: string, metadata?: Record<string, unknown>) => {
+  high: (
+    title: string,
+    message: string,
+    service?: string,
+    metadata?: Record<string, unknown>
+  ) => {
     sendAlert(AlertSeverity.HIGH, title, message, service, metadata);
   },
 
   /**
    * Alerte moyenne - nécessite une attention
    */
-  medium: (title: string, message: string, service?: string, metadata?: Record<string, unknown>) => {
+  medium: (
+    title: string,
+    message: string,
+    service?: string,
+    metadata?: Record<string, unknown>
+  ) => {
     sendAlert(AlertSeverity.MEDIUM, title, message, service, metadata);
   },
 
   /**
    * Alerte basse - information
    */
-  low: (title: string, message: string, service?: string, metadata?: Record<string, unknown>) => {
+  low: (
+    title: string,
+    message: string,
+    service?: string,
+    metadata?: Record<string, unknown>
+  ) => {
     sendAlert(AlertSeverity.LOW, title, message, service, metadata);
   },
 };
@@ -176,7 +267,9 @@ export const alerting = {
 /**
  * Récupère les alertes récentes (pour l'endpoint /api/alerts)
  */
-export const getRecentAlerts = (severity?: AlertSeverity, since?: number): Alert[] => {
+export const getRecentAlerts = (
+  severity?: AlertSeverity,
+  since?: number
+): Alert[] => {
   return alertStore.getRecentAlerts(severity, since);
 };
-

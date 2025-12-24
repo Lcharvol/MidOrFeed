@@ -146,6 +146,3 @@ export const CacheTTL = {
   DAY: 24 * 60 * 60 * 1000,
 } as const;
 
-// Exposer cache pour les tests et nettoyage
-export { cache };
-

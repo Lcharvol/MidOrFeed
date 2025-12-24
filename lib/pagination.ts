@@ -14,8 +14,8 @@ export const paginationSchema = z.object({
     .optional()
     .transform((val) => {
       const parsed = val ? parseInt(val, 10) : 20;
-      // Limiter entre 1 et 100
-      return Math.max(1, Math.min(100, parsed));
+      // Limiter entre 1 et 1000 (augmenté pour permettre de récupérer tous les champions)
+      return Math.max(1, Math.min(1000, parsed));
     }),
 });
 

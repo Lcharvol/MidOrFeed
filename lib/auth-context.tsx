@@ -36,7 +36,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (user: unknown) => void | Promise<void>;
+  login: (user: unknown, token?: string) => void | Promise<void>;
   logout: () => void;
 }
 
@@ -60,16 +60,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback((userData: unknown) => {
+  const login = useCallback((userData: unknown, token?: string) => {
     const castUser = userData as User;
     setUser(castUser);
     localStorage.setItem("user", JSON.stringify(castUser));
+    if (token) {
+      localStorage.setItem("token", token);
+    }
     setIsLoading(false);
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setIsLoading(false);
   }, []);
 
