@@ -1,12 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { ItemIcon } from "@/components/ItemIcon";
 import { SpellIcon } from "@/components/SpellIcon";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RecentMatchEntry } from "../RecentMatchesSection";
 import { MatchParticipants } from "./MatchParticipants";
+import { SparklesIcon } from "lucide-react";
 
 interface MatchEntryProps {
   match: RecentMatchEntry;
@@ -199,6 +202,20 @@ export const MatchEntry = ({
                   showBorder
                   className="ml-0.5"
                 />
+              )}
+              {/* AI Analysis Button */}
+              {puuid && (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="ml-2 h-7 gap-1.5 text-xs"
+                >
+                  <Link href={`/ai-analysis/${match.matchId}?puuid=${puuid}`}>
+                    <SparklesIcon className="size-3.5" />
+                    Analyser
+                  </Link>
+                </Button>
               )}
             </div>
           </div>
