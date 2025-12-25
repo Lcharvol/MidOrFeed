@@ -98,8 +98,8 @@ export const prisma =
     }
   })();
 
-// Fermer la connexion à l'arrêt de l'application
-if (typeof window === "undefined" && process.env.NODE_ENV !== "production") {
+// Mettre en cache le client Prisma pour éviter de créer de nouvelles connexions
+if (typeof window === "undefined") {
   globalForPrisma.prisma = prisma;
 }
 
