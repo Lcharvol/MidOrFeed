@@ -45,6 +45,9 @@ const envSchema = z.object({
   // Slack Webhook URL (optionnel, pour les alertes)
   SLACK_WEBHOOK_URL: z.string().url().optional(),
 
+  // Anthropic API (pour l'analyse AI des matchs)
+  ANTHROPIC_API_KEY: z.string().optional(),
+
   // Rate limiting (configurable par environnement)
   RATE_LIMIT_AUTH_LIMIT: z
     .string()

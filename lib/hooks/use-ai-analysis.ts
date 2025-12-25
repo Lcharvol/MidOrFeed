@@ -1,101 +1,178 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { authenticatedFetch } from "@/lib/api-client";
 import { toast } from "sonner";
+
+// Types pour l'analyse
+export interface AIInsight {
+  type: "strength" | "weakness" | "tip";
+  category: string;
+  title: string;
+  description: string;
+  impact: "high" | "medium" | "low";
+  data?: Record<string, unknown>;
+}
+
+export interface KeyMoment {
+  timestamp: string;
+  event: string;
+  impact: "Positif" | "Négatif";
+  decision: string;
+}
+
+export interface ChampionPerformance {
+  championId: string;
+  championName: string;
+  performance: "excellent" | "good" | "average" | "poor";
+  reasons: string[];
+  suggestions: string[];
+}
+
+export interface MatchAnalysisResult {
+  overall: {
+    score: number;
+    summary: string;
+  };
+  strengths: AIInsight[];
+  weaknesses: AIInsight[];
+  tips: AIInsight[];
+  keyMoments: KeyMoment[];
+  championPerformance: ChampionPerformance;
+}
 
 interface UseAIAnalysisReturn {
   canAnalyze: boolean;
   isAnalyzing: boolean;
   remainingAnalyses: number;
-  startAnalysis: () => Promise<boolean>;
   isPremium: boolean;
+  analysis: MatchAnalysisResult | null;
+  error: string | null;
+  analyzeMatch: (matchId: string, participantPuuid: string) => Promise<boolean>;
+  refreshQuota: () => Promise<void>;
 }
-
-// Limites d'analyses par tier
-const ANALYSIS_LIMITS = {
-  free: 3, // 3 analyses par jour pour les gratuits
-  premium: Infinity, // Illimité pour les premium
-} as const;
 
 export function useAIAnalysis(): UseAIAnalysisReturn {
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [remainingAnalyses, setRemainingAnalyses] = useState(3);
+  const [isPremium, setIsPremium] = useState(false);
+  const [canAnalyze, setCanAnalyze] = useState(true);
+  const [analysis, setAnalysis] = useState<MatchAnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const isPremium = useMemo(() => {
-    if (!user?.subscriptionTier) return false;
+  // Vérifier si l'utilisateur est authentifié
+  const isAuthenticated = useMemo(() => !!user, [user]);
 
-    // Vérifier si l'abonnement est encore valide
-    if (user.subscriptionExpiresAt) {
-      const expiryDate = new Date(user.subscriptionExpiresAt);
-      const now = new Date();
+  // Rafraîchir le quota depuis l'API
+  const refreshQuota = useCallback(async () => {
+    if (!isAuthenticated) return;
 
-      if (user.subscriptionTier === "premium" && expiryDate > now) {
-        return true;
+    try {
+      const response = await authenticatedFetch("/api/ai/analyze-match", {
+        method: "GET",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCanAnalyze(data.canAnalyze);
+        setRemainingAnalyses(data.remaining === Infinity ? 999 : data.remaining);
+        setIsPremium(data.isPremium);
       }
+    } catch {
+      // Silently fail - will use default values
     }
+  }, [isAuthenticated]);
 
-    return false;
-  }, [user?.subscriptionTier, user?.subscriptionExpiresAt]);
-
-  const remainingAnalyses = useMemo(() => {
-    if (!user) return 0;
-
-    if (isPremium) {
-      return Infinity;
+  // Charger le quota au montage
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshQuota();
     }
+  }, [isAuthenticated, refreshQuota]);
 
-    // Réinitialiser le compteur si c'est un nouveau jour
-    const now = new Date();
-    const lastResetTimestamp = user.lastDailyReset || now.toISOString();
-    const lastReset = new Date(lastResetTimestamp);
-    const isNewDay =
-      now.getDate() !== lastReset.getDate() ||
-      now.getMonth() !== lastReset.getMonth() ||
-      now.getFullYear() !== lastReset.getFullYear();
+  // Analyser un match
+  const analyzeMatch = useCallback(
+    async (matchId: string, participantPuuid: string): Promise<boolean> => {
+      if (!isAuthenticated) {
+        setError("Vous devez être connecté pour analyser un match");
+        toast.error("Vous devez être connecté pour analyser un match");
+        return false;
+      }
 
-    if (isNewDay) {
-      return ANALYSIS_LIMITS.free;
-    }
+      if (!canAnalyze && !isPremium) {
+        setError("Limite d'analyses quotidiennes atteinte");
+        toast.error("Vous avez atteint votre limite d'analyses quotidiennes");
+        return false;
+      }
 
-    const used = user.dailyAnalysesUsed || 0;
-    return Math.max(0, ANALYSIS_LIMITS.free - used);
-  }, [user, isPremium]);
+      if (isAnalyzing) {
+        return false;
+      }
 
-  const canAnalyze = useMemo(() => {
-    return remainingAnalyses > 0 || isPremium;
-  }, [remainingAnalyses, isPremium]);
+      setIsAnalyzing(true);
+      setError(null);
+      setAnalysis(null);
 
-  const startAnalysis = async (): Promise<boolean> => {
-    if (!canAnalyze) {
-      toast.error(
-        isPremium
-          ? "Vous avez atteint votre limite quotidienne d'analyses gratuites"
-          : "Abonnez-vous pour des analyses illimitées!"
-      );
-      return false;
-    }
+      try {
+        const response = await authenticatedFetch("/api/ai/analyze-match", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            matchId,
+            participantPuuid,
+          }),
+        });
 
-    if (isAnalyzing) {
-      return false;
-    }
+        const data = await response.json();
 
-    setIsAnalyzing(true);
+        if (!response.ok) {
+          if (response.status === 429) {
+            setCanAnalyze(false);
+            setRemainingAnalyses(0);
+            setError("Limite d'analyses quotidiennes atteinte");
+            toast.error("Limite d'analyses quotidiennes atteinte");
+            return false;
+          }
 
-    // TODO: Incrémenter le compteur côté backend
-    // Pour l'instant, on retourne juste true
-    setTimeout(() => {
-      setIsAnalyzing(false);
-    }, 100);
+          setError(data.error || "Erreur lors de l'analyse");
+          toast.error(data.error || "Erreur lors de l'analyse du match");
+          return false;
+        }
 
-    return true;
-  };
+        setAnalysis(data.data);
+        setRemainingAnalyses(
+          data.remaining === Infinity ? 999 : data.remaining
+        );
+        setIsPremium(data.isPremium);
+        setCanAnalyze(data.remaining > 0 || data.isPremium);
+
+        toast.success("Analyse terminée avec succès");
+        return true;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Erreur lors de l'analyse";
+        setError(message);
+        toast.error(message);
+        return false;
+      } finally {
+        setIsAnalyzing(false);
+      }
+    },
+    [isAuthenticated, canAnalyze, isPremium, isAnalyzing]
+  );
 
   return {
-    canAnalyze,
+    canAnalyze: canAnalyze || isPremium,
     isAnalyzing,
-    remainingAnalyses,
-    startAnalysis,
+    remainingAnalyses: isPremium ? Infinity : remainingAnalyses,
     isPremium,
+    analysis,
+    error,
+    analyzeMatch,
+    refreshQuota,
   };
 }

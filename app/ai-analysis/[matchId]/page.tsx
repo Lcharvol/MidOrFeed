@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -21,210 +21,86 @@ import {
   TrendingUpIcon,
   ArrowLeftIcon,
   SparklesIcon,
+  RefreshCwIcon,
 } from "lucide-react";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
-import { useAIAnalysis } from "@/lib/hooks/use-ai-analysis";
+import { useAIAnalysis, type MatchAnalysisResult } from "@/lib/hooks/use-ai-analysis";
 import { useChampions } from "@/lib/hooks/use-champions";
-
-interface AIInsight {
-  type: "strength" | "weakness" | "tip";
-  category: string;
-  title: string;
-  description: string;
-  impact: "high" | "medium" | "low";
-  data?: Record<string, unknown>;
-}
-
-interface AIAnalysis {
-  overall: {
-    score: number;
-    summary: string;
-  };
-  strengths: AIInsight[];
-  weaknesses: AIInsight[];
-  tips: AIInsight[];
-  keyMoments: Array<{
-    timestamp: string;
-    event: string;
-    impact: string;
-    decision: string;
-  }>;
-  championPerformance: {
-    championId: string;
-    performance: "excellent" | "good" | "average" | "poor";
-    reasons: string[];
-    suggestions: string[];
-  };
-}
+import { useAuth } from "@/lib/auth-context";
 
 export default function AIAnalysisPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { t } = useI18n();
+  const { user } = useAuth();
   const matchId = params.matchId as string;
-  const { canAnalyze, remainingAnalyses } = useAIAnalysis();
+  const participantPuuid = searchParams.get("puuid") || user?.riotPuuid || "";
+
+  const {
+    canAnalyze,
+    isAnalyzing,
+    remainingAnalyses,
+    isPremium,
+    analysis,
+    error,
+    analyzeMatch,
+  } = useAIAnalysis();
   const { championKeyToIdMap } = useChampions();
 
-  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
-  const [isLoading, setIsLoading] = useState(!canAnalyze);
+  const [hasStartedAnalysis, setHasStartedAnalysis] = useState(false);
 
-  // Simuler une analyse IA avec de fausses données
+  // Démarrer l'analyse automatiquement au chargement
   useEffect(() => {
-    if (!canAnalyze) {
-      return;
+    if (matchId && participantPuuid && canAnalyze && !hasStartedAnalysis && !analysis) {
+      setHasStartedAnalysis(true);
+      analyzeMatch(matchId, participantPuuid);
     }
+  }, [matchId, participantPuuid, canAnalyze, hasStartedAnalysis, analysis, analyzeMatch]);
 
-    const generateMockAnalysis = async () => {
-      setIsLoading(true);
-      // Simuler un délai d'analyse
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const mockAnalysis: AIAnalysis = {
-        overall: {
-          score: 72,
-          summary:
-            "Performance solide avec de bonnes décisions macro, mais quelques erreurs de mécaniques ont coûté des opportunités. Focus sur les réactions en combat serait bénéfique.",
-        },
-        strengths: [
-          {
-            type: "strength",
-            category: "Vision",
-            title: "Excellent vision score",
-            description:
-              "Vous avez placé 45 wards et détruit 12 wards ennemies, ce qui a donné un net avantage à votre équipe.",
-            impact: "high",
-            data: { visionScore: 45, wardsCleared: 12 },
-          },
-          {
-            type: "strength",
-            category: "Objectifs",
-            title: "Gestion des objectifs",
-            description:
-              "Votre participation aux dragons et Barons a été cruciale pour sécuriser la victoire.",
-            impact: "high",
-            data: { dragonParticipation: "80%", baronParticipation: "100%" },
-          },
-        ],
-        weaknesses: [
-          {
-            type: "weakness",
-            category: "Positionnement",
-            title: "Mauvais positionnement en combat",
-            description:
-              "Vous avez été attrapé 8 fois en combat d'équipe, ce qui a donné l'avantage à l'ennemi.",
-            impact: "high",
-            data: { deathsFromPositioning: 8 },
-          },
-          {
-            type: "weakness",
-            category: "Farm",
-            title: "CS sous-optimal",
-            description:
-              "Votre CS/min de 5.2 est en dessous de la moyenne attendue pour ce rang et ce champion.",
-            impact: "medium",
-            data: { csPerMin: 5.2, expectedCsPerMin: 6.8 },
-          },
-        ],
-        tips: [
-          {
-            type: "tip",
-            category: "Tactique",
-            title: "Focus early game",
-            description:
-              "Votre champion excelle en early game. Essayez de forcer plus de skirmishes avant le niveau 6.",
-            impact: "high",
-          },
-          {
-            type: "tip",
-            category: "Build",
-            title: "Adaptation de build",
-            description:
-              "Contre cette composition ennemie, un build plus défensif aurait été plus efficace.",
-            impact: "medium",
-          },
-        ],
-        keyMoments: [
-          {
-            timestamp: "03:42",
-            event: "First blood",
-            impact: "Positif",
-            decision:
-              "Bonne rotation après avoir poussé votre vague, la pression sur la map était excellente.",
-          },
-          {
-            timestamp: "15:23",
-            event: "Dragon steal raté",
-            impact: "Négatif",
-            decision:
-              "Timing un peu tardif sur le smite. Essayez de compter les dégâts du dragon pour un timing plus précis.",
-          },
-          {
-            timestamp: "28:45",
-            event: "Flash utilisé",
-            impact: "Négatif",
-            decision:
-              "Utilisation du flash pour rejoindre un combat déjà perdu. Il aurait pu être sauvegardé pour un moment plus crucial.",
-          },
-        ],
-        championPerformance: {
-          championId: "Yasuo",
-          performance: "good",
-          reasons: [
-            "Bonne gestion de la vague et trades efficaces",
-            "Farm constant tout au long de la partie",
-            "Engagements bien exécutés en combat d'équipe",
-          ],
-          suggestions: [
-            "Pratiquer les airblades et les beyblades",
-            "Améliorer la gestion des minions pour plus de CS",
-            "Timing des wall dashes à perfectionner",
-          ],
-        },
-      };
-
-      setAnalysis(mockAnalysis);
-      setIsLoading(false);
-    };
-
-    generateMockAnalysis();
-  }, [matchId, canAnalyze]);
+  const handleRetryAnalysis = () => {
+    if (matchId && participantPuuid) {
+      analyzeMatch(matchId, participantPuuid);
+    }
+  };
 
   const getInsightIcon = (type: string) => {
     switch (type) {
       case "strength":
-        return <CheckCircleIcon className="size-5 text-green-500" />;
+        return <CheckCircleIcon className="size-5 text-success" />;
       case "weakness":
-        return <AlertTriangleIcon className="size-5 text-red-500" />;
+        return <AlertTriangleIcon className="size-5 text-danger" />;
       case "tip":
-        return <SparklesIcon className="size-5 text-blue-500" />;
+        return <SparklesIcon className="size-5 text-info" />;
       default:
         return null;
     }
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-500";
-    if (score >= 60) return "text-yellow-500";
-    return "text-red-500";
+    if (score >= 80) return "text-success";
+    if (score >= 60) return "text-warning";
+    return "text-danger";
   };
 
   const getPerformanceColor = (performance: string) => {
     switch (performance) {
       case "excellent":
-        return "bg-green-500 hover:bg-green-500";
+        return "bg-success hover:bg-success";
       case "good":
-        return "bg-blue-500 hover:bg-blue-500";
+        return "bg-info hover:bg-info";
       case "average":
-        return "bg-yellow-500 hover:bg-yellow-500";
+        return "bg-warning hover:bg-warning";
       case "poor":
-        return "bg-red-500 hover:bg-red-500";
+        return "bg-danger hover:bg-danger";
       default:
         return "";
     }
   };
 
-  if (isLoading) {
+  // État de chargement
+  if (isAnalyzing) {
     return (
       <div className="container mx-auto py-10">
         <Card>
@@ -237,55 +113,8 @@ export default function AIAnalysisPage() {
               <p className="text-muted-foreground">
                 Notre IA analyse votre match en profondeur
               </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!analysis) {
-    if (!canAnalyze) {
-      return (
-        <div className="container mx-auto py-10">
-          <Card className="border-2 border-primary/20">
-            <CardContent className="py-20">
-              <div className="text-center max-w-2xl mx-auto">
-                <AlertTriangleIcon className="size-16 mx-auto text-primary mb-4" />
-                <h3 className="text-2xl font-semibold mb-2">
-                  Limite d&apos;analyses atteinte
-                </h3>
-                <p className="text-muted-foreground mb-6">
-                  Vous avez utilisé toutes vos analyses gratuites aujourd&apos;hui.
-                  Revenez demain ou passez à Premium pour des analyses
-                  illimitées.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" asChild>
-                    {/* Premium hidden per Riot policy */}
-                  </Button>
-                  <Button size="lg" variant="outline" asChild>
-                    <Link href="/summoners/matches">Retour aux matchs</Link>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    return (
-      <div className="container mx-auto py-10">
-        <Card>
-          <CardContent className="py-20">
-            <div className="text-center">
-              <AlertTriangleIcon className="size-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">
-                Aucune analyse disponible
-              </h3>
-              <p className="text-muted-foreground">
-                Impossible de charger l&apos;analyse pour ce match
+              <p className="text-sm text-muted-foreground mt-2">
+                Cela peut prendre quelques secondes
               </p>
             </div>
           </CardContent>
@@ -294,13 +123,104 @@ export default function AIAnalysisPage() {
     );
   }
 
+  // Erreur ou limite atteinte
+  if (error || (!canAnalyze && !analysis)) {
+    return (
+      <div className="container mx-auto py-10">
+        <Card className="border-2 border-primary/20">
+          <CardContent className="py-20">
+            <div className="text-center max-w-2xl mx-auto">
+              <AlertTriangleIcon className="size-16 mx-auto text-warning mb-4" />
+              <h3 className="text-2xl font-semibold mb-2">
+                {!canAnalyze
+                  ? "Limite d'analyses atteinte"
+                  : "Erreur lors de l'analyse"}
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                {!canAnalyze
+                  ? "Vous avez utilisé toutes vos analyses gratuites aujourd'hui. Revenez demain ou passez à Premium pour des analyses illimitées."
+                  : error || "Une erreur s'est produite lors de l'analyse du match."}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {canAnalyze && (
+                  <Button size="lg" onClick={handleRetryAnalysis}>
+                    <RefreshCwIcon className="mr-2 size-4" />
+                    Réessayer
+                  </Button>
+                )}
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/summoners">Retour au profil</Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Pas de PUUID disponible
+  if (!participantPuuid) {
+    return (
+      <div className="container mx-auto py-10">
+        <Card>
+          <CardContent className="py-20">
+            <div className="text-center">
+              <AlertTriangleIcon className="size-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">
+                Impossible d&apos;identifier le joueur
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Veuillez lier votre compte Riot ou spécifier le joueur à analyser.
+              </p>
+              <Button variant="outline" asChild>
+                <Link href="/settings">Lier mon compte Riot</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Pas d'analyse disponible
+  if (!analysis) {
+    return (
+      <div className="container mx-auto py-10">
+        <Card>
+          <CardContent className="py-20">
+            <div className="text-center">
+              <BrainIcon className="size-16 mx-auto text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">
+                Prêt à analyser
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Cliquez sur le bouton ci-dessous pour lancer l&apos;analyse de ce match.
+              </p>
+              <Button size="lg" onClick={handleRetryAnalysis} disabled={!canAnalyze}>
+                <SparklesIcon className="mr-2 size-4" />
+                Lancer l&apos;analyse
+              </Button>
+              {!canAnalyze && (
+                <p className="text-sm text-muted-foreground mt-4">
+                  Vous avez atteint votre limite quotidienne d&apos;analyses.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Affichage de l'analyse
   return (
     <div className="container mx-auto py-10">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/summoners/matches">
+            <Link href="/summoners">
               <ArrowLeftIcon className="size-5" />
             </Link>
           </Button>
@@ -326,7 +246,7 @@ export default function AIAnalysisPage() {
 
       {/* Score Global */}
       <Card className="mb-8 border-2 border-primary/20">
-        <CardHeader className="bg-gradient-to-r from-primary/5 via-purple-500/5 to-primary/5">
+        <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/5 to-transparent">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-2xl mb-2">Score Global</CardTitle>
@@ -349,10 +269,10 @@ export default function AIAnalysisPage() {
       </Card>
 
       {/* Performances Champion */}
-      <Card className="mb-8 border-2 border-blue-500/20">
-        <CardHeader className="bg-gradient-to-r from-blue-500/5 to-transparent">
+      <Card className="mb-8 border-2 border-info/20">
+        <CardHeader className="bg-gradient-to-r from-info-muted to-transparent">
           <CardTitle className="flex items-center gap-2">
-            <TargetIcon className="size-5 text-blue-500" />
+            <TargetIcon className="size-5 text-info" />
             Performance Champion
           </CardTitle>
         </CardHeader>
@@ -362,10 +282,10 @@ export default function AIAnalysisPage() {
               championId={analysis.championPerformance.championId}
               championKey={analysis.championPerformance.championId}
               championKeyToId={championKeyToIdMap}
-              alt={analysis.championPerformance.championId}
+              alt={analysis.championPerformance.championName}
               size={80}
               shape="rounded"
-              className="border-2 border-blue-500/30"
+              className="border-2 border-info/30"
             />
             <div className="flex-1 space-y-4">
               <div>
@@ -383,18 +303,18 @@ export default function AIAnalysisPage() {
                     : "Faible"}
                 </Badge>
                 <h3 className="text-xl font-bold mt-2">
-                  {analysis.championPerformance.championId}
+                  {analysis.championPerformance.championName}
                 </h3>
               </div>
 
               <div>
-                <h4 className="font-semibold mb-2 text-green-600 dark:text-green-400">
+                <h4 className="font-semibold mb-2 text-success">
                   Points forts
                 </h4>
                 <ul className="space-y-1">
                   {analysis.championPerformance.reasons.map((reason, idx) => (
                     <li key={idx} className="text-sm flex items-start gap-2">
-                      <CheckCircleIcon className="size-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircleIcon className="size-4 text-success mt-0.5 flex-shrink-0" />
                       {reason}
                     </li>
                   ))}
@@ -402,14 +322,14 @@ export default function AIAnalysisPage() {
               </div>
 
               <div>
-                <h4 className="font-semibold mb-2 text-blue-600 dark:text-blue-400">
+                <h4 className="font-semibold mb-2 text-info">
                   Suggestions d&apos;amélioration
                 </h4>
                 <ul className="space-y-1">
                   {analysis.championPerformance.suggestions.map(
                     (suggestion, idx) => (
                       <li key={idx} className="text-sm flex items-start gap-2">
-                        <TrendingUpIcon className="size-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <TrendingUpIcon className="size-4 text-info mt-0.5 flex-shrink-0" />
                         {suggestion}
                       </li>
                     )
@@ -423,10 +343,10 @@ export default function AIAnalysisPage() {
 
       <div className="grid md:grid-cols-2 gap-8 mb-8">
         {/* Strengths */}
-        <Card className="border-2 border-green-500/20">
-          <CardHeader className="bg-gradient-to-r from-green-500/5 to-transparent">
+        <Card className="border-2 border-success/20">
+          <CardHeader className="bg-gradient-to-r from-success-muted to-transparent">
             <CardTitle className="flex items-center gap-2">
-              <CheckCircleIcon className="size-5 text-green-500" />
+              <CheckCircleIcon className="size-5 text-success" />
               Points Forts
             </CardTitle>
           </CardHeader>
@@ -434,7 +354,7 @@ export default function AIAnalysisPage() {
             {analysis.strengths.map((strength, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-lg border-2 border-green-500/20 bg-green-500/5 hover:border-green-500/40 transition-colors"
+                className="p-4 rounded-lg border-2 border-success/20 bg-success-muted/50 hover:border-success/40 transition-colors"
               >
                 <div className="flex items-start gap-3 mb-2">
                   {getInsightIcon(strength.type)}
@@ -456,10 +376,10 @@ export default function AIAnalysisPage() {
         </Card>
 
         {/* Weaknesses */}
-        <Card className="border-2 border-red-500/20">
-          <CardHeader className="bg-gradient-to-r from-red-500/5 to-transparent">
+        <Card className="border-2 border-danger/20">
+          <CardHeader className="bg-gradient-to-r from-danger-muted to-transparent">
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangleIcon className="size-5 text-red-500" />
+              <AlertTriangleIcon className="size-5 text-danger" />
               Points à Améliorer
             </CardTitle>
           </CardHeader>
@@ -467,7 +387,7 @@ export default function AIAnalysisPage() {
             {analysis.weaknesses.map((weakness, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-lg border-2 border-red-500/20 bg-red-500/5 hover:border-red-500/40 transition-colors"
+                className="p-4 rounded-lg border-2 border-danger/20 bg-danger-muted/50 hover:border-danger/40 transition-colors"
               >
                 <div className="flex items-start gap-3 mb-2">
                   {getInsightIcon(weakness.type)}
@@ -490,10 +410,10 @@ export default function AIAnalysisPage() {
       </div>
 
       {/* Tips */}
-      <Card className="mb-8 border-2 border-blue-500/20">
-        <CardHeader className="bg-gradient-to-r from-blue-500/5 to-transparent">
+      <Card className="mb-8 border-2 border-info/20">
+        <CardHeader className="bg-gradient-to-r from-info-muted to-transparent">
           <CardTitle className="flex items-center gap-2">
-            <SparklesIcon className="size-5 text-blue-500" />
+            <SparklesIcon className="size-5 text-info" />
             Conseils Personnalisés
           </CardTitle>
         </CardHeader>
@@ -501,7 +421,7 @@ export default function AIAnalysisPage() {
           {analysis.tips.map((tip, idx) => (
             <div
               key={idx}
-              className="p-4 rounded-lg border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/40 transition-colors"
+              className="p-4 rounded-lg border-2 border-info/20 bg-info-muted/50 hover:border-info/40 transition-colors"
             >
               <div className="flex items-start gap-3">
                 {getInsightIcon(tip.type)}
@@ -523,10 +443,10 @@ export default function AIAnalysisPage() {
       </Card>
 
       {/* Key Moments */}
-      <Card className="border-2 border-purple-500/20">
-        <CardHeader className="bg-gradient-to-r from-purple-500/5 to-transparent">
+      <Card className="border-2 border-primary/20">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
           <CardTitle className="flex items-center gap-2">
-            <TrophyIcon className="size-5 text-purple-500" />
+            <TrophyIcon className="size-5 text-primary" />
             Moments Clés
           </CardTitle>
         </CardHeader>
@@ -537,8 +457,8 @@ export default function AIAnalysisPage() {
                 key={idx}
                 className={`p-4 rounded-lg border-2 ${
                   moment.impact === "Positif"
-                    ? "border-green-500/20 bg-green-500/5"
-                    : "border-red-500/20 bg-red-500/5"
+                    ? "border-success/20 bg-success-muted/50"
+                    : "border-danger/20 bg-danger-muted/50"
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -546,8 +466,8 @@ export default function AIAnalysisPage() {
                     <div
                       className={`size-12 rounded-full flex items-center justify-center font-bold ${
                         moment.impact === "Positif"
-                          ? "bg-green-500/20 text-green-500"
-                          : "bg-red-500/20 text-red-500"
+                          ? "bg-success/20 text-success"
+                          : "bg-danger/20 text-danger"
                       }`}
                     >
                       {idx + 1}
@@ -562,8 +482,8 @@ export default function AIAnalysisPage() {
                       <Badge
                         className={
                           moment.impact === "Positif"
-                            ? "bg-green-500 hover:bg-green-500"
-                            : "bg-red-500 hover:bg-red-500"
+                            ? "bg-success hover:bg-success"
+                            : "bg-danger hover:bg-danger"
                         }
                       >
                         {moment.impact}
