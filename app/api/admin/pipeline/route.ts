@@ -92,7 +92,12 @@ async function runOneCycle(
     state.currentStep = "process";
     pushLog("Process en cours");
     const { POST: PROCESS } = await import("@/app/api/crawl/process/route");
-    const res = await PROCESS();
+    const req = new NextRequest("http://internal/api/crawl/process", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ batchSize: 10, delayBetweenPlayers: 500 }),
+    });
+    const res = await PROCESS(req);
     if (res?.ok) {
       let json: ProcessResponse | null = null;
       try {
