@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
+import { z } from "zod";
 
 // Mapping des platformId vers les regions
 const PLATFORM_TO_REGION: Record<string, string> = {
@@ -23,11 +24,71 @@ const PLATFORM_TO_REGION: Record<string, string> = {
   VN2: "vn2",
 };
 
-// Limiteur global par région (token spacing + backoff sur 429)
-type LimiterState = { nextAt: number };
+// État global du processus de sync (en mémoire)
 declare global {
+  // eslint-disable-next-line no-var
+  var __SYNC_ACCOUNTS_STATE__: SyncAccountsState | undefined;
+  // eslint-disable-next-line no-var
   var __RIOT_REGION_LIMITER__: Record<string, LimiterState> | undefined;
 }
+
+interface SyncAccountsState {
+  isRunning: boolean;
+  startedAt: Date | null;
+  totalAccounts: number;
+  processedAccounts: number;
+  accountsCreated: number;
+  accountsUpdated: number;
+  accountsSkipped: number;
+  riotApiCalls: number;
+  riotApiErrors: number;
+  rateLimitHits: number;
+  currentAccount: {
+    puuid: string;
+    region: string;
+    gameName?: string | null;
+  } | null;
+  lastError: string | null;
+  estimatedTimeRemaining: number | null;
+  avgTimePerAccount: number;
+}
+
+const defaultSyncState: SyncAccountsState = {
+  isRunning: false,
+  startedAt: null,
+  totalAccounts: 0,
+  processedAccounts: 0,
+  accountsCreated: 0,
+  accountsUpdated: 0,
+  accountsSkipped: 0,
+  riotApiCalls: 0,
+  riotApiErrors: 0,
+  rateLimitHits: 0,
+  currentAccount: null,
+  lastError: null,
+  estimatedTimeRemaining: null,
+  avgTimePerAccount: 0.5,
+};
+
+function getSyncState(): SyncAccountsState {
+  if (!global.__SYNC_ACCOUNTS_STATE__) {
+    global.__SYNC_ACCOUNTS_STATE__ = { ...defaultSyncState };
+  }
+  return global.__SYNC_ACCOUNTS_STATE__;
+}
+
+function updateSyncState(updates: Partial<SyncAccountsState>) {
+  const state = getSyncState();
+  Object.assign(state, updates);
+}
+
+function resetSyncState() {
+  global.__SYNC_ACCOUNTS_STATE__ = { ...defaultSyncState };
+}
+
+// Limiteur par région
+type LimiterState = { nextAt: number };
+
 function getLimiter(region: string) {
   if (!global.__RIOT_REGION_LIMITER__) global.__RIOT_REGION_LIMITER__ = {};
   const key = region.toLowerCase();
@@ -36,15 +97,34 @@ function getLimiter(region: string) {
   }
   return global.__RIOT_REGION_LIMITER__[key];
 }
+
 async function awaitPermit(region: string, minSpacingMs = 250) {
   const limiter = getLimiter(region);
   const now = Date.now();
   if (limiter.nextAt > now) {
     await new Promise((r) => setTimeout(r, limiter.nextAt - now));
   }
-  // léger jitter pour désynchroniser
   const jitter = Math.floor(Math.random() * 50);
   limiter.nextAt = Date.now() + minSpacingMs + jitter;
+}
+
+const syncOptionsSchema = z.object({
+  maxRiotCallsPerCycle: z.number().min(0).optional().default(50),
+  batchSize: z.number().min(1).max(100).optional().default(20),
+  skipRiotApi: z.boolean().optional().default(false),
+});
+
+/**
+ * GET /api/admin/sync-accounts
+ * Retourne l'état actuel du processus de synchronisation
+ */
+export async function GET() {
+  const state = getSyncState();
+
+  return NextResponse.json({
+    success: true,
+    data: state,
+  });
 }
 
 /**
@@ -66,64 +146,167 @@ export async function POST(request?: Request | NextRequest) {
       return authError;
     }
   }
+
   try {
-    console.log("[SYNC-ACCOUNTS] Démarrage de la synchronisation...");
-    // Paramètres optionnels
-    let maxRiotCallsPerCycle = Number.POSITIVE_INFINITY;
+    const state = getSyncState();
+
+    // Vérifier si un processus est déjà en cours
+    if (state.isRunning) {
+      return NextResponse.json(
+        {
+          error: "Une synchronisation est déjà en cours",
+          data: state,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Parser les options
+    let options = { maxRiotCallsPerCycle: 50, batchSize: 20, skipRiotApi: false };
     if (request) {
       try {
         const body = await request.json().catch(() => ({}));
-        if (typeof body?.maxRiotCallsPerCycle === "number") {
-          maxRiotCallsPerCycle = Math.max(0, body.maxRiotCallsPerCycle | 0);
-        }
-      } catch {}
+        options = syncOptionsSchema.parse(body);
+      } catch {
+        // Utiliser les valeurs par défaut
+      }
     }
 
-    // 1. Récupérer tous les PUUID uniques des participants
-    const participants = await prisma.matchParticipant.findMany({
-      select: {
-        participantPUuid: true,
-      },
+    console.log("[SYNC-ACCOUNTS] Démarrage de la synchronisation...");
+
+    // Compter le nombre total de PUUIDs uniques
+    const totalCount = await prisma.matchParticipant.findMany({
+      select: { participantPUuid: true },
       distinct: ["participantPUuid"],
-      where: {
-        participantPUuid: { not: null },
-      },
+      where: { participantPUuid: { not: null } },
     });
 
-    console.log(`[SYNC-ACCOUNTS] ${participants.length} PUUID uniques trouvés`);
+    if (totalCount.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "Aucun compte à synchroniser",
+        data: {
+          totalPUUIDs: 0,
+          accountsCreated: 0,
+          accountsUpdated: 0,
+        },
+      });
+    }
 
-    let accountsCreated = 0;
-    const accountsUpdated = 0;
+    // Initialiser l'état
+    updateSyncState({
+      isRunning: true,
+      startedAt: new Date(),
+      totalAccounts: totalCount.length,
+      processedAccounts: 0,
+      accountsCreated: 0,
+      accountsUpdated: 0,
+      accountsSkipped: 0,
+      riotApiCalls: 0,
+      riotApiErrors: 0,
+      rateLimitHits: 0,
+      currentAccount: null,
+      lastError: null,
+      estimatedTimeRemaining: totalCount.length * state.avgTimePerAccount,
+    });
 
-    // 2. Pour chaque PUUID, créer ou mettre à jour le compte
-    let riotCalls = 0;
+    // Lancer le traitement en arrière-plan
+    syncAccountsInBackground(options);
+
+    return NextResponse.json({
+      success: true,
+      message: `Démarrage de la synchronisation de ${totalCount.length} comptes`,
+      data: getSyncState(),
+    });
+  } catch (error) {
+    console.error("[SYNC-ACCOUNTS] Erreur:", error);
+    resetSyncState();
+    return NextResponse.json(
+      { error: "Erreur lors du démarrage de la synchronisation" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/admin/sync-accounts
+ * Arrête le processus de synchronisation en cours
+ */
+export async function DELETE() {
+  const state = getSyncState();
+
+  if (!state.isRunning) {
+    return NextResponse.json({
+      success: true,
+      message: "Aucun processus en cours",
+    });
+  }
+
+  updateSyncState({ isRunning: false });
+
+  return NextResponse.json({
+    success: true,
+    message: "Processus arrêté",
+    data: getSyncState(),
+  });
+}
+
+async function syncAccountsInBackground(options: {
+  maxRiotCallsPerCycle: number;
+  batchSize: number;
+  skipRiotApi: boolean;
+}) {
+  const processingTimes: number[] = [];
+  let riotCalls = 0;
+
+  try {
+    // Récupérer tous les PUUIDs uniques
+    const participants = await prisma.matchParticipant.findMany({
+      select: { participantPUuid: true },
+      distinct: ["participantPUuid"],
+      where: { participantPUuid: { not: null } },
+    });
+
     for (const participant of participants) {
+      // Vérifier si le processus a été arrêté
+      if (!getSyncState().isRunning) {
+        break;
+      }
+
       if (!participant.participantPUuid) continue;
 
+      const startTime = Date.now();
+
       try {
+        // Mettre à jour l'état avec le compte en cours
+        updateSyncState({
+          currentAccount: {
+            puuid: participant.participantPUuid,
+            region: "...",
+          },
+        });
+
         // Récupérer les statistiques de ce joueur
         const playerStats = await prisma.matchParticipant.aggregate({
-          where: {
-            participantPUuid: participant.participantPUuid,
-          },
+          where: { participantPUuid: participant.participantPUuid },
           _count: { id: true },
-          _sum: {
-            kills: true,
-            deaths: true,
-            assists: true,
-          },
+          _sum: { kills: true, deaths: true, assists: true },
         });
 
         const totalMatches = playerStats?._count.id || 0;
 
-        if (totalMatches === 0) continue;
+        if (totalMatches === 0) {
+          const currentState = getSyncState();
+          updateSyncState({
+            processedAccounts: currentState.processedAccounts + 1,
+            accountsSkipped: currentState.accountsSkipped + 1,
+          });
+          continue;
+        }
 
         // Compter les victoires
         const wins = await prisma.matchParticipant.count({
-          where: {
-            participantPUuid: participant.participantPUuid,
-            win: true,
-          },
+          where: { participantPUuid: participant.participantPUuid, win: true },
         });
 
         const losses = totalMatches - wins;
@@ -141,138 +324,111 @@ export async function POST(request?: Request | NextRequest) {
         // Trouver le champion le plus joué
         const championStats = await prisma.matchParticipant.groupBy({
           by: ["championId"],
-          where: {
-            participantPUuid: participant.participantPUuid,
-          },
+          where: { participantPUuid: participant.participantPUuid },
           _count: { championId: true },
-          orderBy: {
-            _count: {
-              championId: "desc",
-            },
-          },
+          orderBy: { _count: { championId: "desc" } },
           take: 1,
         });
 
         const mostPlayedChampion = championStats[0]?.championId || null;
 
-        // Essayer de récupérer les détails du compte depuis un Match
-        // pour déterminer la région
+        // Déterminer la région depuis un match
         const sampleMatch = await prisma.matchParticipant.findFirst({
-          where: {
-            participantPUuid: participant.participantPUuid,
-          },
-          include: {
-            match: true,
-          },
+          where: { participantPUuid: participant.participantPUuid },
+          include: { match: true },
         });
 
         const platformId = sampleMatch?.match.platformId || "UNKNOWN";
         const region = PLATFORM_TO_REGION[platformId] || null;
 
-        // Récupérer les détails du compte Riot depuis l'API UNIQUEMENT si les données sont manquantes ou anciennes
+        // Mettre à jour l'état avec la région
+        updateSyncState({
+          currentAccount: {
+            puuid: participant.participantPUuid,
+            region: region || platformId,
+          },
+        });
+
+        // Récupérer les détails Riot si nécessaire
         let riotDetails = null;
-        if (region) {
+        if (region && !options.skipRiotApi && riotCalls < options.maxRiotCallsPerCycle) {
           const existing = await ShardedLeagueAccounts.findUniqueByPuuid(
             participant.participantPUuid,
             region.toLowerCase()
           );
+
           const freshEnough =
             existing &&
-            Date.now() - new Date(existing.updatedAt).getTime() <
-              6 * 60 * 60 * 1000; // < 6h
+            Date.now() - new Date(existing.updatedAt).getTime() < 6 * 60 * 60 * 1000;
           const hasBasicProfile =
             existing &&
-            (existing.riotGameName ||
-              existing.riotTagLine ||
-              existing.profileIconId);
-          if (freshEnough && hasBasicProfile) {
-            // éviter l'appel Riot si déjà frais
-          } else {
-            // quota atteint ? on saute l'appel Riot pour ce participant
-            if (riotCalls >= maxRiotCallsPerCycle) {
-              // Pas d'appel riotDetails, on se contente des stats locales
-            } else {
-              try {
-                await awaitPermit(region, 300);
-                // Appeler l'endpoint interne directement (évite les problèmes d'URL/port)
-                const { POST } = await import(
-                  "@/app/api/riot/get-account-details/route"
-                );
-                const req = new Request(
-                  "http://internal/api/riot/get-account-details",
-                  {
+            (existing.riotGameName || existing.riotTagLine || existing.profileIconId);
+
+          if (!freshEnough || !hasBasicProfile) {
+            try {
+              await awaitPermit(region, 300);
+
+              const { POST } = await import("@/app/api/riot/get-account-details/route");
+              const req = new Request("http://internal/api/riot/get-account-details", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  puuid: participant.participantPUuid,
+                  region: region.toLowerCase(),
+                }),
+              });
+
+              const riotResponse = await POST(req);
+              riotCalls++;
+
+              const currentState = getSyncState();
+              updateSyncState({ riotApiCalls: currentState.riotApiCalls + 1 });
+
+              if (riotResponse.ok) {
+                riotDetails = await riotResponse.json();
+              } else if (riotResponse.status === 429) {
+                // Rate limit
+                const currentState = getSyncState();
+                updateSyncState({ rateLimitHits: currentState.rateLimitHits + 1 });
+
+                const retryAfterHeader = riotResponse.headers.get("Retry-After");
+                const retryAfter = parseInt(retryAfterHeader || "2", 10);
+                const backoffMs = (isNaN(retryAfter) ? 2 : retryAfter) * 1000;
+
+                const limiter = getLimiter(region);
+                limiter.nextAt = Date.now() + backoffMs;
+                await new Promise((resolve) => setTimeout(resolve, backoffMs));
+
+                // Retry
+                await awaitPermit(region, 500);
+                const retryResponse = await POST(
+                  new Request("http://internal/api/riot/get-account-details", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       puuid: participant.participantPUuid,
                       region: region.toLowerCase(),
                     }),
-                  }
+                  })
                 );
-                const riotResponse = await POST(req);
-                riotCalls++;
 
-                if (riotResponse.ok) {
-                  riotDetails = await riotResponse.json();
-                  console.log(
-                    `[SYNC-ACCOUNTS] Données Riot récupérées pour ${participant.participantPUuid}:`,
-                    riotDetails
-                  );
-                } else if (riotResponse.status === 429) {
-                  // Rate limit exceeded - attendre avant de continuer
-                  console.warn(
-                    "[SYNC-ACCOUNTS] Rate limit atteint, attente..."
-                  );
-                  const retryAfterHeader =
-                    riotResponse.headers.get("Retry-After");
-                  const retryAfter = parseInt(retryAfterHeader || "2", 10);
-                  const backoffMs = (isNaN(retryAfter) ? 2 : retryAfter) * 1000;
-                  // positionner le prochain slot après backoff
-                  const limiter = getLimiter(region);
-                  limiter.nextAt = Date.now() + backoffMs;
-                  await new Promise((resolve) =>
-                    setTimeout(resolve, backoffMs)
-                  );
-
-                  // Retry once
-                  await awaitPermit(region, 500);
-                  const retryReq = new Request(
-                    "http://internal/api/riot/get-account-details",
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        puuid: participant.participantPUuid,
-                        region: region.toLowerCase(),
-                      }),
-                    }
-                  );
-                  const retryResponse = await POST(retryReq);
-
-                  if (retryResponse.ok) {
-                    riotDetails = await retryResponse.json();
-                  }
-                } else {
-                  console.error(
-                    `[SYNC-ACCOUNTS] Erreur Riot API pour ${participant.participantPUuid}:`,
-                    riotResponse.status
-                  );
+                if (retryResponse.ok) {
+                  riotDetails = await retryResponse.json();
                 }
-
-                // Délai entre les requêtes pour éviter les rate limits
-                await awaitPermit(region, 300);
-              } catch (error) {
-                console.error(
-                  `[SYNC-ACCOUNTS] Erreur Riot API pour ${participant.participantPUuid}:`,
-                  error
-                );
+              } else {
+                const currentState = getSyncState();
+                updateSyncState({ riotApiErrors: currentState.riotApiErrors + 1 });
               }
+            } catch (error) {
+              console.error(`[SYNC-ACCOUNTS] Erreur Riot API:`, error);
+              const currentState = getSyncState();
+              updateSyncState({ riotApiErrors: currentState.riotApiErrors + 1 });
             }
           }
         }
 
-        // Créer ou mettre à jour le compte dans la table shardée
-        const account = await ShardedLeagueAccounts.upsert({
+        // Créer ou mettre à jour le compte
+        await ShardedLeagueAccounts.upsert({
           puuid: participant.participantPUuid,
           riotRegion: (region || platformId).toLowerCase(),
           riotGameName: riotDetails?.data?.gameName ?? undefined,
@@ -292,34 +448,50 @@ export async function POST(request?: Request | NextRequest) {
           mostPlayedChampion,
         });
 
-        accountsCreated++;
+        const currentState = getSyncState();
+        updateSyncState({
+          accountsCreated: currentState.accountsCreated + 1,
+        });
       } catch (error) {
         console.error(
-          `[SYNC-ACCOUNTS] Erreur pour PUUID ${participant.participantPUuid}:`,
+          `[SYNC-ACCOUNTS] Erreur pour ${participant.participantPUuid}:`,
           error
         );
+        updateSyncState({
+          lastError: error instanceof Error ? error.message : "Erreur inconnue",
+        });
       }
+
+      // Mettre à jour les statistiques de temps
+      const processingTime = (Date.now() - startTime) / 1000;
+      processingTimes.push(processingTime);
+
+      if (processingTimes.length > 20) {
+        processingTimes.shift();
+      }
+
+      const avgTime = processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length;
+      const currentState = getSyncState();
+      const remainingAccounts = currentState.totalAccounts - currentState.processedAccounts - 1;
+
+      updateSyncState({
+        processedAccounts: currentState.processedAccounts + 1,
+        avgTimePerAccount: avgTime,
+        estimatedTimeRemaining: Math.max(0, remainingAccounts * avgTime),
+        currentAccount: null,
+      });
     }
 
-    console.log(`[SYNC-ACCOUNTS] ${accountsCreated} comptes synchronisés`);
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Synchronisation terminée",
-        data: {
-          totalPUUIDs: participants.length,
-          accountsCreated,
-          accountsUpdated,
-        },
-      },
-      { status: 200 }
-    );
+    console.log(`[SYNC-ACCOUNTS] Synchronisation terminée:`, getSyncState());
   } catch (error) {
-    console.error("[SYNC-ACCOUNTS] Erreur:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la synchronisation" },
-      { status: 500 }
-    );
+    console.error("[SYNC-ACCOUNTS] Erreur globale:", error);
+    updateSyncState({
+      lastError: error instanceof Error ? error.message : "Erreur globale",
+    });
+  } finally {
+    updateSyncState({
+      isRunning: false,
+      currentAccount: null,
+    });
   }
 }
