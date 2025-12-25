@@ -31,16 +31,16 @@ const QUEUE_TYPES: Record<string, string> = {
 };
 
 const TIER_COLORS: Record<string, string> = {
-  IRON: "bg-stone-500",
-  BRONZE: "bg-orange-600",
-  SILVER: "bg-gray-400",
-  GOLD: "bg-yellow-500",
-  PLATINUM: "bg-teal-400",
-  EMERALD: "bg-emerald-500",
-  DIAMOND: "bg-sky-400",
-  MASTER: "bg-purple-500",
-  GRANDMASTER: "bg-red-500",
-  CHALLENGER: "bg-yellow-500",
+  IRON: "bg-tier-iron",
+  BRONZE: "bg-tier-bronze",
+  SILVER: "bg-tier-silver",
+  GOLD: "bg-tier-gold",
+  PLATINUM: "bg-tier-platinum",
+  EMERALD: "bg-tier-emerald",
+  DIAMOND: "bg-tier-diamond",
+  MASTER: "bg-tier-master",
+  GRANDMASTER: "bg-tier-grandmaster",
+  CHALLENGER: "bg-tier-challenger",
 };
 
 const TIER_NAMES: Record<string, string> = {
@@ -229,7 +229,7 @@ export default function RankingByIdPage() {
               <CardContent className="relative">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    <div className="text-2xl font-bold text-success">
                       {league.wins}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -237,7 +237,7 @@ export default function RankingByIdPage() {
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                    <div className="text-2xl font-bold text-danger">
                       {league.losses}
                     </div>
                     <div className="text-xs text-muted-foreground">

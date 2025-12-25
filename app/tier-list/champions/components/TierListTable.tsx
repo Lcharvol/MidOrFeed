@@ -37,10 +37,10 @@ import type { WinRateTrend } from "@/types";
 
 const getWinRateColorClasses = (winRate?: number | null) => {
   if (winRate === undefined || winRate === null) return "text-muted-foreground";
-  if (winRate >= 56) return "text-emerald-400 font-semibold";
-  if (winRate >= 52) return "text-sky-400 font-semibold";
-  if (winRate >= 50) return "text-amber-400 font-semibold";
-  return "text-rose-400 font-semibold";
+  if (winRate >= 56) return "text-success font-semibold";
+  if (winRate >= 52) return "text-info font-semibold";
+  if (winRate >= 50) return "text-warning font-semibold";
+  return "text-danger font-semibold";
 };
 
 const WinRateTrendIndicator = ({ trend }: { trend?: WinRateTrend | null }) => {
@@ -51,7 +51,7 @@ const WinRateTrendIndicator = ({ trend }: { trend?: WinRateTrend | null }) => {
 
   const isUp = trend.trend === "up";
   const Icon = isUp ? TrendingUpIcon : TrendingDownIcon;
-  const colorClass = isUp ? "text-emerald-400" : "text-rose-400";
+  const colorClass = isUp ? "text-success" : "text-danger";
 
   return (
     <span

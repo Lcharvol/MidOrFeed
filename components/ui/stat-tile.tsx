@@ -23,43 +23,42 @@ type StatTileProps = {
 const emphasisToContainerClasses: Record<Variant, Record<Emphasis, string>> = {
   solid: {
     neutral: "bg-background/80 border-border/60",
-    positive:
-      "bg-emerald-500/15 border-emerald-500/30 text-emerald-100 shadow-[0_0_18px_rgba(16,185,129,0.20)]",
-    warning: "bg-amber-500/15 border-amber-500/30 text-amber-50",
-    danger: "bg-rose-500/20 border-rose-500/25 text-rose-50",
-    info: "bg-sky-500/15 border-sky-500/25 text-sky-50",
+    positive: "bg-success-muted border-success/30",
+    warning: "bg-warning-muted border-warning/30",
+    danger: "bg-danger-muted border-danger/30",
+    info: "bg-info-muted border-info/30",
   },
   subtle: {
     neutral: "bg-muted/25 border-border/60 backdrop-blur-sm",
-    positive: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
-    warning: "bg-amber-500/10 border-amber-500/30 text-amber-500",
-    danger: "bg-rose-500/10 border-rose-500/30 text-rose-400",
-    info: "bg-sky-500/10 border-sky-500/25 text-sky-400",
+    positive: "bg-success-muted/50 border-success/20",
+    warning: "bg-warning-muted/50 border-warning/20",
+    danger: "bg-danger-muted/50 border-danger/20",
+    info: "bg-info-muted/50 border-info/20",
   },
 };
 
 const labelColorByEmphasis: Record<Emphasis, string> = {
   neutral: "text-muted-foreground",
-  positive: "text-emerald-300/90",
-  warning: "text-amber-300/90",
-  danger: "text-rose-200/90",
-  info: "text-sky-200/90",
+  positive: "text-success-muted-foreground/80",
+  warning: "text-warning-muted-foreground/80",
+  danger: "text-danger-muted-foreground/80",
+  info: "text-info-muted-foreground/80",
 };
 
 const valueColorByEmphasis: Record<Emphasis, string> = {
   neutral: "text-foreground",
-  positive: "text-emerald-50",
-  warning: "text-amber-50",
-  danger: "text-rose-50",
-  info: "text-sky-50",
+  positive: "text-success-muted-foreground",
+  warning: "text-warning-muted-foreground",
+  danger: "text-danger-muted-foreground",
+  info: "text-info-muted-foreground",
 };
 
 const hintColorByEmphasis: Record<Emphasis, string> = {
   neutral: "text-muted-foreground/80",
-  positive: "text-emerald-100/80",
-  warning: "text-amber-100/80",
-  danger: "text-rose-100/80",
-  info: "text-sky-100/80",
+  positive: "text-success-muted-foreground/70",
+  warning: "text-warning-muted-foreground/70",
+  danger: "text-danger-muted-foreground/70",
+  info: "text-info-muted-foreground/70",
 };
 
 export const StatTile = ({

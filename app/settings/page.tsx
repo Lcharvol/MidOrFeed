@@ -98,11 +98,11 @@ export default function SettingsPage() {
         <Card className="mb-4">
           <CardHeader>
             <div className="flex items-center gap-2 mb-1">
-              <div className="p-2 rounded-md bg-purple-500/10">
+              <div className="p-2 rounded-md bg-primary/10">
                 {mounted && theme === "dark" ? (
-                  <MoonIcon className="size-4 text-purple-600 dark:text-purple-400" />
+                  <MoonIcon className="size-4 text-primary" />
                 ) : (
-                  <SunIcon className="size-4 text-purple-600 dark:text-purple-400" />
+                  <SunIcon className="size-4 text-primary" />
                 )}
               </div>
               <CardTitle>{t("settings.appearance")}</CardTitle>
@@ -178,8 +178,8 @@ export default function SettingsPage() {
         <Card className="mb-4">
           <CardHeader>
             <div className="flex items-center gap-2 mb-1">
-              <div className="p-2 rounded-md bg-blue-500/10">
-                <BellIcon className="size-4 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 rounded-md bg-info-muted">
+                <BellIcon className="size-4 text-info" />
               </div>
               <CardTitle>{t("settings.notifications")}</CardTitle>
             </div>
@@ -221,8 +221,8 @@ export default function SettingsPage() {
         <Card className="mb-4">
           <CardHeader>
             <div className="flex items-center gap-2 mb-1">
-              <div className="p-2 rounded-md bg-green-500/10">
-                <ShieldIcon className="size-4 text-green-600 dark:text-green-400" />
+              <div className="p-2 rounded-md bg-success-muted">
+                <ShieldIcon className="size-4 text-success" />
               </div>
               <CardTitle>{t("settings.privacy")}</CardTitle>
             </div>
@@ -259,8 +259,8 @@ export default function SettingsPage() {
         <Card className="mb-4">
           <CardHeader>
             <div className="flex items-center gap-2 mb-1">
-              <div className="p-2 rounded-md bg-orange-500/10">
-                <DatabaseIcon className="size-4 text-orange-600 dark:text-orange-400" />
+              <div className="p-2 rounded-md bg-warning-muted">
+                <DatabaseIcon className="size-4 text-warning" />
               </div>
               <CardTitle>{t("settings.data")}</CardTitle>
             </div>
@@ -307,24 +307,24 @@ export default function SettingsPage() {
         </Card>
 
         {/* Zone de danger */}
-        <Card className="border-red-500/20 bg-red-500/5">
+        <Card className="border-danger/20 bg-danger-muted">
           <CardHeader>
             <div className="flex items-center gap-2 mb-1">
-              <div className="p-2 rounded-md bg-red-500/20">
-                <Trash2Icon className="size-4 text-red-600 dark:text-red-400" />
+              <div className="p-2 rounded-md bg-danger/20">
+                <Trash2Icon className="size-4 text-danger" />
               </div>
-              <CardTitle className="text-red-600 dark:text-red-400">
+              <CardTitle className="text-danger">
                 {t("settings.dangerZone")}
               </CardTitle>
             </div>
-            <CardDescription className="text-red-600/70 dark:text-red-400/70">
+            <CardDescription className="text-danger-muted-foreground">
               {t("settings.irreversibleActions")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium text-red-600 dark:text-red-400">
+                <h3 className="text-sm font-medium text-danger">
                   {t("settings.deleteAccount")}
                 </h3>
                 <p className="text-sm text-muted-foreground">

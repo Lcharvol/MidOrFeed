@@ -41,6 +41,36 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Couleurs sémantiques */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-success-muted-foreground: var(--success-muted-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-warning-muted-foreground: var(--warning-muted-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-muted: var(--danger-muted);
+  --color-danger-muted-foreground: var(--danger-muted-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-muted: var(--info-muted);
+  --color-info-muted-foreground: var(--info-muted-foreground);
+
+  /* Tiers LoL */
+  --color-tier-iron: var(--tier-iron);
+  --color-tier-bronze: var(--tier-bronze);
+  --color-tier-silver: var(--tier-silver);
+  --color-tier-gold: var(--tier-gold);
+  --color-tier-platinum: var(--tier-platinum);
+  --color-tier-emerald: var(--tier-emerald);
+  --color-tier-diamond: var(--tier-diamond);
+  --color-tier-master: var(--tier-master);
+  --color-tier-grandmaster: var(--tier-grandmaster);
+  --color-tier-challenger: var(--tier-challenger);
 }
 
 :root {
@@ -85,6 +115,39 @@
   --sidebar-accent-foreground: oklch(0.18 0 0);
   --sidebar-border: oklch(0.88 0 0);
   --sidebar-ring: oklch(0.55 0.2 280);
+
+  /* Couleurs sémantiques - Light mode */
+  --success: oklch(0.45 0.15 145);
+  --success-foreground: oklch(1 0 0);
+  --success-muted: oklch(0.92 0.05 145);
+  --success-muted-foreground: oklch(0.35 0.12 145);
+
+  --warning: oklch(0.55 0.15 55);
+  --warning-foreground: oklch(0.25 0 0);
+  --warning-muted: oklch(0.95 0.05 55);
+  --warning-muted-foreground: oklch(0.45 0.12 55);
+
+  --danger: oklch(0.5 0.18 25);
+  --danger-foreground: oklch(1 0 0);
+  --danger-muted: oklch(0.95 0.04 25);
+  --danger-muted-foreground: oklch(0.45 0.15 25);
+
+  --info: oklch(0.5 0.15 230);
+  --info-foreground: oklch(1 0 0);
+  --info-muted: oklch(0.94 0.04 230);
+  --info-muted-foreground: oklch(0.4 0.12 230);
+
+  /* Tiers LoL - Light mode */
+  --tier-iron: oklch(0.45 0.02 60);
+  --tier-bronze: oklch(0.5 0.08 50);
+  --tier-silver: oklch(0.6 0.02 240);
+  --tier-gold: oklch(0.6 0.12 70);
+  --tier-platinum: oklch(0.55 0.1 180);
+  --tier-emerald: oklch(0.5 0.12 155);
+  --tier-diamond: oklch(0.55 0.12 250);
+  --tier-master: oklch(0.5 0.15 300);
+  --tier-grandmaster: oklch(0.45 0.18 15);
+  --tier-challenger: oklch(0.55 0.15 80);
 }
 
 .dark {
@@ -130,6 +193,39 @@
   --sidebar-ring: oklch(0.65 0.25 280);
 
   --primary-gradient: linear-gradient(135deg, #7c3aed, #6d28d9);
+
+  /* Couleurs sémantiques - Dark mode */
+  --success: oklch(0.6 0.18 145);
+  --success-foreground: oklch(0.15 0 0);
+  --success-muted: oklch(0.25 0.08 145);
+  --success-muted-foreground: oklch(0.75 0.12 145);
+
+  --warning: oklch(0.7 0.15 55);
+  --warning-foreground: oklch(0.15 0 0);
+  --warning-muted: oklch(0.28 0.06 55);
+  --warning-muted-foreground: oklch(0.8 0.1 55);
+
+  --danger: oklch(0.6 0.2 25);
+  --danger-foreground: oklch(1 0 0);
+  --danger-muted: oklch(0.25 0.08 25);
+  --danger-muted-foreground: oklch(0.75 0.15 25);
+
+  --info: oklch(0.65 0.15 230);
+  --info-foreground: oklch(0.15 0 0);
+  --info-muted: oklch(0.25 0.06 230);
+  --info-muted-foreground: oklch(0.75 0.1 230);
+
+  /* Tiers LoL - Dark mode */
+  --tier-iron: oklch(0.5 0.03 60);
+  --tier-bronze: oklch(0.55 0.1 50);
+  --tier-silver: oklch(0.7 0.02 240);
+  --tier-gold: oklch(0.7 0.15 70);
+  --tier-platinum: oklch(0.65 0.12 180);
+  --tier-emerald: oklch(0.6 0.15 155);
+  --tier-diamond: oklch(0.65 0.15 250);
+  --tier-master: oklch(0.6 0.18 300);
+  --tier-grandmaster: oklch(0.55 0.2 15);
+  --tier-challenger: oklch(0.65 0.18 80);
 }
 
 @layer base {

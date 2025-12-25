@@ -144,18 +144,18 @@ interface RankCardProps {
 
 const getTierColorClass = (tier: string): string => {
   const colors: Record<string, string> = {
-    IRON: "bg-stone-500",
-    BRONZE: "bg-orange-600",
-    SILVER: "bg-gray-400",
-    GOLD: "bg-yellow-500",
-    PLATINUM: "bg-teal-400",
-    EMERALD: "bg-emerald-500",
-    DIAMOND: "bg-sky-400",
-    MASTER: "bg-purple-500",
-    GRANDMASTER: "bg-red-500",
-    CHALLENGER: "bg-yellow-500",
+    IRON: "bg-tier-iron",
+    BRONZE: "bg-tier-bronze",
+    SILVER: "bg-tier-silver",
+    GOLD: "bg-tier-gold",
+    PLATINUM: "bg-tier-platinum",
+    EMERALD: "bg-tier-emerald",
+    DIAMOND: "bg-tier-diamond",
+    MASTER: "bg-tier-master",
+    GRANDMASTER: "bg-tier-grandmaster",
+    CHALLENGER: "bg-tier-challenger",
   };
-  return colors[tier] || "bg-gray-500";
+  return colors[tier] || "bg-muted";
 };
 
 const RankCard = ({ title, data, queueType }: RankCardProps) => {

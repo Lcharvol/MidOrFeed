@@ -12,98 +12,76 @@ type TierBadgeProps = {
   size?: "sm" | "md" | "lg";
 };
 
+// Tier color mappings using semantic theme colors
+type TierColorConfig = {
+  solid: string;
+  subtle: string;
+  outline: string;
+  shadow: string;
+};
+
+const tierColors: Record<string, TierColorConfig> = {
+  "S+": {
+    solid: "bg-success text-success-foreground border-success/50",
+    subtle: "bg-success-muted text-success-muted-foreground border-success/30",
+    outline: "bg-transparent text-success border-success/60",
+    shadow: "shadow-[0_0_20px_var(--success)/0.4,0_4px_12px_rgba(0,0,0,0.15)]",
+  },
+  S: {
+    solid: "bg-success text-success-foreground border-success/40",
+    subtle: "bg-success-muted text-success-muted-foreground border-success/25",
+    outline: "bg-transparent text-success border-success/50",
+    shadow: "shadow-[0_0_16px_var(--success)/0.3,0_4px_8px_rgba(0,0,0,0.1)]",
+  },
+  A: {
+    solid: "bg-info text-info-foreground border-info/40",
+    subtle: "bg-info-muted text-info-muted-foreground border-info/30",
+    outline: "bg-transparent text-info border-info/50",
+    shadow: "shadow-[0_0_12px_var(--info)/0.25,0_2px_8px_rgba(0,0,0,0.1)]",
+  },
+  B: {
+    solid: "bg-muted text-foreground border-border/60",
+    subtle: "bg-muted/50 text-muted-foreground border-border/40",
+    outline: "bg-transparent text-muted-foreground border-border",
+    shadow: "shadow-[0_2px_6px_rgba(0,0,0,0.08)]",
+  },
+  C: {
+    solid: "bg-warning text-warning-foreground border-warning/40",
+    subtle: "bg-warning-muted text-warning-muted-foreground border-warning/30",
+    outline: "bg-transparent text-warning border-warning/50",
+    shadow: "shadow-[0_0_10px_var(--warning)/0.2,0_2px_6px_rgba(0,0,0,0.1)]",
+  },
+  D: {
+    solid: "bg-danger text-danger-foreground border-danger/40",
+    subtle: "bg-danger-muted text-danger-muted-foreground border-danger/30",
+    outline: "bg-transparent text-danger border-danger/50",
+    shadow: "shadow-[0_0_10px_var(--danger)/0.2,0_2px_6px_rgba(0,0,0,0.1)]",
+  },
+  default: {
+    solid: "bg-muted/50 text-muted-foreground border-border/40",
+    subtle: "bg-muted/30 text-muted-foreground border-border/30",
+    outline: "bg-transparent text-muted-foreground border-border/60",
+    shadow: "shadow-none",
+  },
+};
+
 const getTierStyles = (
   tier: string,
   variant: "solid" | "subtle" | "outline"
 ) => {
   const baseStyles =
-    "relative inline-flex items-center justify-center font-bold uppercase tracking-wider transition-all duration-200 overflow-hidden";
+    "relative inline-flex items-center justify-center font-bold uppercase tracking-wider transition-all duration-200 overflow-hidden border-2";
 
-  if (tier === "S+") {
-    return cn(
-      baseStyles,
-      "bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-600",
-      "text-emerald-50",
-      "border-2 border-emerald-300/50",
-      "shadow-[0_0_20px_rgba(16,185,129,0.4),0_4px_12px_rgba(0,0,0,0.15)]",
-      "before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:-translate-x-full before:animate-shine",
-      variant === "subtle" && "opacity-90",
-      variant === "outline" &&
-        "bg-transparent text-emerald-400 border-emerald-400/60 shadow-none"
-    );
-  }
+  const config = tierColors[tier] || tierColors.default;
+  const isPremium = tier === "S+" || tier === "S";
 
-  if (tier === "S") {
-    return cn(
-      baseStyles,
-      "bg-gradient-to-br from-emerald-400 via-emerald-300 to-emerald-500",
-      "text-emerald-950",
-      "border-2 border-emerald-200/50",
-      "shadow-[0_0_16px_rgba(16,185,129,0.3),0_4px_8px_rgba(0,0,0,0.1)]",
-      "before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/15 before:to-transparent before:-translate-x-full before:animate-shine",
-      variant === "subtle" && "opacity-85",
-      variant === "outline" &&
-        "bg-transparent text-emerald-400 border-emerald-400/50 shadow-none"
-    );
-  }
-
-  if (tier === "A") {
-    return cn(
-      baseStyles,
-      "bg-gradient-to-br from-sky-500/90 via-sky-400/90 to-sky-600/90",
-      "text-sky-50",
-      "border-2 border-sky-300/40",
-      "shadow-[0_0_12px_rgba(14,165,233,0.25),0_2px_8px_rgba(0,0,0,0.1)]",
-      variant === "subtle" && "opacity-80",
-      variant === "outline" &&
-        "bg-transparent text-sky-400 border-sky-400/50 shadow-none"
-    );
-  }
-
-  if (tier === "B") {
-    return cn(
-      baseStyles,
-      "bg-gradient-to-br from-muted via-muted/95 to-muted",
-      "text-foreground",
-      "border-2 border-border/60",
-      "shadow-[0_2px_6px_rgba(0,0,0,0.08)]",
-      variant === "subtle" && "opacity-70",
-      variant === "outline" &&
-        "bg-transparent text-muted-foreground border-border shadow-none"
-    );
-  }
-
-  if (tier === "C") {
-    return cn(
-      baseStyles,
-      "bg-gradient-to-br from-amber-500/90 via-amber-400/90 to-amber-600/90",
-      "text-amber-950",
-      "border-2 border-amber-300/40",
-      "shadow-[0_0_10px_rgba(245,158,11,0.2),0_2px_6px_rgba(0,0,0,0.1)]",
-      variant === "subtle" && "opacity-75",
-      variant === "outline" &&
-        "bg-transparent text-amber-500 border-amber-500/50 shadow-none"
-    );
-  }
-
-  if (tier === "D") {
-    return cn(
-      baseStyles,
-      "bg-gradient-to-br from-rose-500/90 via-rose-400/90 to-rose-600/90",
-      "text-rose-50",
-      "border-2 border-rose-300/40",
-      "shadow-[0_0_10px_rgba(244,63,94,0.2),0_2px_6px_rgba(0,0,0,0.1)]",
-      variant === "subtle" && "opacity-70",
-      variant === "outline" &&
-        "bg-transparent text-rose-400 border-rose-400/50 shadow-none"
-    );
-  }
-
-  // Default for "-" or unknown tiers
   return cn(
     baseStyles,
-    "bg-muted/50 text-muted-foreground border-2 border-border/40 shadow-none",
-    variant === "outline" && "bg-transparent border-border/60"
+    config[variant],
+    variant !== "outline" && config.shadow,
+    isPremium &&
+      variant !== "outline" &&
+      "before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:-translate-x-full before:animate-shine"
   );
 };
 
@@ -135,7 +113,7 @@ export const TierBadge = ({
         sizeStyles,
         "group",
         "hover:scale-105 hover:shadow-lg",
-        isPremium && "hover:shadow-[0_0_24px_rgba(16,185,129,0.5)]",
+        isPremium && "hover:shadow-[0_0_24px_var(--success)/0.5]",
         className
       )}
       style={

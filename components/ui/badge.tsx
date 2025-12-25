@@ -19,26 +19,24 @@ const emphasisToClasses: Record<
     outline: "border-border/60 text-muted-foreground",
   },
   positive: {
-    solid:
-      "bg-emerald-500 text-emerald-50 border-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.35)]",
-    subtle:
-      "bg-emerald-500/12 text-emerald-400 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]",
-    outline: "border-emerald-500/50 text-emerald-400",
+    solid: "bg-success text-success-foreground border-success/80",
+    subtle: "bg-success-muted text-success-muted-foreground border-success/30",
+    outline: "border-success/50 text-success-muted-foreground",
   },
   warning: {
-    solid: "bg-amber-500 text-amber-950 border-amber-600",
-    subtle: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-    outline: "border-amber-500/40 text-amber-500",
+    solid: "bg-warning text-warning-foreground border-warning/80",
+    subtle: "bg-warning-muted text-warning-muted-foreground border-warning/30",
+    outline: "border-warning/50 text-warning-muted-foreground",
   },
   danger: {
-    solid: "bg-rose-500 text-rose-50 border-rose-600",
-    subtle: "bg-rose-500/15 text-rose-300 border-rose-500/30",
-    outline: "border-rose-500/40 text-rose-400",
+    solid: "bg-danger text-danger-foreground border-danger/80",
+    subtle: "bg-danger-muted text-danger-muted-foreground border-danger/30",
+    outline: "border-danger/50 text-danger-muted-foreground",
   },
   info: {
-    solid: "bg-sky-500 text-sky-50 border-sky-600",
-    subtle: "bg-sky-500/15 text-sky-300 border-sky-500/30",
-    outline: "border-sky-500/40 text-sky-400",
+    solid: "bg-info text-info-foreground border-info/80",
+    subtle: "bg-info-muted text-info-muted-foreground border-info/30",
+    outline: "border-info/50 text-info-muted-foreground",
   },
 };
 
@@ -48,18 +46,16 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-primary/20 bg-primary/15 text-primary hover:bg-primary/20 dark:text-primary-300 rounded-full",
+          "border-primary/20 bg-primary/15 text-primary hover:bg-primary/20 rounded-full",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90 rounded-full",
         destructive:
-          "border-red-500/20 bg-red-500/15 text-red-700 hover:bg-red-500/20 focus-visible:ring-red-500/20 dark:text-red-400 rounded-full",
+          "border-danger/20 bg-danger-muted text-danger-muted-foreground hover:bg-danger/20 focus-visible:ring-danger/20 rounded-full",
         outline:
           "border border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground rounded-full",
-        info: "border-blue-500/20 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-full",
-        warning:
-          "border-amber-500/20 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded-full",
-        success:
-          "border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-full",
+        info: "border-info/20 bg-info-muted text-info-muted-foreground rounded-full",
+        warning: "border-warning/20 bg-warning-muted text-warning-muted-foreground rounded-full",
+        success: "border-success/20 bg-success-muted text-success-muted-foreground rounded-full",
         // Placeholder variants for ColorBadge compatibility (used with emphasis prop)
         solid: "",
         subtle: "",

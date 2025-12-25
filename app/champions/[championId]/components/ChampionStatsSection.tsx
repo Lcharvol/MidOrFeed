@@ -7,23 +7,23 @@ type EmphasisKey = 'neutral' | 'info' | 'positive' | 'warning' | 'danger';
 
 const gradientByEmphasis: Record<EmphasisKey, string> = {
   neutral:
-    'from-white/70 via-white/40 to-white/70 dark:from-zinc-800/50 dark:via-zinc-800/20 dark:to-zinc-900/50',
+    'from-background via-muted/30 to-background',
   info:
-    'from-sky-200/60 via-sky-100/30 to-white/70 dark:from-sky-500/20 dark:via-sky-500/8 dark:to-sky-950/40',
+    'from-info-muted/60 via-info-muted/30 to-background dark:from-info-muted/40 dark:via-info-muted/20 dark:to-background',
   positive:
-    'from-emerald-200/60 via-emerald-100/30 to-white/70 dark:from-emerald-500/20 dark:via-emerald-500/8 dark:to-emerald-950/40',
+    'from-success-muted/60 via-success-muted/30 to-background dark:from-success-muted/40 dark:via-success-muted/20 dark:to-background',
   warning:
-    'from-amber-200/60 via-amber-100/30 to-white/70 dark:from-amber-500/20 dark:via-amber-500/8 dark:to-amber-950/40',
+    'from-warning-muted/60 via-warning-muted/30 to-background dark:from-warning-muted/40 dark:via-warning-muted/20 dark:to-background',
   danger:
-    'from-rose-200/60 via-rose-100/25 to-white/70 dark:from-rose-600/25 dark:via-rose-500/10 dark:to-rose-950/40',
+    'from-danger-muted/60 via-danger-muted/30 to-background dark:from-danger-muted/40 dark:via-danger-muted/20 dark:to-background',
 };
 
 const borderByEmphasis: Record<EmphasisKey, string> = {
-  neutral: 'border-zinc-200/70 dark:border-zinc-700/50',
-  info: 'border-sky-300/60 dark:border-sky-500/45',
-  positive: 'border-emerald-300/60 dark:border-emerald-500/45',
-  warning: 'border-amber-300/60 dark:border-amber-500/50',
-  danger: 'border-rose-300/60 dark:border-rose-500/50',
+  neutral: 'border-border/70',
+  info: 'border-info/40',
+  positive: 'border-success/40',
+  warning: 'border-warning/40',
+  danger: 'border-danger/40',
 };
 
 type ChampionStatsSectionProps = {
