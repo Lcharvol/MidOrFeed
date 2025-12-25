@@ -153,7 +153,7 @@ function Badge({
       {...props}
     >
       {leadingIcon ? <span className="text-[0.9em]">{leadingIcon}</span> : null}
-      <span>{children}</span>
+      <span className="inline-flex items-center gap-1">{children}</span>
       {trailingIcon ? (
         <span className="text-[0.9em]">{trailingIcon}</span>
       ) : null}
