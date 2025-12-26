@@ -12,6 +12,8 @@ import { RankInfoSection } from "./components/RankInfoSection";
 import { RecentGamesSummary } from "./components/RecentGamesSummary";
 import { RecentMatchesList } from "./components/RecentMatchesList";
 import { ProgressionCharts } from "./components/ProgressionCharts";
+import { ChampionMasterySection } from "./components/ChampionMasterySection";
+import { LiveGameBanner } from "./components/LiveGameBanner";
 import { useSummonerOverview } from "@/lib/hooks/use-summoner-overview";
 
 const SummonerOverviewByIdPage = () => {
@@ -105,6 +107,9 @@ const SummonerOverviewByIdPage = () => {
 
   return (
     <div className="space-y-4">
+      {/* Live Game Banner - shown when player is in game */}
+      {puuid && region && <LiveGameBanner puuid={puuid} region={region} />}
+
       <StatsGrid
         stats={overview.stats}
         winRateValue={winRateValue}
@@ -122,6 +127,7 @@ const SummonerOverviewByIdPage = () => {
             championKeyToId={championKeyToIdMap}
             resolveSlug={resolveSlug}
           />
+          {puuid && region && <ChampionMasterySection puuid={puuid} region={region} />}
           {puuid && <ProgressionCharts puuid={puuid} />}
         </aside>
         <main className="flex-1 space-y-4 min-w-0">
