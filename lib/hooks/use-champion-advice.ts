@@ -8,7 +8,7 @@ import {
   validateChampionAdviceListResponse,
   validateChampionAdviceSingleResponse,
 } from "@/lib/api/schemas";
-import { useApiSWR } from "./swr";
+import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "./swr";
 
 type UseChampionAdviceResult = {
   advices: ChampionAdviceSummary["advices"];
@@ -32,10 +32,7 @@ export const useChampionAdvice = (
     mutate,
   } = useApiSWR<ApiResponse<ChampionAdviceSummary>>(
     shouldFetch && championId ? apiKeys.championAdvice(championId) : null,
-    {
-      revalidateOnFocus: false,
-      refreshInterval: 120_000,
-    }
+    SEMI_DYNAMIC_CONFIG
   );
 
   const validation = useMemo(

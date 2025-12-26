@@ -8,7 +8,26 @@
     "edit": "Edit",
     "delete": "Delete",
     "confirm": "Confirm",
-    "back": "Back"
+    "back": "Back",
+    "or": "or",
+    "viewAll": "View all",
+    "games": "games",
+    "noData": "No data available"
+  },
+  "homeStats": {
+    "champions": "Champions",
+    "topChampions": "Top Champions",
+    "basedOnMatches": "Based on {count} matches",
+    "challengerLeaderboard": "Challenger Leaderboard",
+    "topPlayersEUW": "Top EUW players"
+  },
+  "homeSearch": {
+    "placeholder": "Game name",
+    "search": "Search",
+    "hint": "Search for a summoner to view their stats, matches and more",
+    "results": "Results",
+    "recentSearches": "Recent searches",
+    "minCharacters": "Enter at least 2 characters"
   },
   "header": {
     "login": "Login",

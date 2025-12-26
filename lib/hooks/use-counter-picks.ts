@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
 import type { CounterPickPair, CounterPickResponse } from "@/types";
-import { useApiSWR } from "./swr";
+import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "./swr";
 import { useChampions } from "./use-champions";
 import type { ApiResponse } from "@/types";
 import { apiKeys } from "@/lib/api/keys";
@@ -43,11 +43,7 @@ export const useCounterPicks = (initialChampionId: string) => {
     isValidating,
   } = useApiSWR<ApiResponse<CounterPickResponse>>(
     selectedChampion ? apiKeys.counterPicks(selectedChampion) : null,
-    {
-      refreshInterval: 120_000,
-      revalidateOnFocus: false,
-      revalidateIfStale: true,
-    }
+    SEMI_DYNAMIC_CONFIG
   );
 
   const validation = useMemo(

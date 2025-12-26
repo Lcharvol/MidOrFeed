@@ -1,10 +1,11 @@
 "use client";
 
 import useSWR from "swr";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import type { ApiResponse } from "@/types";
 import type { LeagueAccount } from "@/types";
 import { MATCHES_REFRESH_LIMIT } from "@/constants/matches";
+import { SEMI_DYNAMIC_CONFIG } from "./swr";
 
 type LeagueAccountApi = {
   data: {
@@ -17,10 +18,8 @@ type LeagueAccountApi = {
   };
 };
 
-const postJson = async <TRequest, TResponse>(
-  url: string,
-  body: TRequest
-): Promise<TResponse> => {
+// Fetcher POST optimisé avec gestion d'erreur
+const postFetcher = async ([url, body]: [string, unknown]): Promise<LeagueAccountApi> => {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -30,23 +29,25 @@ const postJson = async <TRequest, TResponse>(
     const errText = await res.text().catch(() => "");
     throw new Error(errText || `Request failed: ${res.status}`);
   }
-  return (await res.json()) as TResponse;
+  return res.json();
 };
 
 export function useAccount(puuid?: string | null) {
-  const key = puuid ? (["leagueAccountByPuuid", puuid] as const) : null;
+  // Clé SWR pour le cache et la déduplication
+  const key = puuid
+    ? ["/api/league-accounts/get-by-puuid", { puuid }] as const
+    : null;
+
+  // Ref pour éviter les appels simultanés
+  const isRefreshingRef = useRef(false);
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     key,
-    ([, id]) =>
-      postJson<{ puuid: string }, LeagueAccountApi>(
-        "/api/league-accounts/get-by-puuid",
-        { puuid: id }
-      ),
+    postFetcher,
     {
-      revalidateOnFocus: false,
-      shouldRetryOnError: false,
-      dedupingInterval: 10_000,
+      ...SEMI_DYNAMIC_CONFIG,
+      // Déduplication plus longue pour les comptes (2 minutes)
+      dedupingInterval: 2 * 60 * 1000,
     }
   );
 
@@ -63,23 +64,52 @@ export function useAccount(puuid?: string | null) {
     };
   }, [data]);
 
+  // Fonction POST réutilisable avec gestion d'erreur
+  const postRequest = useCallback(
+    async <TBody, TResponse>(url: string, body: TBody): Promise<TResponse> => {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(errText || `Request failed: ${res.status}`);
+      }
+      return res.json();
+    },
+    []
+  );
+
   const forceRefreshFromRiot = useCallback(
     async (region: string) => {
       if (!puuid) return { success: false, error: "Missing puuid" } as const;
-      const res = await postJson<
-        { puuid: string; region: string; force: boolean },
-        ApiResponse<{
-          puuid: string;
-          gameName?: string | null;
-          tagLine?: string | null;
-          summonerLevel?: number | null;
-          profileIconId?: number | null;
-        }>
-      >("/api/riot/get-account-details", { puuid, region, force: true });
-      await mutate();
-      return res;
+
+      // Éviter les appels simultanés
+      if (isRefreshingRef.current) {
+        return { success: false, error: "Refresh already in progress" } as const;
+      }
+
+      isRefreshingRef.current = true;
+
+      try {
+        const res = await postRequest<
+          { puuid: string; region: string; force: boolean },
+          ApiResponse<{
+            puuid: string;
+            gameName?: string | null;
+            tagLine?: string | null;
+            summonerLevel?: number | null;
+            profileIconId?: number | null;
+          }>
+        >("/api/riot/get-account-details", { puuid, region, force: true });
+        await mutate();
+        return res;
+      } finally {
+        isRefreshingRef.current = false;
+      }
     },
-    [mutate, puuid]
+    [mutate, puuid, postRequest]
   );
 
   const refreshAccountAndMatches = useCallback(
@@ -88,35 +118,50 @@ export function useAccount(puuid?: string | null) {
         return { success: false, error: "Missing puuid" } as const;
       }
 
-      const accountRes = await forceRefreshFromRiot(region);
-      if (!accountRes.success) {
-        return accountRes;
+      // Éviter les appels simultanés
+      if (isRefreshingRef.current) {
+        return { success: false, error: "Refresh already in progress" } as const;
       }
 
-      const matchResponse = await postJson<
-        { puuid: string; region: string; count: number },
-        {
-          message: string;
-          matchesCollected: number;
-          participantsCreated: number;
-          totalFound: number;
+      isRefreshingRef.current = true;
+
+      try {
+        const accountRes = await postRequest<
+          { puuid: string; region: string; force: boolean },
+          ApiResponse<unknown>
+        >("/api/riot/get-account-details", { puuid, region, force: true });
+
+        if (!accountRes.success) {
+          return accountRes;
         }
-      >("/api/matches/collect", {
-        puuid,
-        region,
-        count: MATCHES_REFRESH_LIMIT,
-      });
 
-      await mutate();
+        const matchResponse = await postRequest<
+          { puuid: string; region: string; count: number },
+          {
+            message: string;
+            matchesCollected: number;
+            participantsCreated: number;
+            totalFound: number;
+          }
+        >("/api/matches/collect", {
+          puuid,
+          region,
+          count: MATCHES_REFRESH_LIMIT,
+        });
 
-      return {
-        success: true as const,
-        matchesCollected: matchResponse.matchesCollected ?? 0,
-        participantsCreated: matchResponse.participantsCreated ?? 0,
-        totalFound: matchResponse.totalFound ?? 0,
-      };
+        await mutate();
+
+        return {
+          success: true as const,
+          matchesCollected: matchResponse.matchesCollected ?? 0,
+          participantsCreated: matchResponse.participantsCreated ?? 0,
+          totalFound: matchResponse.totalFound ?? 0,
+        };
+      } finally {
+        isRefreshingRef.current = false;
+      }
     },
-    [forceRefreshFromRiot, mutate, puuid]
+    [mutate, puuid, postRequest]
   );
 
   return {

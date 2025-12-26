@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from "react";
 import type { ApiResponse, ChampionEntity, ChampionSummary } from "@/types";
-import { useApiSWR } from "./swr";
+import { useApiSWR, STATIC_DATA_CONFIG } from "./swr";
 import { apiKeys } from "@/lib/api/keys";
 import { validateChampionListResponse } from "@/lib/api/schemas";
 
@@ -18,9 +18,7 @@ export const useChampions = (options?: { limit?: number }) => {
   const { data, error, isLoading, mutate, isValidating } =
     useApiSWR<ChampionsApiResponse>(
       apiKeys.champions({ page: 1, limit }),
-      {
-        revalidateOnFocus: false,
-      }
+      STATIC_DATA_CONFIG
     );
 
   const validation = useMemo(

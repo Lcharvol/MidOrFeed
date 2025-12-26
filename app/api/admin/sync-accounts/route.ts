@@ -174,14 +174,16 @@ export async function POST(request?: Request | NextRequest) {
 
     console.log("[SYNC-ACCOUNTS] Démarrage de la synchronisation...");
 
-    // Compter le nombre total de PUUIDs uniques
-    const totalCount = await prisma.matchParticipant.findMany({
-      select: { participantPUuid: true },
-      distinct: ["participantPUuid"],
-      where: { participantPUuid: { not: null } },
-    });
+    // Compter le nombre total de PUUIDs uniques avec une requête optimisée
+    // Utiliser une sous-requête COUNT DISTINCT au lieu de charger tous les enregistrements
+    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(DISTINCT "participantPUuid") as count
+      FROM "MatchParticipant"
+      WHERE "participantPUuid" IS NOT NULL
+    `;
+    const totalCount = Number(countResult[0]?.count ?? 0);
 
-    if (totalCount.length === 0) {
+    if (totalCount === 0) {
       return NextResponse.json({
         success: true,
         message: "Aucun compte à synchroniser",
@@ -197,7 +199,7 @@ export async function POST(request?: Request | NextRequest) {
     updateSyncState({
       isRunning: true,
       startedAt: new Date(),
-      totalAccounts: totalCount.length,
+      totalAccounts: totalCount,
       processedAccounts: 0,
       accountsCreated: 0,
       accountsUpdated: 0,
@@ -207,7 +209,7 @@ export async function POST(request?: Request | NextRequest) {
       rateLimitHits: 0,
       currentAccount: null,
       lastError: null,
-      estimatedTimeRemaining: totalCount.length * state.avgTimePerAccount,
+      estimatedTimeRemaining: totalCount * state.avgTimePerAccount,
     });
 
     // Lancer le traitement en arrière-plan
@@ -215,7 +217,7 @@ export async function POST(request?: Request | NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Démarrage de la synchronisation de ${totalCount.length} comptes`,
+      message: `Démarrage de la synchronisation de ${totalCount} comptes`,
       data: getSyncState(),
     });
   } catch (error) {
@@ -251,6 +253,9 @@ export async function DELETE() {
   });
 }
 
+// Taille de batch pour la pagination
+const BATCH_SIZE = 100;
+
 async function syncAccountsInBackground(options: {
   maxRiotCallsPerCycle: number;
   batchSize: number;
@@ -258,22 +263,49 @@ async function syncAccountsInBackground(options: {
 }) {
   const processingTimes: number[] = [];
   let riotCalls = 0;
+  let lastPuuid: string | null = null;
 
   try {
-    // Récupérer tous les PUUIDs uniques
-    const participants = await prisma.matchParticipant.findMany({
-      select: { participantPUuid: true },
-      distinct: ["participantPUuid"],
-      where: { participantPUuid: { not: null } },
-    });
+    // Traitement par batch avec pagination par curseur
+    // Au lieu de charger tous les PUUIDs en mémoire, on les récupère par petits lots
+    while (getSyncState().isRunning) {
+      // Récupérer un batch de PUUIDs distincts avec pagination par curseur
+      let batch: { participantPUuid: string }[];
 
-    for (const participant of participants) {
-      // Vérifier si le processus a été arrêté
-      if (!getSyncState().isRunning) {
+      if (lastPuuid) {
+        batch = await prisma.$queryRaw<{ participantPUuid: string }[]>`
+          SELECT DISTINCT "participantPUuid"
+          FROM "MatchParticipant"
+          WHERE "participantPUuid" IS NOT NULL
+            AND "participantPUuid" > ${lastPuuid}
+          ORDER BY "participantPUuid"
+          LIMIT ${BATCH_SIZE}
+        `;
+      } else {
+        batch = await prisma.$queryRaw<{ participantPUuid: string }[]>`
+          SELECT DISTINCT "participantPUuid"
+          FROM "MatchParticipant"
+          WHERE "participantPUuid" IS NOT NULL
+          ORDER BY "participantPUuid"
+          LIMIT ${BATCH_SIZE}
+        `;
+      }
+
+      // Si le batch est vide, on a terminé
+      if (batch.length === 0) {
         break;
       }
 
-      if (!participant.participantPUuid) continue;
+      // Mémoriser le dernier PUUID pour la pagination
+      lastPuuid = batch[batch.length - 1].participantPUuid;
+
+      for (const participant of batch) {
+        // Vérifier si le processus a été arrêté
+        if (!getSyncState().isRunning) {
+          break;
+        }
+
+        if (!participant.participantPUuid) continue;
 
       const startTime = Date.now();
 
@@ -480,6 +512,7 @@ async function syncAccountsInBackground(options: {
         estimatedTimeRemaining: Math.max(0, remainingAccounts * avgTime),
         currentAccount: null,
       });
+      }
     }
 
     console.log(`[SYNC-ACCOUNTS] Synchronisation terminée:`, getSyncState());

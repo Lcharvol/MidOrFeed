@@ -11,6 +11,7 @@ import type { RecentMatchEntry } from "./components/RecentMatchesSection";
 import { RankInfoSection } from "./components/RankInfoSection";
 import { RecentGamesSummary } from "./components/RecentGamesSummary";
 import { RecentMatchesList } from "./components/RecentMatchesList";
+import { ProgressionCharts } from "./components/ProgressionCharts";
 import { useSummonerOverview } from "@/lib/hooks/use-summoner-overview";
 
 const SummonerOverviewByIdPage = () => {
@@ -121,6 +122,7 @@ const SummonerOverviewByIdPage = () => {
             championKeyToId={championKeyToIdMap}
             resolveSlug={resolveSlug}
           />
+          {puuid && <ProgressionCharts puuid={puuid} />}
         </aside>
         <main className="flex-1 space-y-4 min-w-0">
           <RecentGamesSummary

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { ApiResponse, GameVersion } from "@/types";
-import { useApiSWR } from "./swr";
+import { useApiSWR, STATIC_DATA_CONFIG } from "./swr";
 import { apiKeys } from "@/lib/api/keys";
 
 type VersionsPayload = {
@@ -17,9 +17,10 @@ export const useGameVersions = () => {
     isLoading,
     isValidating,
     mutate,
-  } = useApiSWR<ApiResponse<VersionsPayload>>(apiKeys.riotVersions(), {
-    revalidateOnFocus: false,
-  });
+  } = useApiSWR<ApiResponse<VersionsPayload>>(
+    apiKeys.riotVersions(),
+    STATIC_DATA_CONFIG
+  );
 
   const versions = useMemo<GameVersion[]>(() => {
     if (!data || !("success" in data) || !data.success || !data.data) {

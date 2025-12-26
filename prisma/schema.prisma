@@ -422,3 +422,37 @@ model ChampionWinRateHistory {
   @@index([recordedAt])
   @@map("champion_win_rate_history")
 }
+
+model FavoritePlayer {
+  id        String   @id @default(cuid())
+  userId    String
+  puuid     String
+  region    String
+  gameName  String?
+  tagLine   String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, puuid])
+  @@index([userId])
+  @@index([puuid])
+  @@map("favorite_players")
+}
+
+model RankHistory {
+  id           String   @id @default(cuid())
+  puuid        String
+  region       String
+  queueType    String   @default("RANKED_SOLO_5x5")
+  tier         String
+  rank         String
+  leaguePoints Int
+  wins         Int
+  losses       Int
+  recordedAt   DateTime @default(now())
+
+  @@index([puuid, queueType])
+  @@index([puuid, recordedAt])
+  @@map("rank_history")
+}

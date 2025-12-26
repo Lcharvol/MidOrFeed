@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import type { ApiResponse, ChampionBuildSummary } from "@/types";
 import { apiKeys } from "@/lib/api/keys";
 import { validateChampionBuildResponse } from "@/lib/api/schemas";
-import { useApiSWR } from "./swr";
+import { useApiSWR, STATIC_DATA_CONFIG } from "./swr";
 
 type UseChampionBuildResult = {
   build: ChampionBuildSummary | null;
@@ -27,10 +27,7 @@ export const useChampionBuild = (
     mutate,
   } = useApiSWR<ApiResponse<ChampionBuildSummary>>(
     shouldFetch && championId ? apiKeys.championBuild(championId) : null,
-    {
-      revalidateOnFocus: false,
-      refreshInterval: 300_000,
-    }
+    STATIC_DATA_CONFIG
   );
 
   const validation = useMemo(

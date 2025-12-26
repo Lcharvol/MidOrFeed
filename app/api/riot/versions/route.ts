@@ -1,25 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import { getOrSetCache, CacheTTL, invalidateCachePrefix } from "@/lib/cache";
 
 export const GET = async () => {
   try {
-    const versions = await prisma.gameVersion.findMany({
-      orderBy: [
-        { isCurrent: "desc" },
-        { createdAt: "desc" },
-      ],
-    });
+    const cacheKey = "riot:versions";
 
-    const current = versions.find((entry) => entry.isCurrent)?.version ?? null;
+    const result = await getOrSetCache(
+      cacheKey,
+      CacheTTL.VERY_LONG, // 1 heure - les versions changent rarement
+      async () => {
+        const versions = await prisma.gameVersion.findMany({
+          orderBy: [
+            { isCurrent: "desc" },
+            { createdAt: "desc" },
+          ],
+        });
+
+        const current = versions.find((entry) => entry.isCurrent)?.version ?? null;
+
+        return {
+          versions,
+          currentVersion: current,
+        };
+      }
+    );
 
     return NextResponse.json(
       {
         success: true,
-        data: {
-          versions,
-          currentVersion: current,
-        },
+        data: result,
       },
       { status: 200 }
     );
@@ -80,6 +91,9 @@ export const PATCH = async (request: NextRequest) => {
         data: { isCurrent: true },
       });
     });
+
+    // Invalider le cache après mise à jour
+    invalidateCachePrefix("riot:versions");
 
     return NextResponse.json(
       {

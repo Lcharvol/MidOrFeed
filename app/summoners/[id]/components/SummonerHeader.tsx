@@ -2,7 +2,8 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StarIcon, UserIcon } from "lucide-react";
+import { UserIcon } from "lucide-react";
+import { FavoriteButton } from "@/components/FavoriteButton";
 
 type SummonerHeaderProps = {
   loading: boolean;
@@ -75,12 +76,15 @@ export const SummonerHeader = ({
                   </span>
                 )}
               </h1>
-              <button
-                className="rounded p-1 transition-colors hover:bg-accent"
-                aria-label="Ajouter aux favoris"
-              >
-                <StarIcon className="size-5 text-muted-foreground" />
-              </button>
+              {details?.puuid && region && (
+                <FavoriteButton
+                  puuid={details.puuid}
+                  region={region}
+                  gameName={details.gameName}
+                  tagLine={details.tagLine}
+                  variant="icon"
+                />
+              )}
             </div>
 
             {/* Région et Rang Ladder */}

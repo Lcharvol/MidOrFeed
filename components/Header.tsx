@@ -50,6 +50,7 @@ import {
   LogOutIcon,
   SettingsIcon,
   UserIcon,
+  UsersIcon,
   Loader2Icon,
   MoonIcon,
   SunIcon,
@@ -206,6 +207,14 @@ export function Header() {
 
     const meta: NavEntry[] = [
       {
+        key: "meta-compare",
+        href: "/compare",
+        icon: UsersIcon,
+        title: "Comparer",
+        description: "Compare les stats de deux joueurs.",
+        isActive: pathEquals("/compare"),
+      },
+      {
         key: "meta-counter-picks",
         href: "/counter-picks",
         icon: SwordIcon,
@@ -257,7 +266,8 @@ export function Header() {
             path &&
               (path.startsWith("/tier-list") ||
                 path === "/counter-picks" ||
-                path === "/leaderboard")
+                path === "/leaderboard" ||
+                path === "/compare")
           ),
       },
     ];

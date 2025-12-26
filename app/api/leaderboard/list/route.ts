@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getOrSetCache, CacheTTL } from "@/lib/cache";
 
 export async function GET(req: Request) {
   try {
@@ -10,15 +11,24 @@ export async function GET(req: Request) {
     const tierLower = tierParam.toLowerCase();
     const take = Math.min(parseInt(searchParams.get("take") || "200", 10), 500);
 
-    const entries = await prisma.leaderboardEntry.findMany({
-      where: {
-        region,
-        queueType: "RANKED_SOLO_5x5",
-        tier: { in: [tierUpper, tierLower] },
-      },
-      orderBy: { leaguePoints: "desc" },
-      take,
-    });
+    // Cache par région et tier - 5 minutes
+    const cacheKey = `leaderboard:${region}:${tierLower}:${take}`;
+
+    const entries = await getOrSetCache(
+      cacheKey,
+      CacheTTL.MEDIUM, // 5 minutes - le leaderboard change régulièrement
+      async () => {
+        return prisma.leaderboardEntry.findMany({
+          where: {
+            region,
+            queueType: "RANKED_SOLO_5x5",
+            tier: { in: [tierUpper, tierLower] },
+          },
+          orderBy: { leaguePoints: "desc" },
+          take,
+        });
+      }
+    );
 
     return NextResponse.json({ success: true, data: entries }, { status: 200 });
   } catch (e) {

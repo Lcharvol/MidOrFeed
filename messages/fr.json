@@ -8,7 +8,26 @@
     "edit": "Modifier",
     "delete": "Supprimer",
     "confirm": "Confirmer",
-    "back": "Retour"
+    "back": "Retour",
+    "or": "ou",
+    "viewAll": "Voir tout",
+    "games": "parties",
+    "noData": "Aucune donnée disponible"
+  },
+  "homeStats": {
+    "champions": "Champions",
+    "topChampions": "Top Champions",
+    "basedOnMatches": "Basé sur {count} matchs",
+    "challengerLeaderboard": "Classement Challenger",
+    "topPlayersEUW": "Top joueurs EUW"
+  },
+  "homeSearch": {
+    "placeholder": "Nom de jeu",
+    "search": "Rechercher",
+    "hint": "Recherchez un invocateur pour voir ses stats, matchs et bien plus",
+    "results": "Résultats",
+    "recentSearches": "Recherches récentes",
+    "minCharacters": "Entrez au moins 2 caractères"
   },
   "header": {
     "login": "Connexion",
