@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyAuth } from "@/lib/auth-utils";
+import { getAuthenticatedUser } from "@/lib/auth-utils";
 
 // GET /api/favorites - List all favorites for the current user
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
-    if (!authResult.success || !authResult.user) {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
       return NextResponse.json(
         { success: false, error: "Non autorise" },
         { status: 401 }
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     const favorites = await prisma.favoritePlayer.findMany({
-      where: { userId: authResult.user.id },
+      where: { userId: user.id },
       orderBy: { createdAt: "desc" },
     });
 
@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
 // POST /api/favorites - Add a player to favorites
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
-    if (!authResult.success || !authResult.user) {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
       return NextResponse.json(
         { success: false, error: "Non autorise" },
         { status: 401 }
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const existing = await prisma.favoritePlayer.findUnique({
       where: {
         userId_puuid: {
-          userId: authResult.user.id,
+          userId: user.id,
           puuid,
         },
       },
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     const favorite = await prisma.favoritePlayer.create({
       data: {
-        userId: authResult.user.id,
+        userId: user.id,
         puuid,
         region,
         gameName: gameName || null,
@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
 // DELETE /api/favorites - Remove a player from favorites
 export async function DELETE(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request);
-    if (!authResult.success || !authResult.user) {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
       return NextResponse.json(
         { success: false, error: "Non autorise" },
         { status: 401 }
@@ -111,7 +111,7 @@ export async function DELETE(request: NextRequest) {
     await prisma.favoritePlayer.delete({
       where: {
         userId_puuid: {
-          userId: authResult.user.id,
+          userId: user.id,
           puuid,
         },
       },
