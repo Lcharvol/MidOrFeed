@@ -1,40 +1,59 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Loader2Icon, PlusIcon, XIcon } from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Loader2Icon,
+  SaveIcon,
+  RotateCcwIcon,
+  XIcon,
+  SearchIcon,
+  CheckIcon,
+  ArrowRightLeftIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useChampions } from "@/lib/hooks/use-champions";
 import { useI18n } from "@/lib/i18n-context";
 import { authenticatedFetch } from "@/lib/api-client";
+import { useAuth } from "@/lib/auth-context";
 import type { ChampionEntity } from "@/types";
+import { cn } from "@/lib/utils";
 
-const ROLES = [
-  { value: "top", label: "Top Lane", icon: "⚔️" },
-  { value: "jungle", label: "Jungle", icon: "🌲" },
-  { value: "mid", label: "Mid Lane", icon: "🔮" },
-  { value: "adc", label: "ADC / Bot Carry", icon: "🏹" },
-  { value: "support", label: "Support", icon: "🛡️" },
+type RoleKey = "top" | "jungle" | "mid" | "adc" | "support";
+
+const ROLES: { key: RoleKey; label: string; shortLabel: string }[] = [
+  { key: "top", label: "Top", shortLabel: "TOP" },
+  { key: "jungle", label: "Jungle", shortLabel: "JGL" },
+  { key: "mid", label: "Mid", shortLabel: "MID" },
+  { key: "adc", label: "ADC", shortLabel: "ADC" },
+  { key: "support", label: "Support", shortLabel: "SUP" },
 ];
 
 export default function CreateCompositionPage() {
   const { t } = useI18n();
-  const [compositionName, setCompositionName] = useState("");
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const [selectedRole, setSelectedRole] = useState<RoleKey | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedChampions, setSelectedChampions] = useState<
-    Record<string, ChampionEntity | null>
-  >({
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [compositionName, setCompositionName] = useState("");
+  const [swapMode, setSwapMode] = useState<RoleKey | null>(null);
+
+  const [composition, setComposition] = useState<Record<RoleKey, ChampionEntity | null>>({
     top: null,
     jungle: null,
     mid: null,
@@ -42,12 +61,9 @@ export default function CreateCompositionPage() {
     support: null,
   });
 
-  const {
-    champions,
-    isLoading: championsLoading,
-    error: championsError,
-  } = useChampions();
+  const { champions, isLoading: championsLoading } = useChampions();
 
+  // Filter champions based on search
   const filteredChampions = useMemo(() => {
     if (!champions.length) return [];
     const normalized = searchTerm.trim().toLowerCase();
@@ -57,388 +73,377 @@ export default function CreateCompositionPage() {
     );
   }, [champions, searchTerm]);
 
-  // Calcul des stats moyennes memoizé pour éviter les recalculs répétés
-  const averageStats = useMemo(() => {
-    const selectedList = Object.values(selectedChampions).filter(
-      (champ): champ is ChampionEntity => champ !== null
+  // Get list of already selected champion IDs
+  const selectedChampionIds = useMemo(() => {
+    return new Set(
+      Object.values(composition)
+        .filter((c): c is ChampionEntity => c !== null)
+        .map((c) => c.id)
     );
+  }, [composition]);
 
-    if (selectedList.length === 0) {
-      return null;
+  // Count filled slots
+  const filledCount = useMemo(() => {
+    return Object.values(composition).filter((c) => c !== null).length;
+  }, [composition]);
+
+  // Handle clicking on a role slot
+  const handleRoleClick = useCallback((role: RoleKey) => {
+    if (swapMode) {
+      // We're in swap mode - swap the two roles
+      if (swapMode !== role) {
+        setComposition((prev) => ({
+          ...prev,
+          [swapMode]: prev[role],
+          [role]: prev[swapMode],
+        }));
+        toast.success("Champions echanges");
+      }
+      setSwapMode(null);
+    } else if (composition[role]) {
+      // Role has a champion - enter swap mode
+      setSwapMode(role);
+      setSelectedRole(null);
+    } else {
+      // Empty role - select it for assignment
+      setSelectedRole(role === selectedRole ? null : role);
+      setSwapMode(null);
+    }
+  }, [composition, selectedRole, swapMode]);
+
+  // Handle clicking on a champion
+  const handleChampionClick = useCallback((champion: ChampionEntity) => {
+    if (!selectedRole) {
+      // No role selected - find first empty role
+      const emptyRole = ROLES.find((r) => composition[r.key] === null);
+      if (emptyRole) {
+        setComposition((prev) => ({ ...prev, [emptyRole.key]: champion }));
+        // Auto-select next empty role
+        const nextEmpty = ROLES.find(
+          (r) => r.key !== emptyRole.key && composition[r.key] === null
+        );
+        setSelectedRole(nextEmpty?.key || null);
+      } else {
+        toast.error("Tous les roles sont deja remplis");
+      }
+    } else {
+      // Assign to selected role
+      setComposition((prev) => ({ ...prev, [selectedRole]: champion }));
+      // Auto-select next empty role
+      const nextEmpty = ROLES.find(
+        (r) => r.key !== selectedRole && composition[r.key] === null
+      );
+      setSelectedRole(nextEmpty?.key || null);
+    }
+  }, [selectedRole, composition]);
+
+  // Remove champion from role
+  const handleRemoveChampion = useCallback((role: RoleKey, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setComposition((prev) => ({ ...prev, [role]: null }));
+    setSwapMode(null);
+  }, []);
+
+  // Reset composition
+  const handleReset = useCallback(() => {
+    setComposition({
+      top: null,
+      jungle: null,
+      mid: null,
+      adc: null,
+      support: null,
+    });
+    setSelectedRole(null);
+    setSwapMode(null);
+    setSearchTerm("");
+  }, []);
+
+  // Save composition
+  const handleSave = useCallback(async () => {
+    if (!user) {
+      toast.error("Connectez-vous pour sauvegarder");
+      return;
     }
 
-    const count = selectedList.length;
-    return {
-      attack: Math.round(
-        selectedList.reduce((sum, champ) => sum + champ.attack, 0) / count
-      ),
-      defense: Math.round(
-        selectedList.reduce((sum, champ) => sum + champ.defense, 0) / count
-      ),
-      magic: Math.round(
-        selectedList.reduce((sum, champ) => sum + champ.magic, 0) / count
-      ),
-    };
-  }, [selectedChampions]);
-
-  const handleChampionSelect = (role: string, champion: ChampionEntity) => {
-    setSelectedChampions((prev) => ({
-      ...prev,
-      [role]: champion,
-    }));
-    const roleLabel = ROLES.find((r) => r.value === role)?.label || role;
-    toast.success(
-      t("compositions.addedToRole")
-        .replace("{championName}", champion.name)
-        .replace("{role}", roleLabel)
-    );
-  };
-
-  const handleChampionRemove = (role: string) => {
-    setSelectedChampions((prev) => ({
-      ...prev,
-      [role]: null,
-    }));
-  };
-
-  const handleSave = async () => {
-    const selectedCount = Object.values(selectedChampions).filter(
-      (champ) => champ !== null
-    ).length;
-
-    if (selectedCount === 0) {
-      toast.error(t("compositions.atLeastOneChampion"));
+    if (filledCount === 0) {
+      toast.error("Selectionnez au moins un champion");
       return;
     }
 
     if (!compositionName.trim()) {
-      toast.error(t("compositions.compositionNameRequired"));
+      toast.error("Donnez un nom a votre composition");
       return;
     }
 
-    // Sauvegarder la composition
+    setIsSaving(true);
     try {
       const response = await authenticatedFetch("/api/compositions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: compositionName,
-          top: selectedChampions.top?.championId ?? null,
-          jungle: selectedChampions.jungle?.championId ?? null,
-          mid: selectedChampions.mid?.championId ?? null,
-          adc: selectedChampions.adc?.championId ?? null,
-          support: selectedChampions.support?.championId ?? null,
+          name: compositionName.trim(),
+          top: composition.top?.championId ?? null,
+          jungle: composition.jungle?.championId ?? null,
+          mid: composition.mid?.championId ?? null,
+          adc: composition.adc?.championId ?? null,
+          support: composition.support?.championId ?? null,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || t("compositions.errorSaving"));
+        toast.error(result.error || "Erreur lors de la sauvegarde");
         return;
       }
 
-      toast.success(t("compositions.compositionSaved"));
-      
-      // Optionnel: rediriger vers la liste des compositions
-      // router.push("/compositions/my");
+      toast.success("Composition sauvegardee!");
+      setShowSaveDialog(false);
+      router.push("/compositions/favorites");
     } catch {
-      toast.error(t("compositions.errorSaving"));
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [user, filledCount, compositionName, composition, router]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 text-4xl font-bold">{t("compositions.createTitle")}</h1>
-        <p className="text-muted-foreground">
-          {t("compositions.buildYourTeam")}
-        </p>
+    <div className="container mx-auto px-4 py-6 max-w-5xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">{t("compositions.createTitle")}</h1>
+          <p className="text-sm text-muted-foreground">
+            {selectedRole
+              ? `Selectionnez un champion pour ${ROLES.find((r) => r.key === selectedRole)?.label}`
+              : swapMode
+                ? `Cliquez sur un autre role pour echanger`
+                : "Cliquez sur un role puis selectionnez un champion"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleReset} disabled={filledCount === 0}>
+            <RotateCcwIcon className="size-4 mr-1" />
+            Reset
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setShowSaveDialog(true)}
+            disabled={filledCount === 0}
+          >
+            <SaveIcon className="size-4 mr-1" />
+            Sauvegarder
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Colonne gauche - Sélection des champions */}
-        <div className="lg:col-span-2">
-          <div className="space-y-6">
-            {/* Nom de la composition */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("compositions.compositionName")}</CardTitle>
-                <CardDescription>
-                  {t("compositions.giveNameToComposition")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Input
-                  placeholder={t("compositions.compositionNamePlaceholder")}
-                  value={compositionName}
-                  onChange={(e) => setCompositionName(e.target.value)}
-                />
-              </CardContent>
-            </Card>
+      {/* Role Slots */}
+      <div className="grid grid-cols-5 gap-2 md:gap-4 mb-6">
+        {ROLES.map((role) => {
+          const champion = composition[role.key];
+          const isSelected = selectedRole === role.key;
+          const isSwapSource = swapMode === role.key;
+          const isSwapTarget = swapMode && swapMode !== role.key;
 
-            {/* Rôles et champions sélectionnés */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("compositions.team")}</CardTitle>
-                <CardDescription>
-                  {t("compositions.selectChampionsForEachPosition")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {ROLES.map((role) => (
-                    <div key={role.value} className="space-y-2">
-                      <Label className="flex items-center gap-2 text-base">
-                        <span>{role.icon}</span>
-                        {role.label}
-                      </Label>
-                      {selectedChampions[role.value] ? (
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                          <div className="flex items-center gap-3">
-                            <ChampionIcon
-                              championId={
-                                selectedChampions[role.value]!.championId
-                              }
-                              alt={selectedChampions[role.value]!.name}
-                              size={48}
-                              shape="rounded"
-                            />
-                            <div>
-                              <div className="font-medium">
-                                {selectedChampions[role.value]!.name}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {selectedChampions[role.value]!.title}
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleChampionRemove(role.value)}
-                          >
-                            <XIcon className="size-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex h-16 items-center justify-center rounded-lg border border-dashed text-muted-foreground">
-                          {t("compositions.noChampionSelected")}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          return (
+            <div
+              key={role.key}
+              onClick={() => handleRoleClick(role.key)}
+              className={cn(
+                "relative flex flex-col items-center p-2 md:p-3 rounded-xl border-2 cursor-pointer transition-all",
+                isSelected && "border-primary bg-primary/10 ring-2 ring-primary/30",
+                isSwapSource && "border-yellow-500 bg-yellow-500/10 ring-2 ring-yellow-500/30",
+                isSwapTarget && "border-dashed border-yellow-500/50 hover:border-yellow-500",
+                !isSelected && !isSwapSource && !isSwapTarget && "border-border hover:border-primary/50",
+                champion && !isSelected && !isSwapSource && "bg-muted/30"
+              )}
+            >
+              {/* Role label */}
+              <div className="text-[10px] md:text-xs font-medium text-muted-foreground mb-1 md:mb-2">
+                {role.shortLabel}
+              </div>
 
-            {/* Liste des champions disponibles */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("compositions.availableChampions")}</CardTitle>
-                <CardDescription>
-                  {t("compositions.searchAndSelectChampion")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Input
-                    placeholder={t("compositions.searchChampionPlaceholder")}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
+              {/* Champion or empty slot */}
+              {champion ? (
+                <div className="relative">
+                  <ChampionIcon
+                    championId={champion.championId}
+                    size={48}
+                    className="md:w-16 md:h-16 rounded-lg"
                   />
-
-                  {championsLoading && (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2Icon className="size-8 animate-spin text-primary" />
-                    </div>
-                  )}
-
-                  {championsError ? (
-                    <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
-                      <p className="text-destructive">
-                        {t("compositions.errorLoadingChampions")}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {!championsLoading && !championsError && (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                      {filteredChampions.map((champion) => {
-                        const isSelected = Object.values(
-                          selectedChampions
-                        ).some((champ) => champ?.id === champion.id);
-
-                        return (
-                          <div
-                            key={champion.id}
-                            className={`group relative cursor-pointer rounded-lg border transition-all hover:border-primary/50 ${
-                              isSelected
-                                ? "opacity-50 cursor-not-allowed"
-                                : "hover:shadow-md"
-                            }`}
-                          >
-                            <ChampionIcon
-                              championId={champion.championId}
-                              alt={champion.name}
-                              size={64}
-                              shape="rounded"
-                            />
-                            <div className="p-2">
-                              <div className="text-center text-sm font-medium">
-                                {champion.name}
-                              </div>
-                            </div>
-
-                            {!isSelected && (
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                                <div className="grid grid-cols-5 gap-1 rounded-lg bg-background/95 p-2 shadow-lg">
-                                  {ROLES.map((role) => (
-                                    <button
-                                      key={role.value}
-                                      onClick={() =>
-                                        handleChampionSelect(
-                                          role.value,
-                                          champion
-                                        )
-                                      }
-                                      className="flex size-10 items-center justify-center rounded border transition-colors hover:bg-primary hover:text-primary-foreground"
-                                      title={t("compositions.addToRole").replace(
-                                        "{role}",
-                                        role.label
-                                      )}
-                                    >
-                                      <span className="text-xs">
-                                        {role.icon}
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <button
+                    onClick={(e) => handleRemoveChampion(role.key, e)}
+                    className="absolute -top-1 -right-1 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                  >
+                    <XIcon className="size-3" />
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              ) : (
+                <div
+                  className={cn(
+                    "w-12 h-12 md:w-16 md:h-16 rounded-lg border-2 border-dashed flex items-center justify-center",
+                    isSelected ? "border-primary" : "border-muted-foreground/30"
+                  )}
+                >
+                  {isSelected && <CheckIcon className="size-5 text-primary" />}
+                </div>
+              )}
+
+              {/* Champion name */}
+              <div className="mt-1 md:mt-2 text-[10px] md:text-xs font-medium truncate max-w-full text-center">
+                {champion?.name || "-"}
+              </div>
+
+              {/* Swap indicator */}
+              {isSwapSource && (
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
+                  <Badge variant="outline" className="text-[8px] bg-yellow-500/20 border-yellow-500">
+                    <ArrowRightLeftIcon className="size-2 mr-0.5" />
+                    Swap
+                  </Badge>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher un champion..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2"
+          >
+            <XIcon className="size-4 text-muted-foreground hover:text-foreground" />
+          </button>
+        )}
+      </div>
+
+      {/* Champion count */}
+      <div className="flex items-center justify-between mb-3 text-sm text-muted-foreground">
+        <span>
+          {filteredChampions.length} champion{filteredChampions.length > 1 ? "s" : ""}
+        </span>
+        <span>
+          {filledCount}/5 selectionnes
+        </span>
+      </div>
+
+      {/* Champion Grid */}
+      {championsLoading ? (
+        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
+          {Array.from({ length: 24 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-square rounded-lg" />
+          ))}
         </div>
+      ) : (
+        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
+          {filteredChampions.map((champion) => {
+            const isSelected = selectedChampionIds.has(champion.id);
 
-        {/* Colonne droite - Aperçu et actions */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
-            <CardHeader>
-              <CardTitle>{t("compositions.preview")}</CardTitle>
-              <CardDescription>{t("compositions.previewDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Résumé des champions */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t("summoners.champions")}</span>
-                    <Badge variant="secondary">
-                      {
-                        Object.values(selectedChampions).filter(
-                          (champ) => champ !== null
-                        ).length
-                      }
-                      /5
-                    </Badge>
-                  </div>
-
-                  {Object.entries(selectedChampions).map(([role, champion]) => {
-                    if (!champion) return null;
-                    const roleInfo = ROLES.find((r) => r.value === role);
-                    return (
-                      <div
-                        key={role}
-                        className="flex items-center gap-2 rounded-lg border p-2"
-                      >
-                        <span className="text-xs">{roleInfo?.icon}</span>
-                        <span className="flex-1 text-sm">{champion.name}</span>
-                      </div>
-                    );
-                  })}
-
-                  {Object.values(selectedChampions).every(
-                    (champ) => champ === null
-                  ) && (
-                    <p className="text-center text-sm text-muted-foreground">
-                      {t("compositions.noChampionSelected")}
-                    </p>
-                  )}
-                </div>
-
-                {/* Boutons d'action */}
-                <div className="space-y-2">
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={handleSave}
-                    disabled={championsLoading}
-                  >
-                    <PlusIcon className="mr-2 size-5" />
-                    {t("compositions.save")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      setSelectedChampions({
-                        top: null,
-                        jungle: null,
-                        mid: null,
-                        adc: null,
-                        support: null,
-                      });
-                      setCompositionName("");
-                      toast.success(t("compositions.resetComposition"));
-                    }}
-                  >
-                    {t("compositions.reset")}
-                  </Button>
-                </div>
-
-                {/* Stats moyennes */}
-                {averageStats && (
-                  <div className="rounded-lg border bg-muted/30 p-4">
-                    <div className="mb-3 text-sm font-medium">
-                      {t("compositions.averageStats")}
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          {t("compositions.attack")}
-                        </span>
-                        <span className="font-medium">{averageStats.attack}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          {t("compositions.defense")}
-                        </span>
-                        <span className="font-medium">{averageStats.defense}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          {t("compositions.magic")}
-                        </span>
-                        <span className="font-medium">{averageStats.magic}</span>
-                      </div>
-                    </div>
+            return (
+              <button
+                key={champion.id}
+                onClick={() => !isSelected && handleChampionClick(champion)}
+                disabled={isSelected}
+                className={cn(
+                  "relative group rounded-lg overflow-hidden border transition-all",
+                  isSelected
+                    ? "opacity-40 cursor-not-allowed border-transparent"
+                    : "hover:border-primary hover:scale-105 cursor-pointer border-transparent hover:shadow-lg"
+                )}
+                title={champion.name}
+              >
+                <ChampionIcon
+                  championId={champion.championId}
+                  size={64}
+                  className="w-full aspect-square"
+                />
+                {isSelected && (
+                  <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                    <CheckIcon className="size-5 text-primary" />
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-[9px] text-white text-center truncate">
+                    {champion.name}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
-      </div>
+      )}
+
+      {/* No results */}
+      {!championsLoading && filteredChampions.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          Aucun champion trouve pour "{searchTerm}"
+        </div>
+      )}
+
+      {/* Save Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sauvegarder la composition</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Preview */}
+            <div className="flex justify-center gap-2">
+              {ROLES.map((role) => {
+                const champion = composition[role.key];
+                return (
+                  <div key={role.key} className="text-center">
+                    {champion ? (
+                      <ChampionIcon
+                        championId={champion.championId}
+                        size={40}
+                        className="rounded-md"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-md bg-muted border-2 border-dashed" />
+                    )}
+                    <div className="text-[9px] text-muted-foreground mt-1">
+                      {role.shortLabel}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Name input */}
+            <Input
+              placeholder="Nom de la composition"
+              value={compositionName}
+              onChange={(e) => setCompositionName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSave()}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving || !compositionName.trim()}>
+              {isSaving ? (
+                <Loader2Icon className="size-4 animate-spin mr-2" />
+              ) : (
+                <SaveIcon className="size-4 mr-2" />
+              )}
+              Sauvegarder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
