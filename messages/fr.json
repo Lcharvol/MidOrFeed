@@ -732,5 +732,15 @@
     "games": "Parties",
     "kda": "KDA",
     "score": "Score"
+  },
+  "mlPrediction": {
+    "title": "Prediction ML",
+    "winProbability": "Probabilite de victoire estimee",
+    "basedOn": "Base sur l'analyse des compositions et statistiques",
+    "difficult": "Difficile",
+    "uncertain": "Incertain",
+    "balanced": "Equilibre",
+    "favorable": "Favorable",
+    "dominant": "Dominant"
   }
 }

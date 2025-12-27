@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import type { RecentMatchEntry } from "../RecentMatchesSection";
 import { QUEUE_NAMES } from "@/constants/queues";
 import { MatchEntry } from "./MatchEntry";
+import { useMatchPredictions } from "@/lib/hooks/use-match-predictions";
 
 interface RecentMatchesListProps {
   matches: RecentMatchEntry[];
@@ -19,6 +21,15 @@ export const RecentMatchesList = ({
   resolveSlug,
   puuid,
 }: RecentMatchesListProps) => {
+  // Extract match IDs for prediction fetching
+  const matchIds = useMemo(
+    () => matches.map((m) => m.matchId),
+    [matches]
+  );
+
+  // Fetch ML predictions for all matches
+  const { predictions } = useMatchPredictions(matchIds, puuid);
+
   if (matches.length === 0) {
     return null;
   }
@@ -33,6 +44,9 @@ export const RecentMatchesList = ({
             ? QUEUE_NAMES[match.queueId] ?? `Queue ${match.queueId}`
             : "File inconnue";
 
+        // Get prediction for this match
+        const winPrediction = predictions.get(match.matchId);
+
         return (
           <MatchEntry
             key={match.id}
@@ -43,6 +57,7 @@ export const RecentMatchesList = ({
             championKeyToId={championKeyToId}
             resolveSlug={resolveSlug}
             puuid={puuid}
+            winPrediction={winPrediction}
           />
         );
       })}

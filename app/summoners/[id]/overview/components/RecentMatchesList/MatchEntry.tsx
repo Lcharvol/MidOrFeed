@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RecentMatchEntry } from "../RecentMatchesSection";
 import { MatchParticipants } from "./MatchParticipants";
+import { WinPredictionBadge } from "./WinPredictionBadge";
 import { SparklesIcon } from "lucide-react";
 
 interface MatchEntryProps {
@@ -19,6 +20,7 @@ interface MatchEntryProps {
   championKeyToId: Map<string, string>;
   resolveSlug: (idOrKey: string) => string;
   puuid?: string;
+  winPrediction?: number;
 }
 
 const formatDuration = (seconds: number) => {
@@ -46,6 +48,7 @@ export const MatchEntry = ({
   championKeyToId,
   resolveSlug,
   puuid,
+  winPrediction,
 }: MatchEntryProps) => {
   const kdaLabel = `${match.kills}/${match.deaths}/${match.assists}`;
   const kdaRatio =
@@ -84,6 +87,9 @@ export const MatchEntry = ({
           >
             {queueLabel} · {formatDate(match.gameCreation)}
           </Badge>
+          {winPrediction !== undefined && (
+            <WinPredictionBadge winProbability={winPrediction} />
+          )}
         </div>
 
         {/* Main content */}

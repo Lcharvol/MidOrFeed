@@ -724,5 +724,15 @@
     "games": "Games",
     "kda": "KDA",
     "score": "Score"
+  },
+  "mlPrediction": {
+    "title": "ML Prediction",
+    "winProbability": "Estimated win probability",
+    "basedOn": "Based on composition and statistics analysis",
+    "difficult": "Difficult",
+    "uncertain": "Uncertain",
+    "balanced": "Balanced",
+    "favorable": "Favorable",
+    "dominant": "Dominant"
   }
 }
