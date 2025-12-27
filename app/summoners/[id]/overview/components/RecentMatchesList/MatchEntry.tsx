@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import type { RecentMatchEntry } from "../RecentMatchesSection";
 import { MatchParticipants } from "./MatchParticipants";
 import { WinPredictionBadge } from "./WinPredictionBadge";
+import { BuildAnalysisBadge } from "./BuildAnalysisBadge";
 import { SparklesIcon } from "lucide-react";
 
 interface MatchEntryProps {
@@ -207,6 +208,15 @@ export const MatchEntry = ({
                   shape="rounded"
                   showBorder
                   className="ml-0.5"
+                />
+              )}
+              {/* Build Analysis Badge */}
+              {mainItems.length > 0 && (
+                <BuildAnalysisBadge
+                  championId={match.championId}
+                  items={mainItems.filter((i): i is number => i !== null)}
+                  queueId={match.queueId ?? undefined}
+                  className="ml-1"
                 />
               )}
               {/* AI Analysis Button */}

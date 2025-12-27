@@ -742,5 +742,16 @@
     "balanced": "Equilibre",
     "favorable": "Favorable",
     "dominant": "Dominant"
+  },
+  "buildAnalysis": {
+    "title": "Analyse du Build",
+    "analyzedGames": "Base sur {count} parties gagnantes",
+    "unusualItems": "Items inhabituels:",
+    "coreItems": "Items core recommandes:",
+    "youHaveThis": "Vous avez cet item",
+    "recommended": "Recommande",
+    "excellent": "Excellent! Build optimal",
+    "good": "Bon build",
+    "needsImprovement": "Optimisations possibles"
   }
 }
