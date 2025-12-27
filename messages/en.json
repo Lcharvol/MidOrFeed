@@ -745,5 +745,17 @@
     "excellent": "Excellent! Optimal build",
     "good": "Good build",
     "needsImprovement": "Room for improvement"
+  },
+  "championPool": {
+    "title": "Champion Pool Advisor",
+    "description": "Analysis based on your last {count} matches",
+    "diversity": "Diversity",
+    "mainRole": "Main role",
+    "strengths": "Your strengths",
+    "needsWork": "Needs improvement",
+    "recommended": "Champions to develop",
+    "games": "games",
+    "needsWorkTip": "Consider practicing these champions in normals before ranked",
+    "recommendedTip": "You showed good potential on these champions"
   }
 }

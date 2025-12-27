@@ -753,5 +753,17 @@
     "excellent": "Excellent! Build optimal",
     "good": "Bon build",
     "needsImprovement": "Optimisations possibles"
+  },
+  "championPool": {
+    "title": "Conseiller Champion Pool",
+    "description": "Analyse basee sur vos {count} derniers matchs",
+    "diversity": "Diversite",
+    "mainRole": "Role principal",
+    "strengths": "Vos forces",
+    "needsWork": "A ameliorer",
+    "recommended": "Champions a developper",
+    "games": "parties",
+    "needsWorkTip": "Considerez de pratiquer ces champions en normale avant la ranked",
+    "recommendedTip": "Vous avez montre un bon potentiel sur ces champions"
   }
 }

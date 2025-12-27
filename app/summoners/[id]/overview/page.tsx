@@ -13,6 +13,7 @@ import { RecentGamesSummary } from "./components/RecentGamesSummary";
 import { RecentMatchesList } from "./components/RecentMatchesList";
 import { ProgressionCharts } from "./components/ProgressionCharts";
 import { ChampionMasterySection } from "./components/ChampionMasterySection";
+import { ChampionPoolAdvisor } from "./components/ChampionPoolAdvisor";
 import { LiveGameBanner } from "./components/LiveGameBanner";
 import { useSummonerOverview } from "@/lib/hooks/use-summoner-overview";
 
@@ -128,6 +129,7 @@ const SummonerOverviewByIdPage = () => {
             resolveSlug={resolveSlug}
           />
           {puuid && region && <ChampionMasterySection puuid={puuid} region={region} />}
+          {puuid && <ChampionPoolAdvisor puuid={puuid} />}
           {puuid && <ProgressionCharts puuid={puuid} />}
         </aside>
         <main className="flex-1 space-y-4 min-w-0">
