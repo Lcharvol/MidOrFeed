@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n-context";
 import { GameVersionProvider } from "@/components/GameVersionProvider";
+import { ServerStatusBanner } from "@/components/ServerStatusBanner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,6 +42,7 @@ export default function RootLayout({
               <GameVersionProvider>
                 <NotificationProvider>
                   <ConditionalHeader />
+                  <ServerStatusBanner />
                   <main className="relative px-4 sm:px-6">
                     <div className="pointer-events-none absolute inset-0 -z-10 select-none">
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--color-primary),transparent_55%)]/[16] dark:bg-[radial-gradient(circle_at_top,var(--color-primary),transparent_55%)]/[20]" />
