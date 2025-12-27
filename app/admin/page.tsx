@@ -30,6 +30,11 @@ const MLTab = dynamic(
   { loading: () => <LazyLoadingFallback />, ssr: false }
 );
 
+const ApiTestTab = dynamic(
+  () => import("./ApiTestTab").then((mod) => ({ default: mod.ApiTestTab })),
+  { loading: () => <LazyLoadingFallback />, ssr: false }
+);
+
 export default function AdminPage() {
   const { user, isLoading } = useAuth();
   const { t } = useI18n();
@@ -94,7 +99,7 @@ function AdminTabs() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab =
-    (searchParams?.get("tab") as "discover" | "sync" | "rights" | "ml") ||
+    (searchParams?.get("tab") as "discover" | "sync" | "rights" | "ml" | "api") ||
     "discover";
 
   return (
@@ -108,6 +113,7 @@ function AdminTabs() {
         <TabsTrigger value="sync">{t("admin.tabs.sync")}</TabsTrigger>
         <TabsTrigger value="rights">{t("admin.tabs.rights")}</TabsTrigger>
         <TabsTrigger value="ml">{t("admin.tabs.ml")}</TabsTrigger>
+        <TabsTrigger value="api">{t("admin.tabs.api")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="discover" className="space-y-6">
@@ -124,6 +130,10 @@ function AdminTabs() {
 
       <TabsContent value="ml">
         <MLTab />
+      </TabsContent>
+
+      <TabsContent value="api">
+        <ApiTestTab />
       </TabsContent>
     </Tabs>
   );

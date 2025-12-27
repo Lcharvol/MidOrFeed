@@ -432,7 +432,8 @@
       "discover": "Player Discovery",
       "sync": "Data Synchronization",
       "rights": "Rights Management",
-      "ml": "Machine Learning"
+      "ml": "Machine Learning",
+      "api": "Riot API Test"
     },
     "dataSync": {
       "filterScripts": "Filter scripts",
