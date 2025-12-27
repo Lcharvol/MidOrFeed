@@ -757,5 +757,23 @@
     "games": "games",
     "needsWorkTip": "Consider practicing these champions in normals before ranked",
     "recommendedTip": "You showed good potential on these champions"
+  },
+  "matchTimeline": {
+    "view": "Timeline",
+    "title": "Match Timeline",
+    "noData": "Timeline data not available",
+    "duration": "Duration",
+    "early": "Early",
+    "mid": "Mid",
+    "late": "Late",
+    "teamComparison": "Team Comparison",
+    "blueTeam": "Blue Team",
+    "redTeam": "Red Team",
+    "victory": "Victory",
+    "defeat": "Defeat",
+    "kills": "Kills",
+    "gold": "Gold",
+    "damage": "Damage",
+    "vision": "Vision"
   }
 }

@@ -11,6 +11,7 @@ import type { RecentMatchEntry } from "../RecentMatchesSection";
 import { MatchParticipants } from "./MatchParticipants";
 import { WinPredictionBadge } from "./WinPredictionBadge";
 import { BuildAnalysisBadge } from "./BuildAnalysisBadge";
+import { MatchTimeline } from "./MatchTimeline";
 import { SparklesIcon } from "lucide-react";
 
 interface MatchEntryProps {
@@ -219,13 +220,15 @@ export const MatchEntry = ({
                   className="ml-1"
                 />
               )}
+              {/* Match Timeline */}
+              <MatchTimeline matchId={match.matchId} puuid={puuid} />
               {/* AI Analysis Button */}
               {puuid && (
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
-                  className="ml-2 h-7 gap-1.5 text-xs"
+                  className="ml-1 h-7 gap-1.5 text-xs"
                 >
                   <Link href={`/ai-analysis/${match.matchId}?puuid=${puuid}`}>
                     <SparklesIcon className="size-3.5" />

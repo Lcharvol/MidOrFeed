@@ -765,5 +765,23 @@
     "games": "parties",
     "needsWorkTip": "Considerez de pratiquer ces champions en normale avant la ranked",
     "recommendedTip": "Vous avez montre un bon potentiel sur ces champions"
+  },
+  "matchTimeline": {
+    "view": "Timeline",
+    "title": "Timeline du Match",
+    "noData": "Donnees de timeline non disponibles",
+    "duration": "Duree",
+    "early": "Early",
+    "mid": "Mid",
+    "late": "Late",
+    "teamComparison": "Comparaison des equipes",
+    "blueTeam": "Equipe Bleue",
+    "redTeam": "Equipe Rouge",
+    "victory": "Victoire",
+    "defeat": "Defaite",
+    "kills": "Kills",
+    "gold": "Or",
+    "damage": "Degats",
+    "vision": "Vision"
   }
 }
