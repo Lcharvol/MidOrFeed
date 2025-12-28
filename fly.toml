@@ -14,7 +14,8 @@ primary_region = 'cdg'
   PORT = '8080'
 
 [deploy]
-  release_command = "pnpm dlx prisma@6.18.0 migrate deploy"
+  # Use bundled Prisma CLI (no download needed)
+  release_command = "node node_modules/prisma/build/index.js migrate deploy"
 
 [[services]]
   protocol = 'tcp'
@@ -34,10 +35,10 @@ primary_region = 'cdg'
 
   [[services.http_checks]]
     interval = '15s'
-    timeout = '5s'
-    grace_period = '30s'
+    timeout = '10s'
+    grace_period = '60s'
     method = 'get'
-    path = '/'
+    path = '/api/health'
     protocol = 'http'
 
 [[vm]]
