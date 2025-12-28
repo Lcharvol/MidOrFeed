@@ -217,45 +217,45 @@ export default function AIAnalysisPage() {
   return (
     <div className="container mx-auto py-10">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+      <div className="mb-6 sm:mb-8 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Button variant="ghost" size="icon" asChild className="shrink-0">
             <Link href="/summoners">
               <ArrowLeftIcon className="size-5" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-4xl font-bold">Analyse IA</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-4xl font-bold">Analyse IA</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Insights personnalisés de notre intelligence artificielle
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 ml-12 sm:ml-0">
           {remainingAnalyses !== Infinity && (
-            <Badge variant="outline" className="gap-2">
+            <Badge variant="outline" className="gap-1 sm:gap-2 text-[10px] sm:text-xs">
               {remainingAnalyses} {t("subscription.remainingAnalyses")}
             </Badge>
           )}
-          <Badge variant="secondary" className="gap-2">
+          <Badge variant="secondary" className="gap-1 sm:gap-2 text-[10px] sm:text-xs">
             <BrainIcon className="size-3" />
-            Powered by AI
+            <span className="hidden sm:inline">Powered by</span> AI
           </Badge>
         </div>
       </div>
 
       {/* Score Global */}
-      <Card className="mb-8 border-2 border-primary/20">
+      <Card className="mb-6 sm:mb-8 border-2 border-primary/20">
         <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/5 to-transparent">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl mb-2">Score Global</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-2xl mb-1 sm:mb-2">Score Global</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Évaluation complète de votre performance
               </CardDescription>
             </div>
             <div
-              className={`text-6xl font-bold ${getScoreColor(
+              className={`text-4xl sm:text-6xl font-bold ${getScoreColor(
                 analysis.overall.score
               )}`}
             >
@@ -269,25 +269,25 @@ export default function AIAnalysisPage() {
       </Card>
 
       {/* Performances Champion */}
-      <Card className="mb-8 border-2 border-info/20">
+      <Card className="mb-6 sm:mb-8 border-2 border-info/20">
         <CardHeader className="bg-gradient-to-r from-info-muted to-transparent">
-          <CardTitle className="flex items-center gap-2">
-            <TargetIcon className="size-5 text-info" />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <TargetIcon className="size-4 sm:size-5 text-info" />
             Performance Champion
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-start gap-6">
+          <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
             <ChampionIcon
               championId={analysis.championPerformance.championId}
               championKey={analysis.championPerformance.championId}
               championKeyToId={championKeyToIdMap}
               alt={analysis.championPerformance.championName}
-              size={80}
+              size={64}
               shape="rounded"
-              className="border-2 border-info/30"
+              className="border-2 border-info/30 sm:size-20"
             />
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-3 sm:space-y-4">
               <div>
                 <Badge
                   className={`${getPerformanceColor(

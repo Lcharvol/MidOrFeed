@@ -116,7 +116,7 @@ export function MatchTimeline({ matchId, puuid }: MatchTimelineProps) {
           {t("matchTimeline.view")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GanttChartIcon className="size-5" />
@@ -184,7 +184,7 @@ export function MatchTimeline({ matchId, puuid }: MatchTimelineProps) {
             </div>
 
             {/* Team Stats Comparison */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {/* Blue Team */}
               <TeamCard
                 team={timeline.blueTeam}
@@ -274,25 +274,27 @@ function TeamCard({
   const textColor = side === "blue" ? "text-blue-400" : "text-red-400";
 
   return (
-    <div className={cn("rounded-lg border p-3 space-y-3", bgColor, borderColor)}>
+    <div className={cn("rounded-lg border p-2 sm:p-3 space-y-2 sm:space-y-3", bgColor, borderColor)}>
       <div className="flex items-center justify-between">
-        <span className={cn("text-sm font-semibold", textColor)}>
+        <span className={cn("text-xs sm:text-sm font-semibold", textColor)}>
           {side === "blue" ? t("matchTimeline.blueTeam") : t("matchTimeline.redTeam")}
         </span>
         {team.won ? (
-          <Badge className="gap-1 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+          <Badge className="gap-1 bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] sm:text-xs">
             <TrophyIcon className="size-3" />
-            {t("matchTimeline.victory")}
+            <span className="hidden sm:inline">{t("matchTimeline.victory")}</span>
+            <span className="sm:hidden">W</span>
           </Badge>
         ) : (
-          <Badge variant="destructive" className="gap-1">
+          <Badge variant="destructive" className="gap-1 text-[10px] sm:text-xs">
             <XCircleIcon className="size-3" />
-            {t("matchTimeline.defeat")}
+            <span className="hidden sm:inline">{t("matchTimeline.defeat")}</span>
+            <span className="sm:hidden">L</span>
           </Badge>
         )}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1 sm:space-y-1.5">
         {team.participants.map((p) => {
           const slug = resolveSlug(p.championId);
           const name = resolveName(p.championId);
@@ -302,7 +304,7 @@ function TeamCard({
             <div
               key={p.participantId}
               className={cn(
-                "flex items-center gap-2 rounded-md px-2 py-1 transition-colors",
+                "flex items-center gap-1.5 sm:gap-2 rounded-md px-1.5 sm:px-2 py-0.5 sm:py-1 transition-colors",
                 isHighlighted
                   ? "bg-primary/20 ring-1 ring-primary/40"
                   : "hover:bg-muted/50"
@@ -312,19 +314,19 @@ function TeamCard({
                 championId={slug}
                 championKey={p.championId}
                 championKeyToId={championKeyToIdMap}
-                size={28}
+                size={24}
                 shape="circle"
-                className="border border-border/50"
+                className="border border-border/50 sm:size-7"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">{name}</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] sm:text-xs font-medium truncate">{name}</p>
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground">
                   {p.kills}/{p.deaths}/{p.assists}
                 </p>
               </div>
-              <div className="text-right text-[10px] text-muted-foreground">
-                <p>{formatGold(p.gold)} gold</p>
-                <p>{formatGold(p.damage)} dmg</p>
+              <div className="text-right text-[9px] sm:text-[10px] text-muted-foreground">
+                <p>{formatGold(p.gold)}</p>
+                <p className="hidden sm:block">{formatGold(p.damage)} dmg</p>
               </div>
             </div>
           );

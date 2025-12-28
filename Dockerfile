@@ -40,11 +40,8 @@ ENV PORT=8080
 ENV VIRTUAL_ENV=/opt/ml-venv
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
-# Copy Prisma schema/migrations and generated client (for migrate deploy)
+# Copy Prisma schema/migrations (for migrate deploy via release_command)
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 # Copy standalone server and assets (includes minimal node_modules)
 COPY --from=builder /app/.next/standalone ./

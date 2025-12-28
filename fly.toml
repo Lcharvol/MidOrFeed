@@ -14,8 +14,8 @@ primary_region = 'cdg'
   PORT = '8080'
 
 [deploy]
-  # Use bundled Prisma CLI (no download needed)
-  release_command = "node node_modules/prisma/build/index.js migrate deploy"
+  # Run migrations before starting (only during deploy, not at restart)
+  release_command = "pnpm dlx prisma@6.18.0 migrate deploy"
 
 [[services]]
   protocol = 'tcp'

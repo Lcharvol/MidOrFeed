@@ -71,42 +71,48 @@ export const MatchEntry = ({
   return (
     <div
       className={cn(
-        "flex justify-between relative overflow-hidden rounded-lg border transition-all hover:shadow-md",
+        "flex flex-col md:flex-row md:justify-between relative overflow-hidden rounded-lg border transition-all hover:shadow-md",
         match.win
           ? "border-blue-500/30 bg-blue-500/5"
           : "border-rose-500/30 bg-rose-500/5"
       )}
     >
-      <div>
-        <div className="flex items-center gap-2 px-3 pt-2 pb-1">
-          <Badge variant={match.win ? "default" : "destructive"}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 pt-2 pb-1 flex-wrap">
+          <Badge variant={match.win ? "default" : "destructive"} className="text-[10px] sm:text-xs">
             {match.win ? "Victoire" : "Défaite"} ·{" "}
             {formatDuration(match.gameDuration)}
           </Badge>
           <Badge
             variant="outline"
-            className="h-5 px-2 text-[10px] font-medium bg-background/50 border-border/50"
+            className="h-5 px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-medium bg-background/50 border-border/50 hidden sm:inline-flex"
           >
             {queueLabel} · {formatDate(match.gameCreation)}
           </Badge>
+          <Badge
+            variant="outline"
+            className="h-5 px-1.5 text-[9px] font-medium bg-background/50 border-border/50 sm:hidden"
+          >
+            {formatDate(match.gameCreation)}
+          </Badge>
           {winPrediction !== undefined && (
-            <WinPredictionBadge winProbability={winPrediction} />
+            <WinPredictionBadge winProbability={winPrediction} className="hidden sm:inline-flex" />
           )}
         </div>
 
         {/* Main content */}
-        <div className="flex items-start gap-3 px-3 pb-3">
+        <div className="flex items-start gap-2 sm:gap-3 px-2 sm:px-3 pb-2 sm:pb-3">
           {/* Left: Champion + Spells + Runes */}
-          <div className="flex items-start gap-2 shrink-0">
+          <div className="flex items-start gap-1.5 sm:gap-2 shrink-0">
             {/* Champion Icon (circular) */}
             <div className="relative">
               <ChampionIcon
                 championId={match.championSlug}
                 championKey={match.championKey ?? match.championId}
                 championKeyToId={championKeyToId}
-                size={56}
+                size={48}
                 shape="circle"
-                className="border-2 border-border/60"
+                className="border-2 border-border/60 sm:size-14"
               />
               {/* Champion Level - placeholder */}
               <div className="absolute -bottom-1 -right-1 size-5 rounded-full bg-background border-2 border-border flex items-center justify-center text-[10px] font-bold text-foreground">
@@ -177,14 +183,14 @@ export const MatchEntry = ({
             </div>
 
             {/* Items row */}
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center gap-0.5 sm:gap-1 mt-1 flex-wrap">
               {Array.from({ length: 6 }, (_, index) => {
                 const itemId = mainItems[index] ?? null;
                 if (!itemId) {
                   return (
                     <div
                       key={index}
-                      className="relative size-7 rounded border border-border/30 bg-background/30"
+                      className="relative size-5 sm:size-7 rounded border border-border/30 bg-background/30"
                     />
                   );
                 }
@@ -193,46 +199,49 @@ export const MatchEntry = ({
                     key={index}
                     itemId={itemId}
                     alt={itemId ? `Item ${itemId}` : "Item"}
-                    size={28}
+                    size={20}
                     shape="rounded"
                     showBorder
-                    className="hover:border-primary/50 transition-colors"
+                    className="hover:border-primary/50 transition-colors sm:size-7"
                   />
                 );
               })}
-              {/* Trinket */}
+              {/* Trinket - hidden on mobile */}
               {trinket && (
                 <ItemIcon
                   itemId={trinket}
                   alt="Trinket"
-                  size={24}
+                  size={20}
                   shape="rounded"
                   showBorder
-                  className="ml-0.5"
+                  className="ml-0.5 hidden sm:block"
                 />
               )}
-              {/* Build Analysis Badge */}
+              {/* Build Analysis Badge - hidden on mobile */}
               {mainItems.length > 0 && (
                 <BuildAnalysisBadge
                   championId={match.championId}
                   items={mainItems.filter((i): i is number => i !== null)}
                   queueId={match.queueId ?? undefined}
-                  className="ml-1"
+                  className="ml-1 hidden sm:inline-flex"
                 />
               )}
-              {/* Match Timeline */}
-              <MatchTimeline matchId={match.matchId} puuid={puuid} />
+              {/* Match Timeline - hidden on mobile */}
+              <div className="hidden sm:block">
+                <MatchTimeline matchId={match.matchId} puuid={puuid} />
+              </div>
               {/* AI Analysis Button */}
               {puuid && (
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
-                  className="ml-1 h-7 gap-1.5 text-xs"
+                  className="ml-1 h-6 sm:h-7 gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-3"
                 >
                   <Link href={`/ai-analysis/${match.matchId}?puuid=${puuid}`}>
-                    <SparklesIcon className="size-3.5" />
-                    Analyser
+                    <SparklesIcon className="size-3 sm:size-3.5" />
+                    <span className="hidden sm:inline">Analyser</span>
+                    <span className="sm:hidden">IA</span>
                   </Link>
                 </Button>
               )}
@@ -240,18 +249,20 @@ export const MatchEntry = ({
           </div>
         </div>
       </div>
-      {/* Match participants */}
+      {/* Match participants - hidden on mobile */}
       {match.participants &&
         match.participants.length > 0 &&
         match.teamId !== undefined && (
-          <MatchParticipants
-            participants={match.participants}
-            teamId={match.teamId}
-            championNameMap={championNameMap}
-            championKeyToId={championKeyToId}
-            resolveSlug={resolveSlug}
-            puuid={puuid}
-          />
+          <div className="hidden lg:block shrink-0 pr-3">
+            <MatchParticipants
+              participants={match.participants}
+              teamId={match.teamId}
+              championNameMap={championNameMap}
+              championKeyToId={championKeyToId}
+              resolveSlug={resolveSlug}
+              puuid={puuid}
+            />
+          </div>
         )}
     </div>
   );

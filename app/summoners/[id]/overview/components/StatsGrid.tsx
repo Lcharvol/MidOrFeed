@@ -27,7 +27,7 @@ export const StatsGrid = ({
   const winRatio = stats.totalWins / Math.max(stats.totalGames, 1);
 
   return (
-    <div className="grid gap-6 md:grid-cols-4">
+    <div className="grid gap-3 sm:gap-6 grid-cols-2 md:grid-cols-4">
       <Card
         variant="gradient"
         className="border-blue-500/25 from-background to-blue-500/10 dark:border-blue-500/25 dark:from-background dark:to-blue-500/10"

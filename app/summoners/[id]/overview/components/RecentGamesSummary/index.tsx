@@ -61,9 +61,9 @@ export const RecentGamesSummary = ({
 
   return (
     <Card className="bg-background/90">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>Parties récentes</CardTitle>
-        <div className="relative w-55">
+        <div className="relative w-full sm:w-55">
           <SearchIcon className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Rechercher un champion"
@@ -72,7 +72,7 @@ export const RecentGamesSummary = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-row gap-4 justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2">
             <WinRateChart stats={summaryStats} config={winRateChartConfig} />
             <KDAStats stats={summaryStats} />

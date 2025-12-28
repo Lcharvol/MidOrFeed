@@ -129,11 +129,12 @@ export function ChampionPoolAdvisor({ puuid }: ChampionPoolAdvisorProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Pool Stats */}
-        <div className="flex items-center gap-3 text-xs">
-          <Badge variant="outline" className="gap-1">
-            <span className="text-muted-foreground">
+        <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs flex-wrap">
+          <Badge variant="outline" className="gap-1 px-1.5 sm:px-2">
+            <span className="text-muted-foreground hidden sm:inline">
               {t("championPool.diversity")}:
             </span>
+            <span className="text-muted-foreground sm:hidden">Div:</span>
             <span
               className={cn(
                 "font-semibold",
@@ -148,8 +149,8 @@ export function ChampionPoolAdvisor({ puuid }: ChampionPoolAdvisorProps) {
             </span>
           </Badge>
           {mainRole && (
-            <Badge variant="secondary" className="gap-1">
-              <span className="text-muted-foreground">
+            <Badge variant="secondary" className="gap-1 px-1.5 sm:px-2">
+              <span className="text-muted-foreground hidden sm:inline">
                 {t("championPool.mainRole")}:
               </span>
               <span className="font-semibold">
@@ -173,20 +174,20 @@ export function ChampionPoolAdvisor({ puuid }: ChampionPoolAdvisorProps) {
                 return (
                   <div
                     key={champ.championId}
-                    className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-1.5"
+                    className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-1.5 sm:px-2 py-1 sm:py-1.5"
                   >
                     <ChampionIcon
                       championId={slug}
                       championKey={champ.championId}
                       championKeyToId={championKeyToIdMap}
-                      size={28}
+                      size={24}
                       shape="circle"
-                      className="border border-emerald-500/40"
+                      className="border border-emerald-500/40 sm:size-7"
                     />
                     <div className="flex flex-col">
-                      <span className="text-xs font-medium">{name}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {champ.winRate}% WR · {champ.games} {t("championPool.games")}
+                      <span className="text-[10px] sm:text-xs font-medium">{name}</span>
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground">
+                        {champ.winRate}% · {champ.games}g
                       </span>
                     </div>
                   </div>
@@ -210,20 +211,20 @@ export function ChampionPoolAdvisor({ puuid }: ChampionPoolAdvisorProps) {
                 return (
                   <div
                     key={champ.championId}
-                    className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg px-2 py-1.5"
+                    className="flex items-center gap-1.5 sm:gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg px-1.5 sm:px-2 py-1 sm:py-1.5"
                   >
                     <ChampionIcon
                       championId={slug}
                       championKey={champ.championId}
                       championKeyToId={championKeyToIdMap}
-                      size={28}
+                      size={24}
                       shape="circle"
-                      className="border border-orange-500/40"
+                      className="border border-orange-500/40 sm:size-7"
                     />
                     <div className="flex flex-col">
-                      <span className="text-xs font-medium">{name}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {champ.winRate}% WR · {champ.games} {t("championPool.games")}
+                      <span className="text-[10px] sm:text-xs font-medium">{name}</span>
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground">
+                        {champ.winRate}% · {champ.games}g
                       </span>
                     </div>
                   </div>
@@ -250,20 +251,20 @@ export function ChampionPoolAdvisor({ puuid }: ChampionPoolAdvisorProps) {
                 return (
                   <div
                     key={champ.championId}
-                    className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-1.5"
+                    className="flex items-center gap-1.5 sm:gap-2 bg-blue-500/10 border border-blue-500/20 rounded-lg px-1.5 sm:px-2 py-1 sm:py-1.5"
                   >
                     <ChampionIcon
                       championId={slug}
                       championKey={champ.championId}
                       championKeyToId={championKeyToIdMap}
-                      size={28}
+                      size={24}
                       shape="circle"
-                      className="border border-blue-500/40"
+                      className="border border-blue-500/40 sm:size-7"
                     />
                     <div className="flex flex-col">
-                      <span className="text-xs font-medium">{name}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {champ.avgKDA} KDA · {champ.games} {t("championPool.games")}
+                      <span className="text-[10px] sm:text-xs font-medium">{name}</span>
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground">
+                        {champ.avgKDA} KDA · {champ.games}g
                       </span>
                     </div>
                   </div>

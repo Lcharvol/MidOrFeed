@@ -210,10 +210,10 @@ export default function CreateCompositionPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">{t("compositions.createTitle")}</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold">{t("compositions.createTitle")}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {selectedRole
               ? `Selectionnez un champion pour ${ROLES.find((r) => r.key === selectedRole)?.label}`
               : swapMode
@@ -223,16 +223,16 @@ export default function CreateCompositionPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleReset} disabled={filledCount === 0}>
-            <RotateCcwIcon className="size-4 mr-1" />
-            Reset
+            <RotateCcwIcon className="size-4 sm:mr-1" />
+            <span className="hidden sm:inline">Reset</span>
           </Button>
           <Button
             size="sm"
             onClick={() => setShowSaveDialog(true)}
             disabled={filledCount === 0}
           >
-            <SaveIcon className="size-4 mr-1" />
-            Sauvegarder
+            <SaveIcon className="size-4 sm:mr-1" />
+            <span className="hidden sm:inline">Sauvegarder</span>
           </Button>
         </div>
       </div>
