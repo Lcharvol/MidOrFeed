@@ -35,30 +35,35 @@ export const RecentMatchesList = ({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {matches.map((match) => {
+    <div className="flex flex-col gap-2.5">
+      {matches.map((match, index) => {
         const championName =
           championNameMap.get(match.championId) ?? match.championId;
         const queueLabel =
           match.queueId !== null && match.queueId !== undefined
             ? QUEUE_NAMES[match.queueId] ?? `Queue ${match.queueId}`
-            : "File inconnue";
+            : "Unknown queue";
 
         // Get prediction for this match
         const winPrediction = predictions.get(match.matchId);
 
         return (
-          <MatchEntry
+          <div
             key={match.id}
-            match={match}
-            championName={championName}
-            queueLabel={queueLabel}
-            championNameMap={championNameMap}
-            championKeyToId={championKeyToId}
-            resolveSlug={resolveSlug}
-            puuid={puuid}
-            winPrediction={winPrediction}
-          />
+            className="animate-in fade-in-0 slide-in-from-bottom-2"
+            style={{ animationDelay: `${index * 50}ms`, animationFillMode: "both" }}
+          >
+            <MatchEntry
+              match={match}
+              championName={championName}
+              queueLabel={queueLabel}
+              championNameMap={championNameMap}
+              championKeyToId={championKeyToId}
+              resolveSlug={resolveSlug}
+              puuid={puuid}
+              winPrediction={winPrediction}
+            />
+          </div>
         );
       })}
     </div>

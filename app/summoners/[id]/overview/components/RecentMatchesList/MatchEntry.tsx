@@ -13,7 +13,16 @@ import { MatchParticipants } from "./MatchParticipants";
 import { WinPredictionBadge } from "./WinPredictionBadge";
 import { BuildAnalysisBadge } from "./BuildAnalysisBadge";
 import { MatchTimeline } from "./MatchTimeline";
-import { SparklesIcon } from "lucide-react";
+import { SparklesIcon, SwordsIcon, EyeIcon, CoinsIcon } from "lucide-react";
+
+// KDA color based on ratio
+const getKdaColor = (ratio: number) => {
+  if (ratio >= 5) return "text-amber-500 font-bold";
+  if (ratio >= 4) return "text-teal-500 font-semibold";
+  if (ratio >= 3) return "text-emerald-500 font-semibold";
+  if (ratio >= 2) return "text-sky-500";
+  return "text-muted-foreground";
+};
 
 interface MatchEntryProps {
   match: RecentMatchEntry;
@@ -73,189 +82,222 @@ export const MatchEntry = ({
   return (
     <div
       className={cn(
-        "flex flex-col md:flex-row md:justify-between relative overflow-hidden rounded-lg border transition-all hover:shadow-md",
+        "group flex flex-col md:flex-row md:justify-between relative overflow-hidden rounded-xl border",
         match.win
-          ? "border-blue-500/30 bg-blue-500/5"
-          : "border-rose-500/30 bg-rose-500/5"
+          ? "border-blue-500/20 bg-gradient-to-r from-blue-500/8 via-blue-500/5 to-transparent"
+          : "border-rose-500/20 bg-gradient-to-r from-rose-500/8 via-rose-500/5 to-transparent"
       )}
     >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 pt-2 pb-1 flex-wrap">
-          <Badge variant={match.win ? "default" : "destructive"} className="text-[10px] sm:text-xs">
-            {match.win ? t("matches.victory") : t("matches.defeat")} ·{" "}
+      {/* Left accent bar */}
+      <div
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-1 rounded-l-xl",
+          match.win ? "bg-blue-500" : "bg-rose-500"
+        )}
+      />
+
+      <div className="flex-1 min-w-0 pl-3">
+        {/* Header badges */}
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 pt-2.5 pb-1.5 flex-wrap">
+          <Badge
+            variant={match.win ? "default" : "destructive"}
+            className={cn(
+              "text-[10px] sm:text-xs font-semibold shadow-sm text-white",
+              match.win
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-rose-600 hover:bg-rose-700"
+            )}
+          >
+            {match.win ? t("matches.victory") : t("matches.defeat")}
+          </Badge>
+          <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
             {formatDuration(match.gameDuration)}
-          </Badge>
-          <Badge
-            variant="outline"
-            className="h-5 px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-medium bg-background/50 border-border/50 hidden sm:inline-flex"
-          >
-            {queueLabel} · {formatDate(match.gameCreation, t)}
-          </Badge>
-          <Badge
-            variant="outline"
-            className="h-5 px-1.5 text-[9px] font-medium bg-background/50 border-border/50 sm:hidden"
-          >
+          </span>
+          <span className="text-muted-foreground/50 hidden sm:inline">•</span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
+            {queueLabel}
+          </span>
+          <span className="text-muted-foreground/50 hidden sm:inline">•</span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground">
             {formatDate(match.gameCreation, t)}
-          </Badge>
+          </span>
           {winPrediction !== undefined && (
             <WinPredictionBadge winProbability={winPrediction} className="hidden sm:inline-flex" />
           )}
         </div>
 
         {/* Main content */}
-        <div className="flex items-start gap-2 sm:gap-3 px-2 sm:px-3 pb-2 sm:pb-3">
-          {/* Left: Champion + Spells + Runes */}
-          <div className="flex items-start gap-1.5 sm:gap-2 shrink-0">
-            {/* Champion Icon (circular) */}
+        <div className="flex items-start gap-3 sm:gap-4 px-2 sm:px-3 pb-2 sm:pb-2.5">
+          {/* Left: Champion + Spells */}
+          <div className="flex items-start gap-2 shrink-0">
+            {/* Champion Icon with ring */}
             <div className="relative">
+              <div className={cn(
+                "absolute -inset-0.5 rounded-full opacity-60",
+                match.win ? "bg-blue-500/30" : "bg-rose-500/30"
+              )} />
               <ChampionIcon
                 championId={match.championSlug}
                 championKey={match.championKey ?? match.championId}
                 championKeyToId={championKeyToId}
-                size={48}
+                size={52}
                 shape="circle"
-                className="border-2 border-border/60 sm:size-14"
+                className={cn(
+                  "relative border-2 sm:size-14",
+                  match.win ? "border-blue-500/50" : "border-rose-500/50"
+                )}
               />
-              {/* Champion Level - placeholder */}
-              <div className="absolute -bottom-1 -right-1 size-5 rounded-full bg-background border-2 border-border flex items-center justify-center text-[10px] font-bold text-foreground">
-                {/* TODO: Ajouter le niveau du champion si disponible */}
-              </div>
             </div>
 
-            {/* Spells et Runes (vertical stack) */}
-            <div className="flex flex-col gap-1 pt-0.5">
-              {/* Summoner Spells */}
-              <div className="flex flex-col gap-0.5">
-                {match.summoner1Id && (
-                  <SpellIcon
-                    spellId={match.summoner1Id}
-                    alt="Summoner Spell 1"
-                    size={20}
-                    shape="rounded"
-                    showBorder
-                  />
-                )}
-                {match.summoner2Id && (
-                  <SpellIcon
-                    spellId={match.summoner2Id}
-                    alt="Summoner Spell 2"
-                    size={20}
-                    shape="rounded"
-                    showBorder
-                  />
-                )}
-              </div>
-
-              {/* Runes - placeholder */}
-              <div className="flex flex-col gap-0.5 pt-1">
-                <div className="relative size-4 rounded-full border border-border/30 bg-background/40 opacity-50" />
-                <div className="relative size-3 rounded-full border border-border/30 bg-background/40 opacity-50" />
-              </div>
+            {/* Summoner Spells (vertical stack) */}
+            <div className="flex flex-col gap-0.5 pt-1">
+              {match.summoner1Id && (
+                <SpellIcon
+                  spellId={match.summoner1Id}
+                  alt="Summoner Spell 1"
+                  size={22}
+                  shape="rounded"
+                  showBorder
+                  className="shadow-sm"
+                />
+              )}
+              {match.summoner2Id && (
+                <SpellIcon
+                  spellId={match.summoner2Id}
+                  alt="Summoner Spell 2"
+                  size={22}
+                  shape="rounded"
+                  showBorder
+                  className="shadow-sm"
+                />
+              )}
             </div>
           </div>
 
           {/* Center: Stats */}
-          <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex-1 min-w-0 space-y-2">
             {/* Champion name + KDA */}
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground text-sm">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="font-bold text-foreground text-sm sm:text-base">
                 {championName}
               </span>
-              <span className="text-xs text-muted-foreground">{kdaLabel}</span>
-              <span className="text-xs text-muted-foreground">
-                {kdaRatio.toFixed(2)}:1 KDA
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold">
+                  <span className="text-foreground">{match.kills}</span>
+                  <span className="text-muted-foreground/60"> / </span>
+                  <span className="text-rose-500">{match.deaths}</span>
+                  <span className="text-muted-foreground/60"> / </span>
+                  <span className="text-foreground">{match.assists}</span>
+                </span>
+                <span className={cn("text-xs", getKdaColor(kdaRatio))}>
+                  {kdaRatio.toFixed(2)} KDA
+                </span>
+              </div>
             </div>
 
-            {/* P/Kill + CS + Vision + Gold */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-              <span>P/Kill: {pkill}%</span>
+            {/* Stats row with icons */}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-1">
+                <SwordsIcon className="size-3 opacity-60" />
+                <span>P/Kill {pkill}%</span>
+              </div>
               {match.visionScore !== undefined && match.visionScore > 0 && (
-                <>
-                  <span>·</span>
-                  <span>Vision: {match.visionScore}</span>
-                </>
+                <div className="flex items-center gap-1">
+                  <EyeIcon className="size-3 opacity-60" />
+                  <span>{match.visionScore}</span>
+                </div>
               )}
               {match.goldEarned !== undefined && match.goldEarned > 0 && (
-                <>
-                  <span>·</span>
-                  <span>Or: {Math.round(match.goldEarned / 1000)}k</span>
-                </>
+                <div className="flex items-center gap-1">
+                  <CoinsIcon className="size-3 opacity-60" />
+                  <span>{(match.goldEarned / 1000).toFixed(1)}k</span>
+                </div>
               )}
             </div>
 
             {/* Items row */}
-            <div className="flex items-center gap-0.5 sm:gap-1 mt-1 flex-wrap">
-              {Array.from({ length: 6 }, (_, index) => {
-                const itemId = mainItems[index] ?? null;
-                if (!itemId) {
+            <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+              <div className="flex items-center gap-0.5 p-1 rounded-lg bg-background/50 border border-border/30">
+                {Array.from({ length: 6 }, (_, index) => {
+                  const itemId = mainItems[index] ?? null;
+                  if (!itemId) {
+                    return (
+                      <div
+                        key={index}
+                        className="relative size-6 sm:size-7 rounded bg-muted/30"
+                      />
+                    );
+                  }
                   return (
-                    <div
+                    <ItemIcon
                       key={index}
-                      className="relative size-5 sm:size-7 rounded border border-border/30 bg-background/30"
+                      itemId={itemId}
+                      alt={itemId ? `Item ${itemId}` : "Item"}
+                      size={24}
+                      shape="rounded"
+                      showBorder={false}
+                      className="hover:scale-110 transition-transform sm:size-7"
                     />
                   );
-                }
-                return (
-                  <ItemIcon
-                    key={index}
-                    itemId={itemId}
-                    alt={itemId ? `Item ${itemId}` : "Item"}
-                    size={20}
-                    shape="rounded"
-                    showBorder
-                    className="hover:border-primary/50 transition-colors sm:size-7"
-                  />
-                );
-              })}
-              {/* Trinket - hidden on mobile */}
-              {trinket && (
-                <ItemIcon
-                  itemId={trinket}
-                  alt="Trinket"
-                  size={20}
-                  shape="rounded"
-                  showBorder
-                  className="ml-0.5 hidden sm:block"
-                />
-              )}
-              {/* Build Analysis Badge - hidden on mobile */}
-              {mainItems.length > 0 && (
-                <BuildAnalysisBadge
-                  championId={match.championId}
-                  items={mainItems.filter((i): i is number => i !== null)}
-                  queueId={match.queueId ?? undefined}
-                  className="ml-1 hidden sm:inline-flex"
-                />
-              )}
-              {/* Match Timeline - hidden on mobile */}
-              <div className="hidden sm:block">
-                <MatchTimeline matchId={match.matchId} puuid={puuid} />
+                })}
+                {/* Trinket separator */}
+                {trinket && (
+                  <>
+                    <div className="w-px h-5 bg-border/50 mx-0.5 hidden sm:block" />
+                    <ItemIcon
+                      itemId={trinket}
+                      alt="Trinket"
+                      size={24}
+                      shape="rounded"
+                      showBorder={false}
+                      className="hidden sm:block opacity-80"
+                    />
+                  </>
+                )}
               </div>
-              {/* AI Analysis Button */}
-              {puuid && (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="ml-1 h-6 sm:h-7 gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-3"
-                >
-                  <Link href={`/ai-analysis/${match.matchId}?puuid=${puuid}`}>
-                    <SparklesIcon className="size-3 sm:size-3.5" />
-                    <span className="hidden sm:inline">{t("summoners.analyze")}</span>
-                    <span className="sm:hidden">IA</span>
-                  </Link>
-                </Button>
-              )}
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-1 ml-1">
+                {mainItems.length > 0 && (
+                  <BuildAnalysisBadge
+                    championId={match.championId}
+                    items={mainItems.filter((i): i is number => i !== null)}
+                    queueId={match.queueId ?? undefined}
+                    className="hidden sm:inline-flex"
+                  />
+                )}
+                <div className="hidden sm:block">
+                  <MatchTimeline matchId={match.matchId} puuid={puuid} />
+                </div>
+                {puuid && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-7 gap-1.5 text-xs px-2.5 transition-colors",
+                      "bg-background/80 hover:bg-primary hover:text-primary-foreground",
+                      "border-border/50"
+                    )}
+                  >
+                    <Link href={`/ai-analysis/${match.matchId}?puuid=${puuid}`}>
+                      <SparklesIcon className="size-3.5" />
+                      <span className="hidden sm:inline">{t("summoners.analyze")}</span>
+                      <span className="sm:hidden">IA</span>
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
       {/* Match participants - hidden on mobile */}
       {match.participants &&
         match.participants.length > 0 &&
         match.teamId !== undefined && (
-          <div className="hidden lg:block shrink-0 pr-3">
+          <div className="hidden lg:flex items-center shrink-0 pr-4 border-l border-border/30 ml-2">
             <MatchParticipants
               participants={match.participants}
               teamId={match.teamId}
