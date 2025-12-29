@@ -131,6 +131,12 @@ export async function POST(request: NextRequest) {
           leagueAccount = null;
         }
 
+        // Mettre à jour la date de dernière connexion
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+
         // Générer un token JWT
         const token = await generateToken({
           userId: user.id,

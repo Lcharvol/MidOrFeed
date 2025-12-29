@@ -60,7 +60,15 @@ export async function POST(request: Request) {
           email,
           name,
           password: hashedPassword,
+          lastLoginAt: new Date(),
         },
+        include: { leagueAccount: true },
+      });
+    } else {
+      // Mettre à jour la date de dernière connexion
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
         include: { leagueAccount: true },
       });
     }
