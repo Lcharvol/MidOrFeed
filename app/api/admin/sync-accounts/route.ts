@@ -178,7 +178,7 @@ export async function POST(request?: Request | NextRequest) {
     // Utiliser une sous-requête COUNT DISTINCT au lieu de charger tous les enregistrements
     const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
       SELECT COUNT(DISTINCT "participantPUuid") as count
-      FROM "MatchParticipant"
+      FROM "match_participants"
       WHERE "participantPUuid" IS NOT NULL
     `;
     const totalCount = Number(countResult[0]?.count ?? 0);
@@ -275,7 +275,7 @@ async function syncAccountsInBackground(options: {
       if (lastPuuid) {
         batch = await prisma.$queryRaw<{ participantPUuid: string }[]>`
           SELECT DISTINCT "participantPUuid"
-          FROM "MatchParticipant"
+          FROM "match_participants"
           WHERE "participantPUuid" IS NOT NULL
             AND "participantPUuid" > ${lastPuuid}
           ORDER BY "participantPUuid"
@@ -284,7 +284,7 @@ async function syncAccountsInBackground(options: {
       } else {
         batch = await prisma.$queryRaw<{ participantPUuid: string }[]>`
           SELECT DISTINCT "participantPUuid"
-          FROM "MatchParticipant"
+          FROM "match_participants"
           WHERE "participantPUuid" IS NOT NULL
           ORDER BY "participantPUuid"
           LIMIT ${BATCH_SIZE}
