@@ -80,7 +80,6 @@ export default function SummonerByIdLayout({
       toast.success(
         `Profil mis à jour — ${result.matchesCollected} matchs collectés`
       );
-      router.refresh();
     } catch (e) {
       console.error(e);
       toast.error("Une erreur est survenue");

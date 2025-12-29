@@ -1,11 +1,12 @@
 "use client";
 
-import useSWR from "swr";
+import useSWR, { mutate as globalMutate } from "swr";
 import { useCallback, useMemo, useRef } from "react";
 import type { ApiResponse } from "@/types";
 import type { LeagueAccount } from "@/types";
 import { MATCHES_REFRESH_LIMIT } from "@/constants/matches";
 import { SEMI_DYNAMIC_CONFIG } from "./swr";
+import { apiKeys } from "@/lib/api/keys";
 
 type LeagueAccountApi = {
   data: {
@@ -149,7 +150,13 @@ export function useAccount(puuid?: string | null) {
           count: MATCHES_REFRESH_LIMIT,
         });
 
+        // Revalidate account cache
         await mutate();
+
+        // Revalidate matches cache to show new data without page reload
+        if (puuid) {
+          await globalMutate(apiKeys.matches({ puuid }));
+        }
 
         return {
           success: true as const,
