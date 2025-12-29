@@ -324,6 +324,8 @@ export async function POST(request: Request) {
                   item6: participant.item6,
                   summoner1Id: participant.summoner1Id,
                   summoner2Id: participant.summoner2Id,
+                  riotIdGameName: participant.riotIdGameName || null,
+                  riotIdTagline: participant.riotIdTagline || null,
                 },
                 create: {
                   matchId: match.id,
@@ -352,6 +354,8 @@ export async function POST(request: Request) {
                   item6: participant.item6,
                   summoner1Id: participant.summoner1Id,
                   summoner2Id: participant.summoner2Id,
+                  riotIdGameName: participant.riotIdGameName || null,
+                  riotIdTagline: participant.riotIdTagline || null,
                 },
               });
               participantsCreated++;

@@ -132,6 +132,8 @@ model MatchParticipant {
   item6                       Int?
   summoner1Id                 Int?
   summoner2Id                 Int?
+  riotIdGameName              String?
+  riotIdTagline               String?
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
   participantPUuid            String?

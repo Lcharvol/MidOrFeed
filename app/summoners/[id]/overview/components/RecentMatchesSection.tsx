@@ -35,6 +35,8 @@ export type MatchParticipant = {
   teamId: number;
   championId: string;
   championName?: string | null;
+  riotIdGameName?: string | null;
+  riotIdTagline?: string | null;
 };
 
 type RecentMatchEntry = {

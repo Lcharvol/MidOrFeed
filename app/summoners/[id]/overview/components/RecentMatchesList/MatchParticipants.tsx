@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { cn } from "@/lib/utils";
 import type { MatchParticipant } from "../RecentMatchesSection";
@@ -41,17 +42,16 @@ export const MatchParticipants = ({
   }) => (
     <div className="flex flex-col gap-0.5">
       {team.map((participant) => {
-        const participantChampionName =
-          championNameMap.get(participant.championId) ?? participant.championId;
         const participantChampionSlug = resolveSlug(participant.championId);
         const isCurrentPlayer = participant.participantPUuid === puuid;
+        const playerName = participant.riotIdGameName || championNameMap.get(participant.championId) || participant.championId;
+        const hasProfile = participant.participantPUuid && participant.riotIdGameName;
 
-        return (
+        const content = (
           <div
-            key={participant.participantId}
             className={cn(
               "flex items-center gap-1.5 px-1.5 py-0.5 rounded-md transition-colors",
-              "hover:bg-muted/50",
+              hasProfile && "hover:bg-muted/50 cursor-pointer",
               isCurrentPlayer && "bg-primary/15 ring-1 ring-primary/30"
             )}
           >
@@ -66,7 +66,6 @@ export const MatchParticipants = ({
                   "border",
                   isAlly ? "border-blue-500/40" : "border-rose-500/40"
                 )}
-                clickable
               />
               {isCurrentPlayer && (
                 <div className="absolute -right-0.5 -bottom-0.5 size-2 rounded-full bg-primary border border-background" />
@@ -77,11 +76,30 @@ export const MatchParticipants = ({
                 "truncate text-[11px] max-w-[80px]",
                 isCurrentPlayer
                   ? "text-foreground font-medium"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground",
+                hasProfile && "hover:text-foreground hover:underline"
               )}
             >
-              {participantChampionName}
+              {playerName}
             </span>
+          </div>
+        );
+
+        if (hasProfile) {
+          return (
+            <Link
+              key={participant.participantId}
+              href={`/summoners/${participant.participantPUuid}`}
+              prefetch={false}
+            >
+              {content}
+            </Link>
+          );
+        }
+
+        return (
+          <div key={participant.participantId}>
+            {content}
           </div>
         );
       })}

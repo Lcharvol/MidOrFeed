@@ -69,6 +69,8 @@ const SummonerOverviewByIdPage = () => {
         teamId: p.teamId,
         championId: p.championId,
         championName: p.championName ?? null,
+        riotIdGameName: (p as { riotIdGameName?: string | null }).riotIdGameName ?? null,
+        riotIdTagline: (p as { riotIdTagline?: string | null }).riotIdTagline ?? null,
       }));
 
       entries.push({
