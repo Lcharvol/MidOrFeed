@@ -1,6 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
-import { getEnv } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("ai-analysis");
@@ -183,15 +182,22 @@ async function getMatchData(matchId: string, participantPuuid: string) {
 async function generateAnalysisWithClaude(
   matchData: Awaited<ReturnType<typeof getMatchData>>
 ): Promise<MatchAnalysisResult> {
-  const env = getEnv();
+  // Lire directement depuis process.env pour éviter les problèmes de cache
+  const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
 
-  if (!env.ANTHROPIC_API_KEY) {
-    logger.warn("ANTHROPIC_API_KEY non configurée, utilisation de l'analyse basique");
+  if (!anthropicApiKey) {
+    logger.warn("ANTHROPIC_API_KEY non configurée, utilisation de l'analyse basique", {
+      envKeys: Object.keys(process.env).filter(k => k.includes("ANTHROPIC")),
+    });
     return generateBasicAnalysis(matchData);
   }
 
+  logger.info("Utilisation de Claude pour l'analyse", {
+    matchId: matchData.match.id,
+  });
+
   const anthropic = new Anthropic({
-    apiKey: env.ANTHROPIC_API_KEY,
+    apiKey: anthropicApiKey,
   });
 
   const prompt = `Tu es un analyste expert de League of Legends. Analyse cette performance de match et fournis des insights détaillés.
