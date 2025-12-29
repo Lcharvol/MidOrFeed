@@ -25,6 +25,26 @@ export const normalizeRegion = (region: string) => region.toLowerCase();
 export const getRoutingForRegion = (region: string) =>
   REGION_TO_ROUTING[normalizeRegion(region)];
 
+// Platform ID to region mapping (platformId is often uppercase, region lowercase)
+export const PLATFORM_TO_REGION: Record<string, string> = {
+  euw1: "euw1",
+  eun1: "eun1",
+  tr1: "tr1",
+  ru: "ru",
+  na1: "na1",
+  la1: "la1",
+  la2: "la2",
+  br1: "br1",
+  kr: "kr",
+  jp1: "jp1",
+  oc1: "oc1",
+  ph2: "ph2",
+  sg2: "sg2",
+  th2: "th2",
+  tw2: "tw2",
+  vn2: "vn2",
+};
+
 // Platform base URLs per region for Summoner-v4 endpoints
 export const REGION_TO_BASE_URL: Record<string, string> = {
   euw1: "https://euw1.api.riotgames.com",

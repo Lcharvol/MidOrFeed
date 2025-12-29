@@ -38,7 +38,7 @@ export default function SummonerByIdLayout({
     account,
     profileIconUrl,
     refreshAccountAndMatches,
-  } = useSummonerDetails(puuid);
+  } = useSummonerDetails(puuid, region);
   const { solo } = useSummonerRanked(puuid, region);
   const { ladderRank, topPercentage } = useLadderRank(solo);
 

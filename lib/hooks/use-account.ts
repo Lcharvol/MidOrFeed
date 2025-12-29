@@ -33,10 +33,11 @@ const postFetcher = async ([url, body]: [string, unknown]): Promise<LeagueAccoun
   return res.json();
 };
 
-export function useAccount(puuid?: string | null) {
+export function useAccount(puuid?: string | null, region?: string | null) {
   // Clé SWR pour le cache et la déduplication
+  // Include region in the request body so API can auto-fetch if needed
   const key = puuid
-    ? ["/api/league-accounts/get-by-puuid", { puuid }] as const
+    ? ["/api/league-accounts/get-by-puuid", { puuid, region: region || undefined }] as const
     : null;
 
   // Ref pour éviter les appels simultanés

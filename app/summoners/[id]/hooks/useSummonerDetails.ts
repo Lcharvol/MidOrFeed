@@ -12,7 +12,7 @@ type SummonerDetails = {
   profileIconId?: number | null;
 };
 
-export const useSummonerDetails = (puuid?: string) => {
+export const useSummonerDetails = (puuid?: string, region?: string) => {
   const [details, setDetails] = useState<SummonerDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +20,7 @@ export const useSummonerDetails = (puuid?: string) => {
     account,
     isLoading: accLoading,
     refreshAccountAndMatches,
-  } = useAccount(puuid);
+  } = useAccount(puuid, region);
 
   // Set details from DB cache-first
   useEffect(() => {
