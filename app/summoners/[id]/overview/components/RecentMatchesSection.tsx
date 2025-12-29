@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChampionIcon } from '@/components/ChampionIcon';
 import { QUEUE_NAMES } from '@/constants/queues';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n-context';
 
 const formatDuration = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -76,6 +77,8 @@ export const RecentMatchesSection = ({
   championNameMap,
   championKeyToId,
 }: RecentMatchesSectionProps) => {
+  const { t } = useI18n();
+
   if (matches.length === 0) {
     return null;
   }
@@ -84,10 +87,10 @@ export const RecentMatchesSection = ({
     <Card className="border-border/70 bg-background/90 shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-foreground">
-          Dernières parties
+          {t("matches.recentMatches")}
         </CardTitle>
         <CardDescription className="text-xs">
-          Résumé rapide de vos matchs les plus récents.
+          {t("summoners.yourLastMatches")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -131,7 +134,7 @@ export const RecentMatchesSection = ({
                     : 'bg-rose-500 text-white hover:bg-rose-500'
                 )}
               >
-                {match.win ? 'Victoire' : 'Défaite'}
+                {match.win ? t('matches.victory') : t('matches.defeat')}
               </Badge>
             </div>
           );

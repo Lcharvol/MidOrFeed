@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2Icon, TrophyIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ColorBadge } from "@/components/ui/badge";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { useParams, useSearchParams } from "next/navigation";
+import { useI18n } from "@/lib/i18n-context";
 
 interface LeagueEntry {
   leagueId: string;
@@ -24,12 +25,6 @@ interface LeagueEntry {
   hotStreak: boolean;
 }
 
-const QUEUE_TYPES: Record<string, string> = {
-  RANKED_SOLO_5x5: "Classé Solo/Duo",
-  RANKED_FLEX_SR: "Classé Flex 5v5",
-  RANKED_TFT: "TFT Classé",
-};
-
 const TIER_COLORS: Record<string, string> = {
   IRON: "bg-tier-iron",
   BRONZE: "bg-tier-bronze",
@@ -43,17 +38,17 @@ const TIER_COLORS: Record<string, string> = {
   CHALLENGER: "bg-tier-challenger",
 };
 
-const TIER_NAMES: Record<string, string> = {
-  IRON: "Fer",
-  BRONZE: "Bronze",
-  SILVER: "Argent",
-  GOLD: "Or",
-  PLATINUM: "Platine",
-  EMERALD: "Émeraude",
-  DIAMOND: "Diamant",
-  MASTER: "Maître",
-  GRANDMASTER: "Grand Maître",
-  CHALLENGER: "Challenger",
+const TIER_KEYS: Record<string, string> = {
+  IRON: "tierIron",
+  BRONZE: "tierBronze",
+  SILVER: "tierSilver",
+  GOLD: "tierGold",
+  PLATINUM: "tierPlatinum",
+  EMERALD: "tierEmerald",
+  DIAMOND: "tierDiamond",
+  MASTER: "tierMaster",
+  GRANDMASTER: "tierGrandmaster",
+  CHALLENGER: "tierChallenger",
 };
 
 const RANK_ROMAN: Record<string, string> = {
@@ -64,6 +59,7 @@ const RANK_ROMAN: Record<string, string> = {
 };
 
 export default function RankingByIdPage() {
+  const { t } = useI18n();
   const params = useParams();
   const searchParams = useSearchParams();
   const puuid = typeof params?.id === "string" ? params.id : undefined;
@@ -75,6 +71,17 @@ export default function RankingByIdPage() {
   const [profileData, setProfileData] = useState<{
     data?: { summonerId?: string };
   } | null>(null);
+
+  const getTierName = (tier: string) => {
+    const key = TIER_KEYS[tier];
+    return key ? t(`ranking.${key}`) : tier;
+  };
+
+  const QUEUE_TYPES: Record<string, string> = useMemo(() => ({
+    RANKED_SOLO_5x5: t("ranking.rankedSoloDuo"),
+    RANKED_FLEX_SR: t("ranking.rankedFlex"),
+    RANKED_TFT: t("ranking.rankedTFT"),
+  }), [t]);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -102,9 +109,7 @@ export default function RankingByIdPage() {
   useEffect(() => {
     const fetchLeagueData = async () => {
       if (!profileData?.data?.summonerId || !region) {
-        setError(
-          "Non classé. Information de classement non disponible avec l'API Riot actuelle."
-        );
+        setError(t("ranking.unrankedMessage"));
         setIsLoading(false);
         return;
       }
@@ -121,15 +126,13 @@ export default function RankingByIdPage() {
         });
         const result = await response.json();
         if (!response.ok) {
-          setError(
-            result.error || "Erreur lors de la récupération du classement"
-          );
+          setError(result.error || t("ranking.errorFetchingRanking"));
           return;
         }
         setLeagueData(result.data || []);
       } catch (err) {
-        console.error("Erreur:", err);
-        setError("Une erreur est survenue");
+        console.error("Error:", err);
+        setError(t("ranking.errorOccurred"));
       } finally {
         setIsLoading(false);
       }
@@ -137,7 +140,7 @@ export default function RankingByIdPage() {
     fetchLeagueData();
   }, [profileData, region]);
 
-  const aiInsights = getRankingInsights(leagueData || []);
+  const aiInsights = useMemo(() => getRankingInsights(leagueData || [], t, getTierName), [leagueData, t, getTierName]);
 
   if (isLoading) {
     return (
@@ -159,9 +162,9 @@ export default function RankingByIdPage() {
         <CardContent className="py-20">
           <div className="text-center">
             <TrophyIcon className="size-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Non classé</h3>
+            <h3 className="text-xl font-semibold mb-2">{t("ranking.unranked")}</h3>
             <p className="text-muted-foreground">
-              Vous n&apos;avez pas encore de classement actif
+              {t("ranking.noActiveRanking")}
             </p>
           </div>
         </CardContent>
@@ -185,7 +188,7 @@ export default function RankingByIdPage() {
             100
           ).toFixed(1);
           const tierColor = TIER_COLORS[league.tier] || "bg-gray-500";
-          const tierName = TIER_NAMES[league.tier] || league.tier;
+          const tierName = getTierName(league.tier);
           const rankDisplay = league.rank
             ? `${tierName} ${RANK_ROMAN[league.rank] || league.rank}`
             : tierName;
@@ -203,7 +206,7 @@ export default function RankingByIdPage() {
                   <CardTitle>{queueName}</CardTitle>
                   {league.hotStreak && (
                     <ColorBadge emphasis="positive" variant="solid">
-                      🔥 Série chaude
+                      🔥 {t("ranking.hotStreak")}
                     </ColorBadge>
                   )}
                 </div>
@@ -233,7 +236,7 @@ export default function RankingByIdPage() {
                       {league.wins}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Victoires
+                      {t("ranking.victories")}
                     </div>
                   </div>
                   <div className="text-center">
@@ -241,13 +244,13 @@ export default function RankingByIdPage() {
                       {league.losses}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Défaites
+                      {t("ranking.defeats")}
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">{winRate}%</div>
                     <div className="text-xs text-muted-foreground">
-                      Win Rate
+                      {t("ranking.winRate")}
                     </div>
                   </div>
                 </div>
@@ -257,7 +260,7 @@ export default function RankingByIdPage() {
                     variant="subtle"
                     className="mt-4 inline-flex w-full justify-center"
                   >
-                    🆕 Sang neuf
+                    🆕 {t("ranking.freshBlood")}
                   </ColorBadge>
                 )}
               </CardContent>
@@ -269,7 +272,11 @@ export default function RankingByIdPage() {
   );
 }
 
-function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
+function getRankingInsights(
+  leagueData: LeagueEntry[],
+  t: (key: string) => string,
+  getTierName: (tier: string) => string
+): AIInsight[] {
   const insights: AIInsight[] = [];
   if (leagueData.length === 0) return insights;
   const soloQueue = leagueData.find((l) => l.queueType === "RANKED_SOLO_5x5");
@@ -291,42 +298,40 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
       "CHALLENGER",
     ];
     const currentTierIndex = tierOrder.indexOf(soloQueue.tier);
+    const tierName = getTierName(soloQueue.tier);
     if (currentTierIndex >= 3) {
       insights.push({
         type: "positive",
-        title: "Rang élevé maintenu",
-        description: `Vous êtes actuellement ${TIER_NAMES[soloQueue.tier]} ${
-          soloQueue.rank || ""
-        } dans le classé Solo/Duo. Excellente performance !`,
+        title: t("ranking.highRankMaintained"),
+        description: t("ranking.highRankDescription")
+          .replace("{tier}", tierName)
+          .replace("{rank}", soloQueue.rank || ""),
         confidence: 90,
-        recommendation:
-          "Continuez à jouer régulièrement pour maintenir votre rang et continuer à progresser.",
+        recommendation: t("ranking.highRankRecommendation"),
         data: {
-          Rang: `${TIER_NAMES[soloQueue.tier]} ${soloQueue.rank || ""}`,
-          LP: soloQueue.leaguePoints,
+          [t("ranking.rank")]: `${tierName} ${soloQueue.rank || ""}`,
+          [t("ranking.lp")]: soloQueue.leaguePoints,
         },
       });
     }
     if (parseFloat(winRate) >= 55) {
       insights.push({
         type: "positive",
-        title: "Win rate excellent",
-        description: `Avec ${winRate}% de victoires en Solo/Duo, vous êtes sur la bonne voie pour grimper les rangs !`,
+        title: t("ranking.excellentWinRate"),
+        description: t("ranking.excellentWinRateDescription").replace("{winRate}", winRate),
         confidence: 88,
-        recommendation:
-          "Maintenez ce niveau de performance pour continuer à progresser dans le classement.",
-        data: { "Win rate": `${winRate}%`, LP: soloQueue.leaguePoints },
+        recommendation: t("ranking.excellentWinRateRecommendation"),
+        data: { [t("ranking.winRate")]: `${winRate}%`, [t("ranking.lp")]: soloQueue.leaguePoints },
       });
     } else if (parseFloat(winRate) < 45) {
       insights.push({
         type: "negative",
-        title: "Win rate en difficulté",
-        description: `Votre win rate de ${winRate}% en Solo/Duo suggère que vous pourriez bénéficier d'un coaching.`,
+        title: t("ranking.winRateDifficulty"),
+        description: t("ranking.winRateDifficultyDescription").replace("{winRate}", winRate),
         confidence: 85,
-        recommendation:
-          "Analysez vos matchs perdus et travaillez sur vos points faibles pour améliorer votre win rate.",
+        recommendation: t("ranking.winRateDifficultyRecommendation"),
         data: {
-          "Win rate": `${winRate}%`,
+          [t("ranking.winRate")]: `${winRate}%`,
           Matchs: `${soloQueue.wins}W / ${soloQueue.losses}L`,
         },
       });
@@ -334,12 +339,10 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
     if (soloQueue.hotStreak) {
       insights.push({
         type: "positive",
-        title: "🔥 Série de victoires !",
-        description:
-          "Vous êtes en pleine série de victoires ! C'est le moment idéal pour jouer plus.",
+        title: `🔥 ${t("ranking.winningStreak")}`,
+        description: t("ranking.winningStreakDescription"),
         confidence: 95,
-        recommendation:
-          "Profitez de cette dynamique positive mais n'oubliez pas de prendre des pauses régulières.",
+        recommendation: t("ranking.winningStreakRecommendation"),
       });
     }
   }
@@ -360,20 +363,19 @@ function getRankingInsights(leagueData: LeagueEntry[]): AIInsight[] {
     const soloIndex = tierOrder.indexOf(soloQueue.tier);
     const flexIndex = tierOrder.indexOf(flexQueue.tier);
     if (flexIndex > soloIndex) {
+      const flexTierName = getTierName(flexQueue.tier);
+      const soloTierName = getTierName(soloQueue.tier);
       insights.push({
         type: "positive",
-        title: "Performance Flex meilleure",
-        description: `Vous performez mieux en Flex (${
-          TIER_NAMES[flexQueue.tier]
-        }) qu'en Solo/Duo (${
-          TIER_NAMES[soloQueue.tier]
-        }). Vous êtes un bon joueur d'équipe !`,
+        title: t("ranking.flexBetterPerformance"),
+        description: t("ranking.flexBetterDescription")
+          .replace("{flexTier}", flexTierName)
+          .replace("{soloTier}", soloTierName),
         confidence: 85,
-        recommendation:
-          "Considérez jouer plus en équipe pour maximiser vos performances.",
+        recommendation: t("ranking.flexBetterRecommendation"),
         data: {
-          Flex: TIER_NAMES[flexQueue.tier],
-          Solo: TIER_NAMES[soloQueue.tier],
+          [t("ranking.flex")]: flexTierName,
+          [t("ranking.solo")]: soloTierName,
         },
       });
     }

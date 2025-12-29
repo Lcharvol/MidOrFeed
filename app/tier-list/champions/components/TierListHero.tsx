@@ -4,23 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { PageHero } from "@/components/ui/page-hero";
 import type { TierListMetrics } from "@/types";
 import { formatNumber, PATCH_VERSION } from "../utils";
+import { useI18n } from "@/lib/i18n-context";
 
 type TierListHeroProps = {
   metrics: TierListMetrics;
 };
 
 export const TierListHero = ({ metrics }: TierListHeroProps) => {
+  const { t } = useI18n();
   const { totalMatches, formattedLastUpdated, championsCount } = metrics;
 
   return (
     <>
       <PageHero
-        title="LoL Tier List"
+        title={t("tierListChampions.heroTitle")}
         description={
           <>
-            Analyse des performances compétitives basée sur{" "}
-            {formatNumber(totalMatches)} parties récentes. Classement mis à jour
-            automatiquement à partir des données de matchs collectées.
+            {t("tierListChampions.heroDescription").replace("{count}", formatNumber(totalMatches))}
           </>
         }
         badge={
@@ -32,13 +32,13 @@ export const TierListHero = ({ metrics }: TierListHeroProps) => {
           </Badge>
         }
         metaItems={[
-          <>Dernière mise à jour&nbsp;: {formattedLastUpdated}</>,
-          <>Champions analysés&nbsp;: {formatNumber(championsCount)}</>,
+          <>{t("tierListChampions.lastUpdate")}&nbsp;: {formattedLastUpdated}</>,
+          <>{t("tierListChampions.championsAnalyzed")}&nbsp;: {formatNumber(championsCount)}</>,
         ]}
       />
       <div className="mt-4 text-sm text-muted-foreground">
         <strong className="text-foreground">
-          Totale des matches analysé&nbsp;:
+          {t("tierListChampions.totalMatchesAnalyzed")}&nbsp;:
         </strong>{" "}
         {formatNumber(totalMatches)}
       </div>

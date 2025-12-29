@@ -109,7 +109,7 @@ export const TierListTable = ({
     return (
       <div className="rounded-2xl border border-destructive bg-destructive/10 p-6 text-center">
         <p className="font-medium text-destructive">
-          Erreur lors du chargement des champions
+          {t("tierListChampions.loadingError")}
         </p>
       </div>
     );
@@ -118,7 +118,7 @@ export const TierListTable = ({
   if (champions.length === 0) {
     return (
       <div className="rounded-2xl border bg-background/80 p-8 text-center text-sm text-muted-foreground">
-        Aucun champion trouvé
+        {t("tierListChampions.noChampionFound")}
       </div>
     );
   }

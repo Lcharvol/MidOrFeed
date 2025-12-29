@@ -7,6 +7,7 @@ import { SpellIcon } from "@/components/SpellIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n-context";
 import type { RecentMatchEntry } from "../RecentMatchesSection";
 import { MatchParticipants } from "./MatchParticipants";
 import { WinPredictionBadge } from "./WinPredictionBadge";
@@ -31,15 +32,15 @@ const formatDuration = (seconds: number) => {
   return `${minutes}m ${remainingSeconds.toString().padStart(2, "0")}s`;
 };
 
-const formatDate = (timestamp: string | number) => {
+const formatDate = (timestamp: string | number, t: (key: string) => string) => {
   const date = new Date(Number(timestamp));
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return "Aujourd'hui";
-  if (diffDays === 1) return "Hier";
-  return `il y a ${diffDays} jours`;
+  if (diffDays === 0) return t("summoners.today");
+  if (diffDays === 1) return t("summoners.yesterday");
+  return t("summoners.daysAgo").replace("{count}", diffDays.toString());
 };
 
 export const MatchEntry = ({
@@ -52,6 +53,7 @@ export const MatchEntry = ({
   puuid,
   winPrediction,
 }: MatchEntryProps) => {
+  const { t } = useI18n();
   const kdaLabel = `${match.kills}/${match.deaths}/${match.assists}`;
   const kdaRatio =
     match.deaths === 0
@@ -80,20 +82,20 @@ export const MatchEntry = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 pt-2 pb-1 flex-wrap">
           <Badge variant={match.win ? "default" : "destructive"} className="text-[10px] sm:text-xs">
-            {match.win ? "Victoire" : "Défaite"} ·{" "}
+            {match.win ? t("matches.victory") : t("matches.defeat")} ·{" "}
             {formatDuration(match.gameDuration)}
           </Badge>
           <Badge
             variant="outline"
             className="h-5 px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-medium bg-background/50 border-border/50 hidden sm:inline-flex"
           >
-            {queueLabel} · {formatDate(match.gameCreation)}
+            {queueLabel} · {formatDate(match.gameCreation, t)}
           </Badge>
           <Badge
             variant="outline"
             className="h-5 px-1.5 text-[9px] font-medium bg-background/50 border-border/50 sm:hidden"
           >
-            {formatDate(match.gameCreation)}
+            {formatDate(match.gameCreation, t)}
           </Badge>
           {winPrediction !== undefined && (
             <WinPredictionBadge winProbability={winPrediction} className="hidden sm:inline-flex" />
@@ -240,7 +242,7 @@ export const MatchEntry = ({
                 >
                   <Link href={`/ai-analysis/${match.matchId}?puuid=${puuid}`}>
                     <SparklesIcon className="size-3 sm:size-3.5" />
-                    <span className="hidden sm:inline">Analyser</span>
+                    <span className="hidden sm:inline">{t("summoners.analyze")}</span>
                     <span className="sm:hidden">IA</span>
                   </Link>
                 </Button>

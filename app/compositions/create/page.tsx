@@ -97,7 +97,7 @@ export default function CreateCompositionPage() {
           [swapMode]: prev[role],
           [role]: prev[swapMode],
         }));
-        toast.success("Champions echanges");
+        toast.success(t("compositions.championsSwapped"));
       }
       setSwapMode(null);
     } else if (composition[role]) {
@@ -124,7 +124,7 @@ export default function CreateCompositionPage() {
         );
         setSelectedRole(nextEmpty?.key || null);
       } else {
-        toast.error("Tous les roles sont deja remplis");
+        toast.error(t("compositions.allRolesFilled"));
       }
     } else {
       // Assign to selected role
@@ -161,17 +161,17 @@ export default function CreateCompositionPage() {
   // Save composition
   const handleSave = useCallback(async () => {
     if (!user) {
-      toast.error("Connectez-vous pour sauvegarder");
+      toast.error(t("compositions.loginToSave"));
       return;
     }
 
     if (filledCount === 0) {
-      toast.error("Selectionnez au moins un champion");
+      toast.error(t("compositions.selectAtLeastOneChampion"));
       return;
     }
 
     if (!compositionName.trim()) {
-      toast.error("Donnez un nom a votre composition");
+      toast.error(t("compositions.giveCompositionName"));
       return;
     }
 
@@ -193,19 +193,19 @@ export default function CreateCompositionPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || "Erreur lors de la sauvegarde");
+        toast.error(result.error || t("compositions.saveError"));
         return;
       }
 
-      toast.success("Composition sauvegardee!");
+      toast.success(t("compositions.compositionSavedSuccess"));
       setShowSaveDialog(false);
       router.push("/compositions/favorites");
     } catch {
-      toast.error("Erreur lors de la sauvegarde");
+      toast.error(t("compositions.saveError"));
     } finally {
       setIsSaving(false);
     }
-  }, [user, filledCount, compositionName, composition, router]);
+  }, [user, filledCount, compositionName, composition, router, t]);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
@@ -215,16 +215,16 @@ export default function CreateCompositionPage() {
           <h1 className="text-xl sm:text-2xl font-bold">{t("compositions.createTitle")}</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
             {selectedRole
-              ? `Selectionnez un champion pour ${ROLES.find((r) => r.key === selectedRole)?.label}`
+              ? t("compositions.selectChampionFor").replace("{role}", ROLES.find((r) => r.key === selectedRole)?.label ?? "")
               : swapMode
-                ? `Cliquez sur un autre role pour echanger`
-                : "Cliquez sur un role puis selectionnez un champion"}
+                ? t("compositions.clickToSwap")
+                : t("compositions.clickRoleThenSelect")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleReset} disabled={filledCount === 0}>
             <RotateCcwIcon className="size-4 sm:mr-1" />
-            <span className="hidden sm:inline">Reset</span>
+            <span className="hidden sm:inline">{t("compositions.reset")}</span>
           </Button>
           <Button
             size="sm"
@@ -232,7 +232,7 @@ export default function CreateCompositionPage() {
             disabled={filledCount === 0}
           >
             <SaveIcon className="size-4 sm:mr-1" />
-            <span className="hidden sm:inline">Sauvegarder</span>
+            <span className="hidden sm:inline">{t("compositions.saveButton")}</span>
           </Button>
         </div>
       </div>
@@ -299,7 +299,7 @@ export default function CreateCompositionPage() {
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
                   <Badge variant="outline" className="text-[8px] bg-yellow-500/20 border-yellow-500">
                     <ArrowRightLeftIcon className="size-2 mr-0.5" />
-                    Swap
+                    {t("compositions.swap")}
                   </Badge>
                 </div>
               )}
@@ -312,7 +312,7 @@ export default function CreateCompositionPage() {
       <div className="relative mb-4">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
-          placeholder="Rechercher un champion..."
+          placeholder={t("compositions.searchChampionPlaceholder")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-9"
@@ -330,10 +330,10 @@ export default function CreateCompositionPage() {
       {/* Champion count */}
       <div className="flex items-center justify-between mb-3 text-sm text-muted-foreground">
         <span>
-          {filteredChampions.length} champion{filteredChampions.length > 1 ? "s" : ""}
+          {filteredChampions.length} {filteredChampions.length > 1 ? "champions" : "champion"}
         </span>
         <span>
-          {filledCount}/5 selectionnes
+          {filledCount}/5 {t("compositions.selected")}
         </span>
       </div>
 
@@ -386,7 +386,7 @@ export default function CreateCompositionPage() {
       {/* No results */}
       {!championsLoading && filteredChampions.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          Aucun champion trouve pour "{searchTerm}"
+          {t("compositions.noChampionFound").replace("{search}", searchTerm)}
         </div>
       )}
 
@@ -394,7 +394,7 @@ export default function CreateCompositionPage() {
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Sauvegarder la composition</DialogTitle>
+            <DialogTitle>{t("compositions.saveCompositionDialog")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Preview */}
@@ -422,7 +422,7 @@ export default function CreateCompositionPage() {
 
             {/* Name input */}
             <Input
-              placeholder="Nom de la composition"
+              placeholder={t("compositions.compositionNameLabel")}
               value={compositionName}
               onChange={(e) => setCompositionName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSave()}
@@ -431,7 +431,7 @@ export default function CreateCompositionPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
-              Annuler
+              {t("common.cancel")}
             </Button>
             <Button onClick={handleSave} disabled={isSaving || !compositionName.trim()}>
               {isSaving ? (
@@ -439,7 +439,7 @@ export default function CreateCompositionPage() {
               ) : (
                 <SaveIcon className="size-4 mr-2" />
               )}
-              Sauvegarder
+              {t("compositions.saveButton")}
             </Button>
           </DialogFooter>
         </DialogContent>

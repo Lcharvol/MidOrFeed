@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DDRAGON_VERSION, getItemImageUrl as buildItemImageUrl } from "@/constants/ddragon";
+import { useI18n } from "@/lib/i18n-context";
 
 // Interface basée sur les données Riot
 interface Item {
@@ -68,6 +69,7 @@ const SortIcon = ({
 };
 
 export default function ItemsPage() {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -168,16 +170,16 @@ export default function ItemsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-2 text-4xl font-bold">Items</h1>
+        <h1 className="mb-2 text-4xl font-bold">{t("tierList.items.title")}</h1>
         <p className="text-muted-foreground">
-          Tous les objets de League of Legends avec leurs statistiques
+          {t("tierList.items.description")}
         </p>
       </div>
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row">
         <div className="flex-1">
           <Input
-            placeholder="Rechercher un item..."
+            placeholder={t("tierList.items.searchItem")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full"
@@ -194,7 +196,7 @@ export default function ItemsPage() {
       {error && (
         <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
           <p className="text-destructive">
-            Erreur lors du chargement des items
+            {t("tierList.items.loadingError")}
           </p>
         </div>
       )}
@@ -204,13 +206,13 @@ export default function ItemsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16">Image</TableHead>
+                <TableHead className="w-16">{t("tierList.items.image")}</TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
                   onClick={() => handleSort("name")}
                 >
                   <div className="flex items-center">
-                    Nom
+                    {t("tierList.items.name")}
                     <SortIcon
                       column="name"
                       sortColumn={sortColumn}
@@ -218,13 +220,13 @@ export default function ItemsPage() {
                     />
                   </div>
                 </TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>{t("tierList.items.descriptionCol")}</TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
                   onClick={() => handleSort("gold")}
                 >
                   <div className="flex items-center">
-                    Prix
+                    {t("tierList.items.price")}
                     <SortIcon
                       column="gold"
                       sortColumn={sortColumn}
@@ -238,7 +240,7 @@ export default function ItemsPage() {
               {sortedAndFilteredItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
-                    Aucun item trouvé
+                    {t("tierList.items.noItemFound")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -282,9 +284,9 @@ export default function ItemsPage() {
 
       {!isLoading && !error && (
         <div className="mt-4 text-sm text-muted-foreground">
-          Affichage de {sortedAndFilteredItems.length} item
-          {sortedAndFilteredItems.length > 1 ? "s" : ""}
-          {data && ` sur ${data.count}`}
+          {t("tierList.items.displayingItems")
+            .replace("{count}", String(sortedAndFilteredItems.length))
+            .replace("{total}", String(data?.count ?? 0))}
         </div>
       )}
     </div>

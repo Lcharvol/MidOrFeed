@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n-context";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -47,6 +48,7 @@ const TIERS = [
 ];
 
 export default function LeaderboardPage() {
+  const { t } = useI18n();
   const [region, setRegion] = useState("euw1");
   const [tier, setTier] = useState("CHALLENGER");
   const [search, setSearch] = useState("");
@@ -75,24 +77,24 @@ export default function LeaderboardPage() {
   return (
     <div className="container mx-auto py-10 space-y-6">
       <div>
-        <h1 className="text-4xl font-bold">Leaderboard</h1>
+        <h1 className="text-4xl font-bold">{t("leaderboard.title")}</h1>
         <p className="text-muted-foreground">
-          Top joueurs classés (solo queue)
+          {t("leaderboard.description")}
         </p>
       </div>
 
       <Card>
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <CardTitle>Classement</CardTitle>
+            <CardTitle>{t("leaderboard.ranking")}</CardTitle>
             <CardDescription>
-              Mise à jour périodiquement depuis Riot
+              {t("leaderboard.updatedPeriodically")}
             </CardDescription>
           </div>
           <div className="flex gap-2">
             <Select value={region} onValueChange={setRegion}>
               <SelectTrigger className="w-36">
-                <SelectValue placeholder="Région" />
+                <SelectValue placeholder={t("leaderboard.region")} />
               </SelectTrigger>
               <SelectContent>
                 {REGIONS.map((r) => (
@@ -104,18 +106,18 @@ export default function LeaderboardPage() {
             </Select>
             <Select value={tier} onValueChange={setTier}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Palier" />
+                <SelectValue placeholder={t("leaderboard.tier")} />
               </SelectTrigger>
               <SelectContent>
-                {TIERS.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
+                {TIERS.map((tier) => (
+                  <SelectItem key={tier.value} value={tier.value}>
+                    {tier.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Input
-              placeholder="Rechercher un joueur..."
+              placeholder={t("leaderboard.searchPlayer")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-56"
@@ -128,10 +130,10 @@ export default function LeaderboardPage() {
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>#</TableHead>
-                  <TableHead>Joueur</TableHead>
+                  <TableHead>{t("leaderboard.player")}</TableHead>
                   <TableHead>LP</TableHead>
-                  <TableHead>Victoires</TableHead>
-                  <TableHead>Défaites</TableHead>
+                  <TableHead>{t("leaderboard.victories")}</TableHead>
+                  <TableHead>{t("leaderboard.defeats")}</TableHead>
                   <TableHead>WR</TableHead>
                 </TableRow>
               </TableHeader>
@@ -140,7 +142,7 @@ export default function LeaderboardPage() {
                   <TableRow>
                     <TableCell colSpan={6}>
                       <div className="py-8 text-center text-muted-foreground">
-                        Chargement...
+                        {t("leaderboard.loading")}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -148,7 +150,7 @@ export default function LeaderboardPage() {
                   <TableRow>
                     <TableCell colSpan={6}>
                       <div className="py-8 text-center text-muted-foreground">
-                        Aucun résultat
+                        {t("leaderboard.noResults")}
                       </div>
                     </TableCell>
                   </TableRow>

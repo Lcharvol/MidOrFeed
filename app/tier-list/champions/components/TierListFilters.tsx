@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { ROLE_FILTER_OPTIONS } from "../utils";
 import type { TierListActions, TierListState } from "../hooks/useChampionTierList";
+import { useI18n } from "@/lib/i18n-context";
 
 type TierListFiltersProps = {
   state: TierListState;
@@ -25,27 +26,12 @@ type TierListFiltersProps = {
   filtersActive: boolean;
 };
 
-const TIER_OPTIONS = [
-  { value: "ALL", label: "Tous les tiers" },
-  { value: "S+", label: "S+" },
-  { value: "S", label: "S" },
-  { value: "A", label: "A" },
-  { value: "B", label: "B" },
-  { value: "C", label: "C" },
-  { value: "D", label: "D" },
-] as const;
-
-const QUEUE_TYPE_OPTIONS = [
-  { value: "ALL", label: "Tous les modes" },
-  { value: "SOLO", label: "Ranked Solo/Duo" },
-  { value: "FLEX", label: "Ranked Flex" },
-] as const;
-
 export const TierListFilters = ({
   state,
   actions,
   filtersActive,
 }: TierListFiltersProps) => {
+  const { t } = useI18n();
   const {
     searchTerm,
     roleFilter,
@@ -65,12 +51,28 @@ export const TierListFilters = ({
     resetFilters,
   } = actions;
 
+  const TIER_OPTIONS = [
+    { value: "ALL", label: t("tierListChampions.allTiers") },
+    { value: "S+", label: "S+" },
+    { value: "S", label: "S" },
+    { value: "A", label: "A" },
+    { value: "B", label: "B" },
+    { value: "C", label: "C" },
+    { value: "D", label: "D" },
+  ] as const;
+
+  const QUEUE_TYPE_OPTIONS = [
+    { value: "ALL", label: t("tierListChampions.allModes") },
+    { value: "SOLO", label: t("summoners.rankedSolo") },
+    { value: "FLEX", label: t("summoners.rankedFlex") },
+  ] as const;
+
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 p-4">
       {/* Filtre par rôle */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-muted-foreground">
-          Rôle
+          {t("tierListChampions.role")}
         </label>
         <ButtonGroup orientation="horizontal" className="h-8">
           <Button
@@ -78,9 +80,9 @@ export const TierListFilters = ({
             variant={roleFilter === "ALL" ? "default" : "outline"}
             onClick={() => setRoleFilter("ALL")}
             className="px-3"
-            title="Tous les rôles"
+            title={t("tierListChampions.allRoles")}
           >
-            Tous
+            {t("tierListChampions.allRoles")}
           </Button>
           {ROLE_FILTER_OPTIONS.map(({ key, label, Icon }) => (
             <Button
@@ -100,11 +102,11 @@ export const TierListFilters = ({
       {/* Filtre par tier */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-muted-foreground">
-          Tier
+          {t("tierListChampions.tier")}
         </label>
         <Select value={tierFilter} onValueChange={setTierFilter}>
           <SelectTrigger size="sm" className="w-[140px]">
-            <SelectValue placeholder="Tous les tiers" />
+            <SelectValue placeholder={t("tierListChampions.allTiers")} />
           </SelectTrigger>
           <SelectContent>
             {TIER_OPTIONS.map(({ value, label }) => (
@@ -119,11 +121,11 @@ export const TierListFilters = ({
       {/* Filtre par type de queue */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-muted-foreground">
-          Mode de jeu
+          {t("tierListChampions.gameMode")}
         </label>
         <Select value={queueTypeFilter} onValueChange={setQueueTypeFilter}>
           <SelectTrigger size="sm" className="w-[160px]">
-            <SelectValue placeholder="Tous les modes" />
+            <SelectValue placeholder={t("tierListChampions.allModes")} />
           </SelectTrigger>
           <SelectContent>
             {QUEUE_TYPE_OPTIONS.map(({ value, label }) => (
@@ -143,7 +145,7 @@ export const TierListFilters = ({
           htmlFor="reliability-filter"
           className="text-xs font-medium text-muted-foreground whitespace-nowrap"
         >
-          Champions fiables
+          {t("tierListChampions.reliableChampions")}
         </label>
         <Switch
           id="reliability-filter"
@@ -159,7 +161,7 @@ export const TierListFilters = ({
           className="text-xs font-medium text-muted-foreground whitespace-nowrap flex items-center gap-1"
         >
           <SparklesIcon className="size-3" />
-          Elite (S/S+)
+          {t("tierListChampions.eliteOnly")}
         </label>
         <Switch
           id="elite-filter"
@@ -175,17 +177,17 @@ export const TierListFilters = ({
         <button
           onClick={resetFilters}
           className="flex items-center gap-1.5 rounded-md border border-border/60 bg-background/70 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background h-8"
-          title="Réinitialiser les filtres"
+          title={t("tierListChampions.reset")}
         >
           <GlobeIcon className="size-4" />
-          Réinitialiser
+          {t("tierListChampions.reset")}
         </button>
       )}
 
       {/* Recherche */}
       <div className="ml-auto flex w-full items-center gap-2 sm:w-64">
         <Input
-          placeholder="Rechercher un champion..."
+          placeholder={t("tierListChampions.searchChampion")}
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           className="rounded-md bg-background/80"

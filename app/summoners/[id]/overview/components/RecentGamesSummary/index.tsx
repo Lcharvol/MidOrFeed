@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { SearchIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n-context";
 import dynamic from "next/dynamic";
 import { LazyLoadingFallback } from "@/lib/lazy-components";
 import { KDAStats } from "./KDAStats";
@@ -37,6 +38,7 @@ export const RecentGamesSummary = ({
   resolveSlug,
   rolePerformance = [],
 }: RecentGamesSummaryProps) => {
+  const { t } = useI18n();
   const winRateChartConfig = useMemo(() => {
     const winsColor = "var(--primary)";
     const lossesColor = "var(--destructive)";
@@ -62,11 +64,11 @@ export const RecentGamesSummary = ({
   return (
     <Card className="bg-background/90">
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle>Parties récentes</CardTitle>
+        <CardTitle>{t("matches.recentMatches")}</CardTitle>
         <div className="relative w-full sm:w-55">
           <SearchIcon className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Rechercher un champion"
+            placeholder={t("matches.searchChampion")}
             className="h-8 pl-8 text-xs"
           />
         </div>
