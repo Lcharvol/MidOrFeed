@@ -72,7 +72,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
-import { useRecentSearch } from "@/lib/hooks/use-recent-search";
+import { useSummonerSearch } from "@/lib/hooks/use-summoner-search";
 import { getInitials } from "@/lib/profile-utils";
 import { useI18n } from "@/lib/i18n-context";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
@@ -121,19 +121,21 @@ export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isVersionOpen, setIsVersionOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchRegion, setSearchRegion] = useState("euw1");
-  const [isSearching, setIsSearching] = useState(false);
-  const { recentSearches, addRecentSearch } = useRecentSearch();
-  type LocalSearchResult = {
-    puuid: string;
-    gameName?: string;
-    tagLine?: string;
-    region: string;
-    profileIconId?: number;
-    stats?: { totalMatches?: number };
-  };
-  const [searchResults, setSearchResults] = useState<LocalSearchResult[]>([]);
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchRegion,
+    setSearchRegion,
+    isSearching,
+    searchResults,
+    recentSearches,
+    search: performFullSearch,
+    navigateToResult,
+    handleRecentClick,
+    clearSearch,
+  } = useSummonerSearch({
+    onNavigate: () => setIsSearchOpen(false),
+  });
   const { profileIconUrl, isLoading: isLoadingIcon } = useRiotProfileIcon(
     user?.leagueAccount?.puuid,
     user?.leagueAccount?.riotRegion
@@ -335,110 +337,6 @@ export function Header() {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
-  // Recherche locale en temps réel
-  const performLocalSearch = useCallback(
-    async (query: string) => {
-      if (!query || query.length < 2) {
-        setSearchResults([]);
-        return;
-      }
-
-      try {
-        const response = await fetch("/api/search/summoners", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query,
-            region: searchRegion,
-            limit: 5,
-          }),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          setSearchResults(result.results || []);
-        }
-      } catch (error) {
-        console.error("Local search error:", error);
-      }
-    },
-    [searchRegion]
-  );
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      performLocalSearch(searchQuery);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, performLocalSearch]);
-
-  const handleSelectResult = useCallback(
-    (entry: LocalSearchResult) => {
-      if (!entry.puuid) return;
-      addRecentSearch(
-        entry.gameName || entry.puuid,
-        entry.tagLine || entry.region,
-        entry.region
-      );
-      setIsSearchOpen(false);
-      setSearchQuery("");
-      setSearchResults([]);
-      router.push(`/summoners/${entry.puuid}/overview?region=${entry.region}`);
-    },
-    [addRecentSearch, router]
-  );
-
-  const handleSummonerSearch = async (query: string) => {
-    const trimmed = query.trim();
-    if (!trimmed || trimmed.length < 2) {
-      toast.error("Entrez au moins 2 caractères");
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const region = searchRegion;
-
-      const response = await fetch("/api/riot/search-account", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: trimmed,
-          region,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(result.error || t("header.searchError"));
-        return;
-      }
-
-      // Enregistrer la recherche comme récente
-      if (result.summary) {
-        addRecentSearch(
-          result.summary.gameName ?? trimmed,
-          result.summary.tagLine ?? region,
-          region
-        );
-      }
-
-      // Redirect to summoner page with the found PUUID
-      router.push(`/summoners?puuid=${result.puuid}&region=${region}`);
-      setIsSearchOpen(false);
-    } catch (error) {
-      console.error("Search error:", error);
-      toast.error(t("header.searchError"));
-    } finally {
-      setIsSearching(false);
-      setSearchQuery("");
-      setSearchResults([]);
-    }
-  };
 
   const handleSelectVersion = useCallback(
     async (version: string) => {
@@ -786,7 +684,7 @@ export function Header() {
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
-                        handleSummonerSearch(searchQuery);
+                        performFullSearch();
                       }
                     }}
                   />
@@ -821,7 +719,7 @@ export function Header() {
                         <CommandItem
                           key={result.puuid}
                           value={result.puuid}
-                          onSelect={() => handleSelectResult(result)}
+                          onSelect={() => navigateToResult(result)}
                           className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/80 hover:border-primary/40 hover:bg-background transition-colors"
                         >
                           <div className="flex flex-col">
@@ -849,11 +747,7 @@ export function Header() {
                         <CommandItem
                           key={`${recent.gameName}#${recent.tagLine}@${recent.region}`}
                           value={`${recent.gameName}#${recent.tagLine}`}
-                          onSelect={() =>
-                            handleSummonerSearch(
-                              `${recent.gameName}#${recent.tagLine}`
-                            )
-                          }
+                          onSelect={() => handleRecentClick(recent)}
                           className="flex items-center justify-between gap-3"
                         >
                           <div className="flex flex-col">
@@ -877,7 +771,7 @@ export function Header() {
                     variant="default"
                     size="sm"
                     className="w-full"
-                    onClick={() => handleSummonerSearch(searchQuery)}
+                    onClick={() => performFullSearch()}
                     disabled={isSearching || searchQuery.length < 2}
                   >
                     {isSearching ? (
