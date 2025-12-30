@@ -116,8 +116,8 @@ export function SummonerSearchBar({
     [addRecentSearch, router]
   );
 
-  const handleSearch = async () => {
-    const trimmed = searchQuery.trim();
+  const performSearch = async (query: string, region: string) => {
+    const trimmed = query.trim();
     if (!trimmed || trimmed.length < 2) {
       toast.error(t("homeSearch.minCharacters") || "Enter at least 2 characters");
       return;
@@ -130,7 +130,7 @@ export function SummonerSearchBar({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: trimmed,
-          region: searchRegion,
+          region,
         }),
       });
 
@@ -144,12 +144,12 @@ export function SummonerSearchBar({
       if (result.summary) {
         addRecentSearch(
           result.summary.gameName ?? trimmed,
-          result.summary.tagLine ?? searchRegion,
-          searchRegion
+          result.summary.tagLine ?? region,
+          region
         );
       }
 
-      router.push(`/summoners?puuid=${result.puuid}&region=${searchRegion}`);
+      router.push(`/summoners/${result.puuid}/overview?region=${region}`);
       setIsFocused(false);
     } catch (error) {
       console.error("Search error:", error);
@@ -161,6 +161,10 @@ export function SummonerSearchBar({
     }
   };
 
+  const handleSearch = () => {
+    performSearch(searchQuery, searchRegion);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -169,13 +173,11 @@ export function SummonerSearchBar({
   };
 
   const handleRecentClick = (recent: { gameName: string; tagLine: string; region: string }) => {
-    setSearchQuery(`${recent.gameName}#${recent.tagLine}`);
+    const query = `${recent.gameName}#${recent.tagLine}`;
+    setSearchQuery(query);
     setSearchRegion(recent.region);
     setIsFocused(false);
-
-    setTimeout(() => {
-      handleSearch();
-    }, 100);
+    performSearch(query, recent.region);
   };
 
   const showDropdown = isFocused && (searchResults.length > 0 || (showRecentSearches && recentSearches.length > 0 && searchQuery.length === 0));
