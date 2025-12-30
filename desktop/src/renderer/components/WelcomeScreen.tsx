@@ -3,9 +3,10 @@ import type { LCUConnectionStatus } from '../../shared/types';
 interface WelcomeScreenProps {
   status: LCUConnectionStatus;
   onReconnect: () => void;
+  onStartDemo?: () => void;
 }
 
-export function WelcomeScreen({ status, onReconnect }: WelcomeScreenProps) {
+export function WelcomeScreen({ status, onReconnect, onStartDemo }: WelcomeScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
       <div className="text-6xl mb-6">
@@ -48,9 +49,16 @@ export function WelcomeScreen({ status, onReconnect }: WelcomeScreenProps) {
             </ol>
           </div>
 
-          <button onClick={onReconnect} className="btn btn-secondary">
-            Réessayer la connexion
-          </button>
+          <div className="flex gap-3">
+            <button onClick={onReconnect} className="btn btn-secondary">
+              Réessayer la connexion
+            </button>
+            {onStartDemo && (
+              <button onClick={onStartDemo} className="btn btn-primary">
+                Mode Demo
+              </button>
+            )}
+          </div>
         </div>
       )}
 

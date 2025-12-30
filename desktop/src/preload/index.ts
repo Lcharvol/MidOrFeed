@@ -54,6 +54,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('api:champion', championId),
   fetchBuildData: (championId: number, role: string) =>
     ipcRenderer.invoke('api:build', championId, role),
+
+  // Demo mode
+  startDemo: () => ipcRenderer.invoke('demo:start'),
+  stopDemo: () => ipcRenderer.invoke('demo:stop'),
+  isDemoActive: () => ipcRenderer.invoke('demo:isActive'),
 });
 
 // Type definitions for the exposed API
@@ -72,6 +77,9 @@ declare global {
       updateSettings: (settings: Partial<Record<string, unknown>>) => Promise<void>;
       fetchChampionData: (championId: number) => Promise<unknown>;
       fetchBuildData: (championId: number, role: string) => Promise<unknown>;
+      startDemo: () => Promise<void>;
+      stopDemo: () => Promise<void>;
+      isDemoActive: () => Promise<boolean>;
     };
   }
 }

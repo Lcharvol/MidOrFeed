@@ -9,6 +9,7 @@ function App() {
   const [gamePhase, setGamePhase] = useState<GameFlowPhase>('None');
   const [champSelect, setChampSelect] = useState<ChampSelectSession | null>(null);
   const [summoner, setSummoner] = useState<CurrentSummoner | null>(null);
+  const [demoActive, setDemoActive] = useState(false);
 
   useEffect(() => {
     // Subscribe to LCU events
@@ -16,6 +17,9 @@ function App() {
     const unsubGameFlow = window.electronAPI.onGameFlow(setGamePhase);
     const unsubChampSelect = window.electronAPI.onChampSelect(setChampSelect);
     const unsubSummoner = window.electronAPI.onSummoner(setSummoner);
+
+    // Check if demo mode is active
+    window.electronAPI.isDemoActive().then(setDemoActive);
 
     return () => {
       unsubStatus();
@@ -27,6 +31,16 @@ function App() {
 
   const handleReconnect = () => {
     window.electronAPI.reconnectLCU();
+  };
+
+  const handleToggleDemo = async () => {
+    if (demoActive) {
+      await window.electronAPI.stopDemo();
+      setDemoActive(false);
+    } else {
+      await window.electronAPI.startDemo();
+      setDemoActive(true);
+    }
   };
 
   return (
@@ -47,8 +61,8 @@ function App() {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto p-4">
-        {lcuStatus !== 'connected' ? (
-          <WelcomeScreen status={lcuStatus} onReconnect={handleReconnect} />
+        {lcuStatus !== 'connected' && !demoActive ? (
+          <WelcomeScreen status={lcuStatus} onReconnect={handleReconnect} onStartDemo={handleToggleDemo} />
         ) : gamePhase === 'ChampSelect' && champSelect ? (
           <ChampSelectPanel session={champSelect} />
         ) : (
@@ -71,7 +85,20 @@ function App() {
                   <span className="text-lol-gold">{summoner.gameName}#{summoner.tagLine}</span>
                 </p>
               )}
+              {demoActive && (
+                <p className="text-sm text-yellow-400 mt-2">
+                  Mode Demo actif
+                </p>
+              )}
             </div>
+            {demoActive && (
+              <button
+                onClick={handleToggleDemo}
+                className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              >
+                Arrêter le mode Demo
+              </button>
+            )}
           </div>
         )}
       </main>

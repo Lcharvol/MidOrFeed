@@ -3,8 +3,12 @@ import Store from 'electron-store';
 import { lcuConnector } from '../lcu/connector';
 import { lcuAPI } from '../lcu/api';
 import { lcuWebSocket } from '../lcu/websocket';
-import { toggleOverlay } from '../windows/overlay';
-import type { AppSettings, DEFAULT_SETTINGS, RunePage } from '../../shared/types';
+import { toggleOverlay, showOverlay, hideOverlay } from '../windows/overlay';
+import type { AppSettings, DEFAULT_SETTINGS, RunePage, ChampSelectSession } from '../../shared/types';
+
+// Demo mode state
+let demoModeActive = false;
+let demoInterval: NodeJS.Timeout | null = null;
 
 const store = new Store<AppSettings>({
   defaults: {
@@ -51,6 +55,19 @@ export function setupIPCHandlers(): void {
     Object.entries(settings).forEach(([key, value]) => {
       store.set(key as keyof AppSettings, value as AppSettings[keyof AppSettings]);
     });
+  });
+
+  // Demo mode handlers
+  ipcMain.handle('demo:start', async () => {
+    startDemoMode();
+  });
+
+  ipcMain.handle('demo:stop', async () => {
+    stopDemoMode();
+  });
+
+  ipcMain.handle('demo:isActive', async () => {
+    return demoModeActive;
   });
 
   // Web API handlers
@@ -117,4 +134,104 @@ export function setupLCUEventForwarding(): void {
 
 export function getSettings(): AppSettings {
   return store.store;
+}
+
+// Demo mode mock data
+const DEMO_CHAMPIONS = [
+  { id: 1, name: 'Annie' },
+  { id: 64, name: 'Lee Sin' },
+  { id: 157, name: 'Yasuo' },
+  { id: 238, name: 'Zed' },
+  { id: 412, name: "Thresh" },
+  { id: 51, name: 'Caitlyn' },
+  { id: 99, name: 'Lux' },
+  { id: 86, name: 'Garen' },
+  { id: 222, name: 'Jinx' },
+  { id: 103, name: 'Ahri' },
+];
+
+function createMockChampSelectSession(phase: number): ChampSelectSession {
+  const myTeam = DEMO_CHAMPIONS.slice(0, 5).map((champ, index) => ({
+    cellId: index,
+    championId: phase > index ? champ.id : 0,
+    championPickIntent: phase <= index ? champ.id : 0,
+    summonerId: 1000 + index,
+    assignedPosition: ['top', 'jungle', 'middle', 'bottom', 'utility'][index],
+    spell1Id: 4, // Flash
+    spell2Id: index === 1 ? 11 : 14, // Smite for jungle, Ignite for others
+    team: 1,
+  }));
+
+  const theirTeam = DEMO_CHAMPIONS.slice(5, 10).map((champ, index) => ({
+    cellId: 5 + index,
+    championId: phase > index + 1 ? champ.id : 0,
+    championPickIntent: 0,
+    summonerId: 2000 + index,
+    assignedPosition: ['top', 'jungle', 'middle', 'bottom', 'utility'][index],
+    spell1Id: 4,
+    spell2Id: index === 1 ? 11 : 14,
+    team: 2,
+  }));
+
+  const bans = phase > 0
+    ? [
+        { championId: 67, isAllyBan: true },
+        { championId: 55, isAllyBan: true },
+        { championId: 91, isAllyBan: false },
+        { championId: 7, isAllyBan: false },
+      ]
+    : [];
+
+  return {
+    myTeam,
+    theirTeam,
+    bans,
+    timer: {
+      phase: phase < 5 ? 'BAN_PICK' : 'FINALIZATION',
+      timeRemaining: 30000 - (phase % 5) * 5000,
+      totalTimeInPhase: 30000,
+    },
+    localPlayerCellId: 2, // Mid laner
+    isSpectating: false,
+  };
+}
+
+function startDemoMode(): void {
+  if (demoModeActive) return;
+
+  demoModeActive = true;
+  let phase = 0;
+
+  // Send initial status
+  sendToAllWindows('lcu:status', 'connected');
+  sendToAllWindows('lcu:gameflow', 'ChampSelect');
+  showOverlay();
+
+  // Simulate champion select progression
+  const sendUpdate = () => {
+    const session = createMockChampSelectSession(phase);
+    sendToAllWindows('lcu:champselect', session);
+    phase = (phase + 1) % 6;
+  };
+
+  sendUpdate();
+  demoInterval = setInterval(sendUpdate, 3000);
+
+  console.log('Demo mode started');
+}
+
+function stopDemoMode(): void {
+  if (!demoModeActive) return;
+
+  demoModeActive = false;
+  if (demoInterval) {
+    clearInterval(demoInterval);
+    demoInterval = null;
+  }
+
+  hideOverlay();
+  sendToAllWindows('lcu:gameflow', 'None');
+  sendToAllWindows('lcu:status', 'disconnected');
+
+  console.log('Demo mode stopped');
 }

@@ -24,12 +24,21 @@ function createMainWindow(): BrowserWindow {
   });
 
   // Load the main page
+  const rendererPath = path.join(__dirname, '../renderer/index.html');
+  console.log('Loading renderer from:', rendererPath);
+
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(rendererPath);
   }
+
+  // Always open DevTools for debugging
+  mainWindow.webContents.openDevTools();
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load:', errorCode, errorDescription);
+  });
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
