@@ -68,6 +68,7 @@ import {
   ChevronDownIcon,
   RefreshCwIcon,
   CheckIcon,
+  DownloadIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -377,6 +378,19 @@ export function Header() {
         );
       })}
 
+      <NavigationMenuItem>
+        <Link
+          href="/download"
+          className={cn(
+            standaloneNavLinkClasses,
+            pathname === "/download" && activeTriggerClass
+          )}
+        >
+          <DownloadIcon className="size-4" />
+          Overlay
+        </Link>
+      </NavigationMenuItem>
+
       {user && (
         <>
           <NavigationMenuItem>
@@ -437,6 +451,18 @@ export function Header() {
           );
         })}
       </Accordion>
+
+      <Link
+        href="/download"
+        className={cn(
+          mobilePrimaryLinkClasses,
+          pathname === "/download" && "bg-primary/10 text-primary"
+        )}
+        onClick={() => setMobileMenuOpen(false)}
+      >
+        <DownloadIcon className="size-4" />
+        Telecharger l'Overlay
+      </Link>
 
       {user && (
         <>
