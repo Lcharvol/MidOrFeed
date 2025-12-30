@@ -2,6 +2,9 @@ appId: gg.midorfeed.overlay
 productName: MidOrFeed Overlay
 copyright: Copyright © 2024 MidOrFeed
 
+# Disable auto-update for now (no code signing)
+publish: null
+
 directories:
   output: release
   buildResources: assets
@@ -18,7 +21,7 @@ win:
     - target: nsis
       arch:
         - x64
-  icon: assets/icons/icon.ico
+  icon: assets/icons/icon.png
   artifactName: ${productName}-${version}-Setup.${ext}
 
 nsis:
@@ -26,9 +29,6 @@ nsis:
   perMachine: false
   allowToChangeInstallationDirectory: true
   deleteAppDataOnUninstall: true
-  installerIcon: assets/icons/icon.ico
-  uninstallerIcon: assets/icons/icon.ico
-  installerHeaderIcon: assets/icons/icon.ico
 
 mac:
   target:
@@ -61,10 +61,6 @@ linux:
   icon: assets/icons
   category: Game
   artifactName: ${productName}-${version}.${ext}
-
-publish:
-  provider: github
-  releaseType: release
 
 asar: true
 

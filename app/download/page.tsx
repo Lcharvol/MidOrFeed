@@ -22,6 +22,7 @@ const APP_VERSION = "1.0.0";
 export default function DownloadPage() {
   const [platform, setPlatform] = useState<Platform>("unknown");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAppleSilicon, setIsAppleSilicon] = useState(false);
 
   useEffect(() => {
     // Detect user's platform
@@ -30,15 +31,24 @@ export default function DownloadPage() {
       setPlatform("windows");
     } else if (userAgent.includes("mac")) {
       setPlatform("mac");
+      // Try to detect Apple Silicon
+      // @ts-expect-error - userAgentData is not yet in TypeScript types
+      if (navigator.userAgentData?.platform === "macOS") {
+        // @ts-expect-error - userAgentData is not yet in TypeScript types
+        navigator.userAgentData.getHighEntropyValues(["architecture"]).then((values: { architecture: string }) => {
+          setIsAppleSilicon(values.architecture === "arm");
+        }).catch(() => {});
+      }
     }
   }, []);
 
-  const getDownloadUrl = (targetPlatform: Platform) => {
+  const getDownloadUrl = (targetPlatform: Platform, arch?: string) => {
     const baseUrl = `https://github.com/${GITHUB_REPO}/releases/download/v${APP_VERSION}`;
     if (targetPlatform === "windows") {
-      return `${baseUrl}/MidOrFeed-Overlay-${APP_VERSION}-Setup.exe`;
+      return `${baseUrl}/MidOrFeed%20Overlay-${APP_VERSION}-Setup.exe`;
     } else if (targetPlatform === "mac") {
-      return `${baseUrl}/MidOrFeed-Overlay-${APP_VERSION}-arm64.dmg`;
+      const macArch = arch || (isAppleSilicon ? "arm64" : "x64");
+      return `${baseUrl}/MidOrFeed%20Overlay-${APP_VERSION}-${macArch}.dmg`;
     }
     return "#";
   };
