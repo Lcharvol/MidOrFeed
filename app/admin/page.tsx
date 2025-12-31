@@ -15,18 +15,13 @@ const DiscoverTab = dynamic(
   { loading: () => <LazyLoadingFallback />, ssr: false }
 );
 
-const DataSyncTab = dynamic(
-  () => import("./DataSyncTab").then((mod) => ({ default: mod.DataSyncTab })),
+const JobsTab = dynamic(
+  () => import("./JobsTab").then((mod) => ({ default: mod.JobsTab })),
   { loading: () => <LazyLoadingFallback />, ssr: false }
 );
 
 const RightsTab = dynamic(
   () => import("./RightsTab").then((mod) => ({ default: mod.RightsTab })),
-  { loading: () => <LazyLoadingFallback />, ssr: false }
-);
-
-const MLTab = dynamic(
-  () => import("./MLTab").then((mod) => ({ default: mod.MLTab })),
   { loading: () => <LazyLoadingFallback />, ssr: false }
 );
 
@@ -99,7 +94,7 @@ function AdminTabs() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab =
-    (searchParams?.get("tab") as "discover" | "sync" | "rights" | "ml" | "api") ||
+    (searchParams?.get("tab") as "discover" | "jobs" | "rights" | "api") ||
     "discover";
 
   return (
@@ -110,9 +105,8 @@ function AdminTabs() {
     >
       <TabsList className="mb-6">
         <TabsTrigger value="discover">{t("admin.tabs.discover")}</TabsTrigger>
-        <TabsTrigger value="sync">{t("admin.tabs.sync")}</TabsTrigger>
+        <TabsTrigger value="jobs">Jobs</TabsTrigger>
         <TabsTrigger value="rights">{t("admin.tabs.rights")}</TabsTrigger>
-        <TabsTrigger value="ml">{t("admin.tabs.ml")}</TabsTrigger>
         <TabsTrigger value="api">{t("admin.tabs.api")}</TabsTrigger>
       </TabsList>
 
@@ -120,16 +114,12 @@ function AdminTabs() {
         <DiscoverTab />
       </TabsContent>
 
-      <TabsContent value="sync">
-        <DataSyncTab />
+      <TabsContent value="jobs">
+        <JobsTab />
       </TabsContent>
 
       <TabsContent value="rights">
         <RightsTab />
-      </TabsContent>
-
-      <TabsContent value="ml">
-        <MLTab />
       </TabsContent>
 
       <TabsContent value="api">

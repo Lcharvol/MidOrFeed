@@ -372,36 +372,6 @@ model PlayerChallenge {
   @@map("player_challenges")
 }
 
-model MlTrainingRun {
-  id          String         @id @default(cuid())
-  startedAt   DateTime       @default(now())
-  finishedAt  DateTime?
-  status      String         @default("running")
-  message     String?
-  logs        String?
-  predictions MlPrediction[]
-
-  @@map("ml_training_runs")
-}
-
-model MlPrediction {
-  id               String        @id @default(cuid())
-  trainingRunId    String
-  matchId          String?
-  participantPUuid String?
-  championId       String
-  queueId          Int?
-  teamId           Int?
-  winProbability   Float
-  sampleCount      Int?
-  createdAt        DateTime      @default(now())
-  trainingRun      MlTrainingRun @relation(fields: [trainingRunId], references: [id], onDelete: Cascade)
-
-  @@index([championId])
-  @@index([matchId])
-  @@map("ml_predictions")
-}
-
 model GameVersion {
   id        String   @id @default(cuid())
   version   String   @unique
