@@ -92,20 +92,31 @@ export async function getAllQueuesStatus() {
   return status;
 }
 
+interface JobProgressData {
+  current: number;
+  total: number;
+  message?: string;
+  percent?: number;
+}
+
+interface RecentJobData {
+  id: string;
+  queue: string;
+  name: string;
+  status: string;
+  progress: number | JobProgressData;
+  timestamp: number;
+  processedOn?: number;
+  finishedOn?: number;
+  duration?: number;
+  failedReason?: string;
+}
+
 /**
  * Get recent jobs from all queues
  */
-export async function getRecentJobs(limit = 20) {
-  const jobs: Array<{
-    id: string;
-    queue: string;
-    name: string;
-    status: string;
-    progress: number;
-    timestamp: number;
-    duration?: number;
-    failedReason?: string;
-  }> = [];
+export async function getRecentJobs(limit = 20): Promise<RecentJobData[]> {
+  const jobs: RecentJobData[] = [];
 
   for (const queueName of Object.values(QUEUE_NAMES)) {
     const queue = getQueue(queueName);
@@ -122,15 +133,34 @@ export async function getRecentJobs(limit = 20) {
 
     for (const job of allJobs) {
       const state = await job.getState();
+
+      // Normalize progress - could be number or object
+      let progress: number | JobProgressData = 0;
+      if (job.progress) {
+        if (typeof job.progress === "number") {
+          progress = job.progress;
+        } else if (typeof job.progress === "object") {
+          const p = job.progress as JobProgressData;
+          progress = {
+            current: p.current || 0,
+            total: p.total || 100,
+            message: p.message,
+            percent: p.total > 0 ? Math.round((p.current / p.total) * 100) : 0,
+          };
+        }
+      }
+
       jobs.push({
         id: job.id || "unknown",
         queue: queueName,
         name: job.name,
         status: state,
-        progress: typeof job.progress === "number" ? job.progress : 0,
+        progress,
         timestamp: job.timestamp,
-        duration: job.finishedOn
-          ? job.finishedOn - job.processedOn!
+        processedOn: job.processedOn,
+        finishedOn: job.finishedOn,
+        duration: job.finishedOn && job.processedOn
+          ? job.finishedOn - job.processedOn
           : undefined,
         failedReason: job.failedReason,
       });
