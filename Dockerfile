@@ -1,5 +1,5 @@
 
-# Multi-stage Dockerfile for Next.js (standalone) + Prisma
+# Multi-stage Dockerfile for Next.js (standalone) + Prisma + Workers
 
 FROM node:20-alpine AS deps
 RUN corepack enable
@@ -32,15 +32,18 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Copy scripts directory (for migration scripts)
+# Copy scripts directory (for workers and migration scripts)
 COPY --from=builder /app/scripts ./scripts
 
-# Copy lib directory (for prisma-sharded-accounts and other utilities)
+# Copy lib directory (for workers, queues, redis, and utilities)
 COPY --from=builder /app/lib ./lib
 
 # Copy package.json and tsconfig.json (needed for scripts and TypeScript path resolution)
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
+
+# Copy full node_modules for workers (tsx, bullmq, ioredis, etc.)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy startup script
 COPY --from=builder /app/scripts/start.sh /app/start.sh

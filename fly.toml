@@ -17,6 +17,10 @@ primary_region = 'cdg'
   # Run migrations before starting (only during deploy, not at restart)
   release_command = "pnpm dlx prisma@6.18.0 migrate deploy"
 
+[processes]
+  app = "/app/start.sh"
+  worker = "npx tsx scripts/start-workers.ts"
+
 [http_service]
   internal_port = 8080
   force_https = true
