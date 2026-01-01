@@ -14,23 +14,20 @@ import { Progress } from "@/components/ui/progress";
 import {
   RefreshCwIcon,
   PlayIcon,
+  SquareIcon,
   TrashIcon,
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  LoaderIcon,
+  Loader2Icon,
   AlertCircleIcon,
   ServerIcon,
-  StopCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ActivityIcon,
+  BarChart3Icon,
+  LayersIcon,
+  SearchIcon,
+  UsersIcon,
 } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { toast } from "sonner";
 
 interface JobProgress {
   current: number;
@@ -77,26 +74,29 @@ interface JobsData {
   timestamp: number;
 }
 
-const QUEUE_INFO: Record<string, { label: string; description: string; icon: string }> = {
+const QUEUE_CONFIG: Record<
+  string,
+  { label: string; description: string; icon: React.ReactNode }
+> = {
   "champion-stats": {
     label: "Stats Champions",
-    description: "Calcul des winrates, KDA, counters par champion",
-    icon: "📊",
+    description: "Calcul des winrates, KDA, counters",
+    icon: <BarChart3Icon className="size-4" />,
   },
   "composition-gen": {
     label: "Compositions",
-    description: "Génération des suggestions de compositions",
-    icon: "🎮",
+    description: "Génération des suggestions",
+    icon: <LayersIcon className="size-4" />,
   },
   "data-crawl": {
     label: "Crawl Données",
-    description: "Découverte de joueurs et collecte de matchs",
-    icon: "🔍",
+    description: "Découverte de joueurs et matchs",
+    icon: <SearchIcon className="size-4" />,
   },
   "account-sync": {
     label: "Sync Comptes",
-    description: "Synchronisation des comptes via Riot API",
-    icon: "🔄",
+    description: "Synchronisation Riot API",
+    icon: <UsersIcon className="size-4" />,
   },
 };
 
@@ -106,10 +106,10 @@ export function JobsTab() {
   const [error, setError] = useState<string | null>(null);
   const [triggeringQueue, setTriggeringQueue] = useState<string | null>(null);
   const [cancellingJob, setCancellingJob] = useState<string | null>(null);
-  const [activeJobsDetails, setActiveJobsDetails] = useState<Record<string, ActiveJobDetails>>({});
-  const [expandedQueues, setExpandedQueues] = useState<Set<string>>(new Set());
+  const [activeJobsDetails, setActiveJobsDetails] = useState<
+    Record<string, ActiveJobDetails>
+  >({});
 
-  // Check if there are any active jobs
   const hasActiveJobs = data?.queues
     ? Object.values(data.queues).some((q) => q.active > 0)
     : false;
@@ -130,8 +130,13 @@ export function JobsTab() {
           .filter(([, status]) => (status as QueueStatus).active > 0)
           .map(([name]) => name);
 
-        for (const queueName of activeQueues) {
-          fetchActiveJobDetails(queueName);
+        // Clear old active jobs that are no longer active
+        if (activeQueues.length === 0) {
+          setActiveJobsDetails({});
+        } else {
+          for (const queueName of activeQueues) {
+            fetchActiveJobDetails(queueName);
+          }
         }
       }
     } catch (err) {
@@ -149,10 +154,24 @@ export function JobsTab() {
         const activeJobs = json.jobs.filter(
           (j: { state: string }) => j.state === "active"
         );
-        for (const job of activeJobs) {
-          setActiveJobsDetails((prev) => ({
-            ...prev,
-            [`${queueName}-${job.id}`]: {
+
+        // Update active jobs, remove ones that are no longer active
+        setActiveJobsDetails((prev) => {
+          const next = { ...prev };
+          // Remove jobs from this queue that are no longer in activeJobs
+          Object.keys(next).forEach((key) => {
+            if (
+              key.startsWith(`${queueName}-`) &&
+              !activeJobs.find(
+                (j: { id: string }) => `${queueName}-${j.id}` === key
+              )
+            ) {
+              delete next[key];
+            }
+          });
+          // Add/update active jobs
+          for (const job of activeJobs) {
+            next[`${queueName}-${job.id}`] = {
               id: job.id,
               name: job.name,
               queue: queueName,
@@ -160,29 +179,32 @@ export function JobsTab() {
               state: job.state,
               timestamp: job.timestamp,
               processedOn: job.processedOn,
-            },
-          }));
-        }
+            };
+          }
+          return next;
+        });
       }
     } catch (err) {
       console.error("Failed to fetch active job details:", err);
     }
   };
 
-  const normalizeProgress = (progress: number | JobProgress | undefined): JobProgress => {
+  const normalizeProgress = (
+    progress: number | JobProgress | undefined
+  ): JobProgress => {
     if (!progress) return { current: 0, total: 100, percent: 0 };
     if (typeof progress === "number") {
       return { current: progress, total: 100, percent: progress };
     }
-    const percent = progress.total > 0
-      ? Math.round((progress.current / progress.total) * 100)
-      : 0;
+    const percent =
+      progress.total > 0
+        ? Math.round((progress.current / progress.total) * 100)
+        : 0;
     return { ...progress, percent };
   };
 
   useEffect(() => {
     fetchJobs();
-    // Poll faster when there are active jobs
     const interval = setInterval(fetchJobs, hasActiveJobs ? 1000 : 5000);
     return () => clearInterval(interval);
   }, [fetchJobs, hasActiveJobs]);
@@ -199,9 +221,10 @@ export function JobsTab() {
       if (!res.ok) {
         throw new Error(json.error || "Failed to trigger job");
       }
+      toast.success(`Job ${QUEUE_CONFIG[queue]?.label || queue} lancé`);
       await fetchJobs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to trigger job");
+      toast.error(err instanceof Error ? err.message : "Erreur");
     } finally {
       setTriggeringQueue(null);
     }
@@ -218,15 +241,15 @@ export function JobsTab() {
       if (!res.ok) {
         throw new Error(json.error || "Failed to cancel job");
       }
-      // Remove from active jobs
       setActiveJobsDetails((prev) => {
         const next = { ...prev };
         delete next[key];
         return next;
       });
+      toast.success("Job annulé");
       await fetchJobs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to cancel job");
+      toast.error(err instanceof Error ? err.message : "Erreur");
     } finally {
       setCancellingJob(null);
     }
@@ -234,7 +257,7 @@ export function JobsTab() {
 
   const cleanQueue = async (
     queue: string,
-    type: "completed" | "failed" | "all"
+    type: "completed" | "failed"
   ) => {
     try {
       const res = await fetch(`/api/admin/jobs/${queue}?type=${type}`, {
@@ -244,36 +267,25 @@ export function JobsTab() {
         const json = await res.json();
         throw new Error(json.error || "Failed to clean queue");
       }
+      toast.success(`Jobs ${type === "completed" ? "terminés" : "échoués"} nettoyés`);
       await fetchJobs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to clean queue");
+      toast.error(err instanceof Error ? err.message : "Erreur");
     }
-  };
-
-  const toggleQueueExpand = (queueName: string) => {
-    setExpandedQueues((prev) => {
-      const next = new Set(prev);
-      if (next.has(queueName)) {
-        next.delete(queueName);
-      } else {
-        next.add(queueName);
-      }
-      return next;
-    });
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircleIcon className="h-4 w-4 text-green-500" />;
+        return <CheckCircleIcon className="size-4 text-green-500" />;
       case "failed":
-        return <XCircleIcon className="h-4 w-4 text-red-500" />;
+        return <XCircleIcon className="size-4 text-red-500" />;
       case "active":
-        return <LoaderIcon className="h-4 w-4 text-blue-500 animate-spin" />;
+        return <Loader2Icon className="size-4 text-blue-500 animate-spin" />;
       case "waiting":
-        return <ClockIcon className="h-4 w-4 text-yellow-500" />;
+        return <ClockIcon className="size-4 text-amber-500" />;
       default:
-        return <AlertCircleIcon className="h-4 w-4 text-gray-500" />;
+        return <AlertCircleIcon className="size-4 text-muted-foreground" />;
     }
   };
 
@@ -288,8 +300,8 @@ export function JobsTab() {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
 
-    if (diff < 60000) return "il y a quelques secondes";
-    if (diff < 3600000) return `il y a ${Math.floor(diff / 60000)} min`;
+    if (diff < 60000) return "à l'instant";
+    if (diff < 3600000) return `il y a ${Math.floor(diff / 60000)}min`;
     if (diff < 86400000) return `il y a ${Math.floor(diff / 3600000)}h`;
     return date.toLocaleDateString("fr-FR");
   };
@@ -302,7 +314,7 @@ export function JobsTab() {
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-12">
-        <LoaderIcon className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -313,115 +325,97 @@ export function JobsTab() {
     <div className="space-y-6">
       {/* Redis Status */}
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ServerIcon className="h-5 w-5" />
-              <CardTitle>Statut Redis</CardTitle>
-            </div>
-            <Button variant="outline" size="sm" onClick={fetchJobs}>
-              <RefreshCwIcon className={`h-4 w-4 mr-2 ${hasActiveJobs ? 'animate-spin' : ''}`} />
-              {hasActiveJobs ? 'Actualisation auto...' : 'Rafraîchir'}
-            </Button>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="flex items-center gap-2">
+            <ServerIcon className="size-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Connexion Redis</CardTitle>
           </div>
+          <Button variant="outline" size="sm" onClick={fetchJobs}>
+            <RefreshCwIcon
+              className={`size-4 mr-2 ${hasActiveJobs ? "animate-spin" : ""}`}
+            />
+            {hasActiveJobs ? "Auto..." : "Rafraîchir"}
+          </Button>
         </CardHeader>
         <CardContent>
           {error ? (
-            <div className="flex items-center gap-2 text-red-500">
-              <XCircleIcon className="h-5 w-5" />
-              <span>{error}</span>
-            </div>
+            <Badge variant="destructive">{error}</Badge>
           ) : data?.redisConnected ? (
-            <div className="flex items-center gap-2 text-green-500">
-              <CheckCircleIcon className="h-5 w-5" />
-              <span>Connecté</span>
-            </div>
+            <Badge variant="success">Connecté</Badge>
           ) : (
-            <div className="flex items-center gap-2 text-yellow-500">
-              <AlertCircleIcon className="h-5 w-5" />
-              <span>Non connecté</span>
-            </div>
+            <Badge variant="outline">Non connecté</Badge>
           )}
         </CardContent>
       </Card>
 
-      {/* Active Jobs Panel */}
+      {/* Active Jobs */}
       {activeJobs.length > 0 && (
-        <Card className="border-blue-500/50 bg-blue-500/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <ActivityIcon className="h-5 w-5 text-blue-500 animate-pulse" />
-              <CardTitle className="text-blue-600">
-                Jobs en cours ({activeJobs.length})
-              </CardTitle>
-            </div>
-            <CardDescription>
-              Suivi en temps réel des jobs actifs
-            </CardDescription>
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Loader2Icon className="size-4 animate-spin text-blue-500" />
+              Jobs en cours ({activeJobs.length})
+            </CardTitle>
+            <CardDescription>Suivi en temps réel</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {activeJobs.map((job) => {
-              const queueInfo = QUEUE_INFO[job.queue];
+              const config = QUEUE_CONFIG[job.queue];
               const progress = job.progress;
               const key = `${job.queue}-${job.id}`;
 
               return (
                 <div
                   key={key}
-                  className="p-4 rounded-lg bg-background border space-y-3"
+                  className="p-4 rounded-lg border bg-muted/20 space-y-3"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{queueInfo?.icon || "⚙️"}</span>
+                      <div className="p-2 rounded-md bg-blue-500/10 text-blue-500">
+                        {config?.icon}
+                      </div>
                       <div>
-                        <p className="font-semibold">
-                          {queueInfo?.label || job.queue}
+                        <p className="font-medium text-sm">
+                          {config?.label || job.queue}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          ID: {job.id}
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {job.id}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="default" className="bg-blue-500">
-                        <LoaderIcon className="h-3 w-3 mr-1 animate-spin" />
-                        En cours
-                      </Badge>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => cancelJob(job.queue, job.id)}
-                        disabled={cancellingJob === key}
-                      >
-                        {cancellingJob === key ? (
-                          <LoaderIcon className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <StopCircleIcon className="h-4 w-4 mr-1" />
-                            Arrêter
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => cancelJob(job.queue, job.id)}
+                      disabled={cancellingJob === key}
+                    >
+                      {cancellingJob === key ? (
+                        <Loader2Icon className="size-4 animate-spin" />
+                      ) : (
+                        <>
+                          <SquareIcon className="size-4 mr-1" />
+                          Arrêter
+                        </>
+                      )}
+                    </Button>
                   </div>
 
-                  {/* Progress Bar */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
                         {progress.message || "Traitement en cours..."}
                       </span>
-                      <span className="font-mono font-medium">
+                      <span className="font-mono text-xs">
                         {progress.current}/{progress.total} ({progress.percent}%)
                       </span>
                     </div>
-                    <Progress value={progress.percent} className="h-3" />
+                    <Progress value={progress.percent} className="h-2" />
                   </div>
 
-                  {/* Stats */}
                   <div className="flex gap-4 text-xs text-muted-foreground">
                     <span>
-                      Démarré: {job.processedOn ? formatTime(job.processedOn) : formatTime(job.timestamp)}
+                      Démarré:{" "}
+                      {formatTime(job.processedOn || job.timestamp)}
                     </span>
                     <span>
                       Durée: {getElapsedTime(job.processedOn || job.timestamp)}
@@ -434,155 +428,129 @@ export function JobsTab() {
         </Card>
       )}
 
-      {/* Queues Grid */}
+      {/* Queue Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.entries(QUEUE_INFO).map(([queueName, info]) => {
+        {Object.entries(QUEUE_CONFIG).map(([queueName, config]) => {
           const status = data?.queues[queueName];
           const hasActive = (status?.active || 0) > 0;
-          const isExpanded = expandedQueues.has(queueName);
 
           return (
-            <Card key={queueName} className={hasActive ? "border-blue-500/30" : ""}>
-              <Collapsible
-                open={isExpanded}
-                onOpenChange={() => toggleQueueExpand(queueName)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{info.icon}</span>
-                      <div>
-                        <CardTitle className="text-lg">{info.label}</CardTitle>
-                        <CardDescription className="text-xs">
-                          {info.description}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          {isExpanded ? (
-                            <ChevronUpIcon className="h-4 w-4" />
-                          ) : (
-                            <ChevronDownIcon className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </CollapsibleTrigger>
-                      <Button
-                        size="sm"
-                        onClick={() => triggerJob(queueName)}
-                        disabled={triggeringQueue === queueName || hasActive}
-                        title={hasActive ? "Un job est déjà en cours" : "Lancer un job"}
-                      >
-                        {triggeringQueue === queueName ? (
-                          <LoaderIcon className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <PlayIcon className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
+            <Card
+              key={queueName}
+              className={hasActive ? "border-l-4 border-l-blue-500" : ""}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="text-muted-foreground">{config.icon}</div>
+                  <div>
+                    <CardTitle className="text-sm font-medium">
+                      {config.label}
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      {config.description}
+                    </CardDescription>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {status ? (
-                    <div className="space-y-3">
-                      {/* Status Badges */}
-                      <div className="flex gap-2 flex-wrap">
-                        {status.active > 0 && (
-                          <Badge variant="default" className="bg-blue-500">
-                            <LoaderIcon className="h-3 w-3 mr-1 animate-spin" />
-                            {status.active} actif
-                          </Badge>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => triggerJob(queueName)}
+                  disabled={triggeringQueue === queueName || hasActive}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {triggeringQueue === queueName ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <PlayIcon className="size-4" />
+                  )}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {status ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-2 flex-wrap">
+                      {status.active > 0 && (
+                        <Badge variant="default">
+                          {status.active} actif
+                        </Badge>
+                      )}
+                      {status.waiting > 0 && (
+                        <Badge variant="outline">{status.waiting} en attente</Badge>
+                      )}
+                      {status.completed > 0 && (
+                        <Badge variant="success">{status.completed} terminé</Badge>
+                      )}
+                      {status.failed > 0 && (
+                        <Badge variant="destructive">{status.failed} échoué</Badge>
+                      )}
+                      {status.active === 0 &&
+                        status.waiting === 0 &&
+                        status.completed === 0 &&
+                        status.failed === 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            Aucun job
+                          </span>
                         )}
-                        {status.waiting > 0 && (
-                          <Badge variant="outline">
-                            <ClockIcon className="h-3 w-3 mr-1" />
-                            {status.waiting} en attente
-                          </Badge>
-                        )}
-                        {status.completed > 0 && (
-                          <Badge
-                            variant="secondary"
-                            className="text-green-600 bg-green-100 dark:bg-green-900/20"
-                          >
-                            <CheckCircleIcon className="h-3 w-3 mr-1" />
-                            {status.completed} terminé
-                          </Badge>
-                        )}
-                        {status.failed > 0 && (
-                          <Badge variant="destructive">
-                            <XCircleIcon className="h-3 w-3 mr-1" />
-                            {status.failed} échoué
-                          </Badge>
-                        )}
-                        {status.active === 0 &&
-                          status.waiting === 0 &&
-                          status.completed === 0 &&
-                          status.failed === 0 && (
-                            <Badge variant="outline" className="text-muted-foreground">
-                              Aucun job
-                            </Badge>
-                          )}
-                      </div>
+                    </div>
 
-                      {/* Expanded Content */}
-                      <CollapsibleContent className="space-y-3">
-                        <div className="flex gap-2 pt-2 border-t">
+                    {(status.completed > 0 || status.failed > 0) && (
+                      <div className="flex gap-2">
+                        {status.completed > 0 && (
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => cleanQueue(queueName, "completed")}
-                            disabled={!status.completed}
                           >
-                            <TrashIcon className="h-3 w-3 mr-1" />
-                            Nettoyer terminés
+                            <TrashIcon className="size-3 mr-1" />
+                            Nettoyer
                           </Button>
+                        )}
+                        {status.failed > 0 && (
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => cleanQueue(queueName, "failed")}
-                            disabled={!status.failed}
+                            className="text-red-500 hover:text-red-600"
                           >
-                            <TrashIcon className="h-3 w-3 mr-1" />
-                            Nettoyer échoués
+                            <TrashIcon className="size-3 mr-1" />
+                            Échoués
                           </Button>
-                        </div>
-                      </CollapsibleContent>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Aucune donnée disponible
-                    </p>
-                  )}
-                </CardContent>
-              </Collapsible>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Aucune donnée
+                  </span>
+                )}
+              </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Recent Jobs History */}
+      {/* Job History */}
       <Card>
         <CardHeader>
-          <CardTitle>Historique des Jobs</CardTitle>
-          <CardDescription>Les 30 derniers jobs exécutés</CardDescription>
+          <CardTitle className="text-sm font-medium">Historique</CardTitle>
+          <CardDescription>Les 30 derniers jobs</CardDescription>
         </CardHeader>
         <CardContent>
           {data?.recentJobs && data.recentJobs.length > 0 ? (
-            <div className="space-y-2">
-              {data.recentJobs.map((job) => {
-                const queueInfo = QUEUE_INFO[job.queue];
+            <div className="rounded-md border bg-muted/20 divide-y">
+              {data.recentJobs.slice(0, 15).map((job) => {
+                const config = QUEUE_CONFIG[job.queue];
                 return (
                   <div
                     key={`${job.queue}-${job.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    className="flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       {getStatusIcon(job.status)}
-                      <span className="text-lg">{queueInfo?.icon || "⚙️"}</span>
+                      <div className="text-muted-foreground">{config?.icon}</div>
                       <div>
-                        <p className="font-medium text-sm">
-                          {queueInfo?.label || job.queue}
+                        <p className="text-sm font-medium">
+                          {config?.label || job.queue}
                         </p>
                         <p className="text-xs text-muted-foreground font-mono">
                           {job.id}
@@ -598,17 +566,12 @@ export function JobsTab() {
                                 ? job.progress
                                 : job.progress?.percent || 0
                             }
-                            className="w-24 h-2"
+                            className="w-20 h-1.5"
                           />
-                          <span className="text-xs font-mono">
-                            {typeof job.progress === "number"
-                              ? `${job.progress}%`
-                              : `${job.progress?.percent || 0}%`}
-                          </span>
                         </div>
                       )}
-                      <div className="text-right min-w-[80px]">
-                        <p className="text-sm font-mono">
+                      <div className="text-right min-w-[70px]">
+                        <p className="text-xs font-mono">
                           {job.duration ? formatDuration(job.duration) : "-"}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -616,24 +579,14 @@ export function JobsTab() {
                         </p>
                       </div>
                     </div>
-                    {job.failedReason && (
-                      <div className="ml-4 text-xs text-red-500 max-w-xs truncate" title={job.failedReason}>
-                        {job.failedReason}
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <ClockIcon className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-sm text-muted-foreground">
-                Aucun job récent
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Lancez un job pour commencer
-              </p>
+            <div className="text-center py-8 text-muted-foreground">
+              <ClockIcon className="size-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Aucun job récent</p>
             </div>
           )}
         </CardContent>

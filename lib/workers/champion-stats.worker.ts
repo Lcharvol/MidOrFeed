@@ -148,7 +148,7 @@ async function computeChampionStats(championId: string): Promise<void> {
   const avgDeaths = (stats._sum.deaths || 0) / totalGames;
   const avgAssists = (stats._sum.assists || 0) / totalGames;
   const avgKDA = avgDeaths > 0 ? (avgKills + avgAssists) / avgDeaths : avgKills + avgAssists;
-  const winRate = wins / totalGames;
+  const winRate = (wins / totalGames) * 100;
 
   // 4. Get most played role/lane
   const roleStats = await prisma.matchParticipant.groupBy({
@@ -187,9 +187,11 @@ async function computeChampionStats(championId: string): Promise<void> {
   );
 
   // Only score champions with enough games
+  // Note: winRate is 0-100, so normalize to 0-1 for the score calculation
+  const normalizedWinRate = winRate / 100;
   const score =
     totalGames >= 10
-      ? (winRate * 40 + normalizedKDA * 30 + normalizedDamage * 20 + normalizedVision * 10)
+      ? (normalizedWinRate * 40 + normalizedKDA * 30 + normalizedDamage * 20 + normalizedVision * 10)
       : 0;
 
   // 7. Upsert champion stats
