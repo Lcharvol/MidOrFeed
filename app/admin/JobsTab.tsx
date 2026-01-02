@@ -28,6 +28,8 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { STATUS_STYLES } from "@/lib/styles/game-colors";
+import { cn } from "@/lib/utils";
 
 interface JobProgress {
   current: number;
@@ -277,15 +279,15 @@ export function JobsTab() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircleIcon className="size-4 text-green-500" />;
+        return <CheckCircleIcon className={cn("size-4", STATUS_STYLES.success.icon)} />;
       case "failed":
-        return <XCircleIcon className="size-4 text-red-500" />;
+        return <XCircleIcon className={cn("size-4", STATUS_STYLES.error.icon)} />;
       case "active":
-        return <Loader2Icon className="size-4 text-blue-500 animate-spin" />;
+        return <Loader2Icon className={cn("size-4 animate-spin", STATUS_STYLES.info.icon)} />;
       case "waiting":
-        return <ClockIcon className="size-4 text-amber-500" />;
+        return <ClockIcon className={cn("size-4", STATUS_STYLES.warning.icon)} />;
       default:
-        return <AlertCircleIcon className="size-4 text-muted-foreground" />;
+        return <AlertCircleIcon className={cn("size-4", STATUS_STYLES.pending.icon)} />;
     }
   };
 
@@ -350,10 +352,10 @@ export function JobsTab() {
 
       {/* Active Jobs */}
       {activeJobs.length > 0 && (
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className={cn("border-l-4", STATUS_STYLES.info.border)}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Loader2Icon className="size-4 animate-spin text-blue-500" />
+              <Loader2Icon className={cn("size-4 animate-spin", STATUS_STYLES.info.icon)} />
               Jobs en cours ({activeJobs.length})
             </CardTitle>
             <CardDescription>Suivi en temps réel</CardDescription>
@@ -371,7 +373,7 @@ export function JobsTab() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-blue-500/10 text-blue-500">
+                      <div className={cn("p-2 rounded-md", STATUS_STYLES.info.bg, STATUS_STYLES.info.icon)}>
                         {config?.icon}
                       </div>
                       <div>
@@ -437,7 +439,7 @@ export function JobsTab() {
           return (
             <Card
               key={queueName}
-              className={hasActive ? "border-l-4 border-l-blue-500" : ""}
+              className={hasActive ? cn("border-l-4", STATUS_STYLES.info.border) : ""}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center gap-2">
@@ -455,7 +457,6 @@ export function JobsTab() {
                   size="sm"
                   onClick={() => triggerJob(queueName)}
                   disabled={triggeringQueue === queueName || hasActive}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   {triggeringQueue === queueName ? (
                     <Loader2Icon className="size-4 animate-spin" />
@@ -509,7 +510,7 @@ export function JobsTab() {
                             variant="ghost"
                             size="sm"
                             onClick={() => cleanQueue(queueName, "failed")}
-                            className="text-red-500 hover:text-red-600"
+                            className={STATUS_STYLES.error.text}
                           >
                             <TrashIcon className="size-3 mr-1" />
                             Échoués

@@ -14,14 +14,20 @@ import { WinPredictionBadge } from "./WinPredictionBadge";
 import { BuildAnalysisBadge } from "./BuildAnalysisBadge";
 import { MatchTimeline } from "./MatchTimeline";
 import { SparklesIcon, SwordsIcon, EyeIcon, CoinsIcon } from "lucide-react";
+import {
+  TEAM_STYLES,
+  MATCH_RESULT_STYLES,
+  KDA_STYLES,
+  getKdaLevel,
+} from "@/lib/styles/game-colors";
 
 // KDA color based on ratio
 const getKdaColor = (ratio: number) => {
-  if (ratio >= 5) return "text-amber-500 font-bold";
-  if (ratio >= 4) return "text-teal-500 font-semibold";
-  if (ratio >= 3) return "text-emerald-500 font-semibold";
-  if (ratio >= 2) return "text-sky-500";
-  return "text-muted-foreground";
+  const level = getKdaLevel(ratio);
+  const style = KDA_STYLES[level];
+  if (level === "excellent") return `${style.text} font-bold`;
+  if (level === "veryGood" || level === "good") return `${style.text} font-semibold`;
+  return style.text;
 };
 
 interface MatchEntryProps {
@@ -84,15 +90,15 @@ export const MatchEntry = ({
       className={cn(
         "group flex flex-col md:flex-row md:justify-between relative overflow-hidden rounded-xl border",
         match.win
-          ? "border-blue-500/20 bg-gradient-to-r from-blue-500/8 via-blue-500/5 to-transparent"
-          : "border-rose-500/20 bg-gradient-to-r from-rose-500/8 via-rose-500/5 to-transparent"
+          ? cn(MATCH_RESULT_STYLES.victory.border, MATCH_RESULT_STYLES.victory.bgSubtle)
+          : cn(MATCH_RESULT_STYLES.defeat.border, MATCH_RESULT_STYLES.defeat.bgSubtle)
       )}
     >
       {/* Left accent bar */}
       <div
         className={cn(
           "absolute left-0 top-0 bottom-0 w-1 rounded-l-xl",
-          match.win ? "bg-blue-500" : "bg-rose-500"
+          match.win ? MATCH_RESULT_STYLES.victory.accent : MATCH_RESULT_STYLES.defeat.accent
         )}
       />
 
@@ -100,13 +106,8 @@ export const MatchEntry = ({
         {/* Header badges */}
         <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 pt-2.5 pb-1.5 flex-wrap">
           <Badge
-            variant={match.win ? "default" : "destructive"}
-            className={cn(
-              "text-[10px] sm:text-xs font-semibold shadow-sm text-white",
-              match.win
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-rose-600 hover:bg-rose-700"
-            )}
+            variant={match.win ? "info" : "destructive"}
+            className="text-[10px] sm:text-xs font-semibold shadow-sm"
           >
             {match.win ? t("matches.victory") : t("matches.defeat")}
           </Badge>
@@ -134,7 +135,7 @@ export const MatchEntry = ({
             <div className="relative">
               <div className={cn(
                 "absolute -inset-0.5 rounded-full opacity-60",
-                match.win ? "bg-blue-500/30" : "bg-rose-500/30"
+                match.win ? TEAM_STYLES.blue.bgSubtle : TEAM_STYLES.red.bgSubtle
               )} />
               <ChampionIcon
                 championId={match.championSlug}
@@ -144,7 +145,7 @@ export const MatchEntry = ({
                 shape="circle"
                 className={cn(
                   "relative border-2 sm:size-14",
-                  match.win ? "border-blue-500/50" : "border-rose-500/50"
+                  match.win ? TEAM_STYLES.blue.border : TEAM_STYLES.red.border
                 )}
               />
             </div>
@@ -185,7 +186,7 @@ export const MatchEntry = ({
                 <span className="text-sm font-semibold">
                   <span className="text-foreground">{match.kills}</span>
                   <span className="text-muted-foreground/60"> / </span>
-                  <span className="text-rose-500">{match.deaths}</span>
+                  <span className="text-danger-muted-foreground">{match.deaths}</span>
                   <span className="text-muted-foreground/60"> / </span>
                   <span className="text-foreground">{match.assists}</span>
                 </span>

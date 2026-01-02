@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useApiSWR } from "@/lib/hooks/swr";
 import { cn } from "@/lib/utils";
+import { SEVERITY_STYLES, STATUS_STYLES } from "@/lib/styles/game-colors";
 
 type MaintenanceEntry = {
   id: number;
@@ -36,40 +37,30 @@ type StatusResponse = {
   };
 };
 
-const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  critical: {
-    bg: "bg-red-500/10",
-    text: "text-red-600 dark:text-red-400",
-    border: "border-red-500/30",
-  },
-  warning: {
-    bg: "bg-amber-500/10",
-    text: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-500/30",
-  },
-  info: {
-    bg: "bg-blue-500/10",
-    text: "text-blue-600 dark:text-blue-400",
-    border: "border-blue-500/30",
-  },
+// Map severity to design system styles
+const getSeverityColors = (severity: string) => {
+  switch (severity) {
+    case "critical":
+      return SEVERITY_STYLES.critical;
+    case "warning":
+      return SEVERITY_STYLES.major;
+    case "info":
+    default:
+      return SEVERITY_STYLES.minor;
+  }
 };
 
-const MAINTENANCE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  scheduled: {
-    bg: "bg-blue-500/10",
-    text: "text-blue-600 dark:text-blue-400",
-    border: "border-blue-500/30",
-  },
-  in_progress: {
-    bg: "bg-amber-500/10",
-    text: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-500/30",
-  },
-  complete: {
-    bg: "bg-green-500/10",
-    text: "text-green-600 dark:text-green-400",
-    border: "border-green-500/30",
-  },
+// Map maintenance status to design system styles
+const getMaintenanceColors = (status: string) => {
+  switch (status) {
+    case "in_progress":
+      return STATUS_STYLES.warning;
+    case "complete":
+      return STATUS_STYLES.success;
+    case "scheduled":
+    default:
+      return STATUS_STYLES.info;
+  }
 };
 
 interface ServerStatusBannerProps {
@@ -104,10 +95,10 @@ export function ServerStatusBanner({ region = "euw1" }: ServerStatusBannerProps)
   const hasWarning = warningIncidents.length > 0 || activeMaintenances.length > 0;
 
   const bannerStyle = hasCritical
-    ? SEVERITY_COLORS.critical
+    ? SEVERITY_STYLES.critical
     : hasWarning
-      ? SEVERITY_COLORS.warning
-      : SEVERITY_COLORS.info;
+      ? SEVERITY_STYLES.major
+      : SEVERITY_STYLES.minor;
 
   const totalIssues = incidents.length + activeMaintenances.length;
 
@@ -133,17 +124,17 @@ export function ServerStatusBanner({ region = "euw1" }: ServerStatusBannerProps)
             </span>
             <div className="hidden sm:flex items-center gap-2">
               {criticalIncidents.length > 0 && (
-                <Badge variant="outline" className="bg-red-500/20 text-red-600 border-red-500/30 text-xs">
+                <Badge variant="destructive" className="text-xs">
                   {criticalIncidents.length} critique{criticalIncidents.length > 1 ? "s" : ""}
                 </Badge>
               )}
               {warningIncidents.length > 0 && (
-                <Badge variant="outline" className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-xs">
+                <Badge variant="warning" className="text-xs">
                   {warningIncidents.length} avertissement{warningIncidents.length > 1 ? "s" : ""}
                 </Badge>
               )}
               {activeMaintenances.length > 0 && (
-                <Badge variant="outline" className="bg-blue-500/20 text-blue-600 border-blue-500/30 text-xs">
+                <Badge variant="info" className="text-xs">
                   {activeMaintenances.length} maintenance{activeMaintenances.length > 1 ? "s" : ""}
                 </Badge>
               )}
@@ -179,7 +170,7 @@ export function ServerStatusBanner({ region = "euw1" }: ServerStatusBannerProps)
           <div className="pb-3 space-y-2">
             {/* Incidents */}
             {incidents.map((incident) => {
-              const colors = SEVERITY_COLORS[incident.severity] || SEVERITY_COLORS.info;
+              const colors = getSeverityColors(incident.severity);
               return (
                 <div
                   key={incident.id}
@@ -208,7 +199,7 @@ export function ServerStatusBanner({ region = "euw1" }: ServerStatusBannerProps)
 
             {/* Maintenances */}
             {activeMaintenances.map((maintenance) => {
-              const colors = MAINTENANCE_COLORS[maintenance.status] || MAINTENANCE_COLORS.scheduled;
+              const colors = getMaintenanceColors(maintenance.status);
               return (
                 <div
                   key={maintenance.id}
