@@ -106,6 +106,21 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
         return;
       }
 
+      // Parse gameName#tagLine format
+      const hashIndex = trimmed.lastIndexOf("#");
+      if (hashIndex === -1 || hashIndex === 0 || hashIndex === trimmed.length - 1) {
+        toast.error("Format invalide. Utilisez: Nom#Tag");
+        return;
+      }
+
+      const gameName = trimmed.slice(0, hashIndex).trim();
+      const tagLine = trimmed.slice(hashIndex + 1).trim();
+
+      if (!gameName || !tagLine) {
+        toast.error("Le nom et le tag sont requis");
+        return;
+      }
+
       setIsSearching(true);
       onSearchStart?.();
 
@@ -114,7 +129,8 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            query: trimmed,
+            gameName,
+            tagLine,
             region,
           }),
         });
@@ -126,20 +142,23 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
           return;
         }
 
-        if (result.summary && result.puuid) {
+        const data = result.data;
+        if (data?.puuid) {
           addRecentSearch(
-            result.summary.gameName ?? trimmed,
-            result.summary.tagLine ?? region,
+            data.gameName ?? gameName,
+            data.tagLine ?? tagLine,
             region,
-            result.puuid
+            data.puuid
           );
+
+          setSearchQuery("");
+          setSearchResults([]);
+          onNavigate?.();
+
+          router.push(`/summoners/${data.puuid}/overview?region=${region}`);
+        } else {
+          toast.error("Réponse invalide du serveur");
         }
-
-        setSearchQuery("");
-        setSearchResults([]);
-        onNavigate?.();
-
-        router.push(`/summoners/${result.puuid}/overview?region=${region}`);
       } catch (error) {
         console.error("Search error:", error);
         toast.error("Erreur lors de la recherche");
