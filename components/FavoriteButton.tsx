@@ -6,6 +6,7 @@ import { HeartIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useApiSWR } from "@/lib/hooks/swr";
+import { authenticatedFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 interface FavoriteButtonProps {
@@ -49,23 +50,23 @@ export function FavoriteButton({
     setIsLoading(true);
     try {
       if (isFavorite) {
-        const res = await fetch(`/api/favorites?puuid=${puuid}`, {
+        const res = await authenticatedFetch(`/api/favorites?puuid=${puuid}`, {
           method: "DELETE",
         });
         if (!res.ok) throw new Error("Erreur");
-        toast.success("Retire des favoris");
+        toast.success("Retiré des favoris");
       } else {
-        const res = await fetch("/api/favorites", {
+        const res = await authenticatedFetch("/api/favorites", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ puuid, region, gameName, tagLine }),
         });
         if (!res.ok) throw new Error("Erreur");
-        toast.success("Ajoute aux favoris");
+        toast.success("Ajouté aux favoris");
       }
       mutate();
     } catch {
-      toast.error("Erreur lors de la mise a jour");
+      toast.error("Erreur lors de la mise à jour");
     } finally {
       setIsLoading(false);
     }
