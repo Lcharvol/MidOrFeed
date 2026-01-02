@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/types/roles";
-import { verifyToken, extractTokenFromHeader } from "@/lib/jwt";
+import { verifyToken, extractTokenFromHeader, AUTH_COOKIE_NAME } from "@/lib/jwt";
 import { logger } from "@/lib/logger";
+import { requireCsrf } from "@/lib/csrf";
 
 /**
- * Récupère l'utilisateur authentifié depuis le header Authorization
+ * Récupère l'utilisateur authentifié depuis le cookie HTTP-only ou le header Authorization
  * Utilise JWT pour valider l'authentification
- * Format: "Bearer <jwt-token>"
+ * Priority: 1. HTTP-only cookie (secure), 2. Authorization header (legacy/mobile)
  */
 export const getAuthenticatedUser = async (
   request: NextRequest
 ): Promise<{ id: string; email: string; role: string } | null> => {
   try {
-    // Extraire le token JWT depuis le header Authorization
-    const authHeader = request.headers.get("authorization");
-    const token = extractTokenFromHeader(authHeader);
+    // Priority 1: Try to get token from HTTP-only cookie (more secure)
+    let token = request.cookies.get(AUTH_COOKIE_NAME)?.value || null;
+
+    // Priority 2: Fallback to Authorization header (for legacy clients or mobile apps)
+    if (!token) {
+      const authHeader = request.headers.get("authorization");
+      token = extractTokenFromHeader(authHeader);
+    }
 
     if (!token) {
       return null;
@@ -69,9 +75,11 @@ export const getAuthenticatedUser = async (
 /**
  * Middleware pour protéger les routes admin
  * Vérifie que l'utilisateur est authentifié et a le rôle admin
+ * Valide également le token CSRF pour les requêtes mutatives
  */
 export const requireAdmin = async (
-  request: NextRequest
+  request: NextRequest,
+  options: { skipCsrf?: boolean } = {}
 ): Promise<NextResponse | null> => {
   const user = await getAuthenticatedUser(request);
 
@@ -84,6 +92,14 @@ export const requireAdmin = async (
       { error: "Accès refusé. Rôle admin requis." },
       { status: 403 }
     );
+  }
+
+  // Validate CSRF for mutative requests (POST, PUT, DELETE, PATCH)
+  if (!options.skipCsrf) {
+    const csrfError = requireCsrf(request);
+    if (csrfError) {
+      return csrfError;
+    }
   }
 
   return null; // Autoriser l'accès

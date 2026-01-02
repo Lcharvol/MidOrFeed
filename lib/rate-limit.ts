@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import Redis from "ioredis";
 
 /**
  * Configuration du rate limiting
- * En production, utiliser Redis ou Upstash pour un rate limiting distribué
  */
 interface RateLimitConfig {
   /**
    * Nombre de requêtes autorisées
    */
   limit: number;
-  
+
   /**
    * Période en millisecondes
    */
   windowMs: number;
-  
+
   /**
    * Message d'erreur personnalisé
    */
   message?: string;
-  
+
   /**
    * Identifier unique pour le rate limiting (par défaut: IP)
    */
@@ -27,10 +27,61 @@ interface RateLimitConfig {
 }
 
 /**
- * Store simple en mémoire pour le rate limiting
- * ⚠️ En production avec plusieurs instances, utiliser Redis/Upstash
+ * Interface pour les stores de rate limiting
  */
-class MemoryStore {
+interface RateLimitStore {
+  get(key: string): Promise<{ count: number; resetTime: number } | null>;
+  set(key: string, value: { count: number; resetTime: number }, ttlMs: number): Promise<void>;
+  increment(key: string): Promise<number>;
+}
+
+/**
+ * Store Redis pour le rate limiting distribué
+ * Utilisé en production pour supporter plusieurs instances
+ */
+class RedisStore implements RateLimitStore {
+  private redis: Redis;
+
+  constructor(redis: Redis) {
+    this.redis = redis;
+  }
+
+  async get(key: string): Promise<{ count: number; resetTime: number } | null> {
+    try {
+      const data = await this.redis.get(`ratelimit:${key}`);
+      if (!data) return null;
+      return JSON.parse(data);
+    } catch {
+      return null;
+    }
+  }
+
+  async set(key: string, value: { count: number; resetTime: number }, ttlMs: number): Promise<void> {
+    try {
+      await this.redis.set(
+        `ratelimit:${key}`,
+        JSON.stringify(value),
+        "PX",
+        ttlMs
+      );
+    } catch (error) {
+      console.error("[RateLimit] Redis set error:", error);
+    }
+  }
+
+  async increment(key: string): Promise<number> {
+    try {
+      return await this.redis.incr(`ratelimit:${key}`);
+    } catch {
+      return 1;
+    }
+  }
+}
+
+/**
+ * Store en mémoire pour le développement ou fallback
+ */
+class MemoryStore implements RateLimitStore {
   private store: Map<string, { count: number; resetTime: number }> = new Map();
   private cleanupInterval: NodeJS.Timeout;
 
@@ -46,12 +97,21 @@ class MemoryStore {
     }, 60000);
   }
 
-  get(key: string): { count: number; resetTime: number } | undefined {
-    return this.store.get(key);
+  async get(key: string): Promise<{ count: number; resetTime: number } | null> {
+    return this.store.get(key) || null;
   }
 
-  set(key: string, value: { count: number; resetTime: number }): void {
+  async set(key: string, value: { count: number; resetTime: number }): Promise<void> {
     this.store.set(key, value);
+  }
+
+  async increment(key: string): Promise<number> {
+    const record = this.store.get(key);
+    if (record) {
+      record.count++;
+      return record.count;
+    }
+    return 1;
   }
 
   destroy(): void {
@@ -60,12 +120,55 @@ class MemoryStore {
   }
 }
 
-// Store global (en production, utiliser Redis)
-const store = new MemoryStore();
+// Store global - utilise Redis en production si disponible
+let store: RateLimitStore | null = null;
+let redisClient: Redis | null = null;
+
+/**
+ * Initialise le store de rate limiting
+ * Utilise Redis si REDIS_URL est configuré, sinon fallback sur mémoire
+ */
+const getStore = (): RateLimitStore => {
+  if (store) return store;
+
+  const redisUrl = process.env.REDIS_URL;
+
+  if (redisUrl) {
+    try {
+      redisClient = new Redis(redisUrl, {
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: false,
+        lazyConnect: true,
+      });
+
+      redisClient.on("error", (err) => {
+        console.error("[RateLimit] Redis error, falling back to memory:", err.message);
+        // Fallback to memory store on Redis failure
+        store = new MemoryStore();
+      });
+
+      store = new RedisStore(redisClient);
+      console.log("[RateLimit] Using Redis store for distributed rate limiting");
+    } catch (error) {
+      console.warn("[RateLimit] Failed to connect to Redis, using memory store:", error);
+      store = new MemoryStore();
+    }
+  } else {
+    if (process.env.NODE_ENV === "production") {
+      console.warn(
+        "[RateLimit] ⚠️  REDIS_URL not configured in production. " +
+        "Rate limiting will not work across multiple instances!"
+      );
+    }
+    store = new MemoryStore();
+  }
+
+  return store;
+};
 
 /**
  * Rate limiting middleware pour Next.js API Routes
- * 
+ *
  * @example
  * ```typescript
  * export async function POST(request: NextRequest) {
@@ -74,7 +177,7 @@ const store = new MemoryStore();
  *     windowMs: 60000, // 1 minute
  *   });
  *   if (rateLimitResponse) return rateLimitResponse;
- *   
+ *
  *   // Votre code ici...
  * }
  * ```
@@ -83,10 +186,15 @@ export const rateLimit = async (
   request: NextRequest,
   config: RateLimitConfig
 ): Promise<NextResponse | null> => {
-  const { limit, windowMs, message = "Trop de requêtes, veuillez réessayer plus tard", identifier } = config;
+  const {
+    limit,
+    windowMs,
+    message = "Trop de requêtes, veuillez réessayer plus tard",
+    identifier,
+  } = config;
 
   // Identifier la requête (par défaut: IP depuis les headers)
-  const id = identifier 
+  const id = identifier
     ? await identifier(request)
     : request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
@@ -95,16 +203,21 @@ export const rateLimit = async (
 
   const key = `${id}:${windowMs}`;
   const now = Date.now();
-  
+  const rateLimitStore = getStore();
+
   // Récupérer ou initialiser le compteur
-  const record = store.get(key);
-  
+  const record = await rateLimitStore.get(key);
+
   if (!record || record.resetTime < now) {
     // Nouveau window ou window expiré
-    store.set(key, {
-      count: 1,
-      resetTime: now + windowMs,
-    });
+    await rateLimitStore.set(
+      key,
+      {
+        count: 1,
+        resetTime: now + windowMs,
+      },
+      windowMs
+    );
     return null; // OK
   }
 
@@ -130,7 +243,7 @@ export const rateLimit = async (
 
   // Incrémenter le compteur
   record.count++;
-  store.set(key, record);
+  await rateLimitStore.set(key, record, record.resetTime - now);
 
   return null; // OK
 };
@@ -140,13 +253,15 @@ export const rateLimit = async (
  * avec des valeurs par défaut raisonnables
  */
 const getRateLimitConfig = () => {
-  // Import dynamique pour éviter les problèmes de circular dependency
   const env = process.env;
 
   return {
     auth: {
       limit: parseInt(env.RATE_LIMIT_AUTH_LIMIT || "5", 10),
-      windowMs: parseInt(env.RATE_LIMIT_AUTH_WINDOW_MS || String(15 * 60 * 1000), 10),
+      windowMs: parseInt(
+        env.RATE_LIMIT_AUTH_WINDOW_MS || String(15 * 60 * 1000),
+        10
+      ),
     },
     api: {
       limit: parseInt(env.RATE_LIMIT_API_LIMIT || "100", 10),
@@ -154,7 +269,10 @@ const getRateLimitConfig = () => {
     },
     admin: {
       limit: parseInt(env.RATE_LIMIT_ADMIN_LIMIT || "50", 10),
-      windowMs: parseInt(env.RATE_LIMIT_ADMIN_WINDOW_MS || String(60 * 1000), 10),
+      windowMs: parseInt(
+        env.RATE_LIMIT_ADMIN_WINDOW_MS || String(60 * 1000),
+        10
+      ),
     },
   };
 };
@@ -171,7 +289,8 @@ export const rateLimitPresets = {
     const config = getRateLimitConfig();
     return {
       ...config.auth,
-      message: "Trop de tentatives de connexion, veuillez réessayer dans quelques minutes",
+      message:
+        "Trop de tentatives de connexion, veuillez réessayer dans quelques minutes",
     };
   },
 
@@ -209,3 +328,13 @@ export const rateLimitPresets = {
   },
 };
 
+/**
+ * Ferme la connexion Redis proprement
+ */
+export const closeRateLimitStore = async (): Promise<void> => {
+  if (redisClient) {
+    await redisClient.quit();
+    redisClient = null;
+  }
+  store = null;
+};

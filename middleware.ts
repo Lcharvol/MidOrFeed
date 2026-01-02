@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { securityHeadersMiddleware } from "@/lib/security-headers";
+import { generateCsrfToken, setCsrfCookie, CSRF_CONSTANTS } from "@/lib/csrf";
 
 /**
  * Middleware Next.js pour appliquer les headers de sécurité à toutes les réponses
+ * et gérer les tokens CSRF
  */
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
@@ -13,6 +15,13 @@ export function middleware(request: NextRequest) {
     response.headers,
     process.env.NODE_ENV === "production"
   );
+
+  // Generate CSRF token if not present
+  const existingToken = request.cookies.get(CSRF_CONSTANTS.COOKIE_NAME);
+  if (!existingToken) {
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(response, csrfToken);
+  }
 
   return response;
 }

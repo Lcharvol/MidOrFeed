@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   getAllQueuesStatus,
   getRecentJobs,
@@ -6,13 +6,18 @@ import {
   getQueue,
 } from "@/lib/queues";
 import { isRedisAvailable } from "@/lib/redis";
+import { requireAdmin } from "@/lib/auth-utils";
 import type { ChampionStatsJobData, CompositionJobData } from "@/lib/queues/types";
 
 /**
  * GET /api/admin/jobs
  * Get all queues status and recent jobs
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Verify admin access (skip CSRF for GET)
+  const authError = await requireAdmin(request, { skipCsrf: true });
+  if (authError) return authError;
+
   try {
     // Check Redis availability
     const redisAvailable = await isRedisAvailable();
@@ -57,7 +62,11 @@ export async function GET() {
  * POST /api/admin/jobs
  * Trigger a new job
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Verify admin access with CSRF protection
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const { queue, data } = body as {

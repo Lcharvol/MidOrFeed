@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { generateToken } from "@/lib/jwt";
+import { generateToken, createAuthResponse } from "@/lib/jwt";
 import { logger } from "@/lib/logger";
 import {
   serializeUser,
@@ -86,11 +85,14 @@ export async function POST(request: Request) {
       leagueAccount: user.leagueAccount ?? null,
     };
 
-    return NextResponse.json({
-      success: true,
-      token: jwtToken,
-      user: serializeUser(userForSerialization),
-    });
+    // Return response with token in HTTP-only cookie
+    return createAuthResponse(
+      {
+        success: true,
+        user: serializeUser(userForSerialization),
+      },
+      jwtToken
+    );
   } catch (error) {
     logger.error("Erreur lors de l'authentification Google", error as Error);
     return handleApiError(error, "Authentification Google", "auth");

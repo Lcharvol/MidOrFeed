@@ -148,8 +148,8 @@ async function runOneCycle(
 }
 
 export async function GET(request: NextRequest) {
-  // Vérifier les permissions admin
-  const authError = await requireAdmin(request);
+  // Vérifier les permissions admin (skip CSRF for GET)
+  const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) {
     return authError;
   }

@@ -85,6 +85,7 @@ export default function SignupPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: credentialResponse.credential }),
+        credentials: "include", // Important: include cookies
       });
 
       const result = await response.json();
@@ -94,7 +95,8 @@ export default function SignupPage() {
         return;
       }
 
-      login(result.user, result.token);
+      // Store user data (token is now in HTTP-only cookie set by server)
+      login(result.user);
       toast.success(t("login.connectionSuccessful"));
       router.push("/");
     } catch (error) {

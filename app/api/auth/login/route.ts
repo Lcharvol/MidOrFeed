@@ -8,7 +8,7 @@ import { measureTiming } from "@/lib/metrics";
 import { readAndValidateBody } from "@/lib/request-validation";
 import { withApiMonitoring } from "@/lib/api-monitoring";
 import { logger } from "@/lib/logger";
-import { generateToken } from "@/lib/jwt";
+import { generateToken, createAuthResponse } from "@/lib/jwt";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import {
   getRequestContext,
@@ -145,9 +145,9 @@ export async function POST(request: NextRequest) {
         });
 
         // Retourner les informations utilisateur (sans le mot de passe)
-        const response: LoginResponse = {
+        // Token is set in HTTP-only cookie, not in response body
+        const responseData: Omit<LoginResponse, "token"> = {
           message: "Connexion réussie",
-          token,
           user: {
             id: user.id,
             email: user.email,
@@ -166,7 +166,9 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           email: user.email,
         });
-        return NextResponse.json(response, { status: 200 });
+
+        // Return response with token in HTTP-only cookie
+        return createAuthResponse(responseData, token);
       } catch (error) {
         if (error instanceof z.ZodError) {
           return handleZodError(error);

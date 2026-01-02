@@ -6,7 +6,8 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAdmin(request);
+  // Skip CSRF for GET requests
+  const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
   try {
     const { searchParams } = new URL(request.url);

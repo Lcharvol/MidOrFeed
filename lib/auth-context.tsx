@@ -36,8 +36,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (user: unknown, token?: string) => void | Promise<void>;
-  logout: () => void;
+  login: (user: unknown) => void | Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
+      // Clean up legacy token from localStorage (now in HTTP-only cookie)
+      localStorage.removeItem("token");
     } catch {
       // ignore
     } finally {
@@ -60,20 +62,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback((userData: unknown, token?: string) => {
+  // Login now only stores user data - token is in HTTP-only cookie set by server
+  const login = useCallback((userData: unknown) => {
     const castUser = userData as User;
     setUser(castUser);
     localStorage.setItem("user", JSON.stringify(castUser));
-    if (token) {
-      localStorage.setItem("token", token);
-    }
     setIsLoading(false);
   }, []);
 
-  const logout = useCallback(() => {
+  // Logout calls the server to clear the HTTP-only cookie
+  const logout = useCallback(async () => {
+    try {
+      // Call logout endpoint to clear HTTP-only cookie
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // Continue with local logout even if server call fails
+    }
     setUser(null);
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
     setIsLoading(false);
   }, []);
 
