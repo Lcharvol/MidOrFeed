@@ -37,6 +37,7 @@ export const ChampionCountersSection = ({
 }: ChampionCountersSectionProps) => {
   const {
     championNameMap,
+    mode,
     counterData,
     pairs,
     summary,
@@ -119,6 +120,7 @@ export const ChampionCountersSection = ({
           championName={resolvedChampionName}
           pairs={pairs}
           championNameMap={championNameMap}
+          mode={mode}
         />
       </section>
     </div>

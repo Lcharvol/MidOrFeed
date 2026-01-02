@@ -13,7 +13,8 @@ export const apiKeys = {
   championStats: () => "/api/champions/stats",
   matches: (params?: { puuid?: string }) =>
     params?.puuid ? `/api/matches/list?puuid=${params.puuid}` : "/api/matches/list",
-  counterPicks: (championId: string) => `/api/counter-picks?championId=${championId}`,
+  counterPicks: (championId: string, mode?: "same_lane" | "global") =>
+    `/api/counter-picks?championId=${championId}${mode ? `&mode=${mode}` : ""}`,
   championBuild: (championId: string) => `/api/champions/build?championId=${championId}`,
   championRunes: (championId: string) => `/api/champions/${encodeURIComponent(championId)}/runes`,
   championLeadership: (championId: string) => `/api/champions/${encodeURIComponent(championId)}/leadership`,

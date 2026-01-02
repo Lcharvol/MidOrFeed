@@ -20,6 +20,8 @@ import {
   SwordsIcon,
   TargetIcon,
   SparklesIcon,
+  GlobeIcon,
+  UserIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCounterPicks } from "@/lib/hooks/use-counter-picks";
@@ -28,6 +30,7 @@ import { CounterPickTips } from "./components/CounterPickTips";
 import { CounterPickTable } from "./components/CounterPickTable";
 import { getChampionSplashUrl } from "@/constants/ddragon";
 import { cn } from "@/lib/utils";
+import type { CounterPickMode } from "@/types";
 
 type CounterPicksPageClientProps = {
   initialChampionId: string;
@@ -57,6 +60,8 @@ const CounterPicksPageClient = ({
     championNameMap,
     selectedChampion,
     setSelectedChampion,
+    mode,
+    setMode,
     counterData,
     pairs,
     summary,
@@ -264,6 +269,7 @@ const CounterPicksPageClient = ({
           championName={resolvedChampionName}
           pairs={pairs}
           championNameMap={championNameMap}
+          mode={mode}
         />
       </div>
     );
@@ -356,13 +362,51 @@ const CounterPicksPageClient = ({
                 Champion à contrer
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <ChampionSelect
                 options={championOptions}
                 value={selectedChampion || null}
                 onChange={handleChampionChange}
                 placeholder="Rechercher..."
               />
+
+              {/* Mode toggle */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Type de matchup
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setMode("same_lane")}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-xs transition-all",
+                      mode === "same_lane"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/50 hover:border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <UserIcon className="size-4" />
+                    <span className="font-medium">Même lane</span>
+                  </button>
+                  <button
+                    onClick={() => setMode("global")}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-xs transition-all",
+                      mode === "global"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/50 hover:border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <GlobeIcon className="size-4" />
+                    <span className="font-medium">Global</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {mode === "same_lane"
+                    ? "Champions face à face en lane"
+                    : "Tous les ennemis, toutes lanes"}
+                </p>
+              </div>
             </CardContent>
           </Card>
 

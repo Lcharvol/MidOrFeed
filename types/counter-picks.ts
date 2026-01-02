@@ -1,3 +1,5 @@
+export type CounterPickMode = "same_lane" | "global";
+
 export interface CounterPickPair {
   enemyChampionId: string;
   games: number;
@@ -9,6 +11,7 @@ export interface CounterPickPair {
 
 export interface CounterPickResponse {
   championId: string;
+  mode: CounterPickMode;
   totalMatches: number;
   pairs: CounterPickPair[];
 }

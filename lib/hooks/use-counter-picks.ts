@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
-import type { CounterPickPair, CounterPickResponse } from "@/types";
+import type { CounterPickPair, CounterPickResponse, CounterPickMode } from "@/types";
 import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "./swr";
 import { useChampions } from "./use-champions";
 import type { ApiResponse } from "@/types";
@@ -26,6 +26,7 @@ export const useCounterPicks = (initialChampionId: string) => {
   const [selectedChampion, setSelectedChampion] = useState(
     initialChampionId ?? ""
   );
+  const [mode, setMode] = useState<CounterPickMode>("same_lane");
 
   const {
     championSummaries,
@@ -42,7 +43,7 @@ export const useCounterPicks = (initialChampionId: string) => {
     mutate,
     isValidating,
   } = useApiSWR<ApiResponse<CounterPickResponse>>(
-    selectedChampion ? apiKeys.counterPicks(selectedChampion) : null,
+    selectedChampion ? apiKeys.counterPicks(selectedChampion, mode) : null,
     SEMI_DYNAMIC_CONFIG
   );
 
@@ -137,6 +138,8 @@ export const useCounterPicks = (initialChampionId: string) => {
     championNameMap,
     selectedChampion,
     setSelectedChampion: handleChampionChange,
+    mode,
+    setMode,
     counterData,
     pairs,
     summary,

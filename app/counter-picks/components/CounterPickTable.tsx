@@ -20,13 +20,14 @@ import {
   SwordsIcon,
 } from "lucide-react";
 import { formatDateTime, formatNumber, formatPercent } from "../utils";
-import type { CounterPickPair } from "@/types";
+import type { CounterPickPair, CounterPickMode } from "@/types";
 import { cn } from "@/lib/utils";
 
 type CounterPickTableProps = {
   championName: string;
   pairs: CounterPickPair[];
   championNameMap: Map<string, string>;
+  mode: CounterPickMode;
 };
 
 const getRankIcon = (index: number) => {
@@ -77,6 +78,7 @@ export const CounterPickTable = ({
   championName,
   pairs,
   championNameMap,
+  mode,
 }: CounterPickTableProps) => {
   const [showAll, setShowAll] = useState(false);
   const displayedPairs = showAll ? pairs : pairs.slice(0, INITIAL_SHOW);
@@ -92,7 +94,9 @@ export const CounterPickTable = ({
               Classement des counters
             </CardTitle>
             <CardDescription>
-              Champions les plus efficaces contre {championName}
+              {mode === "same_lane"
+                ? `Champions en lane face à ${championName}`
+                : `Tous les champions efficaces contre ${championName}`}
             </CardDescription>
           </div>
           <Badge variant="secondary" className="px-3">

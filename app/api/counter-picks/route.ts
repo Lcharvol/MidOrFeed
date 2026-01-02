@@ -3,9 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { MATCHES_PAGE_LIMIT } from "@/constants/matches";
 import { resolveChampionRole } from "@/lib/compositions/roles";
 
+export type CounterPickMode = "same_lane" | "global";
+
 type CounterPickFilters = {
   region?: string | null;
   queueId?: number | null;
+  mode: CounterPickMode;
 };
 
 const parseFilters = (request: Request): CounterPickFilters => {
@@ -13,9 +16,12 @@ const parseFilters = (request: Request): CounterPickFilters => {
   const region = searchParams.get("region");
   const queueIdParam = searchParams.get("queueId");
   const queueId = queueIdParam ? Number(queueIdParam) : null;
+  const modeParam = searchParams.get("mode");
+  const mode: CounterPickMode = modeParam === "global" ? "global" : "same_lane";
   return {
     region: region ?? null,
     queueId: Number.isFinite(queueId) ? queueId : null,
+    mode,
   };
 };
 
@@ -36,7 +42,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const { region, queueId } = parseFilters(request);
+  const { region, queueId, mode } = parseFilters(request);
 
   try {
     const matchFilter = {
@@ -65,6 +71,7 @@ export async function GET(request: Request) {
         success: true,
         data: {
           championId,
+          mode,
           pairs: [],
           totalMatches: 0,
         },
@@ -88,12 +95,19 @@ export async function GET(request: Request) {
       if (!targetParticipant) return;
 
       const enemyTeamId = targetParticipant.teamId === 100 ? 200 : 100;
-      const targetRole = resolveChampionRole(
-        targetParticipant.role,
-        targetParticipant.lane
-      );
+
+      // En mode global, on prend tous les ennemis
+      // En mode same_lane, on filtre par même rôle
       const enemyParticipants = match.participants.filter((participant) => {
         if (participant.teamId !== enemyTeamId) return false;
+
+        if (mode === "global") return true;
+
+        // Mode same_lane: filtrer par rôle
+        const targetRole = resolveChampionRole(
+          targetParticipant.role,
+          targetParticipant.lane
+        );
         if (!targetRole) return true;
         const enemyRole = resolveChampionRole(
           participant.role,
@@ -142,6 +156,7 @@ export async function GET(request: Request) {
       success: true,
       data: {
         championId,
+        mode,
         totalMatches: matches.length,
         pairs,
       },
