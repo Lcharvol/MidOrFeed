@@ -15,6 +15,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { useChampionAdvice } from '@/lib/hooks/use-champion-advice';
 import { apiKeys } from '@/lib/api/keys';
+import { authenticatedFetch } from '@/lib/api-client';
 import type { ChampionAdviceEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -300,11 +301,10 @@ export const ChampionAdviceSection = ({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(apiKeys.championAdvice(championId), {
+      const response = await authenticatedFetch(apiKeys.championAdvice(championId), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.id}`,
         },
         body: JSON.stringify({
           championId,
@@ -357,11 +357,10 @@ export const ChampionAdviceSection = ({
     setPendingVoteId(adviceId);
 
     try {
-      const response = await fetch(apiKeys.championAdviceVote(), {
+      const response = await authenticatedFetch(apiKeys.championAdviceVote(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.id}`,
         },
         body: JSON.stringify({
           adviceId,
@@ -412,11 +411,8 @@ export const ChampionAdviceSection = ({
     setDeletePendingId(adviceId);
 
     try {
-      const response = await fetch(`/api/champions/advice/${adviceId}`, {
+      const response = await authenticatedFetch(`/api/champions/advice/${adviceId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: user ? `Bearer ${user.id}` : '',
-        },
       });
 
       const json = await response.json().catch(() => null);
