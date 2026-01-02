@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const whereClause: {
       championId: string;
       win: boolean;
-      queueId?: number;
+      match?: { queueId: number };
     } = {
       championId,
       win: true,
@@ -56,11 +56,11 @@ export async function GET(request: NextRequest) {
     if (queueId) {
       const parsedQueueId = parseInt(queueId, 10);
       if (!isNaN(parsedQueueId)) {
-        whereClause.queueId = parsedQueueId;
+        whereClause.match = { queueId: parsedQueueId };
       }
     }
 
-    // Fetch winning participants with this champion (last 100 games)
+    // Fetch winning participants with this champion (last 200 games)
     const winningParticipants = await prisma.matchParticipant.findMany({
       where: whereClause,
       select: {
