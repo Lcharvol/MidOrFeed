@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PROBABILITY_STYLES, getProbabilityLevel, STATUS_STYLES } from "@/lib/styles/game-colors";
 
 interface WinPredictionBadgeProps {
   winProbability: number;
@@ -28,25 +29,19 @@ export const WinPredictionBadge = ({
   const percentage = Math.round(winProbability * 100);
 
   // Determine color based on probability
-  // < 35%: red (low chance)
-  // 35-50%: orange (below average)
-  // 50-65%: yellow (average)
-  // 65-80%: green (good chance)
-  // > 80%: emerald (excellent chance)
   const getColorClasses = () => {
     if (percentage < 35) {
-      return "bg-rose-500/15 text-rose-400 border-rose-500/30";
+      return cn(STATUS_STYLES.error.bg, STATUS_STYLES.error.text, STATUS_STYLES.error.border);
     }
     if (percentage < 50) {
-      return "bg-orange-500/15 text-orange-400 border-orange-500/30";
+      return cn(STATUS_STYLES.warning.bg, STATUS_STYLES.warning.text, STATUS_STYLES.warning.border);
     }
     if (percentage < 65) {
-      return "bg-yellow-500/15 text-yellow-400 border-yellow-500/30";
+      return cn(STATUS_STYLES.warning.bg, STATUS_STYLES.warning.text, STATUS_STYLES.warning.border);
     }
-    if (percentage < 80) {
-      return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
-    }
-    return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+    const level = getProbabilityLevel(winProbability);
+    const style = PROBABILITY_STYLES[level];
+    return cn(style.bg, style.text, style.border);
   };
 
   const getLabelKey = () => {

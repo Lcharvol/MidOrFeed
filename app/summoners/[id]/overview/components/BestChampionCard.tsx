@@ -10,6 +10,8 @@ import { getChampionSplashUrl } from "@/constants/ddragon";
 import { useI18n } from "@/lib/i18n-context";
 import Image from "next/image";
 import type { ChampionIdToStats } from "@/types";
+import { cn } from "@/lib/utils";
+import { getKdaLevel, KDA_STYLES } from "@/lib/styles/game-colors";
 
 interface BestChampionCardProps {
   championStats: ChampionIdToStats;
@@ -92,11 +94,8 @@ export const BestChampionCard = ({
                 indicatorClassName="bg-purple-600 dark:bg-purple-400"
               />
               <Badge
-                className={
-                  parseFloat(winRate) >= 50
-                    ? "bg-green-500 hover:bg-green-500 text-white text-[10px] px-1.5 py-0 h-4"
-                    : "bg-red-500 hover:bg-red-500 text-white text-[10px] px-1.5 py-0 h-4"
-                }
+                variant={parseFloat(winRate) >= 50 ? "success" : "destructive"}
+                className="text-[10px] px-1.5 py-0 h-4"
               >
                 {winRate}%
               </Badge>
@@ -105,13 +104,10 @@ export const BestChampionCard = ({
           <div>
             <p className="text-[10px] text-muted-foreground">{t("summoners.kda")}</p>
             <p
-              className={`font-semibold tabular-nums text-sm ${
-                parseFloat(kda) >= 3
-                  ? "text-green-600 dark:text-green-400"
-                  : parseFloat(kda) >= 2
-                  ? "text-amber-600 dark:text-amber-400"
-                  : "text-foreground"
-              }`}
+              className={cn(
+                "font-semibold tabular-nums text-sm",
+                KDA_STYLES[getKdaLevel(parseFloat(kda))].text
+              )}
             >
               {kda}
             </p>

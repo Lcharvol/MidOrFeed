@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { cn } from "@/lib/utils";
 import type { MatchParticipant } from "../RecentMatchesSection";
+import { TEAM_STYLES } from "@/lib/styles/game-colors";
 
 interface MatchParticipantsProps {
   participants: MatchParticipant[];
@@ -64,7 +65,7 @@ export const MatchParticipants = ({
                 shape="circle"
                 className={cn(
                   "border",
-                  isAlly ? "border-blue-500/40" : "border-rose-500/40"
+                  isAlly ? TEAM_STYLES.blue.border : TEAM_STYLES.red.border
                 )}
               />
               {isCurrentPlayer && (
@@ -111,8 +112,8 @@ export const MatchParticipants = ({
       {/* Allies */}
       <div className="space-y-1">
         <div className="flex items-center gap-1 px-1.5">
-          <div className="size-1.5 rounded-full bg-blue-500" />
-          <span className="text-[9px] font-medium text-blue-500/80 uppercase tracking-wide">
+          <div className={cn("size-1.5 rounded-full", TEAM_STYLES.blue.accent)} />
+          <span className={cn("text-[9px] font-medium uppercase tracking-wide", TEAM_STYLES.blue.text)}>
             Allies
           </span>
         </div>
@@ -125,8 +126,8 @@ export const MatchParticipants = ({
       {/* Enemies */}
       <div className="space-y-1">
         <div className="flex items-center gap-1 px-1.5">
-          <div className="size-1.5 rounded-full bg-rose-500" />
-          <span className="text-[9px] font-medium text-rose-500/80 uppercase tracking-wide">
+          <div className={cn("size-1.5 rounded-full", TEAM_STYLES.red.accent)} />
+          <span className={cn("text-[9px] font-medium uppercase tracking-wide", TEAM_STYLES.red.text)}>
             Enemies
           </span>
         </div>

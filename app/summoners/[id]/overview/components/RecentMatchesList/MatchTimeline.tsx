@@ -26,6 +26,12 @@ import {
   XCircleIcon,
   ActivityIcon,
 } from "lucide-react";
+import {
+  TEAM_STYLES,
+  GAME_PHASE_STYLES,
+  KDA_STYLES,
+  getKdaLevel,
+} from "@/lib/styles/game-colors";
 
 interface MatchTimelineProps {
   matchId: string;
@@ -165,34 +171,45 @@ export function MatchTimeline({ matchId, puuid }: MatchTimelineProps) {
                 <div className="relative h-10 rounded-xl bg-muted/50 overflow-hidden flex">
                   {/* Early Game */}
                   <div
-                    className="relative flex items-center justify-center bg-gradient-to-r from-blue-500/30 to-blue-500/20 border-r border-blue-500/40"
+                    className={cn(
+                      "relative flex items-center justify-center border-r",
+                      GAME_PHASE_STYLES.early.bg,
+                      GAME_PHASE_STYLES.early.border
+                    )}
                     style={{
                       width: `${(timeline.phases.early.end / (timeline.gameDuration / 60)) * 100}%`,
                     }}
                   >
-                    <span className="text-[11px] font-medium text-blue-400">
+                    <span className={cn("text-[11px] font-medium", GAME_PHASE_STYLES.early.text)}>
                       {t("matchTimeline.early")}
                     </span>
                   </div>
                   {/* Mid Game */}
                   <div
-                    className="relative flex items-center justify-center bg-gradient-to-r from-amber-500/30 to-amber-500/20 border-r border-amber-500/40"
+                    className={cn(
+                      "relative flex items-center justify-center border-r",
+                      GAME_PHASE_STYLES.mid.bg,
+                      GAME_PHASE_STYLES.mid.border
+                    )}
                     style={{
                       width: `${((timeline.phases.mid.end - timeline.phases.mid.start) / (timeline.gameDuration / 60)) * 100}%`,
                     }}
                   >
-                    <span className="text-[11px] font-medium text-amber-400">
+                    <span className={cn("text-[11px] font-medium", GAME_PHASE_STYLES.mid.text)}>
                       {t("matchTimeline.mid")}
                     </span>
                   </div>
                   {/* Late Game */}
                   <div
-                    className="relative flex items-center justify-center bg-gradient-to-r from-rose-500/30 to-rose-500/20"
+                    className={cn(
+                      "relative flex items-center justify-center",
+                      GAME_PHASE_STYLES.late.bg
+                    )}
                     style={{
                       width: `${((timeline.phases.late.end - timeline.phases.late.start) / (timeline.gameDuration / 60)) * 100}%`,
                     }}
                   >
-                    <span className="text-[11px] font-medium text-rose-400">
+                    <span className={cn("text-[11px] font-medium", GAME_PHASE_STYLES.late.text)}>
                       {t("matchTimeline.late")}
                     </span>
                   </div>
@@ -289,45 +306,46 @@ function TeamCard({
 }: TeamCardProps) {
   const isBlue = side === "blue";
 
+  const teamStyle = isBlue ? TEAM_STYLES.blue : TEAM_STYLES.red;
+
   return (
     <div
       className={cn(
         "rounded-xl border overflow-hidden",
-        isBlue
-          ? "bg-blue-500/5 border-blue-500/20"
-          : "bg-rose-500/5 border-rose-500/20"
+        teamStyle.bgSubtle,
+        teamStyle.border
       )}
     >
       {/* Header */}
       <div
         className={cn(
           "flex items-center justify-between px-4 py-3",
-          isBlue ? "bg-blue-500/10" : "bg-rose-500/10"
+          teamStyle.bg
         )}
       >
         <div className="flex items-center gap-2">
           <div
             className={cn(
               "size-2.5 rounded-full",
-              isBlue ? "bg-blue-500" : "bg-rose-500"
+              teamStyle.accent
             )}
           />
           <span
             className={cn(
               "text-sm font-semibold",
-              isBlue ? "text-blue-400" : "text-rose-400"
+              teamStyle.text
             )}
           >
             {isBlue ? t("matchTimeline.blueTeam") : t("matchTimeline.redTeam")}
           </span>
         </div>
         {team.won ? (
-          <Badge className="gap-1.5 bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/20">
+          <Badge variant="success" className="gap-1.5">
             <TrophyIcon className="size-3" />
             {t("matchTimeline.victory")}
           </Badge>
         ) : (
-          <Badge className="gap-1.5 bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/20">
+          <Badge variant="destructive" className="gap-1.5">
             <XCircleIcon className="size-3" />
             {t("matchTimeline.defeat")}
           </Badge>
@@ -360,7 +378,7 @@ function TeamCard({
                 shape="circle"
                 className={cn(
                   "border-2",
-                  isBlue ? "border-blue-500/30" : "border-rose-500/30"
+                  teamStyle.border
                 )}
               />
 
@@ -372,9 +390,7 @@ function TeamCard({
                   </span>
                   <span className={cn(
                     "text-[10px]",
-                    kda >= 4 ? "text-amber-500" :
-                    kda >= 3 ? "text-green-500" :
-                    kda >= 2 ? "text-blue-500" : ""
+                    KDA_STYLES[getKdaLevel(kda)].text
                   )}>
                     {kda.toFixed(1)} KDA
                   </span>
@@ -383,7 +399,7 @@ function TeamCard({
 
               <div className="text-right space-y-0.5">
                 <p className="text-xs font-medium flex items-center gap-1 justify-end">
-                  <CoinsIcon className="size-3 text-amber-500" />
+                  <CoinsIcon className="size-3 text-warning-muted-foreground" />
                   {formatGold(p.gold)}
                 </p>
                 <p className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end">
@@ -425,7 +441,7 @@ function StatCompareBar({
         <span
           className={cn(
             "font-semibold tabular-nums",
-            blueWins ? "text-blue-400" : "text-muted-foreground"
+            blueWins ? TEAM_STYLES.blue.text : "text-muted-foreground"
           )}
         >
           {format(blueValue)}
@@ -437,7 +453,7 @@ function StatCompareBar({
         <span
           className={cn(
             "font-semibold tabular-nums",
-            redWins ? "text-rose-400" : "text-muted-foreground"
+            redWins ? TEAM_STYLES.red.text : "text-muted-foreground"
           )}
         >
           {format(redValue)}
@@ -448,8 +464,8 @@ function StatCompareBar({
           className={cn(
             "absolute left-0 top-0 h-full rounded-l-full transition-all duration-500",
             blueWins
-              ? "bg-gradient-to-r from-blue-500 to-blue-400"
-              : "bg-blue-500/60"
+              ? TEAM_STYLES.blue.accent
+              : TEAM_STYLES.blue.bgSubtle
           )}
           style={{ width: `${bluePercent}%` }}
         />
@@ -457,8 +473,8 @@ function StatCompareBar({
           className={cn(
             "absolute right-0 top-0 h-full rounded-r-full transition-all duration-500",
             redWins
-              ? "bg-gradient-to-l from-rose-500 to-rose-400"
-              : "bg-rose-500/60"
+              ? TEAM_STYLES.red.accent
+              : TEAM_STYLES.red.bgSubtle
           )}
           style={{ width: `${100 - bluePercent}%` }}
         />

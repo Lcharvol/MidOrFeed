@@ -26,6 +26,13 @@ import { useAIAnalysis } from "@/lib/hooks/use-ai-analysis";
 import { useChampions } from "@/lib/hooks/use-champions";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import {
+  INSIGHT_STYLES,
+  PERFORMANCE_STYLES,
+  STATUS_STYLES,
+  getPerformanceLevel,
+  type InsightType,
+} from "@/lib/styles/game-colors";
 
 // Score circle component
 const ScoreCircle = ({ score, size = 120 }: { score: number; size?: number }) => {
@@ -35,9 +42,9 @@ const ScoreCircle = ({ score, size = 120 }: { score: number; size?: number }) =>
   const strokeDashoffset = circumference - progress;
 
   const getScoreColor = (s: number) => {
-    if (s >= 80) return { stroke: "#22c55e", text: "text-green-500" };
-    if (s >= 60) return { stroke: "#eab308", text: "text-yellow-500" };
-    return { stroke: "#ef4444", text: "text-red-500" };
+    if (s >= 80) return { strokeClass: "stroke-success", text: "text-success-muted-foreground" };
+    if (s >= 60) return { strokeClass: "stroke-warning", text: "text-warning-muted-foreground" };
+    return { strokeClass: "stroke-danger", text: "text-danger-muted-foreground" };
   };
 
   const colors = getScoreColor(score);
@@ -58,13 +65,12 @@ const ScoreCircle = ({ score, size = 120 }: { score: number; size?: number }) =>
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.stroke}
           strokeWidth="6"
           fill="none"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
-          className="transition-all duration-1000 ease-out"
+          className={cn("transition-all duration-1000 ease-out", colors.strokeClass)}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -85,41 +91,28 @@ const InsightCard = ({
   title: string;
   description: string;
   category: string;
-  type: "strength" | "weakness" | "tip";
+  type: InsightType;
 }) => {
-  const config = {
-    strength: {
-      icon: CheckCircleIcon,
-      iconColor: "text-green-500",
-      bg: "bg-green-500/5",
-      border: "border-green-500/20 hover:border-green-500/40",
-    },
-    weakness: {
-      icon: AlertTriangleIcon,
-      iconColor: "text-red-500",
-      bg: "bg-red-500/5",
-      border: "border-red-500/20 hover:border-red-500/40",
-    },
-    tip: {
-      icon: SparklesIcon,
-      iconColor: "text-blue-500",
-      bg: "bg-blue-500/5",
-      border: "border-blue-500/20 hover:border-blue-500/40",
-    },
+  const icons = {
+    strength: CheckCircleIcon,
+    weakness: AlertTriangleIcon,
+    tip: SparklesIcon,
   };
 
-  const { icon: Icon, iconColor, bg, border } = config[type];
+  const Icon = icons[type];
+  const style = INSIGHT_STYLES[type];
 
   return (
     <div
       className={cn(
         "p-4 rounded-xl border transition-all duration-200",
-        bg,
-        border
+        style.bg,
+        style.border,
+        style.hoverBorder
       )}
     >
       <div className="flex items-start gap-3">
-        <div className={cn("mt-0.5", iconColor)}>
+        <div className={cn("mt-0.5", style.icon)}>
           <Icon className="size-5" />
         </div>
         <div className="flex-1 min-w-0">
@@ -172,13 +165,15 @@ export default function AIAnalysisPage() {
   };
 
   const getPerformanceLabel = (performance: string) => {
-    switch (performance) {
-      case "excellent": return { label: "Excellent", color: "bg-green-500" };
-      case "good": return { label: "Bon", color: "bg-blue-500" };
-      case "average": return { label: "Moyen", color: "bg-yellow-500" };
-      case "poor": return { label: "Faible", color: "bg-red-500" };
-      default: return { label: performance, color: "bg-muted" };
-    }
+    const labels: Record<string, string> = {
+      excellent: "Excellent",
+      good: "Bon",
+      average: "Moyen",
+      poor: "Faible",
+    };
+    const level = getPerformanceLevel(performance);
+    const style = PERFORMANCE_STYLES[level];
+    return { label: labels[performance] || performance, color: style.bg };
   };
 
   // Loading state
@@ -207,8 +202,8 @@ export default function AIAnalysisPage() {
     return (
       <div className="container mx-auto py-20">
         <div className="max-w-md mx-auto text-center">
-          <div className="bg-yellow-500/10 rounded-full p-6 w-fit mx-auto mb-6">
-            <AlertTriangleIcon className="size-12 text-yellow-500" />
+          <div className={cn("rounded-full p-6 w-fit mx-auto mb-6", STATUS_STYLES.warning.bg)}>
+            <AlertTriangleIcon className={cn("size-12", STATUS_STYLES.warning.icon)} />
           </div>
           <h3 className="text-2xl font-semibold mb-3">
             {!canAnalyze ? "Limite d'analyses atteinte" : "Erreur lors de l'analyse"}
@@ -361,13 +356,13 @@ export default function AIAnalysisPage() {
             {/* Strengths */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircleIcon className="size-4 text-green-500" />
+                <CheckCircleIcon className={cn("size-4", INSIGHT_STYLES.strength.icon)} />
                 <h4 className="font-semibold text-sm">Points forts</h4>
               </div>
               <ul className="space-y-2">
                 {analysis.championPerformance.reasons.map((reason, idx) => (
                   <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-green-500 mt-1">•</span>
+                    <span className={cn("mt-1", INSIGHT_STYLES.strength.icon)}>•</span>
                     {reason}
                   </li>
                 ))}
@@ -377,13 +372,13 @@ export default function AIAnalysisPage() {
             {/* Suggestions */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUpIcon className="size-4 text-blue-500" />
+                <TrendingUpIcon className={cn("size-4", INSIGHT_STYLES.tip.icon)} />
                 <h4 className="font-semibold text-sm">Axes d&apos;amélioration</h4>
               </div>
               <ul className="space-y-2">
                 {analysis.championPerformance.suggestions.map((suggestion, idx) => (
                   <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-blue-500 mt-1">•</span>
+                    <span className={cn("mt-1", INSIGHT_STYLES.tip.icon)}>•</span>
                     {suggestion}
                   </li>
                 ))}
@@ -398,8 +393,8 @@ export default function AIAnalysisPage() {
         {/* Strengths */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <ShieldIcon className="size-4 text-green-500" />
+            <div className={cn("p-2 rounded-lg", INSIGHT_STYLES.strength.bg)}>
+              <ShieldIcon className={cn("size-4", INSIGHT_STYLES.strength.icon)} />
             </div>
             <h3 className="font-semibold">Points Forts</h3>
             <Badge variant="secondary" className="ml-auto text-xs">
@@ -422,8 +417,8 @@ export default function AIAnalysisPage() {
         {/* Weaknesses */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-lg bg-red-500/10">
-              <TargetIcon className="size-4 text-red-500" />
+            <div className={cn("p-2 rounded-lg", INSIGHT_STYLES.weakness.bg)}>
+              <TargetIcon className={cn("size-4", INSIGHT_STYLES.weakness.icon)} />
             </div>
             <h3 className="font-semibold">À Améliorer</h3>
             <Badge variant="secondary" className="ml-auto text-xs">
@@ -446,8 +441,8 @@ export default function AIAnalysisPage() {
         {/* Tips */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-lg bg-blue-500/10">
-              <ZapIcon className="size-4 text-blue-500" />
+            <div className={cn("p-2 rounded-lg", INSIGHT_STYLES.tip.bg)}>
+              <ZapIcon className={cn("size-4", INSIGHT_STYLES.tip.icon)} />
             </div>
             <h3 className="font-semibold">Conseils</h3>
             <Badge variant="secondary" className="ml-auto text-xs">
@@ -485,13 +480,14 @@ export default function AIAnalysisPage() {
             <div className="space-y-4">
               {analysis.keyMoments.map((moment, idx) => {
                 const isPositive = moment.impact === "Positif";
+                const momentStyle = isPositive ? INSIGHT_STYLES.strength : INSIGHT_STYLES.weakness;
                 return (
                   <div key={idx} className="relative pl-12">
                     {/* Timeline dot */}
                     <div
                       className={cn(
-                        "absolute left-2 top-1 size-5 rounded-full border-2 border-background flex items-center justify-center text-[10px] font-bold text-white",
-                        isPositive ? "bg-green-500" : "bg-red-500"
+                        "absolute left-2 top-1 size-5 rounded-full border-2 border-background flex items-center justify-center text-[10px] font-bold",
+                        isPositive ? "bg-success text-success-foreground" : "bg-danger text-danger-foreground"
                       )}
                     >
                       {idx + 1}
@@ -500,9 +496,8 @@ export default function AIAnalysisPage() {
                     <div
                       className={cn(
                         "p-4 rounded-xl border",
-                        isPositive
-                          ? "bg-green-500/5 border-green-500/20"
-                          : "bg-red-500/5 border-red-500/20"
+                        momentStyle.bg,
+                        momentStyle.border
                       )}
                     >
                       <div className="flex items-center justify-between gap-2 mb-1">
@@ -514,10 +509,7 @@ export default function AIAnalysisPage() {
                         </div>
                         <Badge
                           variant="secondary"
-                          className={cn(
-                            "text-xs",
-                            isPositive ? "text-green-600" : "text-red-600"
-                          )}
+                          className={cn("text-xs", momentStyle.icon)}
                         >
                           {moment.impact}
                         </Badge>

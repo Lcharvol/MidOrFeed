@@ -267,3 +267,105 @@ export function getProbabilityLevel(probability: number): ProbabilityLevel {
   if (probability >= 0.5) return "medium";
   return "low";
 }
+
+// ============================================================================
+// SCORE DE BUILD (Analyse de build)
+// ============================================================================
+
+export const BUILD_SCORE_STYLES = {
+  /** >= 80% - Excellent build */
+  excellent: {
+    bg: "bg-success-muted",
+    text: "text-success-muted-foreground",
+    border: "border-success/30",
+  },
+  /** >= 60% - Good build */
+  good: {
+    bg: "bg-info-muted",
+    text: "text-info-muted-foreground",
+    border: "border-info/30",
+  },
+  /** >= 40% - Average build */
+  average: {
+    bg: "bg-warning-muted",
+    text: "text-warning-muted-foreground",
+    border: "border-warning/30",
+  },
+  /** < 40% - Needs improvement */
+  poor: {
+    bg: "bg-danger-muted",
+    text: "text-danger-muted-foreground",
+    border: "border-danger/30",
+  },
+} as const;
+
+export type BuildScoreLevel = keyof typeof BUILD_SCORE_STYLES;
+
+export function getBuildScoreLevel(score: number): BuildScoreLevel {
+  if (score >= 80) return "excellent";
+  if (score >= 60) return "good";
+  if (score >= 40) return "average";
+  return "poor";
+}
+
+// ============================================================================
+// INSIGHTS (AI Analysis)
+// ============================================================================
+
+export const INSIGHT_STYLES = {
+  strength: {
+    icon: "text-success-muted-foreground",
+    bg: "bg-success-muted/50",
+    border: "border-success/20",
+    hoverBorder: "hover:border-success/40",
+  },
+  weakness: {
+    icon: "text-danger-muted-foreground",
+    bg: "bg-danger-muted/50",
+    border: "border-danger/20",
+    hoverBorder: "hover:border-danger/40",
+  },
+  tip: {
+    icon: "text-info-muted-foreground",
+    bg: "bg-info-muted/50",
+    border: "border-info/20",
+    hoverBorder: "hover:border-info/40",
+  },
+} as const;
+
+export type InsightType = keyof typeof INSIGHT_STYLES;
+
+// ============================================================================
+// PERFORMANCE LEVELS
+// ============================================================================
+
+export const PERFORMANCE_STYLES = {
+  excellent: {
+    bg: "bg-success",
+    text: "text-success-foreground",
+  },
+  good: {
+    bg: "bg-info",
+    text: "text-info-foreground",
+  },
+  average: {
+    bg: "bg-warning",
+    text: "text-warning-foreground",
+  },
+  poor: {
+    bg: "bg-danger",
+    text: "text-danger-foreground",
+  },
+} as const;
+
+export type PerformanceLevel = keyof typeof PERFORMANCE_STYLES;
+
+export function getPerformanceLevel(performance: string): PerformanceLevel {
+  switch (performance) {
+    case "excellent": return "excellent";
+    case "good": return "good";
+    case "average": return "average";
+    case "poor": return "poor";
+    default: return "average";
+  }
+}

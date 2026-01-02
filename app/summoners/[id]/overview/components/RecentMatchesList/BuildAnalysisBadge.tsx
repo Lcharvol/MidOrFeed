@@ -16,6 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { BUILD_SCORE_STYLES, getBuildScoreLevel, STATUS_STYLES } from "@/lib/styles/game-colors";
 
 interface BuildAnalysisBadgeProps {
   championId: string;
@@ -66,18 +67,9 @@ export const BuildAnalysisBadge = ({
     analysis;
 
   // Determine color based on match score
-  const getColorClasses = () => {
-    if (matchScore >= 80) {
-      return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
-    }
-    if (matchScore >= 60) {
-      return "bg-blue-500/15 text-blue-400 border-blue-500/30";
-    }
-    if (matchScore >= 40) {
-      return "bg-yellow-500/15 text-yellow-400 border-yellow-500/30";
-    }
-    return "bg-orange-500/15 text-orange-400 border-orange-500/30";
-  };
+  const scoreLevel = getBuildScoreLevel(matchScore);
+  const scoreStyle = BUILD_SCORE_STYLES[scoreLevel];
+  const getColorClasses = () => cn(scoreStyle.bg, scoreStyle.text, scoreStyle.border);
 
   const getScoreIcon = () => {
     if (matchScore >= 60) {
@@ -144,7 +136,7 @@ export const BuildAnalysisBadge = ({
           {/* Unusual items */}
           {unusualItems.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-orange-400">
+              <p className={cn("text-xs font-medium", STATUS_STYLES.warning.text)}>
                 {t("buildAnalysis.unusualItems")}
               </p>
               <div className="flex gap-1 flex-wrap">
@@ -156,7 +148,7 @@ export const BuildAnalysisBadge = ({
                     size={24}
                     shape="rounded"
                     showBorder
-                    className="border-orange-500/50"
+                    className={STATUS_STYLES.warning.border}
                   />
                 ))}
               </div>
@@ -166,7 +158,7 @@ export const BuildAnalysisBadge = ({
           {/* Common items for this champion */}
           {commonItems.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-emerald-400">
+              <p className={cn("text-xs font-medium", STATUS_STYLES.success.text)}>
                 {t("buildAnalysis.coreItems")}
               </p>
               <div className="flex gap-1 flex-wrap">
@@ -183,7 +175,7 @@ export const BuildAnalysisBadge = ({
                             showBorder
                             className={cn(
                               items.includes(itemId)
-                                ? "border-emerald-500/50 ring-1 ring-emerald-500/30"
+                                ? cn(STATUS_STYLES.success.border, "ring-1 ring-success/30")
                                 : "border-border/50 opacity-60"
                             )}
                           />
