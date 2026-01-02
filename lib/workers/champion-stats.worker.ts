@@ -254,56 +254,90 @@ async function computeChampionStats(championId: string): Promise<void> {
 
 /**
  * Get counter champions (champions that beat this champion most often)
+ * Returns data in WeakAgainstItem format for the tier list UI
  */
 async function getCounterChampions(
   championId: string
-): Promise<Array<{ championId: string; lossRate: number; games: number }>> {
-  // Get all matches where this champion lost
-  const losses = await prisma.matchParticipant.findMany({
-    where: { championId, win: false },
-    select: { matchId: true, teamId: true },
+): Promise<Array<{
+  enemyChampionId: string;
+  games: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  lastPlayedAt: string;
+}>> {
+  // Get all matches where this champion participated
+  const participations = await prisma.matchParticipant.findMany({
+    where: { championId },
+    select: { matchId: true, teamId: true, win: true, createdAt: true },
   });
 
-  if (losses.length === 0) return [];
+  if (participations.length === 0) return [];
 
   // Count opponent champions in those matches
-  const opponentCounts: Record<string, { wins: number; total: number }> = {};
+  const opponentCounts: Record<string, {
+    wins: number;
+    losses: number;
+    lastPlayed: Date;
+  }> = {};
 
   // Process in batches to avoid memory issues
   const batchSize = 100;
-  for (let i = 0; i < losses.length; i += batchSize) {
-    const batch = losses.slice(i, i + batchSize);
-    const matchIds = batch.map((l) => l.matchId);
+  for (let i = 0; i < participations.length; i += batchSize) {
+    const batch = participations.slice(i, i + batchSize);
+    const matchIds = batch.map((p) => p.matchId);
+    const teamIdsByMatch = new Map(batch.map((p) => [p.matchId, p.teamId]));
+    const winByMatch = new Map(batch.map((p) => [p.matchId, p.win]));
+    const dateByMatch = new Map(batch.map((p) => [p.matchId, p.createdAt]));
 
     const opponents = await prisma.matchParticipant.findMany({
       where: {
         matchId: { in: matchIds },
         championId: { not: championId },
-        teamId: { notIn: batch.map((l) => l.teamId) },
       },
-      select: { championId: true, matchId: true, win: true },
+      select: { championId: true, matchId: true, teamId: true },
     });
 
     for (const opp of opponents) {
+      // Only count opponents on the enemy team
+      const ourTeamId = teamIdsByMatch.get(opp.matchId);
+      if (opp.teamId === ourTeamId) continue;
+
+      const weWon = winByMatch.get(opp.matchId) ?? false;
+      const matchDate = dateByMatch.get(opp.matchId) ?? new Date();
+
       if (!opponentCounts[opp.championId]) {
-        opponentCounts[opp.championId] = { wins: 0, total: 0 };
+        opponentCounts[opp.championId] = { wins: 0, losses: 0, lastPlayed: matchDate };
       }
-      opponentCounts[opp.championId].total++;
-      if (opp.win) {
+
+      // Count from opponent's perspective (their wins = our losses)
+      if (weWon) {
+        opponentCounts[opp.championId].losses++;
+      } else {
         opponentCounts[opp.championId].wins++;
+      }
+
+      if (matchDate > opponentCounts[opp.championId].lastPlayed) {
+        opponentCounts[opp.championId].lastPlayed = matchDate;
       }
     }
   }
 
-  // Calculate loss rates and sort
+  // Calculate win rates and sort by opponent's win rate (descending)
   const counters = Object.entries(opponentCounts)
-    .filter(([, stats]) => stats.total >= 5) // Minimum 5 games
-    .map(([oppChampionId, stats]) => ({
-      championId: oppChampionId,
-      lossRate: stats.wins / stats.total,
-      games: stats.total,
-    }))
-    .sort((a, b) => b.lossRate - a.lossRate)
+    .filter(([, stats]) => stats.wins + stats.losses >= 5) // Minimum 5 games
+    .map(([enemyChampionId, stats]) => {
+      const games = stats.wins + stats.losses;
+      return {
+        enemyChampionId,
+        games,
+        wins: stats.wins,
+        losses: stats.losses,
+        winRate: stats.wins / games, // Opponent's win rate against us
+        lastPlayedAt: stats.lastPlayed.toISOString(),
+      };
+    })
+    .sort((a, b) => b.winRate - a.winRate)
     .slice(0, 5); // Top 5 counters
 
   return counters;
