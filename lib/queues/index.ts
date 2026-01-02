@@ -7,6 +7,14 @@ export const QUEUE_NAMES = {
   COMPOSITIONS: "composition-gen",
   DATA_CRAWL: "data-crawl",
   ACCOUNT_SYNC: "account-sync",
+  LEADERBOARD_SYNC: "leaderboard-sync",
+  DDRAGON_SYNC: "ddragon-sync",
+  META_ANALYSIS: "meta-analysis",
+  SYNERGY_ANALYSIS: "synergy-analysis",
+  ITEM_BUILDS: "item-builds",
+  DATA_CLEANUP: "data-cleanup",
+  ACCOUNT_REFRESH: "account-refresh",
+  DAILY_RESET: "daily-reset",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -60,6 +68,14 @@ export const championStatsQueue = () => getQueue(QUEUE_NAMES.CHAMPION_STATS);
 export const compositionsQueue = () => getQueue(QUEUE_NAMES.COMPOSITIONS);
 export const dataCrawlQueue = () => getQueue(QUEUE_NAMES.DATA_CRAWL);
 export const accountSyncQueue = () => getQueue(QUEUE_NAMES.ACCOUNT_SYNC);
+export const leaderboardSyncQueue = () => getQueue(QUEUE_NAMES.LEADERBOARD_SYNC);
+export const ddragonSyncQueue = () => getQueue(QUEUE_NAMES.DDRAGON_SYNC);
+export const metaAnalysisQueue = () => getQueue(QUEUE_NAMES.META_ANALYSIS);
+export const synergyAnalysisQueue = () => getQueue(QUEUE_NAMES.SYNERGY_ANALYSIS);
+export const itemBuildsQueue = () => getQueue(QUEUE_NAMES.ITEM_BUILDS);
+export const dataCleanupQueue = () => getQueue(QUEUE_NAMES.DATA_CLEANUP);
+export const accountRefreshQueue = () => getQueue(QUEUE_NAMES.ACCOUNT_REFRESH);
+export const dailyResetQueue = () => getQueue(QUEUE_NAMES.DAILY_RESET);
 
 /**
  * Get all queues status
