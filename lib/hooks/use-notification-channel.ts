@@ -7,8 +7,8 @@ export type NotificationChannelOptions = {
   onNotification?: (payload: NotificationPayload) => void;
 };
 
-const WEBSOCKET_PATH = "/api/notifications/socket";
-const RECONNECT_DELAY_MS = 4_000;
+const SSE_PATH = "/api/notifications/socket";
+const RECONNECT_DELAY_MS = 5_000;
 
 const isNotificationMessage = (
   value: unknown
@@ -27,18 +27,11 @@ const isNotificationMessage = (
   );
 };
 
-const buildSocketUrl = () => {
-  if (typeof window === "undefined") return "";
-  const url = new URL(WEBSOCKET_PATH, window.location.origin);
-  url.protocol = url.protocol.replace("http", "ws");
-  return url.toString();
-};
-
 export const useNotificationChannel = (
   options: NotificationChannelOptions = {}
 ) => {
   const { onNotification } = options;
-  const socketRef = useRef<WebSocket | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const [state, setState] = useState<NotificationChannelState>("connecting");
 
@@ -61,46 +54,39 @@ export const useNotificationChannel = (
       }, RECONNECT_DELAY_MS);
     };
 
-    const handleMessage = (event: MessageEvent<string>) => {
-      try {
-        const data = JSON.parse(event.data) as unknown;
-        if (isNotificationMessage(data)) {
-          onNotification?.(data.payload);
-        }
-      } catch (error) {
-        console.error("Invalid notification message", error);
-      }
-    };
-
     const connect = () => {
-      const socketUrl = buildSocketUrl();
-      if (!socketUrl) return;
+      if (typeof window === "undefined") return;
 
       try {
         setState("connecting");
-        const socket = new WebSocket(socketUrl);
-        socketRef.current = socket;
+        const eventSource = new EventSource(SSE_PATH);
+        eventSourceRef.current = eventSource;
 
-        socket.addEventListener("open", () => {
+        eventSource.onopen = () => {
           if (cancelled) return;
           setState("open");
-        });
+        };
 
-        socket.addEventListener("message", handleMessage as EventListener);
+        eventSource.onmessage = (event) => {
+          if (cancelled) return;
+          try {
+            const data = JSON.parse(event.data) as unknown;
+            if (isNotificationMessage(data)) {
+              onNotification?.(data.payload);
+            }
+          } catch (error) {
+            console.error("Invalid notification message", error);
+          }
+        };
 
-        socket.addEventListener("close", () => {
+        eventSource.onerror = () => {
           if (cancelled) return;
           setState("closed");
+          eventSource.close();
           scheduleReconnect();
-        });
-
-        socket.addEventListener("error", () => {
-          if (cancelled) return;
-          setState("closed");
-          scheduleReconnect();
-        });
+        };
       } catch (error) {
-        console.error("Notification socket creation failed", error);
+        console.error("SSE connection failed", error);
         setState("closed");
         scheduleReconnect();
       }
@@ -111,10 +97,7 @@ export const useNotificationChannel = (
     return () => {
       cancelled = true;
       clearReconnect();
-      const socket = socketRef.current;
-      if (socket?.readyState === WebSocket.OPEN) {
-        socket.close();
-      }
+      eventSourceRef.current?.close();
     };
   }, [onNotification]);
 

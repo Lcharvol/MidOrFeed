@@ -5,42 +5,65 @@ type NotificationMessage = {
   payload: NotificationPayload;
 };
 
-type NotificationClientSet = Set<WebSocket>;
-
-const notificationsGlobal = globalThis as unknown as {
-  __notificationClients?: NotificationClientSet;
+type SSEClient = {
+  id: string;
+  controller: ReadableStreamDefaultController<Uint8Array>;
 };
 
-const clients: NotificationClientSet =
-  notificationsGlobal.__notificationClients ?? new Set<WebSocket>();
+type NotificationClientMap = Map<string, SSEClient>;
+
+const notificationsGlobal = globalThis as unknown as {
+  __notificationClients?: NotificationClientMap;
+};
+
+const clients: NotificationClientMap =
+  notificationsGlobal.__notificationClients ?? new Map<string, SSEClient>();
 
 if (!notificationsGlobal.__notificationClients) {
   notificationsGlobal.__notificationClients = clients;
 }
 
-const serializeMessage = (message: NotificationMessage): string =>
-  JSON.stringify(message);
+const encoder = new TextEncoder();
 
-export const registerNotificationClient = (socket: WebSocket): void => {
-  clients.add(socket);
-
-  const removeClient = () => {
-    clients.delete(socket);
-  };
-
-  socket.addEventListener("close", removeClient, { once: true });
-  socket.addEventListener("error", removeClient, { once: true });
+const formatSSE = (data: string): Uint8Array => {
+  return encoder.encode(`data: ${data}\n\n`);
 };
 
-export const broadcastNotification = (payload: NotificationPayload): void => {
-  const frame = serializeMessage({ type: "notification", payload });
+export const registerSSEClient = (
+  clientId: string,
+  controller: ReadableStreamDefaultController<Uint8Array>
+): void => {
+  clients.set(clientId, { id: clientId, controller });
+};
 
-  clients.forEach((client) => {
+export const unregisterSSEClient = (clientId: string): void => {
+  clients.delete(clientId);
+};
+
+export const getClientCount = (): number => clients.size;
+
+export const broadcastNotification = (payload: NotificationPayload): void => {
+  const message: NotificationMessage = { type: "notification", payload };
+  const frame = formatSSE(JSON.stringify(message));
+
+  clients.forEach((client, clientId) => {
     try {
-      client.send(frame);
+      client.controller.enqueue(frame);
     } catch (error) {
-      console.error("Notification broadcast error", error);
-      clients.delete(client);
+      console.error(`SSE broadcast error for client ${clientId}:`, error);
+      clients.delete(clientId);
+    }
+  });
+};
+
+export const sendHeartbeat = (): void => {
+  const heartbeat = encoder.encode(`: heartbeat\n\n`);
+
+  clients.forEach((client, clientId) => {
+    try {
+      client.controller.enqueue(heartbeat);
+    } catch {
+      clients.delete(clientId);
     }
   });
 };
