@@ -84,7 +84,8 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
       addRecentSearch(
         result.gameName || result.puuid,
         result.tagLine || result.region,
-        result.region
+        result.region,
+        result.puuid
       );
 
       setSearchQuery("");
@@ -125,11 +126,12 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
           return;
         }
 
-        if (result.summary) {
+        if (result.summary && result.puuid) {
           addRecentSearch(
             result.summary.gameName ?? trimmed,
             result.summary.tagLine ?? region,
-            region
+            region,
+            result.puuid
           );
         }
 
@@ -154,15 +156,25 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
     performSearch(searchQuery, searchRegion);
   }, [performSearch, searchQuery, searchRegion]);
 
-  // Handle recent search click - uses the stored region
+  // Handle recent search click - directly navigate using stored puuid
   const handleRecentClick = useCallback(
     (recent: RecentSearch) => {
+      // If we have a puuid, navigate directly
+      if (recent.puuid) {
+        setSearchQuery("");
+        setSearchResults([]);
+        onNavigate?.();
+        router.push(`/summoners/${recent.puuid}/overview?region=${recent.region}`);
+        return;
+      }
+
+      // Fallback: perform search if no puuid (legacy data)
       const query = `${recent.gameName}#${recent.tagLine}`;
       setSearchQuery(query);
       setSearchRegion(recent.region);
       performSearch(query, recent.region);
     },
-    [performSearch]
+    [performSearch, router, onNavigate]
   );
 
   // Clear search state

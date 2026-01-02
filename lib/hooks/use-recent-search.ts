@@ -4,6 +4,7 @@ export type RecentSearch = {
   gameName: string;
   tagLine: string;
   region: string;
+  puuid: string;
   timestamp: number;
 };
 
@@ -34,11 +35,12 @@ export const useRecentSearch = () => {
   }, []);
 
   const addRecentSearch = useCallback(
-    (gameName: string, tagLine: string, region: string) => {
+    (gameName: string, tagLine: string, region: string, puuid: string) => {
       const entry: RecentSearch = {
         gameName: gameName.trim(),
         tagLine: tagLine.trim(),
         region,
+        puuid,
         timestamp: Date.now(),
       };
       const key = `${entry.gameName.toLowerCase()}#${entry.tagLine.toLowerCase()}@${
