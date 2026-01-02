@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -23,10 +22,14 @@ import {
   ShieldIcon,
   ZapIcon,
   EyeIcon,
+  TrophyIcon,
+  TargetIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
 import { useApiSWR } from "@/lib/hooks/swr";
+import { PlayerSearchInput } from "@/components/PlayerSearchInput";
+import { DDRAGON_VERSION } from "@/constants/ddragon";
 
 type PlayerData = {
   puuid: string;
@@ -79,21 +82,29 @@ const StatCompareRow = ({
   format?: (v: number) => string;
 }) => {
   const winner =
-    value1 === value2 ? null : higherIsBetter ? (value1 > value2 ? 1 : 2) : value1 < value2 ? 1 : 2;
+    value1 === value2
+      ? null
+      : higherIsBetter
+        ? value1 > value2
+          ? 1
+          : 2
+        : value1 < value2
+          ? 1
+          : 2;
 
   return (
     <div className="flex items-center gap-4 py-3 border-b border-border/50 last:border-0">
       <div
-        className={`flex-1 text-right font-semibold ${winner === 1 ? "text-green-500" : ""}`}
+        className={`flex-1 text-right font-semibold text-lg ${winner === 1 ? "text-emerald-500" : "text-foreground"}`}
       >
         {format(value1)}
       </div>
-      <div className="flex items-center gap-2 text-muted-foreground text-sm w-32 justify-center">
+      <div className="flex items-center gap-2 text-muted-foreground text-sm w-36 justify-center">
         {icon}
         <span>{label}</span>
       </div>
       <div
-        className={`flex-1 text-left font-semibold ${winner === 2 ? "text-green-500" : ""}`}
+        className={`flex-1 text-left font-semibold text-lg ${winner === 2 ? "text-emerald-500" : "text-foreground"}`}
       >
         {format(value2)}
       </div>
@@ -111,18 +122,19 @@ const PlayerCard = ({
   if (loading) {
     return (
       <div className="flex flex-col items-center gap-3">
-        <Skeleton className="size-20 rounded-full" />
-        <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-4 w-24" />
+        <Skeleton className="size-24 rounded-full" />
+        <Skeleton className="h-6 w-36" />
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="h-6 w-32" />
       </div>
     );
   }
 
   if (!player) {
     return (
-      <div className="flex flex-col items-center gap-3 text-muted-foreground">
-        <div className="size-20 rounded-full bg-muted flex items-center justify-center">
-          <UsersIcon className="size-8" />
+      <div className="flex flex-col items-center gap-3 text-muted-foreground py-4">
+        <div className="size-24 rounded-full bg-muted/50 flex items-center justify-center border-2 border-dashed border-border">
+          <UsersIcon className="size-10 text-muted-foreground/50" />
         </div>
         <span className="text-sm">Selectionnez un joueur</span>
       </div>
@@ -130,33 +142,64 @@ const PlayerCard = ({
   }
 
   const iconUrl = player.profileIconId
-    ? `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${player.profileIconId}.png`
+    ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/profileicon/${player.profileIconId}.png`
     : null;
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <Avatar className="size-20 border-2 border-primary/20">
+      <Avatar className="size-24 border-2 border-primary/30 shadow-lg">
         {iconUrl ? (
           <AvatarImage src={iconUrl} alt={player.gameName} />
         ) : null}
-        <AvatarFallback className="text-2xl">
+        <AvatarFallback className="text-3xl bg-muted">
           {player.gameName[0]?.toUpperCase()}
         </AvatarFallback>
       </Avatar>
       <div className="text-center">
-        <div className="font-semibold">
+        <div className="text-lg font-semibold">
           {player.gameName}
-          <span className="text-muted-foreground">#{player.tagLine}</span>
+          <span className="text-muted-foreground font-normal">
+            #{player.tagLine}
+          </span>
         </div>
         <div className="text-sm text-muted-foreground">
-          {player.region.toUpperCase()} - Niveau {player.summonerLevel || "?"}
+          {player.region.toUpperCase()} - Niveau{" "}
+          {player.summonerLevel || "?"}
         </div>
       </div>
-      <Badge variant={player.stats.winRate >= 50 ? "default" : "secondary"}>
-        {player.stats.winRate.toFixed(1)}% WR ({player.stats.totalGames} parties)
+      <Badge
+        variant={player.stats.winRate >= 50 ? "default" : "secondary"}
+        className="text-sm px-3 py-1"
+      >
+        {player.stats.winRate.toFixed(1)}% WR ({player.stats.totalGames}{" "}
+        parties)
       </Badge>
     </div>
   );
+};
+
+const parsePlayerQuery = (
+  query: string
+): { gameName: string; tagLine: string } | null => {
+  const trimmed = query.trim();
+  const hashIndex = trimmed.lastIndexOf("#");
+
+  if (
+    hashIndex === -1 ||
+    hashIndex === 0 ||
+    hashIndex === trimmed.length - 1
+  ) {
+    return null;
+  }
+
+  const gameName = trimmed.slice(0, hashIndex).trim();
+  const tagLine = trimmed.slice(hashIndex + 1).trim();
+
+  if (!gameName || !tagLine) {
+    return null;
+  }
+
+  return { gameName, tagLine };
 };
 
 export default function ComparePage() {
@@ -172,41 +215,55 @@ export default function ComparePage() {
   });
 
   const handleCompare = useCallback(async () => {
-    if (!player1Query.trim() || !player2Query.trim()) {
-      toast.error("Entrez les deux noms de joueurs");
+    const parsed1 = parsePlayerQuery(player1Query);
+    const parsed2 = parsePlayerQuery(player2Query);
+
+    if (!parsed1) {
+      toast.error("Joueur 1: Format invalide. Utilisez Nom#TAG");
+      return;
+    }
+    if (!parsed2) {
+      toast.error("Joueur 2: Format invalide. Utilisez Nom#TAG");
       return;
     }
 
     setIsSearching(true);
     try {
-      // Search for both players
       const [res1, res2] = await Promise.all([
         fetch("/api/riot/search-account", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: player1Query.trim(), region: region1 }),
+          body: JSON.stringify({
+            gameName: parsed1.gameName,
+            tagLine: parsed1.tagLine,
+            region: region1,
+          }),
         }),
         fetch("/api/riot/search-account", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: player2Query.trim(), region: region2 }),
+          body: JSON.stringify({
+            gameName: parsed2.gameName,
+            tagLine: parsed2.tagLine,
+            region: region2,
+          }),
         }),
       ]);
 
       const data1 = await res1.json();
       const data2 = await res2.json();
 
-      if (!res1.ok || !data1.puuid) {
+      if (!res1.ok || !data1.data?.puuid) {
         toast.error(`Joueur 1 non trouve: ${data1.error || "Erreur"}`);
         return;
       }
-      if (!res2.ok || !data2.puuid) {
+      if (!res2.ok || !data2.data?.puuid) {
         toast.error(`Joueur 2 non trouve: ${data2.error || "Erreur"}`);
         return;
       }
 
       setCompareUrl(
-        `/api/compare?puuid1=${data1.puuid}&region1=${region1}&puuid2=${data2.puuid}&region2=${region2}`
+        `/api/compare?puuid1=${data1.data.puuid}&region1=${region1}&puuid2=${data2.data.puuid}&region2=${region2}`
       );
     } catch (error) {
       console.error(error);
@@ -224,7 +281,7 @@ export default function ComparePage() {
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold flex items-center justify-center gap-3 mb-2">
-          <UsersIcon className="size-8 text-primary" />
+          <SwordsIcon className="size-8 text-primary" />
           Comparer des joueurs
         </h1>
         <p className="text-muted-foreground">
@@ -233,12 +290,15 @@ export default function ComparePage() {
       </div>
 
       {/* Search form */}
-      <Card className="mb-8">
+      <Card className="mb-8 border-border/60 shadow-lg">
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex flex-col lg:flex-row gap-4 items-end">
             {/* Player 1 */}
-            <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium">Joueur 1</label>
+            <div className="flex-1 space-y-2 w-full">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <div className="size-2 rounded-full bg-blue-500" />
+                Joueur 1
+              </label>
               <div className="flex gap-2">
                 <Select value={region1} onValueChange={setRegion1}>
                   <SelectTrigger className="w-[100px]">
@@ -252,22 +312,28 @@ export default function ComparePage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
-                  placeholder="Nom#TAG"
+                <PlayerSearchInput
                   value={player1Query}
-                  onChange={(e) => setPlayer1Query(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCompare()}
+                  onChange={setPlayer1Query}
+                  region={region1}
+                  placeholder="Nom#TAG"
+                  className="flex-1"
                 />
               </div>
             </div>
 
-            <div className="hidden md:flex items-center text-muted-foreground">
-              <SwordsIcon className="size-6" />
+            <div className="hidden lg:flex items-center text-muted-foreground pb-2">
+              <div className="size-10 rounded-full bg-muted flex items-center justify-center">
+                <SwordsIcon className="size-5" />
+              </div>
             </div>
 
             {/* Player 2 */}
-            <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium">Joueur 2</label>
+            <div className="flex-1 space-y-2 w-full">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <div className="size-2 rounded-full bg-red-500" />
+                Joueur 2
+              </label>
               <div className="flex gap-2">
                 <Select value={region2} onValueChange={setRegion2}>
                   <SelectTrigger className="w-[100px]">
@@ -281,16 +347,22 @@ export default function ComparePage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
-                  placeholder="Nom#TAG"
+                <PlayerSearchInput
                   value={player2Query}
-                  onChange={(e) => setPlayer2Query(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCompare()}
+                  onChange={setPlayer2Query}
+                  region={region2}
+                  placeholder="Nom#TAG"
+                  className="flex-1"
                 />
               </div>
             </div>
 
-            <Button onClick={handleCompare} disabled={isSearching || isLoading}>
+            <Button
+              onClick={handleCompare}
+              disabled={isSearching || isLoading}
+              size="lg"
+              className="w-full lg:w-auto"
+            >
               {isSearching || isLoading ? (
                 <Loader2Icon className="size-4 animate-spin mr-2" />
               ) : (
@@ -304,19 +376,24 @@ export default function ComparePage() {
 
       {/* Comparison results */}
       {(isLoading || hasData) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Resultats</CardTitle>
+        <Card className="border-border/60 shadow-lg overflow-hidden">
+          <CardHeader className="bg-muted/30 border-b border-border/50">
+            <CardTitle className="text-center flex items-center justify-center gap-2">
+              <TrophyIcon className="size-5 text-primary" />
+              Resultats de la comparaison
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {/* Player headers */}
-            <div className="flex items-start justify-between gap-8 mb-8">
+            <div className="flex items-start justify-between gap-4 mb-8">
               <div className="flex-1">
                 <PlayerCard player={player1} loading={isLoading} />
               </div>
               <div className="flex items-center justify-center pt-8">
-                <div className="size-12 rounded-full bg-muted flex items-center justify-center">
-                  <span className="font-bold text-muted-foreground">VS</span>
+                <div className="size-14 rounded-full bg-gradient-to-br from-blue-500/20 to-red-500/20 flex items-center justify-center border border-border/50">
+                  <span className="font-bold text-lg text-muted-foreground">
+                    VS
+                  </span>
                 </div>
               </div>
               <div className="flex-1">
@@ -326,19 +403,19 @@ export default function ComparePage() {
 
             {/* Stats comparison */}
             {hasData && (
-              <div className="space-y-2">
+              <div className="space-y-1 bg-muted/20 rounded-xl p-4 border border-border/50">
                 <StatCompareRow
                   label="Win Rate"
                   value1={player1.stats.winRate}
                   value2={player2.stats.winRate}
-                  icon={<SwordsIcon className="size-4" />}
+                  icon={<TrophyIcon className="size-4" />}
                   format={(v) => `${v.toFixed(1)}%`}
                 />
                 <StatCompareRow
                   label="KDA"
                   value1={player1.stats.avgKDA}
                   value2={player2.stats.avgKDA}
-                  icon={<ZapIcon className="size-4" />}
+                  icon={<TargetIcon className="size-4" />}
                 />
                 <StatCompareRow
                   label="Kills"
@@ -381,6 +458,24 @@ export default function ComparePage() {
                 />
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state */}
+      {!isLoading && !hasData && (
+        <Card className="border-dashed border-border/50 bg-muted/10">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="size-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+              <SwordsIcon className="size-8 text-muted-foreground/50" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">
+              Aucune comparaison en cours
+            </h3>
+            <p className="text-muted-foreground text-sm max-w-md">
+              Entrez les noms de deux joueurs au format <strong>Nom#TAG</strong>{" "}
+              et cliquez sur Comparer pour voir leurs statistiques cote a cote.
+            </p>
           </CardContent>
         </Card>
       )}
