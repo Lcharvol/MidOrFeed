@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -8,18 +9,42 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ChampionSelect } from "@/components/ChampionSelect";
-import { Loader2Icon } from "lucide-react";
+import { ChampionIcon } from "@/components/ChampionIcon";
+import {
+  Loader2Icon,
+  SearchIcon,
+  TrendingUpIcon,
+  ShieldIcon,
+  SwordsIcon,
+  TargetIcon,
+  SparklesIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCounterPicks } from "@/lib/hooks/use-counter-picks";
 import { CounterPickSummaryCard } from "./components/CounterPickSummaryCard";
 import { CounterPickTips } from "./components/CounterPickTips";
 import { CounterPickTable } from "./components/CounterPickTable";
+import { getChampionSplashUrl } from "@/constants/ddragon";
+import { cn } from "@/lib/utils";
 
 type CounterPicksPageClientProps = {
   initialChampionId: string;
   initialChampionName?: string | null;
 };
+
+// Popular champions to show when no champion is selected
+const POPULAR_CHAMPIONS = [
+  "Yasuo",
+  "Zed",
+  "Lux",
+  "Jinx",
+  "LeeSin",
+  "Thresh",
+  "Ahri",
+  "Darius",
+];
 
 const CounterPicksPageClient = ({
   initialChampionId,
@@ -55,10 +80,6 @@ const CounterPicksPageClient = ({
   const resolvedChampionName =
     selectedChampionName || initialChampionName || initialChampionId || "";
 
-  const heroChampionLabel = resolvedChampionName
-    ? resolvedChampionName
-    : "League of Legends";
-
   const handleChampionChange = (championId: string) => {
     setSelectedChampion(championId);
     const targetPath = championId
@@ -67,154 +88,317 @@ const CounterPicksPageClient = ({
     router.replace(targetPath, { scroll: false });
   };
 
+  const handleQuickSelect = (championId: string) => {
+    handleChampionChange(championId);
+  };
+
+  // Empty state with popular champions
+  const renderEmptyState = () => (
+    <div className="space-y-8">
+      {/* Hero placeholder */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/5 via-background to-primary/10 p-8 md:p-12">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--color-primary),transparent_70%)] opacity-10" />
+        <div className="relative z-10 max-w-2xl">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
+            <TargetIcon className="size-4" />
+            Analysez vos matchups
+          </div>
+          <h2 className="mb-3 text-2xl font-bold md:text-3xl">
+            Trouvez le counter parfait
+          </h2>
+          <p className="text-muted-foreground">
+            Sélectionnez un champion ennemi pour découvrir les meilleurs counter
+            picks, basés sur des milliers de matchs analysés.
+          </p>
+        </div>
+        <div className="absolute -right-20 -top-20 size-64 rounded-full bg-primary/5 blur-3xl" />
+      </div>
+
+      {/* Popular champions grid */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <TrendingUpIcon className="size-4" />
+          <span>Champions populaires</span>
+        </div>
+        <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
+          {POPULAR_CHAMPIONS.map((champId) => {
+            const name = championNameMap.get(champId) ?? champId;
+            return (
+              <button
+                key={champId}
+                onClick={() => handleQuickSelect(champId)}
+                className="group flex flex-col items-center gap-2 rounded-xl border border-border/50 bg-card/50 p-3 transition-all hover:border-primary/50 hover:bg-primary/5"
+              >
+                <ChampionIcon
+                  championId={champId}
+                  size={48}
+                  shape="circle"
+                  className="border-2 border-border/50 transition-all group-hover:border-primary/50 group-hover:scale-105"
+                />
+                <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">
+                  {name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-border/50 bg-card/50">
+          <CardContent className="flex items-start gap-4 p-4">
+            <div className="rounded-lg bg-success-muted p-2">
+              <ShieldIcon className="size-5 text-success-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Win rates précis</h3>
+              <p className="text-sm text-muted-foreground">
+                Statistiques basées sur des matchs réels
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-card/50">
+          <CardContent className="flex items-start gap-4 p-4">
+            <div className="rounded-lg bg-info-muted p-2">
+              <SwordsIcon className="size-5 text-info-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Matchups détaillés</h3>
+              <p className="text-sm text-muted-foreground">
+                Analyse approfondie de chaque affrontement
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-card/50">
+          <CardContent className="flex items-start gap-4 p-4">
+            <div className="rounded-lg bg-warning-muted p-2">
+              <SparklesIcon className="size-5 text-warning-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Conseils stratégiques</h3>
+              <p className="text-sm text-muted-foreground">
+                Tips pour exploiter chaque matchup
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     if (!selectedChampion) {
-      return (
-        <article aria-live="polite">
-          <Card className="border-dashed border-primary/40 bg-primary/5">
-            <CardHeader>
-              <CardTitle>Commencez par choisir un champion</CardTitle>
-              <CardDescription>
-                Sélectionnez un champion pour découvrir les meilleurs counter picks
-                basés sur des centaines de résultats collectés.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </article>
-      );
+      return renderEmptyState();
     }
 
     if (isLoading) {
       return (
-        <article aria-live="polite">
-          <Card>
-            <CardContent className="flex items-center justify-center gap-3 py-10 text-muted-foreground">
-              <Loader2Icon className="size-5 animate-spin" />
-              Analyse des counter picks en cours...
-            </CardContent>
-          </Card>
-        </article>
+        <div className="flex flex-col items-center justify-center gap-4 py-20">
+          <div className="relative">
+            <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+            <div className="relative rounded-full bg-primary/10 p-4">
+              <Loader2Icon className="size-8 animate-spin text-primary" />
+            </div>
+          </div>
+          <div className="text-center">
+            <p className="font-medium">Analyse en cours...</p>
+            <p className="text-sm text-muted-foreground">
+              Récupération des counter picks pour {resolvedChampionName}
+            </p>
+          </div>
+        </div>
       );
     }
 
     if (error || !counterData) {
       return (
-        <article aria-live="polite">
-          <Card className="border-red-500/30 bg-red-500/5">
-            <CardHeader>
-              <CardTitle>Erreur</CardTitle>
-              <CardDescription>
-                Impossible de récupérer les counter picks pour l’instant.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </article>
+        <Card className="border-danger/30 bg-danger-muted/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-danger-muted-foreground">
+              <TargetIcon className="size-5" />
+              Erreur de chargement
+            </CardTitle>
+            <CardDescription>
+              Impossible de récupérer les counter picks pour {resolvedChampionName}.
+              Réessayez dans quelques instants.
+            </CardDescription>
+          </CardHeader>
+        </Card>
       );
     }
 
     if (!summary || pairs.length === 0) {
       return (
-        <article aria-live="polite">
-          <Card className="border-amber-500/40 bg-amber-500/10">
-            <CardHeader>
-              <CardTitle>Aucune donnée exploitable</CardTitle>
-              <CardDescription>
-                Collectez davantage de matchs ou ajustez vos filtres pour enrichir
-                l’analyse.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </article>
+        <Card className="border-warning/30 bg-warning-muted/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-warning-muted-foreground">
+              <SearchIcon className="size-5" />
+              Données insuffisantes
+            </CardTitle>
+            <CardDescription>
+              Pas assez de matchs analysés pour {resolvedChampionName}. Les données
+              seront disponibles après plus de parties.
+            </CardDescription>
+          </CardHeader>
+        </Card>
       );
     }
 
-    const summaryHeadingId = "summary-counter-picks";
-    const tableHeadingId = "table-counter-picks";
-
     return (
-      <article
-        aria-label={`Analyse des counter picks pour ${resolvedChampionName}`}
-        className="space-y-8"
-      >
-        <section aria-labelledby={summaryHeadingId}>
-          <h2 id={summaryHeadingId} className="sr-only">
-            Résumé des counter picks pour {resolvedChampionName}
-          </h2>
-          <CounterPickSummaryCard
-            championId={selectedChampion}
-            championName={resolvedChampionName}
-            championNameMap={championNameMap}
-            summary={summary}
-          />
-        </section>
+      <div className="space-y-6">
+        <CounterPickSummaryCard
+          championId={selectedChampion}
+          championName={resolvedChampionName}
+          championNameMap={championNameMap}
+          summary={summary}
+        />
 
         {tips.length > 0 && (
-          <section aria-label="Conseils rapides">
-            <CounterPickTips
-              championName={resolvedChampionName}
-              tips={tips}
-            />
-          </section>
+          <CounterPickTips championName={resolvedChampionName} tips={tips} />
         )}
 
-        <section aria-labelledby={tableHeadingId}>
-          <h2 id={tableHeadingId} className="sr-only">
-            Classement des counter picks pour {resolvedChampionName}
-          </h2>
-          <CounterPickTable
-            championName={resolvedChampionName}
-            pairs={pairs}
-            championNameMap={championNameMap}
-          />
-        </section>
-      </article>
+        <CounterPickTable
+          championName={resolvedChampionName}
+          pairs={pairs}
+          championNameMap={championNameMap}
+        />
+      </div>
     );
   };
 
   return (
-    <main
-      className="container mx-auto space-y-10 py-12"
-      aria-labelledby="counter-picks-heading"
-    >
-      <section className="space-y-3">
-        <h1
-          id="counter-picks-heading"
-          className="text-3xl font-bold tracking-tight text-foreground"
-        >
-          Counter picks {heroChampionLabel}
-        </h1>
-        <p className="max-w-2xl text-muted-foreground">
-          {selectedChampion || initialChampionName
-            ? `Retrouvez les meilleurs counter picks, matchups fiables et conseils pour vaincre ${heroChampionLabel} sur League of Legends.`
-            : "Sélectionnez un champion pour obtenir une analyse détaillée des matchups les plus efficaces et mieux préparer vos drafts."}
-        </p>
-      </section>
+    <main className="container mx-auto py-8">
+      {/* Hero Section when champion is selected */}
+      {selectedChampion && (
+        <div className="relative mb-8 overflow-hidden rounded-2xl">
+          {/* Background splash */}
+          <div className="absolute inset-0">
+            <Image
+              src={getChampionSplashUrl(selectedChampion)}
+              alt=""
+              fill
+              className="object-cover object-top"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/70" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          </div>
 
-      <section className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <article className="h-full">
-          <Card className="border-2 border-primary/20 bg-background">
-            <CardHeader>
-              <CardTitle>Counter picks ciblés</CardTitle>
-              <CardDescription>
-                Explorez les matchups gagnants pour un champion spécifique.
-              </CardDescription>
+          {/* Content */}
+          <div className="relative z-10 px-6 py-10 md:px-10 md:py-14">
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div className="flex items-center gap-5">
+                <ChampionIcon
+                  championId={selectedChampion}
+                  size={80}
+                  shape="rounded"
+                  className="rounded-2xl border-2 border-white/20 shadow-2xl"
+                />
+                <div>
+                  <Badge variant="outline" className="mb-2 border-primary/50 text-primary">
+                    <TargetIcon className="mr-1 size-3" />
+                    Counter picks
+                  </Badge>
+                  <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+                    Contrer {resolvedChampionName}
+                  </h1>
+                  <p className="mt-1 text-muted-foreground">
+                    Les meilleurs champions pour dominer ce matchup
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick stats */}
+              {summary && (
+                <div className="flex gap-6">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">
+                      {(summary.overallWinRate * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">Win rate moyen</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{summary.reliableMatchups}</p>
+                    <p className="text-xs text-muted-foreground">Matchups</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{summary.totalMatches}</p>
+                    <p className="text-xs text-muted-foreground">Matchs analysés</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Page header when no champion selected */}
+      {!selectedChampion && (
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Counter picks</h1>
+          <p className="mt-2 text-muted-foreground">
+            Analysez les matchups et trouvez les meilleurs champions pour contrer vos adversaires.
+          </p>
+        </div>
+      )}
+
+      {/* Main layout */}
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        {/* Sidebar */}
+        <div className="space-y-4">
+          <Card className="sticky top-4 border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <SearchIcon className="size-4 text-muted-foreground" />
+                Champion à contrer
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               <ChampionSelect
                 options={championOptions}
                 value={selectedChampion || null}
                 onChange={handleChampionChange}
-                label="Champion à contrer"
-                placeholder="Sélectionnez un champion"
+                placeholder="Rechercher..."
               />
             </CardContent>
           </Card>
-        </article>
 
-        <section aria-live="polite" className="space-y-6">
-          {renderContent()}
-        </section>
-      </section>
+          {/* Quick access to popular champions */}
+          {selectedChampion && (
+            <Card className="border-border/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm text-muted-foreground">
+                  Autres populaires
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-4 gap-2">
+                {POPULAR_CHAMPIONS.filter((c) => c !== selectedChampion)
+                  .slice(0, 4)
+                  .map((champId) => (
+                    <button
+                      key={champId}
+                      onClick={() => handleQuickSelect(champId)}
+                      className="flex flex-col items-center gap-1 rounded-lg p-2 transition-colors hover:bg-muted"
+                    >
+                      <ChampionIcon
+                        championId={champId}
+                        size={32}
+                        shape="circle"
+                        className="border border-border/50"
+                      />
+                    </button>
+                  ))}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Main content */}
+        <div>{renderContent()}</div>
+      </div>
     </main>
   );
 };

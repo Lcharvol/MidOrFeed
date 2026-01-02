@@ -1,19 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { StatChip } from "./StatChip";
+import { Progress } from "@/components/ui/progress";
+import {
+  TrophyIcon,
+  MedalIcon,
+  AwardIcon,
+  ChevronDownIcon,
+  SwordsIcon,
+} from "lucide-react";
 import { formatDateTime, formatNumber, formatPercent } from "../utils";
 import type { CounterPickPair } from "@/types";
+import { cn } from "@/lib/utils";
 
 type CounterPickTableProps = {
   championName: string;
@@ -21,122 +29,204 @@ type CounterPickTableProps = {
   championNameMap: Map<string, string>;
 };
 
+const getRankIcon = (index: number) => {
+  switch (index) {
+    case 0:
+      return <TrophyIcon className="size-4 text-warning" />;
+    case 1:
+      return <MedalIcon className="size-4 text-muted-foreground" />;
+    case 2:
+      return <AwardIcon className="size-4 text-amber-700" />;
+    default:
+      return null;
+  }
+};
+
+const getRankBadge = (index: number) => {
+  switch (index) {
+    case 0:
+      return "bg-warning/10 text-warning border-warning/30";
+    case 1:
+      return "bg-muted text-muted-foreground border-border";
+    case 2:
+      return "bg-amber-500/10 text-amber-700 dark:text-amber-500 border-amber-500/30";
+    default:
+      return "";
+  }
+};
+
+const getWinRateColor = (winRate: number) => {
+  if (winRate >= 0.6) return "text-success-muted-foreground";
+  if (winRate >= 0.55) return "text-success-muted-foreground/80";
+  if (winRate >= 0.5) return "text-info-muted-foreground";
+  if (winRate >= 0.45) return "text-warning-muted-foreground";
+  return "text-danger-muted-foreground";
+};
+
+const getProgressColor = (winRate: number) => {
+  if (winRate >= 0.6) return "bg-success";
+  if (winRate >= 0.55) return "bg-success/80";
+  if (winRate >= 0.5) return "bg-info";
+  if (winRate >= 0.45) return "bg-warning";
+  return "bg-danger";
+};
+
+const INITIAL_SHOW = 10;
+
 export const CounterPickTable = ({
   championName,
   pairs,
   championNameMap,
-}: CounterPickTableProps) => (
-  <Card className="border-border/80 bg-background/95 shadow-sm">
-    <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <CardTitle className="text-xl font-semibold text-foreground">
-          Tableau des counter picks
-        </CardTitle>
-        <CardDescription>
-          Champions les plus efficaces pour faire tomber {championName}.
-        </CardDescription>
-      </div>
-      <Badge
-        variant="outline"
-        className="border-border/60 px-3 py-1 text-xs text-muted-foreground"
-      >
-        {pairs.length} matchups
-      </Badge>
-    </CardHeader>
-    <CardContent>
-      <div className="overflow-hidden rounded-lg border border-border/70">
-        <Table>
-          <TableHeader className="bg-muted/40">
-            <TableRow className="border-border/60">
-              <TableHead className="w-[60px] text-xs uppercase text-muted-foreground">
-                Rang
-              </TableHead>
-              <TableHead className="text-xs uppercase text-muted-foreground">
-                Champion
-              </TableHead>
-              <TableHead className="text-xs uppercase text-muted-foreground text-right">
-                Win rate couter
-              </TableHead>
-              <TableHead className="text-xs uppercase text-muted-foreground text-right">
-                Win rate {championName}
-              </TableHead>
-              <TableHead className="text-xs uppercase text-muted-foreground text-right">
-                Matchs
-              </TableHead>
-              <TableHead className="text-xs uppercase text-muted-foreground text-right">
-                Dernier match
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pairs.map((pair, index) => {
-              const enemyName =
-                championNameMap.get(pair.enemyChampionId) ?? pair.enemyChampionId;
-              const championWinRate = pair.games > 0 ? 1 - pair.winRate : 0;
+}: CounterPickTableProps) => {
+  const [showAll, setShowAll] = useState(false);
+  const displayedPairs = showAll ? pairs : pairs.slice(0, INITIAL_SHOW);
+  const hasMore = pairs.length > INITIAL_SHOW;
 
-              return (
-                <TableRow
-                  key={pair.enemyChampionId}
-                  className="border-border/70 transition hover:bg-muted/40"
-                >
-                  <TableCell className="text-sm font-medium text-muted-foreground">
-                    #{index + 1}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <ChampionIcon
-                        championId={pair.enemyChampionId}
-                        size={40}
-                        shape="rounded"
-                        className="rounded-xl border border-border/60"
-                      />
-                      <span className="text-sm font-semibold text-foreground">
-                        {enemyName}
-                      </span>
+  return (
+    <Card className="border-border/50">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <SwordsIcon className="size-5 text-muted-foreground" />
+              Classement des counters
+            </CardTitle>
+            <CardDescription>
+              Champions les plus efficaces contre {championName}
+            </CardDescription>
+          </div>
+          <Badge variant="secondary" className="px-3">
+            {pairs.length} matchups
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="px-0 pb-0">
+        {/* Header row */}
+        <div className="grid grid-cols-12 gap-2 border-b border-border/50 bg-muted/30 px-4 py-2.5 text-xs font-medium text-muted-foreground">
+          <div className="col-span-1 text-center">#</div>
+          <div className="col-span-4">Champion</div>
+          <div className="col-span-4">Win rate counter</div>
+          <div className="col-span-2 text-right">Matchs</div>
+          <div className="col-span-1 text-right">Date</div>
+        </div>
+
+        {/* Rows */}
+        <div className="divide-y divide-border/30">
+          {displayedPairs.map((pair, index) => {
+            const enemyName =
+              championNameMap.get(pair.enemyChampionId) ?? pair.enemyChampionId;
+            const isTopThree = index < 3;
+
+            return (
+              <div
+                key={pair.enemyChampionId}
+                className={cn(
+                  "grid grid-cols-12 items-center gap-2 px-4 py-3 transition-colors hover:bg-muted/30",
+                  isTopThree && "bg-muted/10"
+                )}
+              >
+                {/* Rank */}
+                <div className="col-span-1 flex justify-center">
+                  {isTopThree ? (
+                    <div
+                      className={cn(
+                        "flex size-7 items-center justify-center rounded-full border",
+                        getRankBadge(index)
+                      )}
+                    >
+                      {getRankIcon(index)}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-medium text-foreground">
-                    {formatPercent(pair.winRate)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground">
-                    {formatPercent(championWinRate)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground">
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      {index + 1}
+                    </span>
+                  )}
+                </div>
+
+                {/* Champion */}
+                <div className="col-span-4">
+                  <div className="flex items-center gap-3">
+                    <ChampionIcon
+                      championId={pair.enemyChampionId}
+                      size={36}
+                      shape="circle"
+                      className={cn(
+                        "border-2",
+                        isTopThree ? "border-primary/30" : "border-border/50"
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "font-medium",
+                        isTopThree && "text-foreground"
+                      )}
+                    >
+                      {enemyName}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Win Rate with progress bar */}
+                <div className="col-span-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <Progress
+                        value={pair.winRate * 100}
+                        className="h-2"
+                        indicatorClassName={getProgressColor(pair.winRate)}
+                      />
+                    </div>
+                    <span
+                      className={cn(
+                        "w-14 text-right text-sm font-semibold tabular-nums",
+                        getWinRateColor(pair.winRate)
+                      )}
+                    >
+                      {formatPercent(pair.winRate)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Games */}
+                <div className="col-span-2 text-right">
+                  <span className="text-sm text-muted-foreground">
                     {formatNumber(pair.games)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground">
+                  </span>
+                </div>
+
+                {/* Last played */}
+                <div className="col-span-1 text-right">
+                  <span className="text-xs text-muted-foreground">
                     {formatDateTime(Number(pair.lastPlayedAt))}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2 text-sm">
-        <StatChip
-          label="Top couter"
-          value={
-            pairs[0]
-              ? championNameMap.get(pairs[0].enemyChampionId) ??
-                pairs[0].enemyChampionId
-              : "—"
-          }
-        />
-        <StatChip
-          label="Win rate moyen"
-          value={
-            pairs.length > 0
-              ? formatPercent(
-                  pairs.reduce((acc, pair) => acc + pair.winRate, 0) /
-                    pairs.length
-                )
-              : "0.0%"
-          }
-        />
-      </div>
-    </CardContent>
-  </Card>
-);
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-
+        {/* Show more button */}
+        {hasMore && (
+          <div className="border-t border-border/50 p-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowAll(!showAll)}
+            >
+              <ChevronDownIcon
+                className={cn(
+                  "mr-2 size-4 transition-transform",
+                  showAll && "rotate-180"
+                )}
+              />
+              {showAll
+                ? "Afficher moins"
+                : `Afficher ${pairs.length - INITIAL_SHOW} de plus`}
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

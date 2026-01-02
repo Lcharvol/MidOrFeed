@@ -1,15 +1,18 @@
 "use client";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { StatTile } from "@/components/ui/stat-tile";
+import { Progress } from "@/components/ui/progress";
+import {
+  TrophyIcon,
+  SwordsIcon,
+  BarChart3Icon,
+  ClockIcon,
+} from "lucide-react";
 import { formatDateTime, formatNumber, formatPercent } from "../utils";
 import type { CounterPickSummary } from "@/lib/hooks/use-counter-picks";
+import { cn } from "@/lib/utils";
 
 type CounterPickSummaryCardProps = {
   championId: string;
@@ -18,95 +21,119 @@ type CounterPickSummaryCardProps = {
   summary: CounterPickSummary;
 };
 
+const getWinRateColor = (winRate: number) => {
+  if (winRate >= 0.55) return "text-success-muted-foreground";
+  if (winRate >= 0.50) return "text-info-muted-foreground";
+  if (winRate >= 0.45) return "text-warning-muted-foreground";
+  return "text-danger-muted-foreground";
+};
+
+const getWinRateBg = (winRate: number) => {
+  if (winRate >= 0.55) return "bg-success";
+  if (winRate >= 0.50) return "bg-info";
+  if (winRate >= 0.45) return "bg-warning";
+  return "bg-danger";
+};
+
 export const CounterPickSummaryCard = ({
   championId,
   championName,
   championNameMap,
   summary,
-}: CounterPickSummaryCardProps) => (
-  <Card className="relative overflow-hidden border border-border/80 bg-linear-to-br from-background to-muted/20 shadow-lg">
-    <div className="pointer-events-none absolute inset-0 rounded-xl border border-white/5 opacity-80 [box-shadow:0_25px_60px_-35px_rgba(15,23,42,0.45)]" />
-    <CardHeader className="relative flex flex-col gap-6">
-      <div className="flex items-center gap-5">
-        <ChampionIcon
-          championId={championId}
-          size={72}
-          shape="rounded"
-          className="rounded-3xl border border-white/10 shadow-inner shadow-black/40"
-        />
-        <div className="space-y-1">
-          <CardTitle className="text-3xl font-semibold tracking-tight text-foreground">
-            {championName}
-          </CardTitle>
-          <CardDescription className="text-sm text-muted-foreground/90">
-            <span className="font-medium text-foreground">
-              {formatNumber(summary.totalMatches)} matchs analysés
-            </span>{" "}
-            •{" "}
-            {summary.lastPlayed
-              ? `Dernière donnée ${formatDateTime(summary.lastPlayed)}`
-              : "Dernière donnée inconnue"}
-          </CardDescription>
-        </div>
-      </div>
+}: CounterPickSummaryCardProps) => {
+  const bestCounterName = summary.bestCounterId
+    ? championNameMap.get(summary.bestCounterId) ?? summary.bestCounterId
+    : null;
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatTile
-          label="Win rate observé"
-          value={formatPercent(summary.overallWinRate)}
-          hint={`${formatNumber(
-            summary.championWins
-          )} victoires · ${formatNumber(summary.championLosses)} défaites`}
-          emphasis={
-            summary.overallWinRate >= 0.55
-              ? "positive"
-              : summary.overallWinRate >= 0.5
-              ? "info"
-              : summary.overallWinRate >= 0.45
-              ? "warning"
-              : "danger"
-          }
-        />
-        <StatTile
-          label="Meilleur couter pick"
-          value={
-            summary.bestCounterId
-              ? championNameMap.get(summary.bestCounterId) ??
-                summary.bestCounterId
-              : "—"
-          }
-          hint={
-            summary.bestCounterId
-              ? `${formatPercent(
-                  summary.bestCounterWinRate
-                )} sur ${formatNumber(summary.bestCounterGames)} matchs`
-              : undefined
-          }
-          emphasis={
-            summary.bestCounterId
-              ? summary.bestCounterWinRate >= 0.6
-                ? "positive"
-                : summary.bestCounterWinRate >= 0.5
-                ? "info"
-                : "warning"
-              : "neutral"
-          }
-        />
-        <StatTile
-          label="Matchups fiables"
-          value={String(summary.reliableMatchups)}
-          hint={`${formatNumber(summary.gamesAnalysed)} matchs pris en compte`}
-          emphasis={
-            summary.reliableMatchups >= 10
-              ? "positive"
-              : summary.reliableMatchups >= 5
-              ? "info"
-              : summary.reliableMatchups > 0
-              ? "warning"
-              : "danger"
-          }
-        />
-      </div>
-    </CardHeader>
-  </Card>
-);
+  return (
+    <Card className="overflow-hidden border-border/50">
+      <CardContent className="p-0">
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 divide-x divide-border/50 md:grid-cols-4">
+          {/* Win Rate */}
+          <div className="p-4 md:p-5">
+            <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <BarChart3Icon className="size-3.5" />
+              Win rate observé
+            </div>
+            <div className="mb-2 flex items-baseline gap-2">
+              <span className={cn("text-2xl font-bold", getWinRateColor(summary.overallWinRate))}>
+                {formatPercent(summary.overallWinRate)}
+              </span>
+            </div>
+            <Progress
+              value={summary.overallWinRate * 100}
+              className="h-1.5"
+              indicatorClassName={getWinRateBg(summary.overallWinRate)}
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              {formatNumber(summary.championWins)} V / {formatNumber(summary.championLosses)} D
+            </p>
+          </div>
+
+          {/* Best Counter */}
+          <div className="p-4 md:p-5">
+            <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <TrophyIcon className="size-3.5" />
+              Meilleur counter
+            </div>
+            {bestCounterName ? (
+              <div className="flex items-center gap-3">
+                <ChampionIcon
+                  championId={summary.bestCounterId!}
+                  size={40}
+                  shape="circle"
+                  className="border-2 border-success/30"
+                />
+                <div>
+                  <p className="font-semibold">{bestCounterName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="text-success-muted-foreground font-medium">
+                      {formatPercent(summary.bestCounterWinRate)}
+                    </span>
+                    {" "}sur {formatNumber(summary.bestCounterGames)} matchs
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">—</p>
+            )}
+          </div>
+
+          {/* Matchups */}
+          <div className="p-4 md:p-5">
+            <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <SwordsIcon className="size-3.5" />
+              Matchups fiables
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold">{summary.reliableMatchups}</span>
+              <Badge variant="outline" className="text-xs">
+                {formatNumber(summary.gamesAnalysed)} matchs
+              </Badge>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Champions avec données suffisantes
+            </p>
+          </div>
+
+          {/* Last Updated */}
+          <div className="p-4 md:p-5">
+            <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <ClockIcon className="size-3.5" />
+              Dernière donnée
+            </div>
+            <p className="text-lg font-semibold">
+              {summary.lastPlayed
+                ? formatDateTime(summary.lastPlayed)
+                : "Inconnue"}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {formatNumber(summary.totalMatches)} matchs au total
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
