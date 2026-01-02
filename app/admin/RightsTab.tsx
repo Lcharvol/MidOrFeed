@@ -44,7 +44,7 @@ type Pagination = {
 };
 
 const formatRelativeDate = (dateString: string | null, t: (key: string) => string): string => {
-  if (!dateString) return t("rights.never");
+  if (!dateString) return t("admin.rights.never");
 
   const date = new Date(dateString);
   const now = new Date();
@@ -53,10 +53,10 @@ const formatRelativeDate = (dateString: string | null, t: (key: string) => strin
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return t("rights.justNow");
-  if (diffMins < 60) return t("rights.minutesAgo").replace("{n}", String(diffMins));
-  if (diffHours < 24) return t("rights.hoursAgo").replace("{n}", String(diffHours));
-  if (diffDays < 7) return t("rights.daysAgo").replace("{n}", String(diffDays));
+  if (diffMins < 1) return t("admin.rights.justNow");
+  if (diffMins < 60) return t("admin.rights.minutesAgo").replace("{n}", String(diffMins));
+  if (diffHours < 24) return t("admin.rights.hoursAgo").replace("{n}", String(diffHours));
+  if (diffDays < 7) return t("admin.rights.daysAgo").replace("{n}", String(diffDays));
 
   return date.toLocaleDateString();
 };
@@ -109,10 +109,10 @@ export const RightsTab = () => {
           setPagination(json.pagination);
         }
       } else {
-        toast.error(t("rights.errorLoadingUsers"));
+        toast.error(t("admin.rights.errorLoadingUsers"));
       }
     } catch {
-      toast.error(t("rights.networkError"));
+      toast.error(t("admin.rights.networkError"));
     } finally {
       setLoading(false);
     }
@@ -132,15 +132,15 @@ export const RightsTab = () => {
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json?.error || t("rights.updateFailed"));
+        toast.error(json?.error || t("admin.rights.updateFailed"));
         return;
       }
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, role } : u))
       );
-      toast.success(t("rights.roleUpdated"));
+      toast.success(t("admin.rights.roleUpdated"));
     } catch {
-      toast.error(t("rights.networkError"));
+      toast.error(t("admin.rights.networkError"));
     } finally {
       setUpdatingId(null);
     }
@@ -156,7 +156,7 @@ export const RightsTab = () => {
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json?.error || t("rights.updateFailed"));
+        toast.error(json?.error || t("admin.rights.updateFailed"));
         return;
       }
       setUsers((prev) =>
@@ -164,9 +164,9 @@ export const RightsTab = () => {
           u.id === userId ? { ...u, dailyAnalysisLimit: limit } : u
         )
       );
-      toast.success(t("rights.limitUpdated"));
+      toast.success(t("admin.rights.limitUpdated"));
     } catch {
-      toast.error(t("rights.networkError"));
+      toast.error(t("admin.rights.networkError"));
     } finally {
       setUpdatingId(null);
       setEditingLimitId(null);
@@ -194,7 +194,7 @@ export const RightsTab = () => {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Input
-          placeholder={t("rights.filterPlaceholder")}
+          placeholder={t("admin.rights.filterPlaceholder")}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
@@ -205,29 +205,29 @@ export const RightsTab = () => {
           disabled={loading}
         >
           <RefreshCwIcon className={`size-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          {t("rights.reload")}
+          {t("admin.rights.reload")}
         </Button>
         <div className="ml-auto text-sm text-muted-foreground">
-          {pagination.totalCount} {t("rights.usersTotal")}
+          {pagination.totalCount} {t("admin.rights.usersTotal")}
         </div>
       </div>
 
       <div className="rounded-md border overflow-hidden">
         <div className="grid grid-cols-12 px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/40">
-          <div className="col-span-3">{t("rights.email")}</div>
-          <div className="col-span-2">{t("rights.name")}</div>
-          <div className="col-span-1">{t("rights.role")}</div>
-          <div className="col-span-2">{t("rights.aiLimit")}</div>
-          <div className="col-span-2">{t("rights.lastLogin")}</div>
-          <div className="col-span-2 text-right">{t("rights.actions")}</div>
+          <div className="col-span-3">{t("admin.rights.email")}</div>
+          <div className="col-span-2">{t("admin.rights.name")}</div>
+          <div className="col-span-1">{t("admin.rights.role")}</div>
+          <div className="col-span-2">{t("admin.rights.aiLimit")}</div>
+          <div className="col-span-2">{t("admin.rights.lastLogin")}</div>
+          <div className="col-span-2 text-right">{t("admin.rights.actions")}</div>
         </div>
         {loading && users.length === 0 ? (
           <div className="px-3 py-6 text-sm text-muted-foreground text-center">
-            {t("rights.loading")}
+            {t("admin.rights.loading")}
           </div>
         ) : users.length === 0 ? (
           <div className="px-3 py-6 text-sm text-muted-foreground text-center">
-            {t("rights.noUsers")}
+            {t("admin.rights.noUsers")}
           </div>
         ) : (
           <ul className={loading ? "opacity-50" : ""}>
@@ -265,7 +265,7 @@ export const RightsTab = () => {
                         setEditingLimitValue(String(u.dailyAnalysisLimit));
                       }}
                       className="flex items-center gap-1.5 text-xs hover:bg-muted px-2 py-1 rounded transition-colors"
-                      title={t("rights.clickToEdit")}
+                      title={t("admin.rights.clickToEdit")}
                     >
                       <SparklesIcon className="size-3 text-amber-500" />
                       <span>
@@ -302,7 +302,7 @@ export const RightsTab = () => {
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            {t("rights.page")} {pagination.page} / {pagination.totalPages}
+            {t("admin.rights.page")} {pagination.page} / {pagination.totalPages}
           </div>
           <div className="flex items-center gap-1">
             <Button
