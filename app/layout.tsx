@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n-context";
 import { GameVersionProvider } from "@/components/GameVersionProvider";
 import { ServerStatusBanner } from "@/components/ServerStatusBanner";
+import { ConstructionBanner } from "@/components/ConstructionBanner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,6 +43,7 @@ export default function RootLayout({
               <GameVersionProvider>
                 <NotificationProvider>
                   <ConditionalHeader />
+                  <ConstructionBanner />
                   <ServerStatusBanner />
                   <main className="relative px-4 sm:px-6">
                     <div className="pointer-events-none absolute inset-0 -z-10 select-none">
