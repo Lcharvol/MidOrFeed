@@ -96,7 +96,7 @@ export const requireAdmin = async (
 
   // Validate CSRF for mutative requests (POST, PUT, DELETE, PATCH)
   if (!options.skipCsrf) {
-    const csrfError = requireCsrf(request);
+    const csrfError = await requireCsrf(request);
     if (csrfError) {
       return csrfError;
     }

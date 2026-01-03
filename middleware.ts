@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { securityHeadersMiddleware } from "@/lib/security-headers";
-import { generateCsrfToken, setCsrfCookie, CSRF_CONSTANTS } from "@/lib/csrf";
+import {
+  generateSimpleCsrfToken,
+  setCsrfCookie,
+  CSRF_CONSTANTS,
+} from "@/lib/csrf";
 
 /**
  * Middleware Next.js pour appliquer les headers de sécurité à toutes les réponses
@@ -16,10 +20,10 @@ export function middleware(request: NextRequest) {
     process.env.NODE_ENV === "production"
   );
 
-  // Generate CSRF token if not present
+  // Generate CSRF token if not present (using sync version for Edge compatibility)
   const existingToken = request.cookies.get(CSRF_CONSTANTS.COOKIE_NAME);
   if (!existingToken) {
-    const csrfToken = generateCsrfToken();
+    const csrfToken = generateSimpleCsrfToken();
     setCsrfCookie(response, csrfToken);
   }
 

@@ -6,7 +6,6 @@ import {
 import { verifyToken, AUTH_COOKIE_NAME } from "@/lib/jwt";
 import { isAdmin } from "@/types/roles";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest): Promise<Response> {

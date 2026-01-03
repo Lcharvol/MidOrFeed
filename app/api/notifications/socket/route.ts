@@ -3,7 +3,6 @@ import {
   unregisterSSEClient,
 } from "@/lib/server/notification-hub";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
