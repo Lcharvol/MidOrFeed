@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -42,6 +43,29 @@ import type {
   GuideRole,
 } from "@/types/guides";
 
+// Loading fallback for Suspense
+const CreateGuideLoading = () => (
+  <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="flex items-center gap-4">
+      <Skeleton className="h-9 w-24" />
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+    </div>
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-4 w-72" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </CardContent>
+    </Card>
+  </div>
+);
+
 const ROLES: { value: GuideRole; label: string }[] = [
   { value: "TOP", label: "Top" },
   { value: "JUNGLE", label: "Jungle" },
@@ -50,7 +74,7 @@ const ROLES: { value: GuideRole; label: string }[] = [
   { value: "SUPPORT", label: "Support" },
 ];
 
-const CreateGuidePage = () => {
+const CreateGuideContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
@@ -530,5 +554,12 @@ const CreateGuidePage = () => {
     </div>
   );
 };
+
+// Wrap in Suspense for useSearchParams
+const CreateGuidePage = () => (
+  <Suspense fallback={<CreateGuideLoading />}>
+    <CreateGuideContent />
+  </Suspense>
+);
 
 export default CreateGuidePage;
