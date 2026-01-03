@@ -7,12 +7,14 @@ Plateforme d'analyse de performances League of Legends avec suggestions de compo
 - **Frontend**: Next.js 16, React 19, TypeScript
 - **UI**: shadcn/ui, Tailwind CSS, Recharts
 - **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: PostgreSQL (production), SQLite (development)
-- **Authentification**: bcryptjs, JWT
+- **Database**: PostgreSQL avec sharding par région
+- **Queue**: BullMQ + Redis (jobs asynchrones)
+- **IA**: Anthropic Claude (analyses, raisonnements)
+- **Authentification**: bcryptjs, JWT (HTTP-only cookies)
 - **Validation**: Zod, react-hook-form
 - **Internationalisation**: next-intl (FR/EN)
-- **Monitoring**: Métriques personnalisées, health checks, alerting
-- **Cache**: In-memory cache avec TTL (configurable pour Redis)
+- **Monitoring**: Métriques personnalisées, health checks, alerting, notifications temps réel
+- **Cache**: Redis + in-memory cache avec TTL
 - **Sécurité**: Rate limiting, timeouts, headers de sécurité, encryption
 
 ## 📦 Installation
@@ -206,22 +208,60 @@ pnpm run sync:items
 - Suggestions de champions pour contrer un ennemi
 - Analyse des matchups basée sur les données réelles
 - Statistiques de win rate par matchup
+- **SEO optimisé** : pages indexées pour "lol counter [champion]"
+- Contenu bilingue FR/EN avec FAQ schema
 
-### 5. Leadership par Champion
+### 5. Suggestions de Compositions IA
+
+- Génération automatique de picks recommandés par rôle
+- **Synergies par duo** : ADC+Support, Mid+Jungle, Top+Jungle
+- **Counter matchups** : champions efficaces contre les ennemis
+- **Raisonnement IA** : explications générées par Claude
+- **Métriques avancées** : dégâts/min, gold/min, vision/min
+
+### 6. Leadership par Champion
 
 - Classement des meilleurs joueurs par champion
 - Statistiques : win rate, KDA, nombre de parties
 - Score personnalisé basé sur performance et volume
 
-### 6. Administration
+### 7. Profil Utilisateur
+
+- **Design moderne** avec header gradient et badges
+- **Affichage du rang** : Solo/Duo et Flex avec emblèmes par tier
+- **Abonnement** : badge Free/Premium, usage quotidien avec barre de progression
+- **Paramètres** : thème, langue, changement de mot de passe
+- **Onglets** : Compte, Statistiques, Paramètres
+
+### 8. Administration
 
 - **Panel admin** (`/admin`) avec plusieurs onglets :
   - **Discovery** : Gestion du crawl de données, synchronisation des comptes
   - **Data Sync** : Synchronisation manuelle des données
   - **Rights** : Gestion des droits utilisateurs
+  - **Jobs** : Monitoring des jobs asynchrones avec notifications temps réel
   - **ML** : Gestion des pipelines d'apprentissage automatique
 - Statistiques en temps réel
 - Monitoring et alertes
+- **Notifications admin** : alertes SSE quand les jobs se terminent
+
+### 9. Jobs Asynchrones (BullMQ)
+
+L'application utilise BullMQ + Redis pour les tâches en arrière-plan :
+
+| Queue | Description |
+|-------|-------------|
+| `champion-stats` | Calcul des statistiques par champion |
+| `compositions` | Génération des suggestions de composition IA |
+| `synergy-analysis` | Analyse des synergies entre champions |
+| `counter-analysis` | Analyse des counter picks |
+| `leaderboard` | Mise à jour du classement |
+| `match-history` | Import de l'historique des matchs |
+| `player-discovery` | Découverte de nouveaux joueurs |
+| `daily-reset` | Réinitialisation quotidienne des compteurs |
+| `data-cleanup` | Nettoyage des données obsolètes |
+
+Les admins reçoivent des notifications en temps réel (SSE) à la fin de chaque job.
 
 ## 📁 Structure du projet
 
@@ -264,6 +304,15 @@ mid-or-feed/
 ├── lib/
 │   ├── hooks/               # Hooks React personnalisés
 │   ├── api/                 # Clés API et schémas de validation
+│   ├── ai/                  # Modules IA (Claude)
+│   │   ├── match-analysis.ts       # Analyse de matchs
+│   │   └── composition-analysis.ts # Raisonnement compositions
+│   ├── workers/             # Workers BullMQ
+│   │   ├── champion-stats.worker.ts
+│   │   ├── composition.worker.ts
+│   │   ├── synergy-analysis.worker.ts
+│   │   └── ...
+│   ├── queues/              # Configuration des queues
 │   ├── alerting.ts          # Système d'alertes
 │   ├── api-monitoring.ts    # Monitoring automatique des API
 │   ├── cache.ts             # Cache en mémoire avec TTL
@@ -271,10 +320,12 @@ mid-or-feed/
 │   ├── env.ts               # Validation des variables d'environnement
 │   ├── logger.ts            # Logging structuré
 │   ├── metrics.ts           # Métriques de performance
+│   ├── notification-hub.ts  # Hub de notifications SSE
 │   ├── pagination.ts        # Utilitaires de pagination
 │   ├── prisma.ts            # Client Prisma configuré
 │   ├── prisma-sharded-accounts.ts  # Gestion du sharding
 │   ├── rate-limit.ts        # Rate limiting
+│   ├── redis.ts             # Client Redis (BullMQ)
 │   ├── riot-api.ts          # Client API Riot avec retry et cache
 │   ├── security-headers.ts  # Headers de sécurité
 │   ├── sharding-config.ts   # Configuration du sharding
@@ -562,10 +613,16 @@ Voir [docs/TODOS.md](./docs/TODOS.md) pour la liste complète des améliorations
 - [x] Ajouter les headers de sécurité
 - [x] Implémenter le monitoring et l'alerting
 - [x] Optimiser l'API Riot avec retry et cache
+- [x] Ajouter les jobs asynchrones (BullMQ + Redis)
+- [x] Implémenter les notifications admin temps réel
+- [x] Améliorer le SEO pour "lol counter"
+- [x] Ajouter le raisonnement IA aux compositions
+- [x] Refonte de la page profil avec rangs et settings
 - [ ] Implémenter NextAuth.js pour les sessions complètes
 - [ ] Créer les fonctionnalités de compositions (sauvegarde)
 - [ ] Ajouter la gestion des favoris
 - [ ] Implémenter les statistiques personnalisées avancées
+- [ ] Ajouter le système de notifications push
 
 ## 📄 License
 
