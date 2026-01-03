@@ -110,6 +110,8 @@ model Match {
   @@index([platformId])
   @@index([queueId])
   @@index([gameCreation])
+  @@index([region])
+  @@index([region, queueId])
   @@map("matches")
 }
 
@@ -181,6 +183,8 @@ model CompositionSuggestion {
 
   @@index([role])
   @@index([userId])
+  @@index([confidence])
+  @@index([suggestedChampion])
   @@map("composition_suggestions")
 }
 
@@ -265,6 +269,8 @@ model LeaderboardEntry {
 
   @@unique([region, queueType, tier, summonerId])
   @@index([region, tier])
+  @@index([leaguePoints])
+  @@index([region, queueType, leaguePoints])
   @@map("leaderboard_entries")
 }
 
