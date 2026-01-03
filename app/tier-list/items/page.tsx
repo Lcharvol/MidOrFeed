@@ -168,15 +168,15 @@ export default function ItemsPage() {
     image ? buildItemImageUrl(image, DDRAGON_VERSION) : "";
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 text-4xl font-bold">{t("tierList.items.title")}</h1>
-        <p className="text-muted-foreground">
+    <div className="container mx-auto px-4 py-6 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="mb-2 text-2xl sm:text-4xl font-bold">{t("tierList.items.title")}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           {t("tierList.items.description")}
         </p>
       </div>
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+      <div className="mb-4 sm:mb-6 flex flex-col gap-4 sm:flex-row">
         <div className="flex-1">
           <Input
             placeholder={t("tierList.items.searchItem")}
@@ -202,11 +202,11 @@ export default function ItemsPage() {
       )}
 
       {!isLoading && !error && (
-        <div className="rounded-lg border">
-          <Table>
+        <div className="rounded-lg border overflow-x-auto">
+          <Table className="text-xs sm:text-sm">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16">{t("tierList.items.image")}</TableHead>
+                <TableHead className="w-12 sm:w-16">{t("tierList.items.image")}</TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
                   onClick={() => handleSort("name")}
@@ -220,7 +220,7 @@ export default function ItemsPage() {
                     />
                   </div>
                 </TableHead>
-                <TableHead>{t("tierList.items.descriptionCol")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("tierList.items.descriptionCol")}</TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
                   onClick={() => handleSort("gold")}
@@ -246,33 +246,36 @@ export default function ItemsPage() {
               ) : (
                 sortedAndFilteredItems.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>
+                    <TableCell className="py-2 sm:py-4">
                       {item.image ? (
                         <Image
                           src={getItemImageUrl(item.image)}
                           alt={cleanItemName(item.name)}
-                          width={48}
-                          height={48}
-                          className="rounded"
+                          width={36}
+                          height={36}
+                          className="rounded sm:w-12 sm:h-12"
                         />
                       ) : (
-                        <div className="size-12 rounded bg-muted" />
+                        <div className="size-9 sm:size-12 rounded bg-muted" />
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {cleanItemName(item.name)}
+                    <TableCell className="font-medium py-2 sm:py-4">
+                      <span className="line-clamp-1">{cleanItemName(item.name)}</span>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-md">
+                    <TableCell className="text-sm text-muted-foreground max-w-md hidden sm:table-cell py-2 sm:py-4">
                       {getPlaintextPreview(item.plaintext)}
                     </TableCell>
-                    <TableCell className="flex items-center justify-end gap-2">
-                      {getGoldValue(item.gold)}
-                      <Image
-                        src="/gold-piece.png"
-                        alt="Gold"
-                        width={20}
-                        height={20}
-                      />
+                    <TableCell className="py-2 sm:py-4">
+                      <div className="flex items-center justify-end gap-1 sm:gap-2 text-xs sm:text-sm">
+                        {getGoldValue(item.gold)}
+                        <Image
+                          src="/gold-piece.png"
+                          alt="Gold"
+                          width={16}
+                          height={16}
+                          className="sm:w-5 sm:h-5"
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

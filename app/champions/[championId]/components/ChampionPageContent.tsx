@@ -143,44 +143,47 @@ const ChampionStrategicTabs = ({
   };
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-background/70 p-4 shadow-lg shadow-black/20">
+    <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background/70 p-3 sm:p-4 shadow-lg shadow-black/20">
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
         className="w-full"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 sm:gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">
               {t("championDetails.strategicDetails")}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {t("championDetails.strategicDescription").replace(
                 "{championName}",
                 champion.name
               )}
             </p>
           </div>
-          <TabsList>
-            <TabsTrigger value="abilities">
-              {t("championDetails.abilities")}
-            </TabsTrigger>
-            <TabsTrigger value="counters">
-              {t("championDetails.counters")}
-            </TabsTrigger>
-            <TabsTrigger value="build">
-              {t("championDetails.build")}
-            </TabsTrigger>
-            <TabsTrigger value="items">
-              {t("championDetails.items")}
-            </TabsTrigger>
-            <TabsTrigger value="leadership">
-              {t("championDetails.leadership")}
-            </TabsTrigger>
-            <TabsTrigger value="guides">
-              Guides
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+            <TabsList className="w-max sm:w-auto">
+              <TabsTrigger value="abilities" className="text-xs sm:text-sm px-2 sm:px-3">
+                {t("championDetails.abilities")}
+              </TabsTrigger>
+              <TabsTrigger value="counters" className="text-xs sm:text-sm px-2 sm:px-3">
+                {t("championDetails.counters")}
+              </TabsTrigger>
+              <TabsTrigger value="build" className="text-xs sm:text-sm px-2 sm:px-3">
+                {t("championDetails.build")}
+              </TabsTrigger>
+              <TabsTrigger value="items" className="text-xs sm:text-sm px-2 sm:px-3">
+                {t("championDetails.items")}
+              </TabsTrigger>
+              <TabsTrigger value="leadership" className="text-xs sm:text-sm px-2 sm:px-3">
+                <span className="hidden sm:inline">{t("championDetails.leadership")}</span>
+                <span className="sm:hidden">Lead</span>
+              </TabsTrigger>
+              <TabsTrigger value="guides" className="text-xs sm:text-sm px-2 sm:px-3">
+                Guides
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         <TabsContent value="abilities">
@@ -267,8 +270,8 @@ export const ChampionPageContent = ({
 }: ChampionPageContentProps) => {
   const summary = useChampionSummary(champion, stats);
   return (
-    <div className="space-y-10">
-      <section className="grid gap-8 lg:grid-cols-[320px_1fr]">
+    <div className="space-y-6 sm:space-y-10 px-4 sm:px-0">
+      <section className="grid gap-6 sm:gap-8 lg:grid-cols-[320px_1fr]">
         <ChampionHero
           champion={champion}
           summary={summary}
@@ -276,7 +279,7 @@ export const ChampionPageContent = ({
           maxHpReference={maxHpReference}
           maxMpReference={maxMpReference}
         />
-        <article className="space-y-6">
+        <article className="space-y-4 sm:space-y-6">
           <ChampionStatsSection summary={summary} />
           <Suspense fallback={<TabsFallback championName={champion.name} />}>
             <ChampionStrategicTabs champion={champion} abilities={abilities} />
