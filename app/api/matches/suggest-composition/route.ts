@@ -78,15 +78,18 @@ async function generateSuggestions(data: {
  * Trouve les champions compatibles avec l'équipe actuelle
  */
 async function findCompatibleChampions(teamChampions: string[]) {
-  // Pour l'instant, on retourne tous les champions
-  // TODO: Implémenter une logique de synergie basée sur les matchs gagnants
-
-  const allChampions = await prisma.champion.findMany();
-
-  // Filtrer les champions déjà dans l'équipe
-  const availableChampions = allChampions.filter(
-    (champion) => !teamChampions.includes(champion.championId)
-  );
+  // Filtrer directement dans la requête DB au lieu de charger tous les champions
+  const availableChampions = await prisma.champion.findMany({
+    where: {
+      championId: {
+        notIn: teamChampions,
+      },
+    },
+    select: {
+      championId: true,
+      name: true,
+    },
+  });
 
   return availableChampions;
 }

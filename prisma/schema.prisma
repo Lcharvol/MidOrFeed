@@ -29,6 +29,7 @@ model User {
   championAdviceVotes   ChampionAdviceVote[]
   compositions          Composition[]
 
+  @@unique([riotPuuid, riotRegion])
   @@index([riotPuuid, riotRegion])
   @@map("users")
 }
@@ -193,6 +194,7 @@ model Composition {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([createdAt])
   @@map("compositions")
 }
 
@@ -318,10 +320,11 @@ model ChampionAdvice {
   downvotes  Int                  @default(0)
   createdAt  DateTime             @default(now())
   updatedAt  DateTime             @updatedAt
-  author     User?                @relation(fields: [authorId], references: [id])
+  author     User?                @relation(fields: [authorId], references: [id], onDelete: SetNull)
   votes      ChampionAdviceVote[]
 
   @@index([championId])
+  @@index([score])
   @@index([score, createdAt])
   @@map("champion_advices")
 }

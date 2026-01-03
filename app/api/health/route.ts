@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getEnv } from "@/lib/env";
 import { prismaWithTimeout } from "@/lib/timeout";
 import { logger } from "@/lib/logger";
+import { getRedis } from "@/lib/redis";
 
 /**
  * GET /api/health
@@ -16,6 +17,7 @@ export async function GET() {
     uptime: number;
     services: {
       database: { status: "ok" | "error"; latency?: number; error?: string };
+      redis: { status: "ok" | "error" | "not_configured"; latency?: number; error?: string };
       environment: { status: "ok" | "error"; error?: string };
     };
     version?: string;
@@ -25,6 +27,7 @@ export async function GET() {
     uptime: process.uptime(),
     services: {
       database: { status: "ok" },
+      redis: { status: "not_configured" },
       environment: { status: "ok" },
     },
   };
@@ -69,6 +72,34 @@ export async function GET() {
     };
     health.status = "unhealthy";
     logger.error("Health check: Database connection failed", error as Error);
+  }
+
+  // Vérifier la connexion Redis (si configurée)
+  try {
+    const env = getEnv();
+    if (env.REDIS_URL) {
+      const redis = getRedis();
+      const redisStartTime = Date.now();
+      await redis.ping();
+      const redisLatency = Date.now() - redisStartTime;
+      health.services.redis = {
+        status: "ok",
+        latency: redisLatency,
+      };
+
+      // Si la latence Redis est trop élevée, marquer comme dégradé
+      if (redisLatency > 500) {
+        health.status = health.status === "unhealthy" ? "unhealthy" : "degraded";
+      }
+    }
+  } catch (error) {
+    health.services.redis = {
+      status: "error",
+      error: error instanceof Error ? error.message : "Erreur de connexion Redis",
+    };
+    // Redis failure degrades but doesn't make unhealthy (optional service)
+    health.status = health.status === "unhealthy" ? "unhealthy" : "degraded";
+    logger.warn("Health check: Redis connection failed", { error: error instanceof Error ? error.message : "Unknown error" });
   }
 
   const responseTime = Date.now() - startTime;

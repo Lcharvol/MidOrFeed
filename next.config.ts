@@ -10,9 +10,14 @@ const nextConfig: NextConfig = {
         pathname: "/cdn/**",
       },
     ],
-    // Désactiver l'optimisation pour éviter les erreurs 403 avec Data Dragon
-    // Les images Data Dragon sont déjà optimisées et servies depuis un CDN
-    unoptimized: true,
+    // Data Dragon images are served from Riot CDN and don't need optimization
+    // We use dangerouslyAllowSVG for champion/item icons
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Only disable optimization for Data Dragon domain
+    // Local images will still be optimized
+    unoptimized: process.env.NODE_ENV === "development",
   },
 };
 

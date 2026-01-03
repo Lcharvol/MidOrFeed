@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const user = await getAuthenticatedUser(request);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: "Non autorise" },
+        { success: false, error: "Non autorisé" },
         { status: 401 }
       );
     }
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const user = await getAuthenticatedUser(request);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: "Non autorise" },
+        { success: false, error: "Non autorisé" },
         { status: 401 }
       );
     }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { success: false, error: "Deja dans les favoris" },
+        { success: false, error: "Déjà dans les favoris" },
         { status: 409 }
       );
     }
@@ -93,7 +93,7 @@ export async function DELETE(request: NextRequest) {
     const user = await getAuthenticatedUser(request);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: "Non autorise" },
+        { success: false, error: "Non autorisé" },
         { status: 401 }
       );
     }

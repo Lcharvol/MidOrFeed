@@ -1,11 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { Fragment } from 'react';
+import DOMPurify from 'dompurify';
 import { ChampionAbility } from '@/lib/champions/get-champion-abilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ColorBadge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 const SLOT_LABELS: Record<string, string> = {
   P: 'Passif',
@@ -28,11 +27,18 @@ type ChampionAbilitiesSectionProps = {
   championName: string;
 };
 
-const formatRichText = (raw: string) =>
-  raw
+const formatRichText = (raw: string): string => {
+  const formatted = raw
     .replace(/<br\s*\/?>(\s)*/gi, '<br />')
     .replace(/\n+/g, '<br />')
     .replace(/ style="[^"]*"/gi, '');
+
+  // Sanitize HTML to prevent XSS attacks
+  return DOMPurify.sanitize(formatted, {
+    ALLOWED_TAGS: ['br', 'b', 'i', 'strong', 'em', 'span'],
+    ALLOWED_ATTR: ['class'],
+  });
+};
 
 export const ChampionAbilitiesSection = ({
   abilities,
