@@ -39,14 +39,24 @@ export const generateMetadata = async ({
   const slugId = slug?.[0];
 
   if (!slugId) {
-    const title = "Counter picks League of Legends | Mid or Feed";
+    const title = "LoL Counter Picks - Meilleurs counters League of Legends | Mid or Feed";
     const description =
-      "Découvrez les meilleurs counter picks League of Legends et optimisez vos drafts grâce à l’analyse Mid or Feed.";
+      "Trouvez les meilleurs counter picks LoL. Analyse de milliers de matchs pour vous recommander les counters parfaits contre chaque champion League of Legends. Find the best LoL counters.";
     const url = buildUrl("/counter-picks");
 
     return {
       title,
       description,
+      keywords: [
+        "lol counter",
+        "counter lol",
+        "counter picks lol",
+        "league of legends counter",
+        "lol counter pick",
+        "counter champion lol",
+        "meilleur counter lol",
+        "best lol counter",
+      ],
       alternates: { canonical: url },
       openGraph: {
         title,
@@ -54,11 +64,14 @@ export const generateMetadata = async ({
         url,
         type: "article",
         siteName: SITE_NAME,
+        locale: "fr_FR",
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
+        site: "@MidOrFeed",
+        creator: "@MidOrFeed",
       },
     };
   }
@@ -76,12 +89,23 @@ export const generateMetadata = async ({
     ? getChampionSplashUrl(champion.championId)
     : buildUrl("/logo.png");
 
-  const title = `Counter picks ${championName} | ${SITE_NAME}`;
-  const description = `Analyse Mid or Feed : découvrez les meilleurs counter picks, statistiques et conseils pour vaincre ${championName} sur League of Legends.`;
+  const title = `Counter ${championName} LoL - Meilleurs counters | ${SITE_NAME}`;
+  const description = `Counter ${championName} : découvrez les meilleurs counters et comment battre ${championName} sur LoL. Statistiques et conseils basés sur des milliers de matchs. Best ${championName} counters in League of Legends.`;
 
   return {
     title,
     description,
+    keywords: [
+      `counter ${championName}`,
+      `${championName} counter`,
+      `lol counter ${championName}`,
+      `${championName} counter pick`,
+      `how to counter ${championName}`,
+      `comment contrer ${championName}`,
+      `meilleur counter ${championName}`,
+      `best ${championName} counter`,
+      `${championName} counters lol`,
+    ],
     alternates: {
       canonical: canonicalUrl,
     },
@@ -97,7 +121,7 @@ export const generateMetadata = async ({
           url: ogImage,
           width: 1215,
           height: 717,
-          alt: `Illustration de ${championName} pour les counter picks`,
+          alt: `Counter ${championName} - Meilleurs counters League of Legends`,
         },
       ],
     },

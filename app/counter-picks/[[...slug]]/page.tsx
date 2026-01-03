@@ -4,6 +4,10 @@ import { getChampionSplashUrl } from "@/constants/ddragon";
 import { buildSiteUrl } from "@/constants/site";
 import CounterPicksPageClient from "../CounterPicksPageClient";
 import {
+  CounterPicksSeoContent,
+  generateFaqSchema,
+} from "@/components/CounterPicksSeoContent";
+import {
   SITE_NAME,
   type CounterPicksPageParams,
   generateMetadata as generateCounterPicksMetadata,
@@ -115,9 +119,13 @@ const CounterPicksPage = async ({
             : buildUrl("/logo.png"),
         },
         keywords: [
-          `counter picks ${initialChampionName ?? initialChampionId}`,
+          `counter ${initialChampionName ?? initialChampionId}`,
+          `${initialChampionName ?? initialChampionId} counter`,
+          `lol counter ${initialChampionName ?? initialChampionId}`,
+          `${initialChampionName ?? initialChampionId} counter pick`,
+          `how to counter ${initialChampionName ?? initialChampionId}`,
           `comment contrer ${initialChampionName ?? initialChampionId}`,
-          `${initialChampionName ?? initialChampionId} counters`,
+          "lol counter",
           "League of Legends",
           SITE_NAME,
         ],
@@ -147,9 +155,19 @@ const CounterPicksPage = async ({
             url: buildUrl("/logo.png"),
           },
         },
-        keywords: ["counter picks", "League of Legends", SITE_NAME],
+        keywords: [
+          "lol counter",
+          "counter lol",
+          "counter picks",
+          "League of Legends",
+          "lol counter pick",
+          SITE_NAME,
+        ],
         articleSection: "League of Legends Counter Picks",
       };
+
+  // FAQ Schema for rich snippets
+  const faqSchema = generateFaqSchema(initialChampionName);
 
   return (
     <>
@@ -157,11 +175,16 @@ const CounterPicksPage = async ({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <CounterPicksPageClient
         key={initialChampionId || "counter-root"}
         initialChampionId={initialChampionId}
         initialChampionName={initialChampionName}
       />
+      <CounterPicksSeoContent championName={initialChampionName} />
     </>
   );
 };

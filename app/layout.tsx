@@ -22,9 +22,48 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MidOrFeed",
+  title: {
+    default: "Mid or Feed - LoL Counter Picks & Stats",
+    template: "%s | Mid or Feed",
+  },
   description:
-    "Analysez vos performances League of Legends et obtenez des suggestions de compositions IA",
+    "Trouvez les meilleurs counter picks LoL, analysez vos performances et obtenez des suggestions de compositions. Find the best League of Legends counters and improve your gameplay.",
+  keywords: [
+    "lol counter",
+    "counter lol",
+    "league of legends counter",
+    "lol counter pick",
+    "counter picks lol",
+    "lol stats",
+    "league of legends",
+    "mid or feed",
+  ],
+  authors: [{ name: "Mid or Feed" }],
+  creator: "Mid or Feed",
+  publisher: "Mid or Feed",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    alternateLocale: "en_US",
+    siteName: "Mid or Feed",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@MidOrFeed",
+    creator: "@MidOrFeed",
+  },
+  metadataBase: new URL("https://midorfeed.gg"),
 };
 
 export default function RootLayout({
