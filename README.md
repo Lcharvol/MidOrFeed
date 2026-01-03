@@ -1,629 +1,629 @@
 # MidOrFeed
 
-Plateforme d'analyse de performances League of Legends avec suggestions de compositions IA, statistiques avancées et coaching personnalisé.
+League of Legends performance analysis platform with AI-powered composition suggestions, advanced statistics, and personalized coaching.
 
-## 🚀 Technologies
+## Technologies
 
 - **Frontend**: Next.js 16, React 19, TypeScript
 - **UI**: shadcn/ui, Tailwind CSS, Recharts
 - **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: PostgreSQL avec sharding par région
-- **Queue**: BullMQ + Redis (jobs asynchrones)
-- **IA**: Anthropic Claude (analyses, raisonnements)
-- **Authentification**: bcryptjs, JWT (HTTP-only cookies)
+- **Database**: PostgreSQL with region-based sharding
+- **Queue**: BullMQ + Redis (async jobs)
+- **AI**: Anthropic Claude (analysis, reasoning)
+- **Authentication**: bcryptjs, JWT (HTTP-only cookies)
 - **Validation**: Zod, react-hook-form
-- **Internationalisation**: next-intl (FR/EN)
-- **Monitoring**: Métriques personnalisées, health checks, alerting, notifications temps réel
-- **Cache**: Redis + in-memory cache avec TTL
-- **Sécurité**: Rate limiting, timeouts, headers de sécurité, encryption
+- **Internationalization**: next-intl (FR/EN)
+- **Monitoring**: Custom metrics, health checks, alerting, real-time notifications
+- **Cache**: Redis + in-memory cache with TTL
+- **Security**: Rate limiting, timeouts, security headers, encryption
 
-## 📦 Installation
+## Installation
 
 ```bash
-# Installer les dépendances
+# Install dependencies
 pnpm install
 
-# Configurer les variables d'environnement
+# Configure environment variables
 cp .env.example .env
-# Éditer .env et configurer :
-# - DATABASE_URL (PostgreSQL ou SQLite)
-# - RIOT_API_KEY (clé API Riot Games)
-# - GOOGLE_CLIENT_ID (pour l'authentification Google, optionnel)
-# - ENCRYPTION_KEY (pour le chiffrement des données sensibles, optionnel)
-# - SLACK_WEBHOOK_URL (pour les alertes Slack, optionnel - voir docs/SLACK_SETUP.md)
-# - JWT_SECRET (pour l'authentification JWT, optionnel en dev, requis en prod)
+# Edit .env and configure:
+# - DATABASE_URL (PostgreSQL or SQLite)
+# - RIOT_API_KEY (Riot Games API key)
+# - GOOGLE_CLIENT_ID (for Google auth, optional)
+# - ENCRYPTION_KEY (for sensitive data encryption, optional)
+# - SLACK_WEBHOOK_URL (for Slack alerts, optional - see docs/SLACK_SETUP.md)
+# - JWT_SECRET (for JWT auth, optional in dev, required in prod)
 
-# Générer le client Prisma
+# Generate Prisma client
 pnpm run prisma:generate
 
-# Créer la base de données et appliquer les migrations
+# Create database and apply migrations
 pnpm run prisma:migrate
 
-# Synchroniser les données initiales
+# Sync initial data
 pnpm run sync:champions
 pnpm run sync:items
 
-# Lancer le serveur de développement
+# Start development server
 pnpm dev
 ```
 
-L'application sera accessible sur <http://localhost:3000>
+The application will be available at <http://localhost:3000>
 
-## 🗄️ Base de données
+## Database
 
 ### Architecture
 
-- **PostgreSQL** en production avec sharding des comptes LoL par région
-- **SQLite** en développement
-- **Prisma ORM** pour la gestion des modèles et migrations
+- **PostgreSQL** in production with LoL account sharding by region
+- **SQLite** in development
+- **Prisma ORM** for model and migration management
 
-### Sharding des comptes League of Legends
+### League of Legends Account Sharding
 
-Les comptes League of Legends sont shardés par région dans des tables séparées pour optimiser les performances :
+League of Legends accounts are sharded by region into separate tables for optimal performance:
 
 - `league_accounts_euw1` (Europe West)
 - `league_accounts_na1` (North America)
 - `league_accounts_kr` (Korea)
-- ... et autres régions
+- ... and other regions
 
-**Migration** :
+**Migration**:
 
 ```bash
-# Migrer vers le sharding (production)
+# Migrate to sharding (production)
 pnpm sharding:migrate
 
-# Vérifier le sharding
+# Verify sharding
 pnpm sharding:verify
 
-# Supprimer la table de backup (après vérification)
+# Drop backup table (after verification)
 pnpm sharding:drop-backup
 ```
 
-### Visualiser la base de données
+### View the Database
 
 ```bash
 pnpm run prisma:studio
 ```
 
-Ouvre l'interface Prisma Studio sur <http://localhost:5555>
+Opens Prisma Studio at <http://localhost:5555>
 
-### Commandes Prisma utiles
+### Useful Prisma Commands
 
 ```bash
-# Générer le client Prisma
+# Generate Prisma client
 pnpm run prisma:generate
 
-# Créer une nouvelle migration
+# Create a new migration
 pnpm run prisma:migrate
 
-# Ouvrir Prisma Studio
+# Open Prisma Studio
 pnpm run prisma:studio
 ```
 
-## 🔐 Authentification
+## Authentication
 
-L'application dispose d'un système d'authentification complet avec sécurité renforcée :
+The application features a complete authentication system with enhanced security:
 
-### Fonctionnalités
+### Features
 
-- **Inscription** (`/signup`) : Création de compte avec validation stricte
-- **Connexion** (`/login`) : Authentification sécurisée avec rate limiting
-- **JWT** : Authentification basée sur des tokens JWT (remplace les headers `x-user-id`)
-- **Validation** : Utilisation de Zod pour la validation des formulaires avec messages traduits
-- **Sécurité** : Mots de passe hashés avec bcryptjs
-- **Interface** : Formulaires avec react-hook-form et shadcn/ui
-- **Session** : Gestion de session avec contexte React et localStorage
-- **Profil** : Gestion du profil utilisateur et liaison avec compte Riot
-- **OAuth Google** : Authentification optionnelle via Google (si configuré)
+- **Sign up** (`/signup`): Account creation with strict validation
+- **Login** (`/login`): Secure authentication with rate limiting
+- **JWT**: Token-based authentication (replaces `x-user-id` headers)
+- **Validation**: Zod for form validation with translated messages
+- **Security**: Passwords hashed with bcryptjs
+- **Interface**: Forms with react-hook-form and shadcn/ui
+- **Session**: Session management with React context and localStorage
+- **Profile**: User profile management and Riot account linking
+- **Google OAuth**: Optional Google authentication (if configured)
 
-### Sécurité
+### Security
 
-- **Rate Limiting** : Protection contre les attaques par force brute
-- **Request Timeouts** : Protection contre les requêtes longues
-- **Security Headers** : Headers HTTP de sécurité (HSTS, CSP, X-Frame-Options, etc.)
-- **SQL Sanitization** : Protection contre les injections SQL
-- **Data Encryption** : Chiffrement des données sensibles au repos
+- **Rate Limiting**: Protection against brute force attacks
+- **Request Timeouts**: Protection against long-running requests
+- **Security Headers**: HTTP security headers (HSTS, CSP, X-Frame-Options, etc.)
+- **SQL Sanitization**: Protection against SQL injection
+- **Data Encryption**: Encryption of sensitive data at rest
 
-## 🔔 Alerting et Monitoring
+## Alerting and Monitoring
 
 ### Slack Integration
 
-L'application peut envoyer des alertes automatiques vers Slack :
+The application can send automatic alerts to Slack:
 
-1. **Créer un webhook Slack** (voir `docs/SLACK_SETUP.md` pour le guide complet)
-2. **Configurer la variable d'environnement** :
+1. **Create a Slack webhook** (see `docs/SLACK_SETUP.md` for the complete guide)
+2. **Configure the environment variable**:
    ```bash
    SLACK_WEBHOOK_URL=https://hooks.slack.com/services/XXXXX/YYYYY/ZZZZZ
    ```
-3. **Tester l'intégration** :
+3. **Test the integration**:
    ```bash
    pnpm test:slack
    ```
 
-Les alertes sont automatiquement envoyées lors d'erreurs critiques, problèmes de synchronisation, ou alertes de monitoring.
+Alerts are automatically sent for critical errors, sync issues, or monitoring alerts.
 
 ### Monitoring
 
-- **Health Checks** : `/api/health` pour vérifier l'état de l'application
-- **Metrics** : `/api/metrics` (admin) pour les métriques de performance
-- **Status** : `/api/status` (admin) pour un état détaillé de l'application
-- **Alerts** : `/api/alerts` (admin) pour consulter les alertes récentes
+- **Health Checks**: `/api/health` to check application status
+- **Metrics**: `/api/metrics` (admin) for performance metrics
+- **Status**: `/api/status` (admin) for detailed application status
+- **Alerts**: `/api/alerts` (admin) to view recent alerts
 
-## 🎮 Champions de League of Legends
+## League of Legends Champions
 
-La base de données contient tous les champions de League of Legends synchronisés depuis l'API Data Dragon de Riot Games.
+The database contains all League of Legends champions synced from Riot Games' Data Dragon API.
 
-### Fonctionnalités
+### Features
 
-- **Synchronisation automatique** : Script pour récupérer les derniers champions
-- **171+ champions** : Toutes les données sont à jour
-- **Statistiques complètes** : HP, mana, attaque, défense, magie, difficulté, etc.
-- **API REST** : Endpoints paginés pour consulter et synchroniser les champions
-- **Pages dédiées** : Page détaillée pour chaque champion avec :
-  - Statistiques complètes
-  - Abilités et ordre des compétences
-  - Runes recommandées
-  - Builds optimaux
+- **Automatic sync**: Script to fetch the latest champions
+- **171+ champions**: All data is up to date
+- **Complete statistics**: HP, mana, attack, defense, magic, difficulty, etc.
+- **REST API**: Paginated endpoints to query and sync champions
+- **Dedicated pages**: Detailed page for each champion with:
+  - Complete statistics
+  - Abilities and skill order
+  - Recommended runes
+  - Optimal builds
   - Counter picks
-  - **Leadership** : Classement des meilleurs joueurs par champion
-  - Conseils communautaires avec système de vote
+  - **Leadership**: Ranking of top players per champion
+  - Community tips with voting system
 
-### Synchronisation
+### Synchronization
 
 ```bash
-# Synchroniser les champions depuis l'API Riot
+# Sync champions from Riot API
 pnpm run sync:champions
 
-# Synchroniser les items depuis l'API Riot
+# Sync items from Riot API
 pnpm run sync:items
 ```
 
-## 🎯 Fonctionnalités principales
+## Main Features
 
-### 1. Tier List des Champions
+### 1. Champion Tier List
 
-- Classement des champions par win rate, KDA, score personnalisé
-- Filtres par rôle, tier, queue type
-- Tri dynamique par colonne
-- Statistiques de fiabilité (nombre de matchs minimum)
+- Champion rankings by win rate, KDA, custom score
+- Filters by role, tier, queue type
+- Dynamic sorting by column
+- Reliability statistics (minimum match count)
 
-### 2. Profils de Joueurs
+### 2. Player Profiles
 
-- Vue d'ensemble complète des statistiques
-- Historique des matchs récents
-- Performance par champion
-- Performance par rôle avec graphiques radar
-- Classements et progression
-- Challenges et accomplissements
+- Complete statistics overview
+- Recent match history
+- Performance by champion
+- Performance by role with radar charts
+- Rankings and progression
+- Challenges and achievements
 
-### 3. Compositions d'Équipe
+### 3. Team Compositions
 
-- Création de compositions de 5 champions
-- Suggestions basées sur les statistiques
-- Analyse des synergies
-- Compositions populaires
+- Create 5-champion compositions
+- Statistics-based suggestions
+- Synergy analysis
+- Popular compositions
 
 ### 4. Counter Picks
 
-- Suggestions de champions pour contrer un ennemi
-- Analyse des matchups basée sur les données réelles
-- Statistiques de win rate par matchup
-- **SEO optimisé** : pages indexées pour "lol counter [champion]"
-- Contenu bilingue FR/EN avec FAQ schema
+- Champion suggestions to counter an enemy
+- Matchup analysis based on real data
+- Win rate statistics per matchup
+- **SEO optimized**: indexed pages for "lol counter [champion]"
+- Bilingual content FR/EN with FAQ schema
 
-### 5. Suggestions de Compositions IA
+### 5. AI Composition Suggestions
 
-- Génération automatique de picks recommandés par rôle
-- **Synergies par duo** : ADC+Support, Mid+Jungle, Top+Jungle
-- **Counter matchups** : champions efficaces contre les ennemis
-- **Raisonnement IA** : explications générées par Claude
-- **Métriques avancées** : dégâts/min, gold/min, vision/min
+- Automatic generation of recommended picks per role
+- **Duo synergies**: ADC+Support, Mid+Jungle, Top+Jungle
+- **Counter matchups**: champions effective against enemies
+- **AI reasoning**: explanations generated by Claude
+- **Advanced metrics**: damage/min, gold/min, vision/min
 
-### 6. Leadership par Champion
+### 6. Champion Leadership
 
-- Classement des meilleurs joueurs par champion
-- Statistiques : win rate, KDA, nombre de parties
-- Score personnalisé basé sur performance et volume
+- Ranking of top players per champion
+- Statistics: win rate, KDA, games played
+- Custom score based on performance and volume
 
-### 7. Profil Utilisateur
+### 7. User Profile
 
-- **Design moderne** avec header gradient et badges
-- **Affichage du rang** : Solo/Duo et Flex avec emblèmes par tier
-- **Abonnement** : badge Free/Premium, usage quotidien avec barre de progression
-- **Paramètres** : thème, langue, changement de mot de passe
-- **Onglets** : Compte, Statistiques, Paramètres
+- **Modern design** with gradient header and badges
+- **Rank display**: Solo/Duo and Flex with tier emblems
+- **Subscription**: Free/Premium badge, daily usage with progress bar
+- **Settings**: theme, language, password change
+- **Tabs**: Account, Statistics, Settings
 
 ### 8. Administration
 
-- **Panel admin** (`/admin`) avec plusieurs onglets :
-  - **Discovery** : Gestion du crawl de données, synchronisation des comptes
-  - **Data Sync** : Synchronisation manuelle des données
-  - **Rights** : Gestion des droits utilisateurs
-  - **Jobs** : Monitoring des jobs asynchrones avec notifications temps réel
-  - **ML** : Gestion des pipelines d'apprentissage automatique
-- Statistiques en temps réel
-- Monitoring et alertes
-- **Notifications admin** : alertes SSE quand les jobs se terminent
+- **Admin panel** (`/admin`) with multiple tabs:
+  - **Discovery**: Data crawl management, account sync
+  - **Data Sync**: Manual data synchronization
+  - **Rights**: User rights management
+  - **Jobs**: Async job monitoring with real-time notifications
+  - **ML**: Machine learning pipeline management
+- Real-time statistics
+- Monitoring and alerts
+- **Admin notifications**: SSE alerts when jobs complete
 
-### 9. Jobs Asynchrones (BullMQ)
+### 9. Async Jobs (BullMQ)
 
-L'application utilise BullMQ + Redis pour les tâches en arrière-plan :
+The application uses BullMQ + Redis for background tasks:
 
 | Queue | Description |
 |-------|-------------|
-| `champion-stats` | Calcul des statistiques par champion |
-| `compositions` | Génération des suggestions de composition IA |
-| `synergy-analysis` | Analyse des synergies entre champions |
-| `counter-analysis` | Analyse des counter picks |
-| `leaderboard` | Mise à jour du classement |
-| `match-history` | Import de l'historique des matchs |
-| `player-discovery` | Découverte de nouveaux joueurs |
-| `daily-reset` | Réinitialisation quotidienne des compteurs |
-| `data-cleanup` | Nettoyage des données obsolètes |
+| `champion-stats` | Champion statistics calculation |
+| `compositions` | AI composition suggestions generation |
+| `synergy-analysis` | Champion synergy analysis |
+| `counter-analysis` | Counter pick analysis |
+| `leaderboard` | Leaderboard update |
+| `match-history` | Match history import |
+| `player-discovery` | New player discovery |
+| `daily-reset` | Daily counter reset |
+| `data-cleanup` | Obsolete data cleanup |
 
-Les admins reçoivent des notifications en temps réel (SSE) à la fin de chaque job.
+Admins receive real-time notifications (SSE) when each job completes.
 
-## 📁 Structure du projet
+## Project Structure
 
 ```text
 mid-or-feed/
 ├── app/
-│   ├── api/                  # Routes API
-│   │   ├── admin/           # Endpoints admin (stats, pipeline, etc.)
-│   │   ├── alerts/          # Gestion des alertes
-│   │   ├── auth/            # Authentification
-│   │   ├── champions/       # API champions (list, stats, runes, builds, leadership)
-│   │   ├── challenges/      # Challenges et accomplissements
-│   │   ├── compositions/   # Compositions d'équipe
+│   ├── api/                  # API Routes
+│   │   ├── admin/           # Admin endpoints (stats, pipeline, etc.)
+│   │   ├── alerts/          # Alert management
+│   │   ├── auth/            # Authentication
+│   │   ├── champions/       # Champions API (list, stats, runes, builds, leadership)
+│   │   ├── challenges/      # Challenges and achievements
+│   │   ├── compositions/    # Team compositions
 │   │   ├── counter-picks/   # Counter picks
-│   │   ├── crawl/           # Système de crawl
+│   │   ├── crawl/           # Crawl system
 │   │   ├── health/          # Health checks
-│   │   ├── items/           # Items LoL
-│   │   ├── matches/         # Matchs
-│   │   ├── metrics/         # Métriques de performance
-│   │   ├── riot/            # API Riot Games
-│   │   ├── search/          # Recherche
-│   │   ├── status/          # Statut détaillé de l'application
-│   │   ├── summoners/       # Profils de joueurs
-│   │   └── user/            # Gestion utilisateur
-│   ├── admin/               # Interface d'administration
-│   ├── ai-analysis/         # Analyses IA
-│   ├── champions/           # Pages champions
-│   ├── compositions/        # Pages compositions
-│   ├── counter-picks/       # Pages counter picks
-│   ├── profile/             # Profil utilisateur
-│   ├── summoners/           # Pages joueurs
+│   │   ├── items/           # LoL items
+│   │   ├── matches/         # Matches
+│   │   ├── metrics/         # Performance metrics
+│   │   ├── riot/            # Riot Games API
+│   │   ├── search/          # Search
+│   │   ├── status/          # Detailed app status
+│   │   ├── summoners/       # Player profiles
+│   │   └── user/            # User management
+│   ├── admin/               # Admin interface
+│   ├── ai-analysis/         # AI analysis
+│   ├── champions/           # Champion pages
+│   ├── compositions/        # Composition pages
+│   ├── counter-picks/       # Counter pick pages
+│   ├── profile/             # User profile
+│   ├── summoners/           # Player pages
 │   ├── tier-list/           # Tier list
 │   └── ...
 ├── components/
-│   ├── ui/                  # Composants shadcn/ui
+│   ├── ui/                  # shadcn/ui components
 │   ├── ChampionIcon.tsx
 │   ├── Header.tsx
 │   ├── RiotAccountSection.tsx
 │   └── ...
 ├── lib/
-│   ├── hooks/               # Hooks React personnalisés
-│   ├── api/                 # Clés API et schémas de validation
-│   ├── ai/                  # Modules IA (Claude)
-│   │   ├── match-analysis.ts       # Analyse de matchs
-│   │   └── composition-analysis.ts # Raisonnement compositions
-│   ├── workers/             # Workers BullMQ
+│   ├── hooks/               # Custom React hooks
+│   ├── api/                 # API keys and validation schemas
+│   ├── ai/                  # AI modules (Claude)
+│   │   ├── match-analysis.ts       # Match analysis
+│   │   └── composition-analysis.ts # Composition reasoning
+│   ├── workers/             # BullMQ workers
 │   │   ├── champion-stats.worker.ts
 │   │   ├── composition.worker.ts
 │   │   ├── synergy-analysis.worker.ts
 │   │   └── ...
-│   ├── queues/              # Configuration des queues
-│   ├── alerting.ts          # Système d'alertes
-│   ├── api-monitoring.ts    # Monitoring automatique des API
-│   ├── cache.ts             # Cache en mémoire avec TTL
-│   ├── encryption.ts        # Chiffrement des données
-│   ├── env.ts               # Validation des variables d'environnement
-│   ├── logger.ts            # Logging structuré
-│   ├── metrics.ts           # Métriques de performance
-│   ├── notification-hub.ts  # Hub de notifications SSE
-│   ├── pagination.ts        # Utilitaires de pagination
-│   ├── prisma.ts            # Client Prisma configuré
-│   ├── prisma-sharded-accounts.ts  # Gestion du sharding
+│   ├── queues/              # Queue configuration
+│   ├── alerting.ts          # Alert system
+│   ├── api-monitoring.ts    # Automatic API monitoring
+│   ├── cache.ts             # In-memory cache with TTL
+│   ├── encryption.ts        # Data encryption
+│   ├── env.ts               # Environment variable validation
+│   ├── logger.ts            # Structured logging
+│   ├── metrics.ts           # Performance metrics
+│   ├── notification-hub.ts  # SSE notification hub
+│   ├── pagination.ts        # Pagination utilities
+│   ├── prisma.ts            # Configured Prisma client
+│   ├── prisma-sharded-accounts.ts  # Sharding management
 │   ├── rate-limit.ts        # Rate limiting
-│   ├── redis.ts             # Client Redis (BullMQ)
-│   ├── riot-api.ts          # Client API Riot avec retry et cache
-│   ├── security-headers.ts  # Headers de sécurité
-│   ├── sharding-config.ts   # Configuration du sharding
-│   ├── sql-sanitization.ts  # Protection SQL injection
-│   └── timeout.ts           # Timeouts pour requêtes
+│   ├── redis.ts             # Redis client (BullMQ)
+│   ├── riot-api.ts          # Riot API client with retry and cache
+│   ├── security-headers.ts  # Security headers
+│   ├── sharding-config.ts   # Sharding configuration
+│   ├── sql-sanitization.ts  # SQL injection protection
+│   └── timeout.ts           # Request timeouts
 ├── constants/
-│   ├── riot-regions.ts      # Régions Riot centralisées
+│   ├── riot-regions.ts      # Centralized Riot regions
 │   └── ...
 ├── scripts/
-│   ├── migrate-to-sharded-accounts.ts  # Migration vers sharding
-│   ├── verify-sharding.ts   # Vérification du sharding
-│   ├── sync-champions.ts    # Synchronisation champions
-│   ├── sync-items.ts        # Synchronisation items
-│   ├── crawl-seed.ts        # Découverte de joueurs
+│   ├── migrate-to-sharded-accounts.ts  # Sharding migration
+│   ├── verify-sharding.ts   # Sharding verification
+│   ├── sync-champions.ts    # Champion sync
+│   ├── sync-items.ts        # Item sync
+│   ├── crawl-seed.ts        # Player discovery
 │   └── ...
 ├── messages/
-│   ├── fr.json              # Traductions françaises
-│   └── en.json              # Traductions anglaises
+│   ├── fr.json              # French translations
+│   └── en.json              # English translations
 ├── prisma/
-│   ├── schema.prisma        # Schéma Prisma
+│   ├── schema.prisma        # Prisma schema
 │   └── migrations/          # Migrations
 ├── types/
-│   ├── api.ts               # Types API stricts
+│   ├── api.ts               # Strict API types
 │   ├── champions.ts
 │   ├── tier-list.ts
 │   └── ...
-└── __tests__/               # Tests unitaires
+└── __tests__/               # Unit tests
     ├── api/
     └── lib/
 ```
 
-## 🎨 Interface
+## Interface
 
-L'application utilise un thème inspiré de League of Legends avec :
+The application uses a League of Legends-inspired theme with:
 
-- **Mode sombre/clair** : Support des deux modes avec système de thème
-- **Couleurs** : Palette violette et or inspirée de LoL
-- **Composants UI** : shadcn/ui pour une interface moderne et accessible
-- **Internationalisation** : Support FR/EN avec next-intl
-- **Responsive** : Design adaptatif mobile/tablette/desktop
+- **Dark/Light mode**: Support for both modes with theme system
+- **Colors**: Purple and gold palette inspired by LoL
+- **UI Components**: shadcn/ui for a modern and accessible interface
+- **Internationalization**: FR/EN support with next-intl
+- **Responsive**: Adaptive design for mobile/tablet/desktop
 
-## 🛠️ Scripts disponibles
+## Available Scripts
 
-### Développement
+### Development
 
 ```bash
-pnpm dev              # Lancer le serveur de développement
-pnpm build            # Créer une build de production
-pnpm start            # Lancer le serveur de production
-pnpm lint             # Lancer ESLint
+pnpm dev              # Start development server
+pnpm build            # Create production build
+pnpm start            # Start production server
+pnpm lint             # Run ESLint
 ```
 
-### Base de données
+### Database
 
 ```bash
-pnpm run prisma:studio        # Ouvrir Prisma Studio
-pnpm run prisma:generate      # Régénérer le client Prisma
-pnpm run prisma:migrate       # Créer/appliquer les migrations
+pnpm run prisma:studio        # Open Prisma Studio
+pnpm run prisma:generate      # Regenerate Prisma client
+pnpm run prisma:migrate       # Create/apply migrations
 ```
 
-### Synchronisation des données
+### Data Synchronization
 
 ```bash
-pnpm run sync:champions       # Synchroniser les champions depuis l'API Riot
-pnpm run sync:items           # Synchroniser les items depuis l'API Riot
+pnpm run sync:champions       # Sync champions from Riot API
+pnpm run sync:items           # Sync items from Riot API
 ```
 
 ### Sharding
 
 ```bash
-pnpm sharding:migrate         # Migrer vers le sharding des comptes
-pnpm sharding:verify          # Vérifier le sharding
-pnpm sharding:test            # Tester les endpoints shardés
-pnpm sharding:drop-backup     # Supprimer la table de backup
+pnpm sharding:migrate         # Migrate to account sharding
+pnpm sharding:verify          # Verify sharding
+pnpm sharding:test            # Test sharded endpoints
+pnpm sharding:drop-backup     # Drop backup table
 ```
 
-### Système de Crawl
+### Crawl System
 
 ```bash
-pnpm crawl:seed [region] [count]  # Découvrir de nouveaux joueurs
-pnpm crawl:process                # Traiter les joueurs en attente
-pnpm crawl:status                 # Voir les statistiques
-pnpm crawl:sync-accounts          # Synchroniser les comptes depuis les matchs
+pnpm crawl:seed [region] [count]  # Discover new players
+pnpm crawl:process                # Process pending players
+pnpm crawl:status                 # View statistics
+pnpm crawl:sync-accounts          # Sync accounts from matches
 ```
 
 ### Administration
 
 ```bash
-pnpm make-admin [email]  # Donner les droits admin à un utilisateur
+pnpm make-admin [email]  # Grant admin rights to a user
 ```
 
 ### Machine Learning
 
 ```bash
-pnpm ml:export                   # Exporter les matchs pour l'entraînement
-pnpm ml:train                    # Entraîner le modèle de prédiction
-pnpm ml:predict                  # Utiliser le modèle pour prédire
-pnpm ml:export:compositions      # Exporter les compositions
-pnpm ml:train:compositions       # Entraîner le modèle de compositions
+pnpm ml:export                   # Export matches for training
+pnpm ml:train                    # Train prediction model
+pnpm ml:predict                  # Use model for predictions
+pnpm ml:export:compositions      # Export compositions
+pnpm ml:train:compositions       # Train composition model
 ```
 
-## 🔒 Sécurité
+## Security
 
-L'application intègre de nombreuses mesures de sécurité :
+The application integrates numerous security measures:
 
-### Authentification & Autorisation
+### Authentication & Authorization
 
-- **Rate Limiting** : Protection contre les attaques par force brute
-  - Auth endpoints : 5 requêtes/minute
-  - API publiques : 60 requêtes/minute
-  - Admin : 10 requêtes/minute
-- **Request Validation** : Validation stricte des payloads (taille, format)
-- **Password Hashing** : bcryptjs avec salt rounds
-- **Session Management** : Gestion sécurisée des sessions
+- **Rate Limiting**: Protection against brute force attacks
+  - Auth endpoints: 5 requests/minute
+  - Public APIs: 60 requests/minute
+  - Admin: 10 requests/minute
+- **Request Validation**: Strict payload validation (size, format)
+- **Password Hashing**: bcryptjs with salt rounds
+- **Session Management**: Secure session handling
 
-### Protection des données
+### Data Protection
 
-- **SQL Sanitization** : Protection contre les injections SQL
-- **Data Encryption** : Chiffrement AES-256-GCM pour données sensibles
-- **Request Timeouts** : Protection contre les requêtes longues
-  - API : 10 secondes
-  - Database : 30 secondes
-- **Security Headers** : Headers HTTP de sécurité complets
-  - HSTS (en production)
+- **SQL Sanitization**: Protection against SQL injection
+- **Data Encryption**: AES-256-GCM encryption for sensitive data
+- **Request Timeouts**: Protection against long-running requests
+  - API: 10 seconds
+  - Database: 30 seconds
+- **Security Headers**: Complete HTTP security headers
+  - HSTS (in production)
   - CSP (Content Security Policy)
   - X-Frame-Options, X-Content-Type-Options, etc.
 
 ### Monitoring & Alerting
 
-- **Health Checks** : `/api/health` pour vérifier l'état de l'application
-- **Status Endpoint** : `/api/status` (admin) pour un status détaillé
-- **Metrics** : `/api/metrics` (admin) pour les métriques de performance
-- **Alerts** : `/api/alerts` (admin) pour les alertes récentes
-- **Structured Logging** : Logs JSON en production, logs lisible en dev
+- **Health Checks**: `/api/health` to check application status
+- **Status Endpoint**: `/api/status` (admin only) for detailed status
+- **Metrics**: `/api/metrics` (admin) for performance metrics
+- **Alerts**: `/api/alerts` (admin) for recent alerts
+- **Structured Logging**: JSON logs in production, readable logs in dev
 
-## ⚡ Performance
+## Performance
 
 ### Frontend
 
-- **Lazy Loading** : Composants lourds chargés à la demande
-  - Sections de champions (abilities, counters, builds, etc.)
-  - Onglets admin
-  - Composants de graphiques (Recharts)
-- **Code Splitting** : Chunks séparés par fonctionnalité
-- **Images Optimisées** : Utilisation de `next/image` partout
-- **Cache Client** : SWR pour le cache et revalidation automatique
+- **Lazy Loading**: Heavy components loaded on demand
+  - Champion sections (abilities, counters, builds, etc.)
+  - Admin tabs
+  - Chart components (Recharts)
+- **Code Splitting**: Separate chunks by feature
+- **Optimized Images**: Using `next/image` everywhere
+- **Client Cache**: SWR for caching and automatic revalidation
 
 ### Backend
 
-- **Pagination** : Toutes les listes sont paginées (limite max: 1000)
-- **Caching** : Cache en mémoire avec TTL pour données statiques
-- **Sharding** : Comptes LoL shardés par région
-- **Batch Operations** : Requêtes groupées pour optimiser la DB
-- **Connection Pooling** : Configuration optimisée de Prisma
+- **Pagination**: All lists are paginated (max limit: 1000)
+- **Caching**: In-memory cache with TTL for static data
+- **Sharding**: LoL accounts sharded by region
+- **Batch Operations**: Grouped queries to optimize DB
+- **Connection Pooling**: Optimized Prisma configuration
 
-### API Riot Games
+### Riot Games API
 
-- **Retry avec Backoff Exponentiel** : Retry automatique en cas d'erreur
-- **Rate Limiting Intelligent** : Gestion des rate limits par routing
-- **Cache des Réponses** : Cache 5 minutes pour réduire les appels API
-- **Timeouts Configurables** : Protection contre les requêtes longues
-- **Gestion d'Erreurs** : Gestion complète des erreurs 429, 500+, etc.
+- **Retry with Exponential Backoff**: Automatic retry on errors
+- **Smart Rate Limiting**: Rate limit handling by routing
+- **Response Caching**: 5-minute cache to reduce API calls
+- **Configurable Timeouts**: Protection against long requests
+- **Error Handling**: Complete handling of 429, 500+, etc.
 
-## 📊 Monitoring & Observabilité
+## Monitoring & Observability
 
-### Métriques
+### Metrics
 
-- **Temps de réponse** : P50, P95, P99 par endpoint
-- **Taux d'erreur** : Suivi des erreurs par endpoint
-- **Utilisation DB** : Latence et nombre de requêtes
-- **Métriques API Riot** : Suivi des appels externes
+- **Response time**: P50, P95, P99 per endpoint
+- **Error rate**: Error tracking per endpoint
+- **DB usage**: Latency and query count
+- **Riot API metrics**: External call tracking
 
 ### Health Checks
 
-- **`/api/health`** : Status général (healthy/degraded/unhealthy)
-  - Vérification de la connexion DB
-  - Latence de réponse
-- **`/api/status`** : Status détaillé (admin uniquement)
-  - Uptime, métriques, alertes récentes
-  - Statistiques par endpoint
-  - État de l'environnement
+- **`/api/health`**: General status (healthy/degraded/unhealthy)
+  - DB connection check
+  - Response latency
+- **`/api/status`**: Detailed status (admin only)
+  - Uptime, metrics, recent alerts
+  - Statistics per endpoint
+  - Environment status
 
 ### Alerting
 
-- **Niveaux d'alerte** : LOW, MEDIUM, HIGH, CRITICAL
-- **Alertes automatiques** :
-  - Rate limit API Riot atteint
-  - Erreurs critiques d'API
-  - Problèmes de base de données
-- **Endpoint** : `/api/alerts` pour consulter les alertes
+- **Alert levels**: LOW, MEDIUM, HIGH, CRITICAL
+- **Automatic alerts**:
+  - Riot API rate limit reached
+  - Critical API errors
+  - Database issues
+- **Endpoint**: `/api/alerts` to view alerts
 
-## 🌐 Internationalisation
+## Internationalization
 
-L'application supporte plusieurs langues via `next-intl` :
+The application supports multiple languages via `next-intl`:
 
-- **Français** (par défaut)
-- **Anglais**
+- **French** (default)
+- **English**
 
-Les traductions sont dans `messages/fr.json` et `messages/en.json`.
+Translations are in `messages/fr.json` and `messages/en.json`.
 
-## 🕷️ Système de Crawl de Données
+## Data Crawl System
 
-MidOrFeed intègre un système de crawl automatique pour collecter des données de joueurs et de matchs depuis l'API Riot Games.
+MidOrFeed includes an automatic crawl system to collect player and match data from the Riot Games API.
 
-### Commandes rapides
+### Quick Commands
 
 ```bash
-# Découvrir de nouveaux joueurs
+# Discover new players
 pnpm crawl:seed euw1 50
 
-# Crawler les joueurs en attente
+# Crawl pending players
 pnpm crawl:process
 
-# Voir les statistiques
+# View statistics
 pnpm crawl:status
 
-# Synchroniser les comptes depuis les matchs
+# Sync accounts from matches
 pnpm crawl:sync-accounts
 ```
 
-### Documentation complète
+### Complete Documentation
 
-Consultez [CRAWL_SYSTEM.md](./CRAWL_SYSTEM.md) pour la documentation détaillée du système de crawl.
+See [CRAWL_SYSTEM.md](./CRAWL_SYSTEM.md) for detailed crawl system documentation.
 
-## 🧪 Tests
+## Tests
 
-L'application inclut des tests unitaires pour les utilitaires critiques :
+The application includes unit tests for critical utilities:
 
 ```bash
-# Exécuter les tests (si configuré)
+# Run tests (if configured)
 pnpm test
 
-# Tests disponibles :
+# Available tests:
 # - lib/pagination.test.ts
 # - lib/rate-limit.test.ts
 # - api/health.test.ts
 ```
 
-Voir [**tests**/README.md](./__tests__/README.md) pour plus d'informations.
+See [**tests**/README.md](./__tests__/README.md) for more information.
 
-## 🚢 Déploiement
+## Deployment
 
 ### Production
 
-L'application est configurée pour le déploiement sur Fly.io avec :
+The application is configured for deployment on Fly.io with:
 
-- **Dockerfile** : Build optimisé avec multi-stage
-- **fly.toml** : Configuration Fly.io
-- **Output Standalone** : Build Next.js standalone pour réduire la taille
+- **Dockerfile**: Optimized build with multi-stage
+- **fly.toml**: Fly.io configuration
+- **Standalone Output**: Next.js standalone build to reduce size
 
-### Variables d'environnement
+### Environment Variables
 
 ```bash
-# Base de données
+# Database
 DATABASE_URL=postgresql://...
 
-# API Riot Games
+# Riot Games API
 RIOT_API_KEY=your_riot_api_key
 
 # Application
 NODE_ENV=production
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 
-# Optionnel
+# Optional
 GOOGLE_CLIENT_ID=your_google_client_id
 ENCRYPTION_KEY=your_encryption_key
 
-# Timeouts (optionnel)
+# Timeouts (optional)
 DB_TIMEOUT_MS=30000
 API_TIMEOUT_MS=10000
 ```
 
-## 📝 Prochaines étapes
+## Roadmap
 
-Voir [docs/TODOS.md](./docs/TODOS.md) pour la liste complète des améliorations prévues.
+See [docs/TODOS.md](./docs/TODOS.md) for the complete list of planned improvements.
 
-### Fonctionnalités principales
+### Main Features
 
-- [x] Implémenter le système d'authentification
-- [x] Ajouter les champions depuis l'API Riot
-- [x] Intégrer les items depuis l'API Riot
-- [x] Implémenter le système de crawl
-- [x] Ajouter le sharding des comptes LoL
-- [x] Implémenter les optimisations de performance
-- [x] Ajouter les headers de sécurité
-- [x] Implémenter le monitoring et l'alerting
-- [x] Optimiser l'API Riot avec retry et cache
-- [x] Ajouter les jobs asynchrones (BullMQ + Redis)
-- [x] Implémenter les notifications admin temps réel
-- [x] Améliorer le SEO pour "lol counter"
-- [x] Ajouter le raisonnement IA aux compositions
-- [x] Refonte de la page profil avec rangs et settings
-- [ ] Implémenter NextAuth.js pour les sessions complètes
-- [ ] Créer les fonctionnalités de compositions (sauvegarde)
-- [ ] Ajouter la gestion des favoris
-- [ ] Implémenter les statistiques personnalisées avancées
-- [ ] Ajouter le système de notifications push
+- [x] Implement authentication system
+- [x] Add champions from Riot API
+- [x] Integrate items from Riot API
+- [x] Implement crawl system
+- [x] Add LoL account sharding
+- [x] Implement performance optimizations
+- [x] Add security headers
+- [x] Implement monitoring and alerting
+- [x] Optimize Riot API with retry and cache
+- [x] Add async jobs (BullMQ + Redis)
+- [x] Implement real-time admin notifications
+- [x] Improve SEO for "lol counter"
+- [x] Add AI reasoning to compositions
+- [x] Profile page redesign with ranks and settings
+- [ ] Implement NextAuth.js for complete sessions
+- [ ] Create composition features (saving)
+- [ ] Add favorites management
+- [ ] Implement advanced custom statistics
+- [ ] Add push notification system
 
-## 📄 License
+## License
 
 MIT
