@@ -8,15 +8,12 @@ import { measureTiming } from "@/lib/metrics";
 import { riotApiRequest } from "@/lib/riot-api";
 import { CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { fetchOpggApi } from "@/lib/opgg-scraper";
 import type { RankedResponse, ApiResponse } from "@/types/api";
 
-const getRiotApiKey = (): string => {
+const getRiotApiKey = (): string | null => {
   const env = getEnv();
-  const key = env.RIOT_API_KEY;
-  if (!key) {
-    throw new Error("RIOT_API_KEY est requis pour cette fonctionnalité");
-  }
-  return key;
+  return env.RIOT_API_KEY || null;
 };
 
 type Params = {
@@ -106,12 +103,10 @@ export async function GET(
     return rateLimitResponse;
   }
 
+  const rankedLogger = createLogger("ranked");
   let puuid = "";
-  try {
-    // Vérifier que la clé API est disponible
-    const RIOT_API_KEY = getRiotApiKey();
-    const env = getEnv();
 
+  try {
     const resolvedParams = await params;
     puuid = resolvedParams.puuid || "";
 
@@ -135,8 +130,10 @@ export async function GET(
       return NextResponse.json({ error: "Région invalide" }, { status: 400 });
     }
 
-    // Récupérer le summonerId depuis la base de données (tables shardées) avec timeout et métriques
-    // Passer la région connue pour éviter la recherche globale
+    // Vérifier si on a une clé API Riot
+    const RIOT_API_KEY = getRiotApiKey();
+
+    // Récupérer le compte depuis la base de données
     const account = await measureTiming(
       "api.summoners.ranked.findAccount",
       () =>
@@ -151,9 +148,91 @@ export async function GET(
       { puuid, region: normalizedRegion }
     );
 
+    // Si pas de clé API Riot, utiliser OP.GG comme fallback
+    if (!RIOT_API_KEY) {
+      rankedLogger.info("Pas de RIOT_API_KEY, utilisation de OP.GG", { puuid });
+
+      // On a besoin du gameName et tagLine pour OP.GG
+      if (!account?.riotGameName || !account?.riotTagLine) {
+        return NextResponse.json(
+          {
+            success: true,
+            data: {
+              solo: null,
+              flex: null,
+            },
+            source: "no_data",
+          },
+          { status: 200 }
+        );
+      }
+
+      const opggData = await fetchOpggApi(
+        account.riotGameName,
+        account.riotTagLine,
+        normalizedRegion
+      );
+
+      if (!opggData) {
+        return NextResponse.json(
+          {
+            success: true,
+            data: {
+              solo: null,
+              flex: null,
+            },
+            source: "opgg_error",
+          },
+          { status: 200 }
+        );
+      }
+
+      // Transformer les données OP.GG au format attendu
+      const response: RankedResponse = {
+        success: true,
+        data: {
+          solo: opggData.solo ? {
+            current: {
+              tier: opggData.solo.tier,
+              rank: opggData.solo.rank,
+              lp: opggData.solo.lp,
+              wins: opggData.solo.wins,
+              losses: opggData.solo.losses,
+              winRate: opggData.solo.winRate,
+            },
+            best: {
+              tier: opggData.solo.tier,
+              rank: opggData.solo.rank,
+              lp: opggData.solo.lp,
+            },
+            seasonHistory: [],
+          } : null,
+          flex: opggData.flex ? {
+            current: {
+              tier: opggData.flex.tier,
+              rank: opggData.flex.rank,
+              lp: opggData.flex.lp,
+              wins: opggData.flex.wins,
+              losses: opggData.flex.losses,
+              winRate: opggData.flex.winRate,
+            },
+            best: {
+              tier: opggData.flex.tier,
+              rank: opggData.flex.rank,
+              lp: opggData.flex.lp,
+            },
+            seasonHistory: [],
+          } : null,
+        },
+      };
+
+      return NextResponse.json({ ...response, source: "opgg" }, { status: 200 });
+    }
+
+    // === Utiliser l'API Riot (comportement existant) ===
     let summonerId = account?.riotSummonerId;
 
-    // Si pas de summonerId en DB, récupérer via l'API Riot avec retry, cache et timeout
+    // Si pas de summonerId en DB, récupérer via l'API Riot
     if (!summonerId) {
       const summonerResponseData = await measureTiming(
         "api.riot.summoner.byPuuid",
@@ -169,16 +248,15 @@ export async function GET(
           }>(`${baseUrl}/lol/summoner/v4/summoners/by-puuid/${puuid}`, {
             region: normalizedRegion,
             cacheKey: `riot:summoner:${puuid}:${normalizedRegion}`,
-            cacheTTL: CacheTTL.MEDIUM, // 5 minutes
+            cacheTTL: CacheTTL.MEDIUM,
           }),
         { region: normalizedRegion }
       );
 
-      // La réponse est déjà parsée, utiliser directement les données
       const summonerData = summonerResponseData.data;
       summonerId = summonerData.id;
 
-      // Mettre à jour la DB avec le summonerId dans la table shardée
+      // Mettre à jour la DB avec le summonerId
       if (account && account.riotRegion) {
         await ShardedLeagueAccounts.upsert({
           puuid: puuid,
@@ -201,7 +279,7 @@ export async function GET(
       );
     }
 
-    // Récupérer les données de ranked via l'API League avec retry, cache et timeout
+    // Récupérer les données de ranked via l'API League
     const leagueResponseData = await measureTiming(
       "api.riot.league.bySummoner",
       () =>
@@ -210,10 +288,9 @@ export async function GET(
           {
             region: normalizedRegion,
             cacheKey: `riot:league:${summonerId}:${normalizedRegion}`,
-            cacheTTL: CacheTTL.MEDIUM, // 5 minutes
+            cacheTTL: CacheTTL.MEDIUM,
           }
         ).catch((error) => {
-          // Si 404, retourner un tableau vide (pas de classement)
           if (error.message.includes("404")) {
             return { data: [] as RiotLeagueEntry[], cached: false, attempt: 1 };
           }
@@ -236,9 +313,8 @@ export async function GET(
       },
     };
 
-    return NextResponse.json(response, { status: 200 });
+    return NextResponse.json({ ...response, source: "riot" }, { status: 200 });
   } catch (error) {
-    const rankedLogger = createLogger("ranked");
     rankedLogger.error("Erreur lors de la récupération du classement", error as Error, {
       puuid,
     });
