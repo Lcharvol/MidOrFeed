@@ -62,6 +62,14 @@ const ChampionLeadershipSection = dynamic(
   { loading: () => <LazyLoadingFallback />, ssr: true }
 );
 
+const ChampionGuidesSection = dynamic(
+  () =>
+    import("./ChampionGuidesSection").then((mod) => ({
+      default: mod.ChampionGuidesSection,
+    })),
+  { loading: () => <LazyLoadingFallback />, ssr: true }
+);
+
 const placeholderStyle =
   "flex min-h-[240px] items-center justify-center rounded-2xl border border-border/50 bg-muted/10 text-sm text-muted-foreground text-center";
 
@@ -71,6 +79,7 @@ const TAB_KEYS = [
   "build",
   "items",
   "leadership",
+  "guides",
 ] as const;
 
 type TabKey = (typeof TAB_KEYS)[number];
@@ -168,6 +177,9 @@ const ChampionStrategicTabs = ({
             <TabsTrigger value="leadership">
               {t("championDetails.leadership")}
             </TabsTrigger>
+            <TabsTrigger value="guides">
+              Guides
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -205,6 +217,13 @@ const ChampionStrategicTabs = ({
             championName={champion.name}
           />
         </TabsContent>
+
+        <TabsContent value="guides">
+          <ChampionGuidesSection
+            championId={champion.championId}
+            championName={champion.name}
+          />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -220,6 +239,7 @@ const TabsFallback = ({ championName }: { championName: string }) => {
           <div className="h-4 w-72 animate-pulse rounded bg-muted/40" />
         </div>
         <div className="flex gap-2">
+          <span className="h-9 w-20 animate-pulse rounded-md bg-muted/40" />
           <span className="h-9 w-20 animate-pulse rounded-md bg-muted/40" />
           <span className="h-9 w-20 animate-pulse rounded-md bg-muted/40" />
           <span className="h-9 w-20 animate-pulse rounded-md bg-muted/40" />

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,13 +52,24 @@ const ROLES: { value: GuideRole; label: string }[] = [
 
 const CreateGuidePage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const { createGuide } = useCreateGuide();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Get champion from URL if provided
+  const initialChampion = searchParams.get("champion");
+
   // Form state
-  const [championId, setChampionId] = useState<string | null>(null);
+  const [championId, setChampionId] = useState<string | null>(initialChampion);
+
+  // Update championId if URL param changes
+  useEffect(() => {
+    if (initialChampion && !championId) {
+      setChampionId(initialChampion);
+    }
+  }, [initialChampion, championId]);
   const [title, setTitle] = useState("");
   const [role, setRole] = useState<GuideRole | "">("");
   const [introduction, setIntroduction] = useState("");
