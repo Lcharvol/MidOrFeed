@@ -2,6 +2,13 @@
 
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SearchIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +44,9 @@ export const RecentGamesSummary = ({
   championKeyToId,
   resolveSlug,
   rolePerformance = [],
+  matchLimit = 10,
+  matchLimitOptions = [10, 20, 50],
+  onMatchLimitChange,
 }: RecentGamesSummaryProps) => {
   const { t } = useI18n();
   const winRateChartConfig = useMemo(() => {
@@ -64,7 +74,26 @@ export const RecentGamesSummary = ({
   return (
     <Card className="bg-background/90">
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle>{t("matches.recentMatches")}</CardTitle>
+        <div className="flex items-center gap-3">
+          <CardTitle>{t("matches.recentMatches")}</CardTitle>
+          {onMatchLimitChange && (
+            <Select
+              value={matchLimit.toString()}
+              onValueChange={(value) => onMatchLimitChange(Number(value))}
+            >
+              <SelectTrigger className="h-8 w-[90px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {matchLimitOptions.map((option) => (
+                  <SelectItem key={option} value={option.toString()}>
+                    {option} matchs
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
         <div className="relative w-full sm:w-55">
           <SearchIcon className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

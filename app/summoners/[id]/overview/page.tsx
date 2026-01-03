@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { LoadingState } from "./components/LoadingState";
 import { ErrorState } from "./components/ErrorState";
@@ -17,11 +17,15 @@ import { ChampionPoolAdvisor } from "./components/ChampionPoolAdvisor";
 import { LiveGameBanner } from "./components/LiveGameBanner";
 import { useSummonerOverview } from "@/lib/hooks/use-summoner-overview";
 
+const MATCH_LIMIT_OPTIONS = [10, 20, 50] as const;
+type MatchLimitOption = (typeof MATCH_LIMIT_OPTIONS)[number];
+
 const SummonerOverviewByIdPage = () => {
   const params = useParams();
   const searchParams = useSearchParams();
   const puuid = typeof params?.id === "string" ? params.id : undefined;
   const region = searchParams.get("region") || null;
+  const [matchLimit, setMatchLimit] = useState<MatchLimitOption>(10);
   const {
     overview,
     topChampions,
@@ -42,7 +46,7 @@ const SummonerOverviewByIdPage = () => {
 
     const entries: RecentMatchEntry[] = [];
 
-    for (const match of overview.matches.slice(0, 10)) {
+    for (const match of overview.matches.slice(0, matchLimit)) {
       const participant = match.participants.find(
         (entry) => entry.participantPUuid === puuid
       );
@@ -102,7 +106,7 @@ const SummonerOverviewByIdPage = () => {
     }
 
     return entries;
-  }, [overview, puuid, resolveSlug]);
+  }, [overview, puuid, resolveSlug, matchLimit]);
 
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState />;
@@ -140,6 +144,9 @@ const SummonerOverviewByIdPage = () => {
             championKeyToId={championKeyToIdMap}
             resolveSlug={resolveSlug}
             rolePerformance={rolePerformance}
+            matchLimit={matchLimit}
+            matchLimitOptions={MATCH_LIMIT_OPTIONS}
+            onMatchLimitChange={(limit) => setMatchLimit(limit as MatchLimitOption)}
           />
           <RecentMatchesList
             matches={recentMatches}

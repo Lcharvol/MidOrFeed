@@ -34,5 +34,8 @@ export interface RecentGamesSummaryProps {
     role: string;
     stats: { played: number };
   }>;
+  matchLimit?: number;
+  matchLimitOptions?: readonly number[];
+  onMatchLimitChange?: (limit: number) => void;
 }
 
