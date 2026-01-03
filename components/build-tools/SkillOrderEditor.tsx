@@ -70,24 +70,24 @@ export const SkillOrderEditor = ({
   const getMaxForSkill = (skill: SkillKey) => (skill === "R" ? 3 : 5);
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-3 sm:space-y-4", className)}>
       {/* Max Order Selection */}
-      <div className="flex items-center gap-4">
-        <span className="text-sm font-medium text-muted-foreground">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <span className="text-xs sm:text-sm font-medium text-muted-foreground">
           Priorité max :
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {[0, 1, 2].map((index) => (
             <div key={index} className="flex items-center gap-1">
               {index > 0 && (
-                <span className="text-muted-foreground">&gt;</span>
+                <span className="text-muted-foreground text-xs sm:text-sm">&gt;</span>
               )}
               <select
                 value={value.maxOrder[index] || ""}
                 onChange={(e) =>
                   handleMaxOrderChange(index, e.target.value as "Q" | "W" | "E")
                 }
-                className="h-8 w-14 rounded border bg-background px-2 text-sm"
+                className="h-8 w-12 sm:w-14 rounded border bg-background px-1 sm:px-2 text-sm"
               >
                 <option value="">-</option>
                 {(["Q", "W", "E"] as const).map((skill) => (
@@ -102,22 +102,22 @@ export const SkillOrderEditor = ({
       </div>
 
       {/* Skill Order Grid */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
+      <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+        <table className="text-xs sm:text-sm border-collapse" style={{ minWidth: "500px" }}>
           <thead>
             <tr>
-              <th className="text-left p-1 w-16 text-muted-foreground font-medium">
+              <th className="text-left p-0.5 sm:p-1 w-10 sm:w-16 text-muted-foreground font-medium">
                 Skill
               </th>
               {LEVELS.map((level) => (
                 <th
                   key={level}
-                  className="text-center p-1 w-8 text-muted-foreground font-normal"
+                  className="text-center p-0.5 sm:p-1 w-6 sm:w-8 text-muted-foreground font-normal"
                 >
                   {level}
                 </th>
               ))}
-              <th className="text-center p-1 w-12 text-muted-foreground font-medium">
+              <th className="text-center p-0.5 sm:p-1 w-10 sm:w-12 text-muted-foreground font-medium">
                 Total
               </th>
             </tr>
@@ -130,7 +130,7 @@ export const SkillOrderEditor = ({
 
               return (
                 <tr key={skill}>
-                  <td className="p-1 font-semibold">{skill}</td>
+                  <td className="p-0.5 sm:p-1 font-semibold">{skill}</td>
                   {LEVELS.map((level) => {
                     const isSelected = value.levels[level] === skill;
                     const isRLevel = R_LEVELS.includes(level);
@@ -145,7 +145,7 @@ export const SkillOrderEditor = ({
                           onClick={() => handleCellClick(level, skill)}
                           disabled={isDisabled || (!isSelected && !canSelect)}
                           className={cn(
-                            "size-6 rounded transition-all mx-auto block",
+                            "size-5 sm:size-6 rounded transition-all mx-auto block",
                             isSelected
                               ? SKILL_COLORS[skill]
                               : "bg-muted hover:bg-muted-foreground/20",
@@ -165,7 +165,7 @@ export const SkillOrderEditor = ({
                   })}
                   <td
                     className={cn(
-                      "text-center p-1 font-medium",
+                      "text-center p-0.5 sm:p-1 font-medium text-xs sm:text-sm",
                       isFull ? "text-green-500" : "text-muted-foreground"
                     )}
                   >
@@ -180,8 +180,7 @@ export const SkillOrderEditor = ({
 
       {/* Helper text */}
       <p className="text-xs text-muted-foreground">
-        Cliquez sur les cellules pour définir l'ordre des compétences. R ne peut
-        être amélioré qu'aux niveaux 6, 11 et 16.
+        Cliquez sur les cellules pour définir l&apos;ordre. R : niveaux 6, 11, 16 uniquement.
       </p>
     </div>
   );

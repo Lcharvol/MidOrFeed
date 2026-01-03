@@ -55,71 +55,69 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
   return (
     <Link href={`/guides/${guide.id}`}>
       <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
-        <CardContent className="p-4">
-          <div className="flex gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex gap-3 sm:gap-4">
             {/* Champion icon */}
             <div className="shrink-0">
-              <ChampionIcon championId={guide.championId} size={56} />
+              <ChampionIcon championId={guide.championId} size={48} className="sm:size-14" />
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="font-semibold truncate">{guide.title}</h3>
-                  <p className="text-sm text-muted-foreground truncate">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-sm sm:text-base truncate">{guide.title}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     par {guide.authorName || "Anonyme"}
                   </p>
                 </div>
-                {guide.role && (
-                  <Badge variant="secondary" className="shrink-0">
-                    {guide.role}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {guide.role && (
+                    <Badge variant="secondary" className="text-xs hidden xs:inline-flex">
+                      {guide.role}
+                    </Badge>
+                  )}
+                  {/* Score - visible on all screens */}
+                  <div
+                    className={`text-sm sm:text-base font-bold px-2 py-0.5 rounded ${
+                      netVotes > 0
+                        ? "text-green-500 bg-green-500/10"
+                        : netVotes < 0
+                          ? "text-red-500 bg-red-500/10"
+                          : "text-muted-foreground bg-muted"
+                    }`}
+                  >
+                    {netVotes > 0 ? `+${netVotes}` : netVotes}
+                  </div>
+                </div>
               </div>
 
               {guide.introduction && (
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 sm:mt-2 line-clamp-2 hidden sm:block">
                   {guide.introduction}
                 </p>
               )}
 
               {/* Stats */}
-              <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 sm:gap-4 mt-2 sm:mt-3 text-xs sm:text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <ThumbsUpIcon className="size-3.5" />
+                  <ThumbsUpIcon className="size-3 sm:size-3.5" />
                   <span>{guide.upvotes}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <ThumbsDownIcon className="size-3.5" />
+                  <ThumbsDownIcon className="size-3 sm:size-3.5" />
                   <span>{guide.downvotes}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <EyeIcon className="size-3.5" />
+                  <EyeIcon className="size-3 sm:size-3.5" />
                   <span>{guide.viewCount}</span>
                 </div>
                 {guide.patchVersion && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs hidden sm:inline-flex">
                     {guide.patchVersion}
                   </Badge>
                 )}
               </div>
-            </div>
-
-            {/* Score */}
-            <div className="shrink-0 flex flex-col items-center justify-center px-2">
-              <div
-                className={`text-xl font-bold ${
-                  netVotes > 0
-                    ? "text-green-500"
-                    : netVotes < 0
-                      ? "text-red-500"
-                      : "text-muted-foreground"
-                }`}
-              >
-                {netVotes > 0 ? `+${netVotes}` : netVotes}
-              </div>
-              <div className="text-xs text-muted-foreground">score</div>
             </div>
           </div>
         </CardContent>
@@ -179,25 +177,25 @@ const GuidesPage = () => {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="relative">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un guide ou champion..."
+                placeholder="Rechercher..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
               <Select
                 value={role}
                 onValueChange={(v) => setRole(v as GuideRole | "all")}
               >
-                <SelectTrigger className="w-[150px]">
-                  <FilterIcon className="size-4 mr-2" />
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <FilterIcon className="size-4 mr-2 shrink-0" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -215,7 +213,7 @@ const GuidesPage = () => {
                   setSort(v as "popular" | "recent" | "views")
                 }
               >
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

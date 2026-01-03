@@ -66,13 +66,13 @@ const CommentItem = ({
   };
 
   return (
-    <div className={cn("space-y-2", depth > 0 && "ml-8 pl-4 border-l")}>
-      <div className="flex items-start gap-3">
-        <div className="size-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-          <UserIcon className="size-4 text-muted-foreground" />
+    <div className={cn("space-y-2", depth > 0 && "ml-4 sm:ml-8 pl-3 sm:pl-4 border-l")}>
+      <div className="flex items-start gap-2 sm:gap-3">
+        <div className="size-7 sm:size-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+          <UserIcon className="size-3 sm:size-4 text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm flex-wrap">
             <span className="font-medium">
               {comment.authorName || "Anonyme"}
             </span>
@@ -80,37 +80,37 @@ const CommentItem = ({
               {formatDate(comment.createdAt)}
             </span>
           </div>
-          <p className="text-sm mt-1 whitespace-pre-line">{comment.content}</p>
-          <div className="flex items-center gap-2 mt-2">
+          <p className="text-xs sm:text-sm mt-1 whitespace-pre-line">{comment.content}</p>
+          <div className="flex items-center gap-1 sm:gap-2 mt-2">
             <Button
               variant={comment.viewerVote === 1 ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-2"
+              className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs"
               onClick={() => handleVote(1)}
               disabled={isVoting}
             >
-              <ThumbsUpIcon className="size-3 mr-1" />
+              <ThumbsUpIcon className="size-3 mr-0.5 sm:mr-1" />
               {comment.upvotes}
             </Button>
             <Button
               variant={comment.viewerVote === -1 ? "destructive" : "ghost"}
               size="sm"
-              className="h-7 px-2"
+              className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs"
               onClick={() => handleVote(-1)}
               disabled={isVoting}
             >
-              <ThumbsDownIcon className="size-3 mr-1" />
+              <ThumbsDownIcon className="size-3 mr-0.5 sm:mr-1" />
               {comment.downvotes}
             </Button>
             {depth === 0 && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2"
+                className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs"
                 onClick={() => onReply(comment.id)}
               >
-                <ReplyIcon className="size-3 mr-1" />
-                Répondre
+                <ReplyIcon className="size-3 mr-0.5 sm:mr-1" />
+                <span className="hidden xs:inline">Répondre</span>
               </Button>
             )}
           </div>
@@ -235,13 +235,13 @@ export const GuideComments = ({ guideId }: { guideId: string }) => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquareIcon className="size-5" />
+      <CardHeader className="pb-2 sm:pb-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <MessageSquareIcon className="size-4 sm:size-5" />
           Commentaires ({total})
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
         {/* New Comment Form */}
         <CommentForm guideId={guideId} onSuccess={revalidate} />
 
@@ -249,21 +249,21 @@ export const GuideComments = ({ guideId }: { guideId: string }) => {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-start gap-3">
-                <Skeleton className="size-8 rounded-full" />
+              <div key={i} className="flex items-start gap-2 sm:gap-3">
+                <Skeleton className="size-7 sm:size-8 rounded-full" />
                 <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-4 w-24 sm:w-32" />
+                  <Skeleton className="h-12 sm:h-16 w-full" />
                 </div>
               </div>
             ))}
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            Aucun commentaire pour le moment. Soyez le premier à commenter !
+          <div className="text-center text-sm sm:text-base text-muted-foreground py-6 sm:py-8">
+            Aucun commentaire. Soyez le premier !
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {comments.map((comment) => (
               <div key={comment.id}>
                 <CommentItem
@@ -273,7 +273,7 @@ export const GuideComments = ({ guideId }: { guideId: string }) => {
                 />
                 {/* Reply Form */}
                 {replyingTo === comment.id && (
-                  <div className="ml-11 mt-3">
+                  <div className="ml-9 sm:ml-11 mt-3">
                     <CommentForm
                       guideId={guideId}
                       parentId={comment.id}

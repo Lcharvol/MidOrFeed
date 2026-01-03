@@ -125,32 +125,32 @@ const SkillOrderSection = ({ skillOrder }: { skillOrder: SkillOrderConfig }) => 
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ZapIcon className="size-5" />
+      <CardHeader className="pb-2 sm:pb-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <ZapIcon className="size-4 sm:size-5" />
           Ordre des compétences
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 sm:px-6">
         {skillOrder.maxOrder.length > 0 && (
-          <div className="mb-4">
-            <span className="text-sm text-muted-foreground">Priorité : </span>
-            <span className="font-semibold">
+          <div className="mb-3 sm:mb-4 px-2 sm:px-0">
+            <span className="text-xs sm:text-sm text-muted-foreground">Priorité : </span>
+            <span className="font-semibold text-sm sm:text-base">
               {skillOrder.maxOrder.join(" > ")}
             </span>
           </div>
         )}
 
         {Object.keys(skillOrder.levels).length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+            <table className="text-xs sm:text-sm" style={{ minWidth: "480px" }}>
               <thead>
                 <tr>
-                  <th className="text-left p-1 w-12"></th>
+                  <th className="text-left p-0.5 sm:p-1 w-8 sm:w-12"></th>
                   {levels.map((level) => (
                     <th
                       key={level}
-                      className="text-center p-1 w-8 text-muted-foreground"
+                      className="text-center p-0.5 sm:p-1 w-6 sm:w-8 text-muted-foreground font-normal"
                     >
                       {level}
                     </th>
@@ -160,13 +160,13 @@ const SkillOrderSection = ({ skillOrder }: { skillOrder: SkillOrderConfig }) => 
               <tbody>
                 {skills.map((skill) => (
                   <tr key={skill}>
-                    <td className="font-semibold p-1">{skill}</td>
+                    <td className="font-semibold p-0.5 sm:p-1">{skill}</td>
                     {levels.map((level) => {
                       const isSelected = skillOrder.levels[level] === skill;
                       return (
-                        <td key={level} className="text-center p-1">
+                        <td key={level} className="text-center p-0.5 sm:p-1">
                           <div
-                            className={`size-6 rounded mx-auto ${
+                            className={`size-4 sm:size-6 rounded mx-auto ${
                               isSelected
                                 ? skill === "R"
                                   ? "bg-yellow-500"
@@ -421,16 +421,27 @@ const GuidePage = () => {
 
       {/* Header */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-6 md:flex-row">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:gap-6 sm:flex-row">
             {/* Champion icon */}
-            <div className="shrink-0">
-              <ChampionIcon championId={guide.championId} size={96} />
+            <div className="shrink-0 flex items-start gap-4 sm:block">
+              <ChampionIcon championId={guide.championId} size={64} className="sm:size-24" />
+              {/* Mobile: show badges next to icon */}
+              <div className="flex flex-col gap-1 sm:hidden">
+                <h1 className="text-lg font-bold line-clamp-2">{guide.title}</h1>
+                <div className="flex flex-wrap gap-1">
+                  {guide.role && <Badge className="text-xs">{guide.role}</Badge>}
+                  {guide.status === "draft" && (
+                    <Badge variant="secondary" className="text-xs">Brouillon</Badge>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-start gap-2 mb-2">
+              {/* Desktop title */}
+              <div className="hidden sm:flex flex-wrap items-start gap-2 mb-2">
                 <h1 className="text-2xl font-bold">{guide.title}</h1>
                 {guide.role && <Badge>{guide.role}</Badge>}
                 {guide.status === "draft" && (
@@ -438,39 +449,39 @@ const GuidePage = () => {
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                 <span className="flex items-center gap-1">
-                  <UserIcon className="size-4" />
+                  <UserIcon className="size-3 sm:size-4" />
                   {guide.authorName || "Anonyme"}
                 </span>
                 <span className="flex items-center gap-1">
-                  <CalendarIcon className="size-4" />
+                  <CalendarIcon className="size-3 sm:size-4" />
                   {formatDate(guide.createdAt)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <EyeIcon className="size-4" />
-                  {guide.viewCount} vues
+                  <EyeIcon className="size-3 sm:size-4" />
+                  {guide.viewCount}
                 </span>
                 {guide.patchVersion && (
-                  <Badge variant="outline">Patch {guide.patchVersion}</Badge>
+                  <Badge variant="outline" className="text-xs">Patch {guide.patchVersion}</Badge>
                 )}
               </div>
 
               {guide.introduction && (
-                <p className="text-muted-foreground whitespace-pre-line">
+                <p className="text-sm sm:text-base text-muted-foreground whitespace-pre-line">
                   {guide.introduction}
                 </p>
               )}
 
               {/* Actions */}
-              <div className="flex flex-wrap items-center gap-4 mt-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3 sm:mt-4">
                 <VoteButton guide={guide} onVote={handleVote} />
 
                 {guide.canEdit && (
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="text-xs sm:text-sm">
                     <Link href={`/guides/${guide.id}/edit`}>
-                      <EditIcon className="size-4 mr-1" />
-                      Modifier
+                      <EditIcon className="size-3 sm:size-4 mr-1" />
+                      <span className="hidden xs:inline">Modifier</span>
                     </Link>
                   </Button>
                 )}
@@ -479,11 +490,11 @@ const GuidePage = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-destructive"
+                    className="text-destructive text-xs sm:text-sm"
                     onClick={handleDelete}
                   >
-                    <TrashIcon className="size-4 mr-1" />
-                    Supprimer
+                    <TrashIcon className="size-3 sm:size-4 mr-1" />
+                    <span className="hidden xs:inline">Supprimer</span>
                   </Button>
                 )}
               </div>
