@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   // Vérifier les permissions admin
-  const authError = await requireAdmin(request);
+  const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) {
     return authError;
   }

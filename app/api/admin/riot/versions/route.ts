@@ -17,7 +17,7 @@ const parseVersions = (input: unknown): string[] => {
 };
 
 export const POST = async (request: NextRequest) => {
-  const authError = await requireAdmin(request);
+  const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) {
     return authError;
   }

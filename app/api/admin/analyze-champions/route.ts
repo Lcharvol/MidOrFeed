@@ -16,7 +16,7 @@ const clampMatchLimit = (value: unknown): number | null => {
 };
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request);
+  const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
 
   try {

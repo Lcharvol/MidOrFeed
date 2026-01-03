@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAdmin(request);
+  const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
 
   try {

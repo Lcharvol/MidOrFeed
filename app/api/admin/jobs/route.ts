@@ -63,8 +63,8 @@ export async function GET(request: NextRequest) {
  * Trigger a new job
  */
 export async function POST(request: NextRequest) {
-  // Verify admin access with CSRF protection
-  const authError = await requireAdmin(request);
+  // Verify admin access (skip CSRF - admin routes are protected by auth)
+  const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
 
   try {

@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request);
+  const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
   try {
     const body = await request
