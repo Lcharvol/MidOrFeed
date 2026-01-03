@@ -38,6 +38,12 @@ COPY --from=builder /app/scripts ./scripts
 # Copy lib directory (for workers, queues, redis, and utilities)
 COPY --from=builder /app/lib ./lib
 
+# Copy constants directory (for workers)
+COPY --from=builder /app/constants ./constants
+
+# Copy types directory (for workers)
+COPY --from=builder /app/types ./types
+
 # Copy package.json and tsconfig.json (needed for scripts and TypeScript path resolution)
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/tsconfig.json ./tsconfig.json

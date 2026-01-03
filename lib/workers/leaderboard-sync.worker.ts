@@ -5,7 +5,7 @@ import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
 import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
-import { MAIN_REGIONS } from "@/constants/riot-regions";
+import { MAIN_REGIONS } from "../../constants/riot-regions";
 import type {
   LeaderboardSyncJobData,
   LeaderboardSyncJobResult,

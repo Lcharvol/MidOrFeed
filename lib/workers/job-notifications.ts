@@ -1,6 +1,6 @@
 import { broadcastToAdmins } from "../server/notification-hub";
 import { WORKER_DESCRIPTIONS } from "./index";
-import type { NotificationPayload, NotificationVariant } from "@/types";
+import type { NotificationPayload, NotificationVariant } from "../../types";
 
 /**
  * Format a job result into a human-readable message

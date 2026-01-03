@@ -5,7 +5,7 @@ import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
 import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
-import { REGION_TO_ROUTING } from "@/constants/regions";
+import { REGION_TO_ROUTING } from "../../constants/regions";
 import type {
   DataCrawlJobData,
   DataCrawlJobResult,

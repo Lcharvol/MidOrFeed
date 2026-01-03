@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { getItemDataUrl, getVersionsUrl } from "@/constants/ddragon";
+import { getItemDataUrl, getVersionsUrl } from "../constants/ddragon";
 
 const prisma = new PrismaClient();
 
