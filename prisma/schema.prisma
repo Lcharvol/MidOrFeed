@@ -8,26 +8,30 @@ datasource db {
 }
 
 model User {
-  id                    String                  @id @default(cuid())
-  email                 String                  @unique
-  name                  String?
-  password              String
-  leagueAccountId       String?
-  riotPuuid             String?
-  riotRegion            String?
-  role                  String                  @default("user")
-  subscriptionTier      String                  @default("free")
-  subscriptionExpiresAt DateTime?
-  dailyAnalysesUsed     Int                     @default(0)
-  dailyAnalysisLimit    Int                     @default(3)
-  lastDailyReset        DateTime                @default(now())
-  lastLoginAt           DateTime?
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  leagueAccount         LeagueOfLegendsAccount? @relation(fields: [leagueAccountId], references: [id])
-  championAdvices       ChampionAdvice[]
-  championAdviceVotes   ChampionAdviceVote[]
-  compositions          Composition[]
+  id                        String                     @id @default(cuid())
+  email                     String                     @unique
+  name                      String?
+  password                  String
+  leagueAccountId           String?
+  riotPuuid                 String?
+  riotRegion                String?
+  role                      String                     @default("user")
+  subscriptionTier          String                     @default("free")
+  subscriptionExpiresAt     DateTime?
+  dailyAnalysesUsed         Int                        @default(0)
+  dailyAnalysisLimit        Int                        @default(3)
+  lastDailyReset            DateTime                   @default(now())
+  lastLoginAt               DateTime?
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  leagueAccount             LeagueOfLegendsAccount?    @relation(fields: [leagueAccountId], references: [id])
+  championAdvices           ChampionAdvice[]
+  championAdviceVotes       ChampionAdviceVote[]
+  compositions              Composition[]
+  championGuides            ChampionGuide[]
+  championGuideVotes        ChampionGuideVote[]
+  championGuideComments     ChampionGuideComment[]
+  championGuideCommentVotes ChampionGuideCommentVote[]
 
   @@unique([riotPuuid, riotRegion])
   @@index([riotPuuid, riotRegion])
@@ -440,4 +444,123 @@ model RankHistory {
   @@index([puuid, queueType])
   @@index([puuid, recordedAt])
   @@map("rank_history")
+}
+
+// ============================================
+// Champion Guides System
+// ============================================
+
+model ChampionGuide {
+  id             String   @id @default(cuid())
+  championId     String
+  authorId       String?
+  authorName     String?
+  title          String
+  introduction   String?  @db.Text
+
+  // Build configuration (stored as JSON)
+  itemBuild      Json? // {starter: [], core: [], situational: [], boots: []}
+  skillOrder     Json? // {levels: {1: "Q", 2: "W", ...}, maxOrder: ["Q","W","E"]}
+  runeConfig     Json? // {primary: {tree, keystone, slots}, secondary: {tree, slots}, shards: []}
+  summonerSpells Json? // [spellId1, spellId2]
+
+  // Gameplay sections
+  earlyGameTips  String?  @db.Text
+  midGameTips    String?  @db.Text
+  lateGameTips   String?  @db.Text
+
+  // Matchup data
+  goodMatchups   Json? // [{championId, difficulty, notes}]
+  badMatchups    Json? // [{championId, difficulty, notes}]
+
+  // Strengths/Weaknesses
+  strengths      Json? // string[]
+  weaknesses     Json? // string[]
+
+  // Metadata
+  patchVersion   String?
+  role           String? // TOP, JUNGLE, MID, ADC, SUPPORT
+
+  // Voting (denormalized counters)
+  score          Int      @default(0)
+  upvotes        Int      @default(0)
+  downvotes      Int      @default(0)
+  viewCount      Int      @default(0)
+
+  // Status
+  status         String   @default("published") // draft, published
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  author         User?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  votes          ChampionGuideVote[]
+  comments       ChampionGuideComment[]
+
+  @@index([championId])
+  @@index([authorId])
+  @@index([score, createdAt])
+  @@index([championId, role])
+  @@index([status, championId])
+  @@map("champion_guides")
+}
+
+model ChampionGuideVote {
+  id        String        @id @default(cuid())
+  guideId   String
+  userId    String
+  value     Int // -1, 0, 1
+  guide     ChampionGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([guideId, userId])
+  @@map("champion_guide_votes")
+}
+
+model ChampionGuideComment {
+  id         String   @id @default(cuid())
+  guideId    String
+  authorId   String?
+  authorName String?
+  content    String   @db.Text
+
+  // Voting on comments
+  score      Int      @default(0)
+  upvotes    Int      @default(0)
+  downvotes  Int      @default(0)
+
+  // Parent for nested replies
+  parentId   String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  guide      ChampionGuide              @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  author     User?                      @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  parent     ChampionGuideComment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    ChampionGuideComment[]     @relation("CommentReplies")
+  votes      ChampionGuideCommentVote[]
+
+  @@index([guideId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([score])
+  @@map("champion_guide_comments")
+}
+
+model ChampionGuideCommentVote {
+  id        String               @id @default(cuid())
+  commentId String
+  userId    String
+  value     Int
+  comment   ChampionGuideComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@unique([commentId, userId])
+  @@map("champion_guide_comment_votes")
 }
