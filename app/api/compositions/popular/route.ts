@@ -23,8 +23,26 @@ export async function GET(request: NextRequest) {
       ? Math.min(Math.floor(perPageParam), 50)
       : 20;
   try {
+    // Select only columns that exist in production (exclude new columns not yet migrated)
     const suggestions = await prisma.compositionSuggestion.findMany({
       where: { userId: null },
+      select: {
+        id: true,
+        userId: true,
+        teamChampions: true,
+        enemyChampions: true,
+        role: true,
+        suggestedChampion: true,
+        confidence: true,
+        reasoning: true,
+        gameMode: true,
+        tier: true,
+        createdAt: true,
+        updatedAt: true,
+        playstyle: true,
+        strengths: true,
+        weaknesses: true,
+      },
       orderBy: [
         { confidence: "desc" },
         { updatedAt: "desc" },
