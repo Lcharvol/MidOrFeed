@@ -884,6 +884,12 @@ export function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link href="/favorites" className="cursor-pointer">
+                      <HeartIcon className="mr-2 size-4" />
+                      Mes Favoris
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/settings" className="cursor-pointer">
                       <SettingsIcon className="mr-2 size-4" />
                       {t("header.settings")}
