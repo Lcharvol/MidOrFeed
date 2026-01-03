@@ -34,12 +34,12 @@ describe("pagination utilities", () => {
       expect(result.page).toBe(1);
     });
 
-    it("should enforce limit between 1 and 100", () => {
+    it("should enforce limit between 1 and 1000", () => {
       const result1 = paginationSchema.parse({ limit: "0" });
       expect(result1.limit).toBe(1);
 
-      const result2 = paginationSchema.parse({ limit: "200" });
-      expect(result2.limit).toBe(100);
+      const result2 = paginationSchema.parse({ limit: "2000" });
+      expect(result2.limit).toBe(1000);
     });
   });
 

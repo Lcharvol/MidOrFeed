@@ -1,18 +1,51 @@
 /**
- * Tests de base pour l'endpoint /api/health
- * 
- * Pour exécuter les tests:
- * pnpm add -D vitest @vitest/ui
- * pnpm vitest
+ * Tests pour l'endpoint /api/health
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock des dépendances avant l'import du module
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    $queryRaw: vi.fn().mockResolvedValue([{ "?column?": 1 }]),
+  },
+}));
+
+vi.mock("@/lib/timeout", () => ({
+  prismaWithTimeout: vi.fn((fn: () => Promise<unknown>) => fn()),
+}));
+
+vi.mock("@/lib/env", () => ({
+  getEnv: vi.fn(() => ({
+    DATABASE_URL: "postgresql://test",
+    RIOT_API_KEY: "test-key",
+    REDIS_URL: undefined,
+  })),
+}));
+
+vi.mock("@/lib/redis", () => ({
+  getRedis: vi.fn(() => ({
+    ping: vi.fn().mockResolvedValue("PONG"),
+  })),
+}));
+
+vi.mock("@/lib/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
 import { GET } from "@/app/api/health/route";
 
 describe("/api/health", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return 200 with healthy status", async () => {
-    const request = new Request("http://localhost:3000/api/health");
-    const response = await GET(request);
+    const response = await GET();
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -24,8 +57,7 @@ describe("/api/health", () => {
   });
 
   it("should include timestamp and uptime", async () => {
-    const request = new Request("http://localhost:3000/api/health");
-    const response = await GET(request);
+    const response = await GET();
     const data = await response.json();
 
     expect(data.timestamp).toBeDefined();
@@ -34,13 +66,20 @@ describe("/api/health", () => {
   });
 
   it("should include response time", async () => {
-    const request = new Request("http://localhost:3000/api/health");
-    const response = await GET(request);
+    const response = await GET();
     const data = await response.json();
 
     expect(data.responseTime).toBeDefined();
     expect(typeof data.responseTime).toBe("number");
     expect(data.responseTime).toBeGreaterThanOrEqual(0);
   });
-});
 
+  it("should have cache-control headers", async () => {
+    const response = await GET();
+
+    expect(response.headers.get("Cache-Control")).toBe(
+      "no-cache, no-store, must-revalidate"
+    );
+    expect(response.headers.get("X-Response-Time")).toBeDefined();
+  });
+});
