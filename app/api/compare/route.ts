@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("compare");
 
 async function getPlayerStats(puuid: string, region: string) {
   // Get account info
@@ -112,7 +115,7 @@ export async function GET(request: NextRequest) {
       data: { player1, player2 },
     });
   } catch (error) {
-    console.error("[COMPARE] Error:", error);
+    logger.error("Error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }

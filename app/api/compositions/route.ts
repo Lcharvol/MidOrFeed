@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { readAndValidateBody } from "@/lib/request-validation";
+import { requireCsrf } from "@/lib/csrf";
 import {
   getRequestContext,
   handleZodError,
@@ -25,6 +26,10 @@ const createCompositionSchema = (t: (key: string) => string) =>
  * POST /api/compositions - Créer une nouvelle composition
  */
 export async function POST(request: NextRequest) {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
   if (rateLimitResponse) {
     return rateLimitResponse;

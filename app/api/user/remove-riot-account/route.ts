@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { prismaWithTimeout } from "@/lib/timeout";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
 import { errorResponse, handleApiError } from "@/lib/api-helpers";
 
 export async function DELETE(request: NextRequest) {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     // Vérifier l'authentification via JWT
     const authUser = await getAuthenticatedUser(request);

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeRole } from "@/lib/compositions/roles";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("popular-compositions");
 
 const parseChampionArray = (value?: string | null): string[] => {
   if (!value) return [];
@@ -60,7 +63,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[POPULAR-COMPOSITIONS] Error:", error);
+    logger.error("Error:", error as Error);
     return NextResponse.json(
       {
         success: false,

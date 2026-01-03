@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { readAndValidateBody } from "@/lib/request-validation";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
 import {
   getRequestContext,
   handleZodError,
@@ -20,6 +21,10 @@ const createSaveRiotAccountSchema = (t: (key: string) => string) =>
   });
 
 export async function POST(request: NextRequest) {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   // Récupérer le contexte de la requête une seule fois
   const { t } = getRequestContext(request);
 

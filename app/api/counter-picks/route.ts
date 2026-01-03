@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { MATCHES_PAGE_LIMIT } from "@/constants/matches";
 import { resolveChampionRole } from "@/lib/compositions/roles";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("counter-picks");
 
 export type CounterPickMode = "same_lane" | "global";
 
@@ -162,7 +165,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("[COUNTER-PICKS] Error:", error);
+    logger.error("Error:", error as Error);
     return NextResponse.json(
       {
         success: false,

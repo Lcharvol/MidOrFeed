@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("champion-advice");
 
 const createAdviceSchema = z.object({
   championId: z.string().min(1),
@@ -126,6 +130,10 @@ export const GET = async (request: NextRequest) => {
 };
 
 export const POST = async (request: NextRequest) => {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const body = await request.json().catch(() => null);
 
@@ -184,7 +192,7 @@ export const POST = async (request: NextRequest) => {
     },
     });
   } catch (error) {
-    console.error("[CHAMPION-ADVICE] POST error", error);
+    logger.error("POST error", error as Error);
     return NextResponse.json(
       {
         success: false,

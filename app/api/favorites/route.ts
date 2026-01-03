@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("favorites");
 
 // GET /api/favorites - List all favorites for the current user
 export async function GET(request: NextRequest) {
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: favorites });
   } catch (error) {
-    console.error("[FAVORITES] Error:", error);
+    logger.error("Error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }
@@ -30,6 +34,10 @@ export async function GET(request: NextRequest) {
 
 // POST /api/favorites - Add a player to favorites
 export async function POST(request: NextRequest) {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) {
@@ -79,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: favorite }, { status: 201 });
   } catch (error) {
-    console.error("[FAVORITES] Error:", error);
+    logger.error("Error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }
@@ -89,6 +97,10 @@ export async function POST(request: NextRequest) {
 
 // DELETE /api/favorites - Remove a player from favorites
 export async function DELETE(request: NextRequest) {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) {
@@ -119,7 +131,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[FAVORITES] Error:", error);
+    logger.error("Error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }

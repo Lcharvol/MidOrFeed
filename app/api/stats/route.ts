@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("stats");
 
 type PublicStats = {
   totalMatches: number;
@@ -55,7 +58,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error("[STATS] Erreur:", error);
+    logger.error("Erreur:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors de la recuperation des statistiques" },
       { status: 500 }

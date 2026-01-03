@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
+import { createLogger } from "@/lib/logger";
 import type {
   ChampionGuide,
   ItemBuildConfig,
@@ -60,6 +62,8 @@ const updateGuideSchema = z.object({
 });
 
 type RouteContext = { params: Promise<{ guideId: string }> };
+
+const logger = createLogger("guides");
 
 // GET /api/guides/[guideId] - Get single guide
 export const GET = async (request: NextRequest, context: RouteContext) => {
@@ -154,7 +158,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       data: { guide: payload },
     });
   } catch (error) {
-    console.error("[GUIDES] GET [guideId] error:", error);
+    logger.error("GET [guideId] error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors de la récupération du guide" },
       { status: 500 }
@@ -164,6 +168,10 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
 
 // PUT /api/guides/[guideId] - Update guide
 export const PUT = async (request: NextRequest, context: RouteContext) => {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const { guideId } = await context.params;
 
@@ -254,7 +262,7 @@ export const PUT = async (request: NextRequest, context: RouteContext) => {
       },
     });
   } catch (error) {
-    console.error("[GUIDES] PUT [guideId] error:", error);
+    logger.error("PUT [guideId] error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors de la mise à jour du guide" },
       { status: 500 }
@@ -264,6 +272,10 @@ export const PUT = async (request: NextRequest, context: RouteContext) => {
 
 // DELETE /api/guides/[guideId] - Delete guide
 export const DELETE = async (request: NextRequest, context: RouteContext) => {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const { guideId } = await context.params;
 
@@ -310,7 +322,7 @@ export const DELETE = async (request: NextRequest, context: RouteContext) => {
       data: { deleted: true },
     });
   } catch (error) {
-    console.error("[GUIDES] DELETE [guideId] error:", error);
+    logger.error("DELETE [guideId] error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors de la suppression du guide" },
       { status: 500 }

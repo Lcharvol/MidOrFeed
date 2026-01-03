@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
+import { createLogger } from "@/lib/logger";
 import type { GuideComment } from "@/types/guides";
+
+const logger = createLogger("guide-comments");
 
 const createCommentSchema = z.object({
   content: z.string().trim().min(1).max(2000),
@@ -153,7 +157,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       },
     });
   } catch (error) {
-    console.error("[GUIDES] GET comments error:", error);
+    logger.error("GET comments error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors de la récupération des commentaires" },
       { status: 500 }
@@ -163,6 +167,10 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
 
 // POST /api/guides/[guideId]/comments - Create comment
 export const POST = async (request: NextRequest, context: RouteContext) => {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const { guideId } = await context.params;
 
@@ -278,7 +286,7 @@ export const POST = async (request: NextRequest, context: RouteContext) => {
       data: { comment: formatted },
     });
   } catch (error) {
-    console.error("[GUIDES] POST comment error:", error);
+    logger.error("POST comment error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors de l'ajout du commentaire" },
       { status: 500 }

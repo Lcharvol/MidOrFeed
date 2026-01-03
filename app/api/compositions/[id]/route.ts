@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { createLogger } from "@/lib/logger";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { requireCsrf } from "@/lib/csrf";
+
+const compositionsLogger = createLogger("compositions");
 
 /**
  * DELETE /api/compositions/[id] - Supprimer une composition
@@ -11,6 +14,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
   if (rateLimitResponse) {
     return rateLimitResponse;
@@ -49,7 +56,6 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    const compositionsLogger = createLogger("compositions");
     compositionsLogger.error("Erreur lors de la suppression de la composition", error as Error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression de la composition" },

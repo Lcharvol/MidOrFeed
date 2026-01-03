@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
+import { createLogger } from "@/lib/logger";
 import type {
   GuideSummary,
   GuideRole,
   GuideStatus,
 } from "@/types/guides";
+
+const logger = createLogger("guides");
 
 // Validation schemas
 const itemBuildSchema = z.object({
@@ -196,7 +200,7 @@ export const GET = async (request: NextRequest) => {
       },
     });
   } catch (error) {
-    console.error("[GUIDES] GET error:", error);
+    logger.error("GET error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors de la récupération des guides" },
       { status: 500 }
@@ -206,6 +210,10 @@ export const GET = async (request: NextRequest) => {
 
 // POST /api/guides - Create guide
 export const POST = async (request: NextRequest) => {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const body = await request.json().catch(() => null);
     const parsed = createGuideSchema.safeParse(body);
@@ -271,7 +279,7 @@ export const POST = async (request: NextRequest) => {
       },
     });
   } catch (error) {
-    console.error("[GUIDES] POST error:", error);
+    logger.error("POST error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Impossible de créer le guide" },
       { status: 500 }

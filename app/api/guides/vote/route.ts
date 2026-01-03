@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("guides-vote");
 
 const voteSchema = z.object({
   guideId: z.string().min(1),
@@ -9,6 +13,10 @@ const voteSchema = z.object({
 });
 
 export const POST = async (request: NextRequest) => {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const body = await request.json().catch(() => null);
     const parsed = voteSchema.safeParse(body);
@@ -115,7 +123,7 @@ export const POST = async (request: NextRequest) => {
       },
     });
   } catch (error) {
-    console.error("[GUIDES] Vote error:", error);
+    logger.error("Vote error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors du vote" },
       { status: 500 }

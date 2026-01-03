@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
 
 const voteSchema = z.object({
   adviceId: z.string().min(1),
@@ -43,6 +44,10 @@ const buildAdvicePayload = (
 });
 
 export const POST = async (request: NextRequest) => {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   const body = await request.json();
   const parsed = voteSchema.safeParse(body);
 

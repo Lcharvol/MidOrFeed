@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("guide-comment-vote");
 
 const voteSchema = z.object({
   commentId: z.string(),
@@ -10,6 +14,10 @@ const voteSchema = z.object({
 
 // POST /api/guides/comments/vote - Vote on a comment
 export const POST = async (request: NextRequest) => {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) {
@@ -133,7 +141,7 @@ export const POST = async (request: NextRequest) => {
       },
     });
   } catch (error) {
-    console.error("[GUIDES] POST comment vote error:", error);
+    logger.error("POST comment vote error:", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur lors du vote" },
       { status: 500 }
