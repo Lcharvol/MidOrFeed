@@ -6,6 +6,7 @@ export interface NotificationPayload {
   message: string;
   variant: NotificationVariant;
   createdAt: string;
+  metadata?: Record<string, unknown>;
 }
 
 

@@ -4,6 +4,7 @@ import { QUEUE_NAMES } from "../queues";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
+import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import type {
   DataCrawlJobData,
@@ -272,12 +273,14 @@ export function createDataCrawlWorker() {
     }
   );
 
-  worker.on("completed", (job) => {
+  worker.on("completed", (job, result) => {
     console.log(`[Data Crawl] Job ${job.id} completed`);
+    notifyJobCompleted(QUEUE_NAMES.DATA_CRAWL, job.id, result as unknown as Record<string, unknown>);
   });
 
   worker.on("failed", (job, err) => {
     console.error(`[Data Crawl] Job ${job?.id} failed:`, err);
+    notifyJobFailed(QUEUE_NAMES.DATA_CRAWL, job?.id, err);
   });
 
   return worker;

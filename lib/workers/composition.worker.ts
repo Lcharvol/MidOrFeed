@@ -3,6 +3,7 @@ import { getRedisConnection } from "../redis";
 import { QUEUE_NAMES } from "../queues";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
+import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
 import type {
   CompositionJobData,
   CompositionJobResult,
@@ -94,12 +95,14 @@ export function createCompositionWorker() {
     }
   );
 
-  worker.on("completed", (job) => {
+  worker.on("completed", (job, result) => {
     console.log(`[Compositions] Job ${job.id} completed`);
+    notifyJobCompleted(QUEUE_NAMES.COMPOSITIONS, job.id, result as unknown as Record<string, unknown>);
   });
 
   worker.on("failed", (job, err) => {
     console.error(`[Compositions] Job ${job?.id} failed:`, err);
+    notifyJobFailed(QUEUE_NAMES.COMPOSITIONS, job?.id, err);
   });
 
   return worker;

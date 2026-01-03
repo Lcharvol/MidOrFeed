@@ -10,6 +10,9 @@ import {
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { useNotificationChannel } from "@/lib/hooks/use-notification-channel";
+import { useAdminNotificationChannel } from "@/lib/hooks/use-admin-notification-channel";
+import { useAuth } from "@/lib/auth-context";
+import { isAdmin } from "@/types/roles";
 import type { NotificationPayload, NotificationVariant } from "@/types";
 
 export type NotificationContextValue = {
@@ -44,6 +47,7 @@ type NotificationProviderProps = {
 export const NotificationProvider = ({
   children,
 }: NotificationProviderProps) => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<NotificationPayload[]>([]);
   const [unreadIds, setUnreadIds] = useState<string[]>([]);
 
@@ -62,6 +66,12 @@ export const NotificationProvider = ({
   }, []);
 
   const { state } = useNotificationChannel({
+    onNotification: handleNotification,
+  });
+
+  // Admin channel for job notifications (only connects if user is admin)
+  useAdminNotificationChannel({
+    enabled: isAdmin(user?.role),
     onNotification: handleNotification,
   });
 

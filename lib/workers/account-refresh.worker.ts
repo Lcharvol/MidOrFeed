@@ -4,6 +4,7 @@ import { QUEUE_NAMES } from "../queues";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
+import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import type {
   AccountRefreshJobData,
@@ -176,12 +177,14 @@ export function createAccountRefreshWorker() {
     }
   );
 
-  worker.on("completed", (job) => {
+  worker.on("completed", (job, result) => {
     console.log(`[Account Refresh] Job ${job.id} completed`);
+    notifyJobCompleted(QUEUE_NAMES.ACCOUNT_REFRESH, job.id, result as unknown as Record<string, unknown>);
   });
 
   worker.on("failed", (job, err) => {
     console.error(`[Account Refresh] Job ${job?.id} failed:`, err);
+    notifyJobFailed(QUEUE_NAMES.ACCOUNT_REFRESH, job?.id, err);
   });
 
   return worker;

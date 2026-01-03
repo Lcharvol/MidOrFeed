@@ -3,6 +3,7 @@ import { getRedisConnection } from "../redis";
 import { QUEUE_NAMES } from "../queues";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
+import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
 import type {
   MetaAnalysisJobData,
   MetaAnalysisJobResult,
@@ -166,12 +167,14 @@ export function createMetaAnalysisWorker() {
     }
   );
 
-  worker.on("completed", (job) => {
+  worker.on("completed", (job, result) => {
     console.log(`[Meta Analysis] Job ${job.id} completed`);
+    notifyJobCompleted(QUEUE_NAMES.META_ANALYSIS, job.id, result as unknown as Record<string, unknown>);
   });
 
   worker.on("failed", (job, err) => {
     console.error(`[Meta Analysis] Job ${job?.id} failed:`, err);
+    notifyJobFailed(QUEUE_NAMES.META_ANALYSIS, job?.id, err);
   });
 
   return worker;

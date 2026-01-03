@@ -4,6 +4,7 @@ import { QUEUE_NAMES } from "../queues";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
+import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
 import { MAIN_REGIONS } from "@/constants/riot-regions";
 import type {
   LeaderboardSyncJobData,
@@ -158,12 +159,14 @@ export function createLeaderboardSyncWorker() {
     }
   );
 
-  worker.on("completed", (job) => {
+  worker.on("completed", (job, result) => {
     console.log(`[Leaderboard Sync] Job ${job.id} completed`);
+    notifyJobCompleted(QUEUE_NAMES.LEADERBOARD_SYNC, job.id, result as unknown as Record<string, unknown>);
   });
 
   worker.on("failed", (job, err) => {
     console.error(`[Leaderboard Sync] Job ${job?.id} failed:`, err);
+    notifyJobFailed(QUEUE_NAMES.LEADERBOARD_SYNC, job?.id, err);
   });
 
   return worker;

@@ -14,6 +14,7 @@ type NotificationClientMap = Map<string, SSEClient>;
 
 const notificationsGlobal = globalThis as unknown as {
   __notificationClients?: NotificationClientMap;
+  __adminNotificationClients?: NotificationClientMap;
 };
 
 const clients: NotificationClientMap =
@@ -21,6 +22,14 @@ const clients: NotificationClientMap =
 
 if (!notificationsGlobal.__notificationClients) {
   notificationsGlobal.__notificationClients = clients;
+}
+
+// Admin clients for job notifications
+const adminClients: NotificationClientMap =
+  notificationsGlobal.__adminNotificationClients ?? new Map<string, SSEClient>();
+
+if (!notificationsGlobal.__adminNotificationClients) {
+  notificationsGlobal.__adminNotificationClients = adminClients;
 }
 
 const encoder = new TextEncoder();
@@ -64,6 +73,46 @@ export const sendHeartbeat = (): void => {
       client.controller.enqueue(heartbeat);
     } catch {
       clients.delete(clientId);
+    }
+  });
+};
+
+// Admin SSE client management
+export const registerAdminSSEClient = (
+  clientId: string,
+  controller: ReadableStreamDefaultController<Uint8Array>
+): void => {
+  adminClients.set(clientId, { id: clientId, controller });
+};
+
+export const unregisterAdminSSEClient = (clientId: string): void => {
+  adminClients.delete(clientId);
+};
+
+export const getAdminClientCount = (): number => adminClients.size;
+
+export const broadcastToAdmins = (payload: NotificationPayload): void => {
+  const message: NotificationMessage = { type: "notification", payload };
+  const frame = formatSSE(JSON.stringify(message));
+
+  adminClients.forEach((client, clientId) => {
+    try {
+      client.controller.enqueue(frame);
+    } catch (error) {
+      console.error(`SSE admin broadcast error for client ${clientId}:`, error);
+      adminClients.delete(clientId);
+    }
+  });
+};
+
+export const sendAdminHeartbeat = (): void => {
+  const heartbeat = encoder.encode(`: heartbeat\n\n`);
+
+  adminClients.forEach((client, clientId) => {
+    try {
+      client.controller.enqueue(heartbeat);
+    } catch {
+      adminClients.delete(clientId);
     }
   });
 };

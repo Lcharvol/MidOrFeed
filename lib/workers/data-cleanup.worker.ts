@@ -3,6 +3,7 @@ import { getRedisConnection } from "../redis";
 import { QUEUE_NAMES } from "../queues";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
+import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
 import type {
   DataCleanupJobData,
   DataCleanupJobResult,
@@ -195,12 +196,14 @@ export function createDataCleanupWorker() {
     }
   );
 
-  worker.on("completed", (job) => {
+  worker.on("completed", (job, result) => {
     console.log(`[Data Cleanup] Job ${job.id} completed`);
+    notifyJobCompleted(QUEUE_NAMES.DATA_CLEANUP, job.id, result as unknown as Record<string, unknown>);
   });
 
   worker.on("failed", (job, err) => {
     console.error(`[Data Cleanup] Job ${job?.id} failed:`, err);
+    notifyJobFailed(QUEUE_NAMES.DATA_CLEANUP, job?.id, err);
   });
 
   return worker;

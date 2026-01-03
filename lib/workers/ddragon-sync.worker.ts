@@ -3,6 +3,7 @@ import { getRedisConnection } from "../redis";
 import { QUEUE_NAMES } from "../queues";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
+import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
 import type {
   DDragonSyncJobData,
   DDragonSyncJobResult,
@@ -299,12 +300,14 @@ export function createDDragonSyncWorker() {
     }
   );
 
-  worker.on("completed", (job) => {
+  worker.on("completed", (job, result) => {
     console.log(`[DDragon Sync] Job ${job.id} completed`);
+    notifyJobCompleted(QUEUE_NAMES.DDRAGON_SYNC, job.id, result as unknown as Record<string, unknown>);
   });
 
   worker.on("failed", (job, err) => {
     console.error(`[DDragon Sync] Job ${job?.id} failed:`, err);
+    notifyJobFailed(QUEUE_NAMES.DDRAGON_SYNC, job?.id, err);
   });
 
   return worker;
