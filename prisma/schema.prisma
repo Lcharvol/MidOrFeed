@@ -166,6 +166,14 @@ model CompositionSuggestion {
   strengths         String?
   weaknesses        String?
 
+  // Enhanced composition data
+  counters        String? // JSON: [{championId, winRateAgainst}]
+  roleSynergies   String? // JSON: {top: [...], jungle: [...], ...}
+  avgDamagePerMin Float?
+  avgGoldPerMin   Float?
+  avgVisionPerMin Float?
+  aiReasoning     String? @db.Text // AI-generated reasoning
+
   @@index([role])
   @@index([userId])
   @@map("composition_suggestions")

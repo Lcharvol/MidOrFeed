@@ -4,6 +4,10 @@ import { QUEUE_NAMES } from "../queues";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
 import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import {
+  generateCompositionReasoning,
+  type CompositionAnalysisInput,
+} from "../ai/composition-analysis";
 import type {
   CompositionJobData,
   CompositionJobResult,
@@ -12,6 +16,34 @@ import type {
 
 const ROLES = ["top", "jungle", "mid", "adc", "support"] as const;
 type Role = (typeof ROLES)[number];
+
+// Role pairs for synergy analysis
+const ROLE_SYNERGY_PAIRS: Record<Role, Role[]> = {
+  top: ["jungle"],
+  jungle: ["mid", "top"],
+  mid: ["jungle"],
+  adc: ["support"],
+  support: ["adc"],
+};
+
+interface AdvancedMetrics {
+  avgDamagePerMin: number;
+  avgGoldPerMin: number;
+  avgVisionPerMin: number;
+}
+
+interface CounterMatchup {
+  championId: string;
+  winRateAgainst: number;
+  games: number;
+}
+
+interface RoleSynergy {
+  championId: string;
+  role: string;
+  winRate: number;
+  games: number;
+}
 
 /**
  * Composition Generation Worker
@@ -161,12 +193,55 @@ async function generateSuggestionsForRole(
     // Find common ally champions (synergies)
     const synergies = await findSynergies(champ.championId, positions);
 
+    // Calculate advanced metrics
+    const metrics = await calculateAdvancedMetrics(champ.championId, positions);
+
+    // Find counter matchups
+    const counters = await findCounterMatchups(champ.championId, positions);
+
+    // Find role-specific synergies
+    const roleSynergies = await findRoleSynergies(champ.championId, role);
+
     // Calculate confidence based on sample size and win rate
     const sampleConfidence = Math.min(totalGames / 100, 1);
     const winRateConfidence = winRate > 0.5 ? (winRate - 0.5) * 2 : 0;
     const confidence = 0.6 * sampleConfidence + 0.4 * winRateConfidence;
 
-    // Generate reasoning
+    // Get champion name for AI reasoning
+    const champion = await prisma.champion.findFirst({
+      where: { championId: champ.championId },
+      select: { name: true },
+    });
+
+    // Prepare synergies for AI input (flatten role synergies)
+    const allRoleSynergies: Array<{ championId: string; role: string; winRate: number }> = [];
+    for (const [partnerRole, synergyList] of Object.entries(roleSynergies)) {
+      for (const s of synergyList) {
+        allRoleSynergies.push({
+          championId: s.championId,
+          role: partnerRole,
+          winRate: s.winRate,
+        });
+      }
+    }
+
+    // Generate AI-powered reasoning
+    const aiInput: CompositionAnalysisInput = {
+      championId: champ.championId,
+      championName: champion?.name,
+      role,
+      winRate,
+      avgKDA,
+      metrics,
+      synergies: allRoleSynergies,
+      counters: counters.map((c) => ({
+        championId: c.championId,
+        winRateAgainst: c.winRateAgainst,
+      })),
+    };
+    const aiReasoning = await generateCompositionReasoning(aiInput);
+
+    // Generate basic reasoning as fallback
     const reasoning = generateReasoning(champ.championId, winRate, avgKDA, totalGames, synergies);
 
     // Get champion stats for additional info
@@ -192,6 +267,13 @@ async function generateSuggestionsForRole(
               .join(", ")}`
           : null,
         playstyle: getPlaystyleDescription(role, avgKDA, winRate),
+        // New enhanced fields
+        counters: JSON.stringify(counters),
+        roleSynergies: JSON.stringify(roleSynergies),
+        avgDamagePerMin: metrics.avgDamagePerMin,
+        avgGoldPerMin: metrics.avgGoldPerMin,
+        avgVisionPerMin: metrics.avgVisionPerMin,
+        aiReasoning,
       },
     });
 
@@ -237,6 +319,137 @@ async function findSynergies(
     winRate: Number(s.wins) / Number(s.games),
     games: Number(s.games),
   }));
+}
+
+/**
+ * Calculate advanced metrics for a champion in a role
+ */
+async function calculateAdvancedMetrics(
+  championId: string,
+  positions: string[]
+): Promise<AdvancedMetrics> {
+  const metrics = await prisma.$queryRaw<
+    Array<{
+      avgDamagePerMin: number | null;
+      avgGoldPerMin: number | null;
+      avgVisionPerMin: number | null;
+    }>
+  >`
+    SELECT
+      AVG(mp."totalDamageDealtToChampions"::float / NULLIF(m."gameDuration" / 60.0, 0)) as "avgDamagePerMin",
+      AVG(mp."goldEarned"::float / NULLIF(m."gameDuration" / 60.0, 0)) as "avgGoldPerMin",
+      AVG(mp."visionScore"::float / NULLIF(m."gameDuration" / 60.0, 0)) as "avgVisionPerMin"
+    FROM match_participants mp
+    INNER JOIN matches m ON mp."matchId" = m.id
+    WHERE mp."championId" = ${championId}
+      AND (mp.role = ANY(${positions}) OR mp.lane = ANY(${positions}))
+      AND m."gameDuration" > 300
+  `;
+
+  const result = metrics[0];
+  return {
+    avgDamagePerMin: result?.avgDamagePerMin ?? 0,
+    avgGoldPerMin: result?.avgGoldPerMin ?? 0,
+    avgVisionPerMin: result?.avgVisionPerMin ?? 0,
+  };
+}
+
+/**
+ * Find counter matchups - champions this pick is effective against
+ */
+async function findCounterMatchups(
+  championId: string,
+  positions: string[]
+): Promise<CounterMatchup[]> {
+  const matchups = await prisma.$queryRaw<
+    Array<{
+      enemyChampionId: string;
+      games: bigint;
+      wins: bigint;
+    }>
+  >`
+    SELECT
+      enemy."championId" as "enemyChampionId",
+      COUNT(*) as games,
+      SUM(CASE WHEN mp.win THEN 1 ELSE 0 END) as wins
+    FROM match_participants mp
+    INNER JOIN match_participants enemy
+      ON mp."matchId" = enemy."matchId"
+      AND mp."teamId" != enemy."teamId"
+    WHERE mp."championId" = ${championId}
+      AND (mp.role = ANY(${positions}) OR mp.lane = ANY(${positions}))
+      AND (enemy.role = ANY(${positions}) OR enemy.lane = ANY(${positions}))
+    GROUP BY enemy."championId"
+    HAVING COUNT(*) >= 10
+    ORDER BY SUM(CASE WHEN mp.win THEN 1 ELSE 0 END)::float / COUNT(*) DESC
+    LIMIT 5
+  `;
+
+  return matchups.map((m) => ({
+    championId: m.enemyChampionId,
+    winRateAgainst: Number(m.wins) / Number(m.games),
+    games: Number(m.games),
+  }));
+}
+
+/**
+ * Find role-specific synergies (e.g., ADC+Support, Mid+Jungle)
+ */
+async function findRoleSynergies(
+  championId: string,
+  role: Role
+): Promise<Record<string, RoleSynergy[]>> {
+  const synergiesResult: Record<string, RoleSynergy[]> = {};
+  const partnerRoles = ROLE_SYNERGY_PAIRS[role];
+
+  // Map roles to position values
+  const rolePositionMap: Record<Role, string[]> = {
+    top: ["TOP", "top", "SOLO"],
+    jungle: ["JUNGLE", "jungle", "NONE"],
+    mid: ["MIDDLE", "mid", "MID"],
+    adc: ["BOTTOM", "bottom", "ADC", "adc"],
+    support: ["UTILITY", "utility", "SUPPORT", "support"],
+  };
+
+  const myPositions = rolePositionMap[role];
+
+  for (const partnerRole of partnerRoles) {
+    const partnerPositions = rolePositionMap[partnerRole];
+
+    const synergies = await prisma.$queryRaw<
+      Array<{
+        allyChampionId: string;
+        games: bigint;
+        wins: bigint;
+      }>
+    >`
+      SELECT
+        ally."championId" as "allyChampionId",
+        COUNT(*) as games,
+        SUM(CASE WHEN mp.win THEN 1 ELSE 0 END) as wins
+      FROM match_participants mp
+      INNER JOIN match_participants ally
+        ON mp."matchId" = ally."matchId"
+        AND mp."teamId" = ally."teamId"
+        AND mp.id != ally.id
+      WHERE mp."championId" = ${championId}
+        AND (mp.role = ANY(${myPositions}) OR mp.lane = ANY(${myPositions}))
+        AND (ally.role = ANY(${partnerPositions}) OR ally.lane = ANY(${partnerPositions}))
+      GROUP BY ally."championId"
+      HAVING COUNT(*) >= 10
+      ORDER BY SUM(CASE WHEN mp.win THEN 1 ELSE 0 END)::float / COUNT(*) DESC
+      LIMIT 5
+    `;
+
+    synergiesResult[partnerRole] = synergies.map((s) => ({
+      championId: s.allyChampionId,
+      role: partnerRole,
+      winRate: Number(s.wins) / Number(s.games),
+      games: Number(s.games),
+    }));
+  }
+
+  return synergiesResult;
 }
 
 /**
