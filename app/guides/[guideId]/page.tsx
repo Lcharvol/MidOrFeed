@@ -28,6 +28,7 @@ import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { useState } from "react";
 import type { ChampionGuide, ItemBuildConfig, SkillOrderConfig } from "@/types/guides";
+import { GuideComments } from "./components/GuideComments";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -507,6 +508,9 @@ const GuidePage = () => {
           mid={guide.midGameTips}
           late={guide.lateGameTips}
         />
+
+        {/* Comments Section */}
+        <GuideComments guideId={guide.id} />
       </div>
     </div>
   );
