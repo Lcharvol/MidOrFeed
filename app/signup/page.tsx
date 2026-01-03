@@ -58,7 +58,12 @@ export default function SignupPage() {
     .object({
       name: z.string().min(2, t("signup.nameMinCharacters")),
       email: z.string().email(t("signup.invalidEmail")),
-      password: z.string().min(8, t("signup.passwordMinCharacters")),
+      password: z
+        .string()
+        .min(8, t("signup.passwordMinCharacters"))
+        .regex(/[A-Z]/, t("signup.passwordNeedsUppercase"))
+        .regex(/[a-z]/, t("signup.passwordNeedsLowercase"))
+        .regex(/[0-9]/, t("signup.passwordNeedsNumber")),
       confirmPassword: z.string(),
       terms: z.boolean().refine((val) => val === true, {
         message: t("signup.mustAcceptConditions"),

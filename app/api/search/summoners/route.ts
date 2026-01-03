@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ShardedLeagueAccounts, getLeagueAccountsTableName } from "@/lib/prisma-sharded-accounts";
-import { validateRegion, validateTableName, escapeSqlIdentifier } from "@/lib/sql-sanitization";
+import { getLeagueAccountsTableName } from "@/lib/prisma-sharded-accounts";
+import { validateRegion, validateTableName, escapeSqlIdentifier, escapeLikePattern } from "@/lib/sql-sanitization";
 import { z } from "zod";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("search-summoners");
 
 const searchSchema = z.object({
   query: z.string().min(2, "Requête trop courte"),
@@ -21,10 +24,12 @@ export async function POST(request: Request) {
 
     const { query, region, limit } = validatedData;
 
-    console.log("[SEARCH/SUMMONERS] Recherche:", { query, region, limit });
+    logger.info("Recherche", { query, region, limit });
 
     // Normaliser et valider la requête: supporter "GameName#Tag" en extrayant le nom
     const namePart = query.split("#")[0].trim();
+    // Escape LIKE special characters to prevent pattern injection
+    const safeNamePart = escapeLikePattern(namePart);
     
     // Valider que la requête ne contient pas de caractères dangereux pour SQL
     if (namePart.length > 100) {
@@ -87,12 +92,12 @@ export async function POST(request: Request) {
           }>
         >(
           `SELECT "puuid", "riotGameName", "riotTagLine", "riotRegion", "summonerLevel", "profileIconId", "totalMatches", "winRate", "avgKDA" FROM ${escapedTableName} WHERE ("riotGameName" ILIKE $1 OR "puuid" LIKE $2) ORDER BY "totalMatches" DESC LIMIT $3`,
-          `%${namePart}%`,
-          `${namePart}%`,
+          `%${safeNamePart}%`,
+          `${safeNamePart}%`,
           limit
         );
       } catch (error) {
-        console.error(`[SEARCH/SUMMONERS] Erreur recherche dans ${tableName}:`, error);
+        logger.error(`Erreur recherche dans ${tableName}`, error as Error);
       }
     }
     
@@ -126,13 +131,13 @@ export async function POST(request: Request) {
             }>
           >(
             `SELECT "puuid", "riotGameName", "riotTagLine", "riotRegion", "summonerLevel", "profileIconId", "totalMatches", "winRate", "avgKDA" FROM ${escapedTableName} WHERE ("riotGameName" ILIKE $1 OR "puuid" LIKE $2) ORDER BY "totalMatches" DESC LIMIT $3`,
-            `%${namePart}%`,
-            `${namePart}%`,
+            `%${safeNamePart}%`,
+            `${safeNamePart}%`,
             limit - rows.length
           );
           rows.push(...results);
         } catch (error) {
-          console.error(`[SEARCH/SUMMONERS] Erreur recherche dans ${tableName}:`, error);
+          logger.error(`Erreur recherche dans ${tableName}`, error as Error);
         }
       }
     }
@@ -164,7 +169,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("[SEARCH/SUMMONERS] Erreur:", error);
+    logger.error("Erreur", error as Error);
     return NextResponse.json(
       { error: "Erreur lors de la recherche" },
       { status: 500 }

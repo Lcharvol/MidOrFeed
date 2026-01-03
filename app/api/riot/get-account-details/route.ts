@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { REGION_TO_ROUTING, REGION_TO_BASE_URL } from "@/constants/regions";
-import { prisma } from "@/lib/prisma";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { z } from "zod";
+import { createLogger } from "@/lib/logger";
+import { cache } from "@/lib/cache";
+
+const logger = createLogger("riot-account-details");
+
+// Rate limiting constants
+const RATE_LIMIT_INTERVAL_MS = 150; // ~6-7 rps per routing
+const MAX_RETRIES = 3;
+const RETRY_BACKOFF_BASE_MS = 1000;
 
 const getAccountDetailsSchema = z.object({
   puuid: z.string().min(1, "PUUID est requis"),
@@ -79,42 +87,36 @@ export async function POST(request: Request) {
     }
 
     // 2) Sinon: appel Riot puis mise à jour du cache DB
-    // Simple rate limiter par routing (token spacing ~150ms)
-    const limiterKey = `__RIOT_RATE_${routing}` as const;
-    const g = globalThis as unknown as Record<string, number>;
+    // Rate limiter using cache (works across serverless instances)
+    const limiterKey = `riot_rate:${routing}`;
+    const lastCallTime = cache.get<number>(limiterKey);
     const now = Date.now();
-    if (!g[limiterKey]) g[limiterKey] = 0;
-    if (g[limiterKey] > now) {
-      await new Promise((r) => setTimeout(r, g[limiterKey] - now));
+    if (lastCallTime && lastCallTime > now) {
+      await new Promise((r) => setTimeout(r, lastCallTime - now));
     }
-    g[limiterKey] = Date.now() + 150; // ~6-7 rps par routing
+    cache.set(limiterKey, Date.now() + RATE_LIMIT_INTERVAL_MS, 10); // 10s TTL
+
+    // Fetch with exponential backoff retry
+    const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<Response> => {
+      const response = await fetch(url, {
+        headers: { "X-Riot-Token": RIOT_API_KEY },
+      });
+
+      if (response.status === 429 && retries > 0) {
+        const retryAfter = parseInt(response.headers.get("Retry-After") || "2", 10);
+        const backoff = Math.max(retryAfter * 1000, RETRY_BACKOFF_BASE_MS * (MAX_RETRIES - retries + 1));
+        logger.warn(`Rate limited, retrying in ${backoff}ms`, { url, retriesLeft: retries - 1 });
+        await new Promise((r) => setTimeout(r, backoff));
+        return fetchWithRetry(url, retries - 1);
+      }
+
+      return response;
+    };
 
     // Appeler l'API Account pour obtenir le Riot ID
-    let accountResponse = await fetch(
-      `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${validatedData.puuid}`,
-      {
-        headers: {
-          "X-Riot-Token": RIOT_API_KEY,
-        },
-      }
+    const accountResponse = await fetchWithRetry(
+      `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${validatedData.puuid}`
     );
-    if (accountResponse.status === 429) {
-      const retryAfter = parseInt(
-        accountResponse.headers.get("Retry-After") || "2",
-        10
-      );
-      await new Promise((r) =>
-        setTimeout(r, (isNaN(retryAfter) ? 2 : retryAfter) * 1000)
-      );
-      accountResponse = await fetch(
-        `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${validatedData.puuid}`,
-        {
-          headers: {
-            "X-Riot-Token": RIOT_API_KEY,
-          },
-        }
-      );
-    }
 
     if (!accountResponse.ok) {
       if (accountResponse.status === 404) {
@@ -169,11 +171,11 @@ export async function POST(request: Request) {
     if (summonerResponse.ok) {
       summonerData = await summonerResponse.json();
     } else {
-      console.log(
-        "Summoner API error:",
-        summonerResponse.status,
-        summonerResponse.statusText
-      );
+      logger.warn("Summoner API error", {
+        status: summonerResponse.status,
+        statusText: summonerResponse.statusText,
+        puuid: validatedData.puuid,
+      });
     }
 
     // Upsert en base pour persister les infos dans la table shardée
@@ -217,7 +219,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Erreur lors de la récupération des détails:", error);
+    logger.error("Erreur lors de la récupération des détails", error as Error);
     return NextResponse.json(
       { error: "Erreur lors de la récupération des détails" },
       { status: 500 }

@@ -81,15 +81,17 @@ const CommentItem = ({
             </span>
           </div>
           <p className="text-xs sm:text-sm mt-1 whitespace-pre-line">{comment.content}</p>
-          <div className="flex items-center gap-1 sm:gap-2 mt-2">
+          <div className="flex items-center gap-1 sm:gap-2 mt-2" role="group" aria-label="Voter pour ce commentaire">
             <Button
               variant={comment.viewerVote === 1 ? "default" : "ghost"}
               size="sm"
               className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs"
               onClick={() => handleVote(1)}
               disabled={isVoting}
+              aria-label={`Vote positif (${comment.upvotes})`}
+              aria-pressed={comment.viewerVote === 1}
             >
-              <ThumbsUpIcon className="size-3 mr-0.5 sm:mr-1" />
+              <ThumbsUpIcon className="size-3 mr-0.5 sm:mr-1" aria-hidden="true" />
               {comment.upvotes}
             </Button>
             <Button
@@ -98,8 +100,10 @@ const CommentItem = ({
               className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs"
               onClick={() => handleVote(-1)}
               disabled={isVoting}
+              aria-label={`Vote negatif (${comment.downvotes})`}
+              aria-pressed={comment.viewerVote === -1}
             >
-              <ThumbsDownIcon className="size-3 mr-0.5 sm:mr-1" />
+              <ThumbsDownIcon className="size-3 mr-0.5 sm:mr-1" aria-hidden="true" />
               {comment.downvotes}
             </Button>
             {depth === 0 && (

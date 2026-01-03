@@ -5,6 +5,17 @@ import { prisma } from "./prisma";
  */
 
 /**
+ * Échappe les caractères spéciaux dans un pattern LIKE pour éviter les injections
+ * Les caractères % et _ ont une signification spéciale dans LIKE
+ */
+export const escapeLikePattern = (value: string): string => {
+  return value
+    .replace(/\\/g, "\\\\") // Escape backslashes first
+    .replace(/%/g, "\\%")   // Escape %
+    .replace(/_/g, "\\_");  // Escape _
+};
+
+/**
  * Échappe un identifiant SQL (nom de table, colonne) pour éviter les injections
  * Utilise des guillemets doubles pour PostgreSQL
  */

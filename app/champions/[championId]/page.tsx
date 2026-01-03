@@ -52,19 +52,23 @@ const ChampionPage = async ({ params }: { params: Promise<PageParams> }) => {
   }
 
   const { champion, stats } = details;
-  const championGrowth = await prisma.champion.findMany({
-    select: { hp: true, hpPerLevel: true, mp: true, mpPerLevel: true },
-  });
+
+  // Utiliser des agrégats SQL pour éviter de charger tous les champions (N+1 fix)
+  // Calcul: HP at level 18 = hp + hpPerLevel * 17
+  const [hpAggregates, mpAggregates] = await Promise.all([
+    prisma.$queryRaw<[{ max_hp_18: number }]>`
+      SELECT MAX("hp" + "hpPerLevel" * 17) as max_hp_18
+      FROM "Champion"
+    `,
+    prisma.$queryRaw<[{ max_mp_18: number }]>`
+      SELECT MAX("mp" + COALESCE("mpPerLevel", 0) * 17) as max_mp_18
+      FROM "Champion"
+      WHERE "mp" IS NOT NULL
+    `,
+  ]);
 
   const computeLevel18 = (base: number, perLevel: number) =>
     base + perLevel * 17;
-
-  const hpReferenceValues = championGrowth.map(({ hp, hpPerLevel }) =>
-    computeLevel18(hp, hpPerLevel)
-  );
-  const mpReferenceValues = championGrowth
-    .filter(({ mp }) => mp !== null)
-    .map(({ mp, mpPerLevel }) => computeLevel18(mp ?? 0, mpPerLevel ?? 0));
 
   const defaultHpReference = computeLevel18(champion.hp, champion.hpPerLevel);
   const defaultMpReference = computeLevel18(
@@ -72,12 +76,8 @@ const ChampionPage = async ({ params }: { params: Promise<PageParams> }) => {
     champion.mpPerLevel ?? 0
   );
 
-  const maxHpReference = hpReferenceValues.length
-    ? Math.max(...hpReferenceValues)
-    : defaultHpReference;
-  const maxMpReference = mpReferenceValues.length
-    ? Math.max(...mpReferenceValues)
-    : Math.max(defaultMpReference, 1);
+  const maxHpReference = hpAggregates[0]?.max_hp_18 ?? defaultHpReference;
+  const maxMpReference = mpAggregates[0]?.max_mp_18 ?? Math.max(defaultMpReference, 1);
   const { createdAtIso, updatedAtIso, ...championEntity } = champion;
   const canonicalPath = `/champions/${encodeURIComponent(champion.championId)}`;
   const canonicalUrl = buildUrl(canonicalPath);

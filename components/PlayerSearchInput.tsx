@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import {
   Command,
@@ -17,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2Icon, UserIcon, ClockIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getProfileIconUrl } from "@/constants/ddragon";
 
 type SearchResult = {
   puuid: string;
@@ -45,22 +47,40 @@ type PlayerSearchInputProps = {
 const RECENT_SEARCHES_KEY = "compareRecentSearches";
 const MAX_RECENT = 5;
 
-type RecentPlayer = {
-  puuid: string;
-  gameName: string;
-  tagLine: string;
-  region: string;
-  profileIconId?: number;
-  timestamp: number;
-};
+// Zod schema for localStorage validation
+const recentPlayerSchema = z.object({
+  puuid: z.string().min(1).max(100),
+  gameName: z.string().min(1).max(50),
+  tagLine: z.string().min(1).max(10),
+  region: z.string().min(1).max(10),
+  profileIconId: z.number().int().positive().optional(),
+  timestamp: z.number().int().positive(),
+});
+
+type RecentPlayer = z.infer<typeof recentPlayerSchema>;
 
 const getRecentSearches = (): RecentPlayer[] => {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.slice(0, MAX_RECENT) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Validate each item and filter out invalid ones
+    return parsed
+      .map((item) => {
+        const result = recentPlayerSchema.safeParse(item);
+        return result.success ? result.data : null;
+      })
+      .filter((item): item is RecentPlayer => item !== null)
+      .slice(0, MAX_RECENT);
   } catch {
+    // If localStorage is corrupted, clear it
+    try {
+      localStorage.removeItem(RECENT_SEARCHES_KEY);
+    } catch {
+      // Ignore storage errors
+    }
     return [];
   }
 };
@@ -236,7 +256,7 @@ export const PlayerSearchInput = ({
                     <Avatar className="size-6">
                       {recent.profileIconId ? (
                         <AvatarImage
-                          src={`https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${recent.profileIconId}.png`}
+                          src={getProfileIconUrl(recent.profileIconId)}
                           alt={recent.gameName}
                         />
                       ) : null}
@@ -270,7 +290,7 @@ export const PlayerSearchInput = ({
                     <Avatar className="size-8">
                       {result.profileIconId ? (
                         <AvatarImage
-                          src={`https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${result.profileIconId}.png`}
+                          src={getProfileIconUrl(result.profileIconId)}
                           alt={result.gameName || ""}
                         />
                       ) : null}

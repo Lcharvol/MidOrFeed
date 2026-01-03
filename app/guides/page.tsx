@@ -100,16 +100,16 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
 
               {/* Stats */}
               <div className="flex items-center gap-2 sm:gap-4 mt-2 sm:mt-3 text-xs sm:text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <ThumbsUpIcon className="size-3 sm:size-3.5" />
+                <div className="flex items-center gap-1" aria-label={`${guide.upvotes} votes positifs`}>
+                  <ThumbsUpIcon className="size-3 sm:size-3.5" aria-hidden="true" />
                   <span>{guide.upvotes}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <ThumbsDownIcon className="size-3 sm:size-3.5" />
+                <div className="flex items-center gap-1" aria-label={`${guide.downvotes} votes negatifs`}>
+                  <ThumbsDownIcon className="size-3 sm:size-3.5" aria-hidden="true" />
                   <span>{guide.downvotes}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <EyeIcon className="size-3 sm:size-3.5" />
+                <div className="flex items-center gap-1" aria-label={`${guide.viewCount} vues`}>
+                  <EyeIcon className="size-3 sm:size-3.5" aria-hidden="true" />
                   <span>{guide.viewCount}</span>
                 </div>
                 {guide.patchVersion && (

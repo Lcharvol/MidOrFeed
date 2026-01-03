@@ -311,14 +311,16 @@ const VoteButton = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" role="group" aria-label="Voter pour ce guide">
       <Button
         variant={guide.viewerVote === 1 ? "default" : "outline"}
         size="sm"
         onClick={() => handleVote(1)}
         disabled={isVoting}
+        aria-label={`Vote positif (${guide.upvotes} votes)`}
+        aria-pressed={guide.viewerVote === 1}
       >
-        <ThumbsUpIcon className="size-4 mr-1" />
+        <ThumbsUpIcon className="size-4 mr-1" aria-hidden="true" />
         {guide.upvotes}
       </Button>
       <Button
@@ -326,8 +328,10 @@ const VoteButton = ({
         size="sm"
         onClick={() => handleVote(-1)}
         disabled={isVoting}
+        aria-label={`Vote negatif (${guide.downvotes} votes)`}
+        aria-pressed={guide.viewerVote === -1}
       >
-        <ThumbsDownIcon className="size-4 mr-1" />
+        <ThumbsDownIcon className="size-4 mr-1" aria-hidden="true" />
         {guide.downvotes}
       </Button>
     </div>

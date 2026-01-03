@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Redis from "ioredis";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("rate-limit");
 
 /**
  * Configuration du rate limiting
@@ -51,7 +54,8 @@ class RedisStore implements RateLimitStore {
       const data = await this.redis.get(`ratelimit:${key}`);
       if (!data) return null;
       return JSON.parse(data);
-    } catch {
+    } catch (error) {
+      logger.warn("Redis get error", { key, error: (error as Error).message });
       return null;
     }
   }
@@ -65,14 +69,15 @@ class RedisStore implements RateLimitStore {
         ttlMs
       );
     } catch (error) {
-      console.error("[RateLimit] Redis set error:", error);
+      logger.error("Redis set error", error as Error, { key });
     }
   }
 
   async increment(key: string): Promise<number> {
     try {
       return await this.redis.incr(`ratelimit:${key}`);
-    } catch {
+    } catch (error) {
+      logger.warn("Redis increment error", { key, error: (error as Error).message });
       return 1;
     }
   }
@@ -142,23 +147,20 @@ const getStore = (): RateLimitStore => {
       });
 
       redisClient.on("error", (err) => {
-        console.error("[RateLimit] Redis error, falling back to memory:", err.message);
+        logger.error("Redis error, falling back to memory", err);
         // Fallback to memory store on Redis failure
         store = new MemoryStore();
       });
 
       store = new RedisStore(redisClient);
-      console.log("[RateLimit] Using Redis store for distributed rate limiting");
+      logger.info("Using Redis store for distributed rate limiting");
     } catch (error) {
-      console.warn("[RateLimit] Failed to connect to Redis, using memory store:", error);
+      logger.warn("Failed to connect to Redis, using memory store", { error: (error as Error).message });
       store = new MemoryStore();
     }
   } else {
     if (process.env.NODE_ENV === "production") {
-      console.warn(
-        "[RateLimit] ⚠️  REDIS_URL not configured in production. " +
-        "Rate limiting will not work across multiple instances!"
-      );
+      logger.warn("REDIS_URL not configured in production - rate limiting will not work across multiple instances");
     }
     store = new MemoryStore();
   }
