@@ -93,18 +93,18 @@ const StatCompareRow = ({
           : 2;
 
   return (
-    <div className="flex items-center gap-4 py-3 border-b border-border/50 last:border-0">
+    <div className="flex items-center gap-2 sm:gap-4 py-2 sm:py-3 border-b border-border/50 last:border-0">
       <div
-        className={`flex-1 text-right font-semibold text-lg ${winner === 1 ? "text-emerald-500" : "text-foreground"}`}
+        className={`flex-1 text-right font-semibold text-sm sm:text-lg ${winner === 1 ? "text-emerald-500" : "text-foreground"}`}
       >
         {format(value1)}
       </div>
-      <div className="flex items-center gap-2 text-muted-foreground text-sm w-36 justify-center">
+      <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground text-[10px] sm:text-sm w-20 sm:w-36 justify-center shrink-0">
         {icon}
-        <span>{label}</span>
+        <span className="truncate">{label}</span>
       </div>
       <div
-        className={`flex-1 text-left font-semibold text-lg ${winner === 2 ? "text-emerald-500" : "text-foreground"}`}
+        className={`flex-1 text-left font-semibold text-sm sm:text-lg ${winner === 2 ? "text-emerald-500" : "text-foreground"}`}
       >
         {format(value2)}
       </div>
@@ -121,22 +121,22 @@ const PlayerCard = ({
 }) => {
   if (loading) {
     return (
-      <div className="flex flex-col items-center gap-3">
-        <Skeleton className="size-24 rounded-full" />
-        <Skeleton className="h-6 w-36" />
-        <Skeleton className="h-5 w-28" />
-        <Skeleton className="h-6 w-32" />
+      <div className="flex flex-col items-center gap-2 sm:gap-3">
+        <Skeleton className="size-16 sm:size-24 rounded-full" />
+        <Skeleton className="h-5 sm:h-6 w-24 sm:w-36" />
+        <Skeleton className="h-4 sm:h-5 w-20 sm:w-28" />
+        <Skeleton className="h-5 sm:h-6 w-24 sm:w-32" />
       </div>
     );
   }
 
   if (!player) {
     return (
-      <div className="flex flex-col items-center gap-3 text-muted-foreground py-4">
-        <div className="size-24 rounded-full bg-muted/50 flex items-center justify-center border-2 border-dashed border-border">
-          <UsersIcon className="size-10 text-muted-foreground/50" />
+      <div className="flex flex-col items-center gap-2 sm:gap-3 text-muted-foreground py-2 sm:py-4">
+        <div className="size-16 sm:size-24 rounded-full bg-muted/50 flex items-center justify-center border-2 border-dashed border-border">
+          <UsersIcon className="size-6 sm:size-10 text-muted-foreground/50" />
         </div>
-        <span className="text-sm">Selectionnez un joueur</span>
+        <span className="text-xs sm:text-sm text-center">Selectionnez un joueur</span>
       </div>
     );
   }
@@ -146,33 +146,32 @@ const PlayerCard = ({
     : null;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <Avatar className="size-24 border-2 border-primary/30 shadow-lg">
+    <div className="flex flex-col items-center gap-2 sm:gap-3">
+      <Avatar className="size-16 sm:size-24 border-2 border-primary/30 shadow-lg">
         {iconUrl ? (
           <AvatarImage src={iconUrl} alt={player.gameName} />
         ) : null}
-        <AvatarFallback className="text-3xl bg-muted">
+        <AvatarFallback className="text-xl sm:text-3xl bg-muted">
           {player.gameName[0]?.toUpperCase()}
         </AvatarFallback>
       </Avatar>
       <div className="text-center">
-        <div className="text-lg font-semibold">
-          {player.gameName}
-          <span className="text-muted-foreground font-normal">
+        <div className="text-sm sm:text-lg font-semibold">
+          <span className="truncate max-w-[80px] sm:max-w-none inline-block align-bottom">{player.gameName}</span>
+          <span className="text-muted-foreground font-normal text-xs sm:text-base">
             #{player.tagLine}
           </span>
         </div>
-        <div className="text-sm text-muted-foreground">
-          {player.region.toUpperCase()} - Niveau{" "}
+        <div className="text-[10px] sm:text-sm text-muted-foreground">
+          {player.region.toUpperCase()} - Niv.{" "}
           {player.summonerLevel || "?"}
         </div>
       </div>
       <Badge
         variant={player.stats.winRate >= 50 ? "default" : "secondary"}
-        className="text-sm px-3 py-1"
+        className="text-[10px] sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1"
       >
-        {player.stats.winRate.toFixed(1)}% WR ({player.stats.totalGames}{" "}
-        parties)
+        {player.stats.winRate.toFixed(1)}% WR ({player.stats.totalGames})
       </Badge>
     </div>
   );
@@ -278,30 +277,30 @@ export default function ComparePage() {
   const hasData = player1 && player2;
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-3 mb-2">
-          <SwordsIcon className="size-8 text-primary" />
+    <div className="container mx-auto py-6 sm:py-8 px-4 max-w-4xl">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-2 sm:gap-3 mb-2">
+          <SwordsIcon className="size-6 sm:size-8 text-primary" />
           Comparer des joueurs
         </h1>
-        <p className="text-muted-foreground">
-          Comparez les statistiques de deux joueurs cote a cote
+        <p className="text-sm sm:text-base text-muted-foreground">
+          Comparez les statistiques de deux joueurs
         </p>
       </div>
 
       {/* Search form */}
-      <Card className="mb-8 border-border/60 shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-end">
+      <Card className="mb-6 sm:mb-8 border-border/60 shadow-lg">
+        <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+          <div className="flex flex-col gap-3 sm:gap-4">
             {/* Player 1 */}
-            <div className="flex-1 space-y-2 w-full">
-              <label className="text-sm font-medium flex items-center gap-2">
+            <div className="space-y-2 w-full">
+              <label className="text-xs sm:text-sm font-medium flex items-center gap-2">
                 <div className="size-2 rounded-full bg-blue-500" />
                 Joueur 1
               </label>
               <div className="flex gap-2">
                 <Select value={region1} onValueChange={setRegion1}>
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger className="w-20 sm:w-24">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -322,21 +321,15 @@ export default function ComparePage() {
               </div>
             </div>
 
-            <div className="hidden lg:flex items-center text-muted-foreground pb-2">
-              <div className="size-10 rounded-full bg-muted flex items-center justify-center">
-                <SwordsIcon className="size-5" />
-              </div>
-            </div>
-
             {/* Player 2 */}
-            <div className="flex-1 space-y-2 w-full">
-              <label className="text-sm font-medium flex items-center gap-2">
+            <div className="space-y-2 w-full">
+              <label className="text-xs sm:text-sm font-medium flex items-center gap-2">
                 <div className="size-2 rounded-full bg-red-500" />
                 Joueur 2
               </label>
               <div className="flex gap-2">
                 <Select value={region2} onValueChange={setRegion2}>
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger className="w-20 sm:w-24">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -360,8 +353,8 @@ export default function ComparePage() {
             <Button
               onClick={handleCompare}
               disabled={isSearching || isLoading}
-              size="lg"
-              className="w-full lg:w-auto"
+              size="default"
+              className="w-full"
             >
               {isSearching || isLoading ? (
                 <Loader2Icon className="size-4 animate-spin mr-2" />
@@ -377,33 +370,33 @@ export default function ComparePage() {
       {/* Comparison results */}
       {(isLoading || hasData) && (
         <Card className="border-border/60 shadow-lg overflow-hidden">
-          <CardHeader className="bg-muted/30 border-b border-border/50">
-            <CardTitle className="text-center flex items-center justify-center gap-2">
-              <TrophyIcon className="size-5 text-primary" />
-              Resultats de la comparaison
+          <CardHeader className="bg-muted/30 border-b border-border/50 p-4 sm:p-6">
+            <CardTitle className="text-center flex items-center justify-center gap-2 text-base sm:text-lg">
+              <TrophyIcon className="size-4 sm:size-5 text-primary" />
+              Resultats
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
             {/* Player headers */}
-            <div className="flex items-start justify-between gap-4 mb-8">
-              <div className="flex-1">
+            <div className="flex items-start justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
+              <div className="flex-1 min-w-0">
                 <PlayerCard player={player1} loading={isLoading} />
               </div>
-              <div className="flex items-center justify-center pt-8">
-                <div className="size-14 rounded-full bg-gradient-to-br from-blue-500/20 to-red-500/20 flex items-center justify-center border border-border/50">
-                  <span className="font-bold text-lg text-muted-foreground">
+              <div className="flex items-center justify-center pt-4 sm:pt-8 shrink-0">
+                <div className="size-10 sm:size-14 rounded-full bg-gradient-to-br from-blue-500/20 to-red-500/20 flex items-center justify-center border border-border/50">
+                  <span className="font-bold text-sm sm:text-lg text-muted-foreground">
                     VS
                   </span>
                 </div>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <PlayerCard player={player2} loading={isLoading} />
               </div>
             </div>
 
             {/* Stats comparison */}
             {hasData && (
-              <div className="space-y-1 bg-muted/20 rounded-xl p-4 border border-border/50">
+              <div className="space-y-1 bg-muted/20 rounded-xl p-3 sm:p-4 border border-border/50">
                 <StatCompareRow
                   label="Win Rate"
                   value1={player1.stats.winRate}

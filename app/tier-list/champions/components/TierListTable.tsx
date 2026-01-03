@@ -124,16 +124,16 @@ export const TierListTable = ({
   }
 
   return (
-    <div className="rounded-2xl border bg-background/80 shadow-sm">
-      <Table>
+    <div className="rounded-2xl border bg-background/80 shadow-sm overflow-x-auto">
+      <Table className="text-xs sm:text-sm">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-16">{t("tierListChampions.rank")}</TableHead>
-            <TableHead className="w-24">{t("tierListChampions.role")}</TableHead>
+            <TableHead className="w-10 sm:w-16">{t("tierListChampions.rank")}</TableHead>
+            <TableHead className="w-10 sm:w-24 hidden sm:table-cell">{t("tierListChampions.role")}</TableHead>
             <TableHead>{t("tierListChampions.champion")}</TableHead>
             <TableHead>{t("tierListChampions.tier")}</TableHead>
             <TableHead
-              className="cursor-pointer select-none"
+              className="cursor-pointer select-none hidden sm:table-cell"
               onClick={() => onSort("score")}
             >
               <div className="flex items-center">
@@ -150,7 +150,8 @@ export const TierListTable = ({
               onClick={() => onSort("winRate")}
             >
               <div className="flex items-center">
-                {t("tierListChampions.winRate")}
+                <span className="hidden sm:inline">{t("tierListChampions.winRate")}</span>
+                <span className="sm:hidden">WR</span>
                 <SortIndicator
                   column="winRate"
                   sortColumn={sortColumn}
@@ -159,7 +160,7 @@ export const TierListTable = ({
               </div>
             </TableHead>
             <TableHead
-              className="cursor-pointer select-none"
+              className="cursor-pointer select-none hidden md:table-cell"
               onClick={() => onSort("totalGames")}
             >
               <div className="flex items-center">
@@ -172,7 +173,7 @@ export const TierListTable = ({
               </div>
             </TableHead>
             <TableHead
-              className="cursor-pointer select-none"
+              className="cursor-pointer select-none hidden md:table-cell"
               onClick={() => onSort("avgKDA")}
             >
               <div className="flex items-center">
@@ -184,8 +185,8 @@ export const TierListTable = ({
                 />
               </div>
             </TableHead>
-            <TableHead>{t("tierListChampions.weakAgainst")}</TableHead>
-            <TableHead className="text-right">{t("tierListChampions.matches")}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t("tierListChampions.weakAgainst")}</TableHead>
+            <TableHead className="text-right hidden sm:table-cell">{t("tierListChampions.matches")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -212,59 +213,65 @@ export const TierListTable = ({
 
             return (
               <TableRow key={champion.id}>
-                <TableCell className="font-semibold">{index + 1}</TableCell>
-                <TableCell>
+                <TableCell className="font-semibold py-2 sm:py-4">{index + 1}</TableCell>
+                <TableCell className="hidden sm:table-cell py-2 sm:py-4">
                   <div className="flex items-center">
                     <RoleIcon
-                      className="size-5 text-primary"
+                      className="size-4 sm:size-5 text-primary"
                       aria-hidden="true"
                     />
                     <span className="sr-only">{roleMeta.label}</span>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-2 sm:py-4">
                   <Link
                     href={`/champions/${encodeURIComponent(
                       champion.championId
                     )}`}
-                    className="flex items-center gap-3 transition hover:text-primary"
+                    className="flex items-center gap-2 sm:gap-3 transition hover:text-primary"
                   >
                     <ChampionIcon
                       championId={champion.championId}
-                      size={48}
+                      size={32}
+                      className="sm:w-12 sm:h-12"
                       alt={champion.name}
                     />
-                    <div className="space-y-1">
-                      <p className="font-semibold leading-none">
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                      <p className="font-semibold leading-none text-xs sm:text-sm truncate">
                         {champion.name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate hidden sm:block">
                         {champion.title}
                       </p>
+                      {/* Mobile: show role icon inline */}
+                      <div className="flex items-center gap-1 sm:hidden">
+                        <RoleIcon className="size-3 text-primary" />
+                        <span className="text-[10px] text-muted-foreground">{roleMeta.label}</span>
+                      </div>
                     </div>
                   </Link>
                 </TableCell>
-                <TableCell>
-                  <TierBadge tier={tier} />
+                <TableCell className="py-2 sm:py-4">
+                  <TierBadge tier={tier} className="text-[10px] sm:text-xs" />
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell py-2 sm:py-4">
                   {reliableStats ? (
                     <ColorBadge
                       emphasis={getScoreEmphasis(scoreValue)}
                       variant="subtle"
-                      className="px-3 py-1 text-xs font-semibold"
+                      className="px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold"
                     >
                       {formattedScore}
                     </ColorBadge>
                   ) : (
-                    <span className="text-muted-foreground text-sm">—</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">—</span>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-2 sm:py-4">
                   {hasStats ? (
                     <span
                       className={cn(
-                        "text-sm inline-flex items-center",
+                        "text-xs sm:text-sm inline-flex items-center",
                         getWinRateColorClasses(winRateValue)
                       )}
                     >
@@ -272,22 +279,22 @@ export const TierListTable = ({
                       <WinRateTrendIndicator trend={stats?.winRateTrend} />
                     </span>
                   ) : (
-                    <span className="text-muted-foreground text-sm">—</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">—</span>
                   )}
                 </TableCell>
-                <TableCell>{formatPercentage(pickRate)}</TableCell>
-                <TableCell>{formatKDA(stats?.avgKDA)}</TableCell>
-                <TableCell>
+                <TableCell className="hidden md:table-cell py-2 sm:py-4">{formatPercentage(pickRate)}</TableCell>
+                <TableCell className="hidden md:table-cell py-2 sm:py-4">{formatKDA(stats?.avgKDA)}</TableCell>
+                <TableCell className="hidden lg:table-cell py-2 sm:py-4">
                   {reliableStats ? (
                     <WeakAgainst
                       weakAgainst={stats?.weakAgainst ?? null}
                       championNameMap={championNameMap}
                     />
                   ) : (
-                    <span className="text-muted-foreground text-sm">—</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">—</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right hidden sm:table-cell py-2 sm:py-4">
                   {hasStats ? formatNumber(stats?.totalGames) : "—"}
                 </TableCell>
               </TableRow>

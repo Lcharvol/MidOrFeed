@@ -75,25 +75,25 @@ export default function LeaderboardPage() {
   }, [data, search]);
 
   return (
-    <div className="container mx-auto py-10 space-y-6">
+    <div className="container mx-auto px-4 py-6 sm:py-10 space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-4xl font-bold">{t("leaderboard.title")}</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-4xl font-bold">{t("leaderboard.title")}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           {t("leaderboard.description")}
         </p>
       </div>
 
       <Card>
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:gap-2 sm:flex-row sm:items-end sm:justify-between p-4 sm:p-6">
           <div>
-            <CardTitle>{t("leaderboard.ranking")}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-base sm:text-lg">{t("leaderboard.ranking")}</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               {t("leaderboard.updatedPeriodically")}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2 w-full sm:w-auto">
             <Select value={region} onValueChange={setRegion}>
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-full sm:w-28">
                 <SelectValue placeholder={t("leaderboard.region")} />
               </SelectTrigger>
               <SelectContent>
@@ -105,7 +105,7 @@ export default function LeaderboardPage() {
               </SelectContent>
             </Select>
             <Select value={tier} onValueChange={setTier}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-32">
                 <SelectValue placeholder={t("leaderboard.tier")} />
               </SelectTrigger>
               <SelectContent>
@@ -120,20 +120,20 @@ export default function LeaderboardPage() {
               placeholder={t("leaderboard.searchPlayer")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-56"
+              className="col-span-2 sm:w-44"
             />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
+        <CardContent className="p-3 sm:p-6">
+          <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-md border">
+            <Table className="text-xs sm:text-sm">
               <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead>#</TableHead>
+                  <TableHead className="w-10 sm:w-12">#</TableHead>
                   <TableHead>{t("leaderboard.player")}</TableHead>
-                  <TableHead>LP</TableHead>
-                  <TableHead>{t("leaderboard.victories")}</TableHead>
-                  <TableHead>{t("leaderboard.defeats")}</TableHead>
+                  <TableHead className="hidden sm:table-cell">LP</TableHead>
+                  <TableHead className="hidden sm:table-cell">{t("leaderboard.victories")}</TableHead>
+                  <TableHead className="hidden sm:table-cell">{t("leaderboard.defeats")}</TableHead>
                   <TableHead>WR</TableHead>
                 </TableRow>
               </TableHeader>
@@ -164,18 +164,24 @@ export default function LeaderboardPage() {
                         key={`${e.summonerId}-${idx}`}
                         className="odd:bg-muted/30"
                       >
-                        <TableCell className="tabular-nums">
+                        <TableCell className="tabular-nums py-2 sm:py-4">
                           {idx + 1}
                         </TableCell>
-                        <TableCell>{e.summonerName}</TableCell>
-                        <TableCell className="tabular-nums">
+                        <TableCell className="py-2 sm:py-4">
+                          <div className="flex flex-col sm:hidden">
+                            <span className="font-medium truncate max-w-[120px]">{e.summonerName}</span>
+                            <span className="text-[10px] text-muted-foreground">{e.leaguePoints} LP • {e.wins}W {e.losses}L</span>
+                          </div>
+                          <span className="hidden sm:inline">{e.summonerName}</span>
+                        </TableCell>
+                        <TableCell className="tabular-nums hidden sm:table-cell">
                           {e.leaguePoints}
                         </TableCell>
-                        <TableCell className="tabular-nums">{e.wins}</TableCell>
-                        <TableCell className="tabular-nums">
+                        <TableCell className="tabular-nums hidden sm:table-cell">{e.wins}</TableCell>
+                        <TableCell className="tabular-nums hidden sm:table-cell">
                           {e.losses}
                         </TableCell>
-                        <TableCell className="tabular-nums">{wr}%</TableCell>
+                        <TableCell className="tabular-nums py-2 sm:py-4">{wr}%</TableCell>
                       </TableRow>
                     );
                   })

@@ -64,10 +64,10 @@ const FavoriteCard = ({
 
   return (
     <Card className="group hover:border-primary/50 transition-colors">
-      <CardContent className="pt-4">
-        <div className="flex items-start gap-4">
-          <Avatar className="size-14 border-2 border-primary/20">
-            <AvatarFallback className="text-lg">
+      <CardContent className="p-3 sm:pt-4 sm:p-4">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <Avatar className="size-10 sm:size-14 border-2 border-primary/20 shrink-0">
+            <AvatarFallback className="text-sm sm:text-lg">
               {favorite.gameName?.[0]?.toUpperCase() || "?"}
             </AvatarFallback>
           </Avatar>
@@ -76,49 +76,49 @@ const FavoriteCard = ({
             <div className="flex items-center justify-between gap-2">
               <Link
                 href={`/summoners/${favorite.puuid}/overview?region=${favorite.region}`}
-                className="font-semibold hover:text-primary transition-colors truncate"
+                className="font-semibold text-sm sm:text-base hover:text-primary transition-colors truncate"
               >
                 {favorite.gameName || favorite.puuid.slice(0, 8)}
                 {favorite.tagLine && (
-                  <span className="text-muted-foreground">#{favorite.tagLine}</span>
+                  <span className="text-muted-foreground text-xs sm:text-sm">#{favorite.tagLine}</span>
                 )}
               </Link>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   onClick={() => onRemove(favorite.puuid)}
                 >
-                  <Trash2Icon className="size-4 text-destructive" />
+                  <Trash2Icon className="size-3.5 sm:size-4 text-destructive" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" asChild>
                   <Link
                     href={`/summoners/${favorite.puuid}/overview?region=${favorite.region}`}
                   >
-                    <ExternalLinkIcon className="size-4" />
+                    <ExternalLinkIcon className="size-3.5 sm:size-4" />
                   </Link>
                 </Button>
               </div>
             </div>
 
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               {favorite.region.toUpperCase()}
             </div>
 
             {recentMatches.length > 0 && (
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Recent:</span>
-                <div className="flex gap-1">
+              <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
+                <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">Recent:</span>
+                <div className="flex gap-0.5 sm:gap-1">
                   {recentMatches.map((match, i) => (
                     <div
                       key={i}
-                      className={`size-2 rounded-full ${match.win ? "bg-green-500" : "bg-red-500"}`}
+                      className={`size-1.5 sm:size-2 rounded-full ${match.win ? "bg-green-500" : "bg-red-500"}`}
                       title={`${match.kills}/${match.deaths}/${match.assists}`}
                     />
                   ))}
                 </div>
-                <span className="text-xs">
+                <span className="text-[10px] sm:text-xs">
                   <span className="text-green-500">{recentWins}W</span>
                   {" / "}
                   <span className="text-red-500">{recentLosses}L</span>
@@ -127,7 +127,7 @@ const FavoriteCard = ({
             )}
 
             {favorite.note && (
-              <div className="mt-2 text-xs text-muted-foreground italic">
+              <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground italic line-clamp-1 sm:line-clamp-none">
                 {favorite.note}
               </div>
             )}
@@ -180,18 +180,18 @@ export default function FavoritesPage() {
   const favorites = data?.data || [];
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="flex items-center justify-between mb-8">
+    <div className="container mx-auto py-6 sm:py-8 px-4 max-w-4xl">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <HeartIcon className="size-8 text-red-500" />
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3">
+            <HeartIcon className="size-6 sm:size-8 text-red-500" />
             Mes Favoris
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Suivez les performances de vos joueurs preferes
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+            Suivez vos joueurs preferes
           </p>
         </div>
-        <Button variant="outline" asChild>
+        <Button variant="outline" size="sm" asChild className="w-fit">
           <Link href="/compare">
             <UsersIcon className="size-4 mr-2" />
             Comparer
