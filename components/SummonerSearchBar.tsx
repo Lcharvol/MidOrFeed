@@ -25,8 +25,10 @@ export function SummonerSearchBar({
 }: SummonerSearchBarProps) {
   const { t } = useI18n();
   const [isFocused, setIsFocused] = useState(false);
+  const [isDebouncing, setIsDebouncing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     searchQuery,
@@ -42,6 +44,26 @@ export function SummonerSearchBar({
   } = useSummonerSearch({
     onNavigate: () => setIsFocused(false),
   });
+
+  // Track debounce state for visual feedback
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      setIsDebouncing(true);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = setTimeout(() => {
+        setIsDebouncing(false);
+      }, 300);
+    } else {
+      setIsDebouncing(false);
+    }
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchQuery]);
 
   // Get region label for placeholder
   const currentRegion = RIOT_REGIONS.find((r) => r.value === searchRegion);
@@ -79,10 +101,10 @@ export function SummonerSearchBar({
       >
         {/* Region selector */}
         <Select value={searchRegion} onValueChange={setSearchRegion}>
-          <SelectTrigger className="h-full w-[110px] shrink-0 border-0 border-r border-border/50 rounded-none bg-transparent focus:ring-0 focus:ring-offset-0 text-sm">
+          <SelectTrigger className="!h-12 w-[110px] shrink-0 border-0 border-r border-border/50 rounded-none bg-transparent focus:ring-0 focus:ring-offset-0 text-sm shadow-none">
             <SelectValue placeholder="Region" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[100]">
             {RIOT_REGIONS.map((region) => (
               <SelectItem key={region.value} value={region.value}>
                 {region.label}
@@ -93,7 +115,15 @@ export function SummonerSearchBar({
 
         {/* Search input */}
         <div className="flex-1 flex items-center h-full px-3 gap-2">
-          <SearchIcon className="size-4 text-muted-foreground shrink-0" />
+          <div className="relative size-4 shrink-0">
+            {isDebouncing ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="size-3 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+              </div>
+            ) : (
+              <SearchIcon className="size-4 text-muted-foreground" />
+            )}
+          </div>
           <input
             ref={inputRef}
             type="text"
@@ -129,7 +159,7 @@ export function SummonerSearchBar({
 
       {/* Dropdown with results and recent searches */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 rounded-lg border border-border bg-background shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1.5 rounded-lg border border-border bg-background shadow-lg z-[100] overflow-hidden">
           {/* Search results */}
           {searchResults.length > 0 && (
             <div className="p-1.5">
