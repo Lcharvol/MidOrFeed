@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
+import { calculateVoteDeltas, hasVoteChanges } from "@/lib/vote-utils";
 
 const logger = createLogger("guide-comment-vote");
 
@@ -61,35 +62,10 @@ export const POST = async (request: NextRequest) => {
       });
 
       const oldValue = existingVote?.value ?? 0;
-      const newValue = value;
-
-      // Calculate deltas
-      let scoreDelta = 0;
-      let upvotesDelta = 0;
-      let downvotesDelta = 0;
-
-      if (oldValue !== newValue) {
-        // Remove old vote effects
-        if (oldValue === 1) {
-          scoreDelta -= 1;
-          upvotesDelta -= 1;
-        } else if (oldValue === -1) {
-          scoreDelta += 1;
-          downvotesDelta -= 1;
-        }
-
-        // Add new vote effects
-        if (newValue === 1) {
-          scoreDelta += 1;
-          upvotesDelta += 1;
-        } else if (newValue === -1) {
-          scoreDelta -= 1;
-          downvotesDelta += 1;
-        }
-      }
+      const deltas = calculateVoteDeltas(oldValue, value);
 
       // Update or remove vote record
-      if (newValue === 0) {
+      if (value === 0) {
         if (existingVote) {
           await tx.championGuideCommentVote.delete({
             where: { id: existingVote.id },
@@ -103,22 +79,22 @@ export const POST = async (request: NextRequest) => {
           create: {
             commentId,
             userId: user.id,
-            value: newValue,
+            value,
           },
           update: {
-            value: newValue,
+            value,
           },
         });
       }
 
-      // Update comment counters
-      if (scoreDelta !== 0 || upvotesDelta !== 0 || downvotesDelta !== 0) {
+      // Update comment counters if there are changes
+      if (hasVoteChanges(deltas)) {
         await tx.championGuideComment.update({
           where: { id: commentId },
           data: {
-            score: { increment: scoreDelta },
-            upvotes: { increment: upvotesDelta },
-            downvotes: { increment: downvotesDelta },
+            score: { increment: deltas.scoreDelta },
+            upvotes: { increment: deltas.upvotesDelta },
+            downvotes: { increment: deltas.downvotesDelta },
           },
         });
       }

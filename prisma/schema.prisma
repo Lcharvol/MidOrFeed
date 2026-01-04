@@ -353,6 +353,7 @@ model ChampionAdviceVote {
   updatedAt DateTime       @updatedAt
 
   @@unique([adviceId, userId])
+  @@index([userId])
   @@map("champion_advice_votes")
 }
 
@@ -512,6 +513,7 @@ model ChampionGuide {
   @@index([score, createdAt])
   @@index([championId, role])
   @@index([status, championId])
+  @@index([viewCount, createdAt])
   @@map("champion_guides")
 }
 
@@ -526,6 +528,7 @@ model ChampionGuideVote {
   updatedAt DateTime      @updatedAt
 
   @@unique([guideId, userId])
+  @@index([userId])
   @@map("champion_guide_votes")
 }
 

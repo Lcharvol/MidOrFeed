@@ -133,6 +133,11 @@ export function SummonerSearchBar({
             onKeyDown={handleKeyDown}
             placeholder={`${t("homeSearch.placeholder") || "Game name"} + #${regionTag}`}
             className="flex-1 h-full bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60"
+            aria-label={t("homeSearch.placeholder") || "Rechercher un joueur"}
+            autoComplete="off"
+            role="combobox"
+            aria-expanded={showDropdown}
+            aria-controls="search-results"
           />
         </div>
 
@@ -145,6 +150,7 @@ export function SummonerSearchBar({
             "hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed",
             "flex items-center justify-center gap-2"
           )}
+          aria-label={t("homeSearch.search") || "Rechercher"}
         >
           {isSearching ? (
             <Loader2Icon className="size-4 animate-spin" />
@@ -159,7 +165,11 @@ export function SummonerSearchBar({
 
       {/* Dropdown with results and recent searches */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 rounded-lg border border-border bg-background shadow-lg z-[100] overflow-hidden">
+        <div
+          id="search-results"
+          role="listbox"
+          className="absolute top-full left-0 right-0 mt-1.5 rounded-lg border border-border bg-background shadow-lg z-[100] overflow-hidden"
+        >
           {/* Search results */}
           {searchResults.length > 0 && (
             <div className="p-1.5">

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("matches");
 
 /**
  * Route API pour obtenir les détails complets d'un match
@@ -42,7 +45,7 @@ export async function GET(
       { status: 200 }
     );
   } catch (error) {
-    console.error("Erreur lors de la récupération du match:", error);
+    logger.error("Erreur lors de la récupération du match", error as Error);
     return NextResponse.json(
       {
         success: false,

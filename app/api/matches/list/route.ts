@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
 import { MATCHES_PAGE_LIMIT } from "@/constants/matches";
+
+const logger = createLogger("matches");
 
 /**
  * Route API pour obtenir la liste des matchs avec leurs statistiques
@@ -206,7 +209,7 @@ export async function GET(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Erreur lors de la récupération des matchs:", error);
+    logger.error("Erreur lors de la récupération des matchs", error as Error);
     return NextResponse.json(
       {
         success: false,

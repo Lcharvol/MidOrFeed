@@ -73,6 +73,7 @@ export function FavoriteButton({
   }, [user, isFavorite, puuid, region, gameName, tagLine, mutate]);
 
   if (variant === "icon") {
+    const ariaLabel = isFavorite ? "Retirer des favoris" : "Ajouter aux favoris";
     return (
       <Button
         variant="ghost"
@@ -80,7 +81,9 @@ export function FavoriteButton({
         onClick={toggleFavorite}
         disabled={isLoading}
         className={cn("h-8 w-8", className)}
-        title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+        title={ariaLabel}
+        aria-label={ariaLabel}
+        aria-pressed={isFavorite}
       >
         {isLoading ? (
           <Loader2Icon className="size-4 animate-spin" />

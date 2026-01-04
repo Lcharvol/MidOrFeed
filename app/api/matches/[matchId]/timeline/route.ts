@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("matches");
 
 interface TeamStats {
   kills: number;
@@ -168,7 +171,7 @@ export async function GET(
       data: timelineData,
     });
   } catch (error) {
-    console.error("Error fetching match timeline:", error);
+    logger.error("Error fetching match timeline", error as Error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch match timeline" },
       { status: 500 }
