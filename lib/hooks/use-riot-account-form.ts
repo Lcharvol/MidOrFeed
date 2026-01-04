@@ -24,6 +24,7 @@ interface User {
   riotPuuid?: string | null;
   riotSummonerId?: string | null;
   leagueAccount?: {
+    puuid?: string;
     riotGameName?: string | null;
     riotTagLine?: string | null;
     riotRegion?: string | null;
@@ -151,7 +152,11 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
   };
 
   const handleAnalyzeMatches = async () => {
-    if (!user?.riotPuuid || !user?.riotRegion) {
+    // Check both direct properties and leagueAccount for puuid/region
+    const puuid = user?.riotPuuid || user?.leagueAccount?.puuid;
+    const region = user?.riotRegion || user?.leagueAccount?.riotRegion;
+
+    if (!puuid || !region) {
       toast.error("Vous devez d'abord sauvegarder votre compte Riot");
       return;
     }
@@ -164,8 +169,8 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          puuid: user.riotPuuid,
-          region: user.riotRegion,
+          puuid,
+          region,
           count: 20,
         }),
       });

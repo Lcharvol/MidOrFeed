@@ -100,6 +100,9 @@ export async function POST(request: NextRequest) {
           id: updatedUser.id,
           email: updatedUser.email,
           name: updatedUser.name,
+          // Include riotPuuid and riotRegion directly for easier access
+          riotPuuid: leagueAccount.puuid,
+          riotRegion: leagueAccount.riotRegion,
           leagueAccount: {
             id: leagueAccount.id,
             puuid: leagueAccount.puuid,
