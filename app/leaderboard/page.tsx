@@ -25,6 +25,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { HomeIcon } from "lucide-react";
+import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -76,6 +87,22 @@ export default function LeaderboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-10 space-y-4 sm:space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/">
+                <HomeIcon className="size-4" />
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{t("leaderboard.title")}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div>
         <h1 className="text-2xl sm:text-4xl font-bold">{t("leaderboard.title")}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
@@ -139,13 +166,32 @@ export default function LeaderboardPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6}>
-                      <div className="py-8 text-center text-muted-foreground">
-                        {t("leaderboard.loading")}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: 10 }).map((_, idx) => (
+                    <TableRow key={idx} className="odd:bg-muted/30">
+                      <TableCell className="py-2 sm:py-4">
+                        <Skeleton className="h-4 w-6" />
+                      </TableCell>
+                      <TableCell className="py-2 sm:py-4">
+                        <div className="flex flex-col gap-1 sm:hidden">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                        <Skeleton className="h-4 w-32 hidden sm:block" />
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Skeleton className="h-4 w-12" />
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Skeleton className="h-4 w-8" />
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Skeleton className="h-4 w-8" />
+                      </TableCell>
+                      <TableCell className="py-2 sm:py-4">
+                        <Skeleton className="h-4 w-12" />
+                      </TableCell>
+                    </TableRow>
+                  ))
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6}>

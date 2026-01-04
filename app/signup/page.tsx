@@ -29,10 +29,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n-context";
 import { useAuth } from "@/lib/auth-context";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, CheckIcon, XIcon } from "lucide-react";
 import { useGoogleClientId } from "@/lib/hooks/use-google-client-id";
 
 export default function SignupPage() {
@@ -161,7 +162,9 @@ export default function SignupPage() {
       router.push("/login");
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error(t("signup.error"));
+      toast.error(t("signup.error"), {
+        description: "Vérifiez votre connexion internet et réessayez.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -175,7 +178,7 @@ export default function SignupPage() {
             <Image
               src="/logo.png"
               alt="MidOrFeed"
-              width={100}
+              width={200}
               height={50}
               className="m-auto"
               priority
@@ -225,19 +228,68 @@ export default function SignupPage() {
                 <FormField
                   control={form.control}
                   name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("signup.password")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder={t("signup.passwordPlaceholder")}
-                          type="password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const password = field.value || "";
+                    const hasMinLength = password.length >= 8;
+                    const hasUppercase = /[A-Z]/.test(password);
+                    const hasLowercase = /[a-z]/.test(password);
+                    const hasNumber = /[0-9]/.test(password);
+
+                    const PasswordRequirement = ({
+                      met,
+                      text,
+                    }: {
+                      met: boolean;
+                      text: string;
+                    }) => (
+                      <div
+                        className={`flex items-center gap-1.5 text-xs ${
+                          met ? "text-win" : "text-muted-foreground"
+                        }`}
+                      >
+                        {met ? (
+                          <CheckIcon className="size-3" />
+                        ) : (
+                          <XIcon className="size-3" />
+                        )}
+                        <span>{text}</span>
+                      </div>
+                    );
+
+                    return (
+                      <FormItem>
+                        <FormLabel>{t("signup.password")}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={t("signup.passwordPlaceholder")}
+                            type="password"
+                            {...field}
+                          />
+                        </FormControl>
+                        {password.length > 0 && (
+                          <div className="grid grid-cols-2 gap-1 pt-1">
+                            <PasswordRequirement
+                              met={hasMinLength}
+                              text={t("signup.passwordMinCharacters")}
+                            />
+                            <PasswordRequirement
+                              met={hasUppercase}
+                              text={t("signup.passwordNeedsUppercase")}
+                            />
+                            <PasswordRequirement
+                              met={hasLowercase}
+                              text={t("signup.passwordNeedsLowercase")}
+                            />
+                            <PasswordRequirement
+                              met={hasNumber}
+                              text={t("signup.passwordNeedsNumber")}
+                            />
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -262,25 +314,26 @@ export default function SignupPage() {
                   render={({ field }) => (
                     <FormItem className="flex items-start gap-2 text-sm">
                       <FormControl>
-                        <input
-                          type="checkbox"
-                          className="mt-0.5 rounded border-gray-300"
+                        <Checkbox
+                          id="terms"
                           checked={field.value}
-                          onChange={(e) => field.onChange(e.target.checked)}
+                          onCheckedChange={field.onChange}
+                          className="mt-0.5"
                         />
                       </FormControl>
-                      <div className="text-muted-foreground">
-                        <label>
-                          {t("signup.acceptTerms")}{" "}
-                          <a href="#" className="text-primary hover:underline">
-                            {t("signup.termsOfUse")}
-                          </a>{" "}
-                          {t("signup.and")}{" "}
-                          <a href="#" className="text-primary hover:underline">
-                            {t("signup.privacyPolicy")}
-                          </a>
-                        </label>
-                      </div>
+                      <label
+                        htmlFor="terms"
+                        className="text-muted-foreground cursor-pointer select-none leading-snug"
+                      >
+                        {t("signup.acceptTerms")}{" "}
+                        <a href="#" className="text-primary hover:underline">
+                          {t("signup.termsOfUse")}
+                        </a>{" "}
+                        {t("signup.and")}{" "}
+                        <a href="#" className="text-primary hover:underline">
+                          {t("signup.privacyPolicy")}
+                        </a>
+                      </label>
                       <FormMessage />
                     </FormItem>
                   )}

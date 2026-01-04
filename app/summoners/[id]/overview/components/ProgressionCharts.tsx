@@ -133,7 +133,7 @@ export function ProgressionCharts({ puuid }: ProgressionChartsProps) {
         <div className="flex gap-4 text-sm text-muted-foreground">
           <span>{summary.totalGames} parties</span>
           <span>{summary.totalWins} victoires</span>
-          <span className={summary.winRate >= 50 ? "text-green-500" : "text-red-500"}>
+          <span className={summary.winRate >= 50 ? "text-win" : "text-loss"}>
             {summary.winRate}% WR
           </span>
         </div>

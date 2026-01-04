@@ -60,6 +60,12 @@
   --color-info-muted: var(--info-muted);
   --color-info-muted-foreground: var(--info-muted-foreground);
 
+  /* Win/Loss colors */
+  --color-win: var(--win);
+  --color-win-foreground: var(--win-foreground);
+  --color-loss: var(--loss);
+  --color-loss-foreground: var(--loss-foreground);
+
   /* Tiers LoL */
   --color-tier-iron: var(--tier-iron);
   --color-tier-bronze: var(--tier-bronze);
@@ -136,6 +142,12 @@
   --info-foreground: oklch(1 0 0);
   --info-muted: oklch(0.94 0.04 230);
   --info-muted-foreground: oklch(0.4 0.12 230);
+
+  /* Win/Loss - Light mode */
+  --win: oklch(0.55 0.18 145);
+  --win-foreground: oklch(1 0 0);
+  --loss: oklch(0.55 0.2 25);
+  --loss-foreground: oklch(1 0 0);
 
   /* Tiers LoL - Light mode */
   --tier-iron: oklch(0.45 0.02 60);
@@ -214,6 +226,12 @@
   --info-foreground: oklch(0.15 0 0);
   --info-muted: oklch(0.25 0.06 230);
   --info-muted-foreground: oklch(0.75 0.1 230);
+
+  /* Win/Loss - Dark mode */
+  --win: oklch(0.65 0.2 145);
+  --win-foreground: oklch(0.15 0 0);
+  --loss: oklch(0.6 0.22 25);
+  --loss-foreground: oklch(1 0 0);
 
   /* Tiers LoL - Dark mode */
   --tier-iron: oklch(0.5 0.03 60);

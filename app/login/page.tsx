@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { GoogleOAuthProvider, GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import {
+  GoogleOAuthProvider,
+  GoogleLogin,
+  type CredentialResponse,
+} from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,6 +28,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
@@ -35,8 +40,11 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
   const { login, user } = useAuth();
-  const { clientId: googleClientId, isConfigured: isGoogleConfigured, isLoading: isGoogleConfigLoading } =
-    useGoogleClientId();
+  const {
+    clientId: googleClientId,
+    isConfigured: isGoogleConfigured,
+    isLoading: isGoogleConfigLoading,
+  } = useGoogleClientId();
   // Redirect authenticated users away from login
   useEffect(() => {
     if (user) {
@@ -87,13 +95,17 @@ export default function LoginPage() {
       router.push("/");
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error(t("login.anErrorOccurred"));
+      toast.error(t("login.anErrorOccurred"), {
+        description: "Vérifiez votre connexion internet et réessayez.",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse
+  ) => {
     if (!credentialResponse.credential) {
       toast.error("Connexion Google impossible");
       return;
@@ -139,7 +151,7 @@ export default function LoginPage() {
             <Image
               src="/logo.png"
               alt="MidOrFeed"
-              width={100}
+              width={200}
               height={50}
               className="m-auto"
               priority
@@ -189,15 +201,15 @@ export default function LoginPage() {
                   )}
                 />
                 <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300"
-                    />
-                    <span className="text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Checkbox id="remember-me" />
+                    <label
+                      htmlFor="remember-me"
+                      className="text-muted-foreground cursor-pointer select-none"
+                    >
                       {t("login.rememberMe")}
-                    </span>
-                  </label>
+                    </label>
+                  </div>
                   <a href="#" className="text-primary hover:underline">
                     {t("login.forgotPassword")}
                   </a>

@@ -1,18 +1,37 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   HeartIcon,
   Trash2Icon,
   ExternalLinkIcon,
   UsersIcon,
   Loader2Icon,
+  HomeIcon,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useApiSWR } from "@/lib/hooks/swr";
@@ -53,6 +72,7 @@ const FavoriteCard = ({
   favorite: FavoritePlayer;
   onRemove: (puuid: string) => void;
 }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { data: matchesData } = useApiSWR<MatchesResponse>(
     `/api/summoners/${favorite.puuid}/matches?limit=5`,
     { revalidateOnFocus: false }
@@ -62,45 +82,51 @@ const FavoriteCard = ({
   const recentWins = recentMatches.filter((m) => m.win).length;
   const recentLosses = recentMatches.length - recentWins;
 
-  return (
-    <Card className="group hover:border-primary/50 transition-colors">
-      <CardContent className="p-3 sm:pt-4 sm:p-4">
-        <div className="flex items-start gap-3 sm:gap-4">
-          <Avatar className="size-10 sm:size-14 border-2 border-primary/20 shrink-0">
-            <AvatarFallback className="text-sm sm:text-lg">
-              {favorite.gameName?.[0]?.toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
+  const handleConfirmDelete = () => {
+    onRemove(favorite.puuid);
+    setShowDeleteDialog(false);
+  };
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <Link
-                href={`/summoners/${favorite.puuid}/overview?region=${favorite.region}`}
-                className="font-semibold text-sm sm:text-base hover:text-primary transition-colors truncate"
-              >
-                {favorite.gameName || favorite.puuid.slice(0, 8)}
-                {favorite.tagLine && (
-                  <span className="text-muted-foreground text-xs sm:text-sm">#{favorite.tagLine}</span>
-                )}
-              </Link>
-              <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                  onClick={() => onRemove(favorite.puuid)}
+  return (
+    <>
+      <Card className="group hover:border-primary/50 transition-colors">
+        <CardContent className="p-3 sm:pt-4 sm:p-4">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <Avatar className="size-10 sm:size-14 border-2 border-primary/20 shrink-0">
+              <AvatarFallback className="text-sm sm:text-lg">
+                {favorite.gameName?.[0]?.toUpperCase() || "?"}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <Link
+                  href={`/summoners/${favorite.puuid}/overview?region=${favorite.region}`}
+                  className="font-semibold text-sm sm:text-base hover:text-primary transition-colors truncate"
                 >
-                  <Trash2Icon className="size-3.5 sm:size-4 text-destructive" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" asChild>
-                  <Link
-                    href={`/summoners/${favorite.puuid}/overview?region=${favorite.region}`}
+                  {favorite.gameName || favorite.puuid.slice(0, 8)}
+                  {favorite.tagLine && (
+                    <span className="text-muted-foreground text-xs sm:text-sm">#{favorite.tagLine}</span>
+                  )}
+                </Link>
+                <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                    onClick={() => setShowDeleteDialog(true)}
                   >
-                    <ExternalLinkIcon className="size-3.5 sm:size-4" />
-                  </Link>
-                </Button>
+                    <Trash2Icon className="size-3.5 sm:size-4 text-destructive" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" asChild>
+                    <Link
+                      href={`/summoners/${favorite.puuid}/overview?region=${favorite.region}`}
+                    >
+                      <ExternalLinkIcon className="size-3.5 sm:size-4" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </div>
 
             <div className="text-xs sm:text-sm text-muted-foreground">
               {favorite.region.toUpperCase()}
@@ -113,15 +139,15 @@ const FavoriteCard = ({
                   {recentMatches.map((match, i) => (
                     <div
                       key={i}
-                      className={`size-1.5 sm:size-2 rounded-full ${match.win ? "bg-green-500" : "bg-red-500"}`}
+                      className={`size-1.5 sm:size-2 rounded-full ${match.win ? "bg-win" : "bg-loss"}`}
                       title={`${match.kills}/${match.deaths}/${match.assists}`}
                     />
                   ))}
                 </div>
                 <span className="text-[10px] sm:text-xs">
-                  <span className="text-green-500">{recentWins}W</span>
+                  <span className="text-win">{recentWins}W</span>
                   {" / "}
-                  <span className="text-red-500">{recentLosses}L</span>
+                  <span className="text-loss">{recentLosses}L</span>
                 </span>
               </div>
             )}
@@ -135,6 +161,31 @@ const FavoriteCard = ({
         </div>
       </CardContent>
     </Card>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retirer des favoris ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Voulez-vous vraiment retirer{" "}
+              <span className="font-semibold text-foreground">
+                {favorite.gameName || favorite.puuid.slice(0, 8)}
+              </span>{" "}
+              de vos favoris ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Retirer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
@@ -148,18 +199,40 @@ export default function FavoritesPage() {
 
   const handleRemove = useCallback(
     async (puuid: string) => {
+      // Store previous data for rollback
+      const previousData = data;
+
+      // Optimistically update UI
+      mutate(
+        (current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            data: current.data.filter((f) => f.puuid !== puuid),
+          };
+        },
+        { revalidate: false }
+      );
+
       try {
         const res = await fetch(`/api/favorites?puuid=${puuid}`, {
           method: "DELETE",
         });
-        if (!res.ok) throw new Error("Erreur");
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `Erreur ${res.status}`);
+        }
         toast.success("Joueur retire des favoris");
-        mutate();
-      } catch {
-        toast.error("Erreur lors de la suppression");
+      } catch (error) {
+        // Rollback on error
+        mutate(previousData, { revalidate: false });
+        const message = error instanceof Error ? error.message : "Erreur inconnue";
+        toast.error(`Impossible de retirer le joueur : ${message}`, {
+          description: "Veuillez réessayer ou vérifier votre connexion.",
+        });
       }
     },
-    [mutate]
+    [mutate, data]
   );
 
   if (!user) {
@@ -181,6 +254,22 @@ export default function FavoritesPage() {
 
   return (
     <div className="container mx-auto py-6 sm:py-8 px-4 max-w-4xl">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/">
+                <HomeIcon className="size-4" />
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Favoris</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3">
