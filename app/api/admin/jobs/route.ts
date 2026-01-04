@@ -7,7 +7,10 @@ import {
 } from "@/lib/queues";
 import { isRedisAvailable } from "@/lib/redis";
 import { requireAdmin } from "@/lib/auth-utils";
+import { createLogger } from "@/lib/logger";
 import type { ChampionStatsJobData, CompositionJobData } from "@/lib/queues/types";
+
+const logger = createLogger("admin-jobs");
 
 /**
  * GET /api/admin/jobs
@@ -45,7 +48,7 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error("[Jobs API] Error:", error);
+    logger.error("Jobs API error", error as Error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Unknown error",
@@ -110,7 +113,7 @@ export async function POST(request: NextRequest) {
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error("[Jobs API] Error creating job:", error);
+    logger.error("Jobs API error creating job", error as Error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

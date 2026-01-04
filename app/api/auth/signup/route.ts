@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Hacher le mot de passe
-    const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
 
     // Créer l'utilisateur avec timeout
     const user = await prismaWithTimeout(

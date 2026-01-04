@@ -115,6 +115,7 @@ model Match {
   @@index([gameCreation])
   @@index([region])
   @@index([region, queueId])
+  @@index([gameVersion])
   @@map("matches")
 }
 
@@ -156,6 +157,7 @@ model MatchParticipant {
   @@index([teamId])
   @@index([matchId])
   @@index([participantPUuid])
+  @@index([role])
   @@map("match_participants")
 }
 
@@ -514,6 +516,7 @@ model ChampionGuide {
   @@index([championId, role])
   @@index([status, championId])
   @@index([viewCount, createdAt])
+  @@index([patchVersion])
   @@map("champion_guides")
 }
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import type {
   GuideSummary,
   GuideRole,
@@ -119,6 +120,10 @@ const buildGuideSummary = (
 
 // GET /api/guides - List guides
 export const GET = async (request: NextRequest) => {
+  // Rate limiting
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { searchParams } = new URL(request.url);
     const championId = searchParams.get("championId")?.trim();

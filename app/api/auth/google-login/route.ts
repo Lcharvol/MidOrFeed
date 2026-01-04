@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       const randomPassword = randomBytes(32).toString("hex");
-      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      const hashedPassword = await bcrypt.hash(randomPassword, 12);
       user = await prisma.user.create({
         data: {
           email,

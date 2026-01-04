@@ -16,15 +16,18 @@ const getEncryptionKey = (): Buffer => {
   if (!key) {
     throw new Error("ENCRYPTION_KEY environment variable is not set");
   }
-  
+
   // La clé doit faire 32 bytes (256 bits) pour AES-256
   // Si la clé est fournie en hex, la convertir
   if (key.length === 64) {
     return Buffer.from(key, "hex");
   }
-  
+
   // Sinon, dériver une clé avec PBKDF2
-  return crypto.pbkdf2Sync(key, "salt", 100000, 32, "sha256");
+  // Use ENCRYPTION_SALT env var or derive salt from key hash for consistency
+  const salt = process.env.ENCRYPTION_SALT ||
+    crypto.createHash("sha256").update(key + "midorfeed-salt").digest("hex").slice(0, 32);
+  return crypto.pbkdf2Sync(key, salt, 100000, 32, "sha256");
 };
 
 /**

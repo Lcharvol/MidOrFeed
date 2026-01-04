@@ -25,21 +25,7 @@ export async function GET(request: Request) {
           }
         : {},
       include: {
-      participants: {
-        include: {
-          match: {
-            select: {
-              queueId: true,
-              region: true,
-              gameDuration: true,
-              gameMode: true,
-              platformId: true,
-              gameVersion: true,
-              gameCreation: true,
-            },
-          },
-        },
-      },
+        participants: true,
       },
       orderBy: {
         gameCreation: "desc",
@@ -177,15 +163,6 @@ export async function GET(request: Request) {
     const serializedMatches = matches.map((match) => ({
       ...match,
       gameCreation: match.gameCreation.toString(),
-      participants: match.participants.map((participant) => ({
-        ...participant,
-        match: participant.match
-          ? {
-              ...participant.match,
-              gameCreation: participant.match.gameCreation.toString(),
-            }
-          : undefined,
-      })),
     }));
 
     return NextResponse.json(

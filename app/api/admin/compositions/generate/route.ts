@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import { createLogger } from "@/lib/logger";
 import {
   ROLE_PRIORITY,
   resolveChampionRole,
   type CompositionRole,
 } from "@/lib/compositions/roles";
+
+const logger = createLogger("admin-compositions");
 
 type ChampionStatSnapshot = {
   championId: string;
@@ -159,7 +162,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[GENERATE-COMPOSITIONS] Erreur:", error);
+    logger.error("Generate compositions error", error as Error);
     return NextResponse.json(
       {
         success: false,

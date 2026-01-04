@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("admin-stats");
 
 /**
  * GET /api/admin/stats
@@ -90,7 +93,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("[ADMIN/STATS] Erreur:", error);
+    logger.error("Admin stats error", error as Error);
     return NextResponse.json(
       { error: "Erreur lors de la récupération des statistiques" },
       { status: 500 }
