@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("suggest-composition");
 
 const suggestCompositionSchema = z.object({
   teamChampions: z.array(z.string()).min(1, "Au moins un champion requis"),
@@ -39,7 +42,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Erreur lors de la génération de suggestions:", error);
+    logger.error("Erreur lors de la génération de suggestions", error as Error);
     return NextResponse.json(
       { error: "Erreur lors de la génération de suggestions" },
       { status: 500 }

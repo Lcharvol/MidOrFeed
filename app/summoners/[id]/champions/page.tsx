@@ -353,7 +353,7 @@ export default function ChampionsByIdPage() {
             />
           </div>
           <div className="overflow-x-auto rounded-md border">
-            <Table>
+            <Table className="text-xs sm:text-sm">
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead
@@ -370,11 +370,12 @@ export default function ChampionsByIdPage() {
                     </div>
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer hover:bg-accent"
+                    className="cursor-pointer hover:bg-accent hidden sm:table-cell"
                     onClick={() => handleSort("played")}
                   >
                     <div className="flex items-center">
-                      Parties jouées
+                      <span className="hidden md:inline">Parties jouées</span>
+                      <span className="md:hidden">Parties</span>
                       <SortIcon
                         column="played"
                         sortColumn={sortColumn}
@@ -383,7 +384,7 @@ export default function ChampionsByIdPage() {
                     </div>
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer hover:bg-accent"
+                    className="cursor-pointer hover:bg-accent hidden md:table-cell"
                     onClick={() => handleSort("wins")}
                   >
                     <div className="flex items-center">
@@ -400,7 +401,8 @@ export default function ChampionsByIdPage() {
                     onClick={() => handleSort("winRate")}
                   >
                     <div className="flex items-center">
-                      Win rate
+                      <span className="hidden sm:inline">Win rate</span>
+                      <span className="sm:hidden">WR</span>
                       <SortIcon
                         column="winRate"
                         sortColumn={sortColumn}
@@ -422,7 +424,7 @@ export default function ChampionsByIdPage() {
                     </div>
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer hover:bg-accent"
+                    className="cursor-pointer hover:bg-accent hidden lg:table-cell"
                     onClick={() => handleSort("avgKills")}
                   >
                     <div className="flex items-center">
@@ -455,30 +457,34 @@ export default function ChampionsByIdPage() {
                     key={champion.championId}
                     className="odd:bg-muted/30 hover:bg-accent/50 transition-colors"
                   >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
+                    <TableCell className="py-2 sm:py-4">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <ChampionIcon
                           championId={resolveChampionSlug(champion.championId)}
                           championKey={champion.championId}
                           championKeyToId={championKeyToIdMap}
-                          size={48}
+                          size={32}
                           shape="rounded"
-                          className="border-2 border-primary/20"
+                          className="border-2 border-primary/20 sm:w-12 sm:h-12"
                           clickable
                         />
-                        <div>
-                          <p className="font-semibold">{champion.name}</p>
-                          <p className="text-xs text-muted-foreground">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-xs sm:text-sm truncate">{champion.name}</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
                             {champion.championId}
+                          </p>
+                          {/* Mobile: show games played inline */}
+                          <p className="text-[10px] text-muted-foreground sm:hidden">
+                            {champion.played} parties
                           </p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell py-2 sm:py-4">
                       <div className="font-medium">{champion.played}</div>
-                      <p className="text-xs text-muted-foreground">parties</p>
+                      <p className="text-xs text-muted-foreground hidden md:block">parties</p>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell py-2 sm:py-4">
                       <div className="font-medium text-win">
                         {champion.wins}
                       </div>
@@ -486,25 +492,25 @@ export default function ChampionsByIdPage() {
                         {champion.played - champion.wins} défaites
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="py-2 sm:py-4">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         <Progress
                           value={parseFloat(champion.winRate)}
-                          className="h-2 w-24"
+                          className="h-1.5 sm:h-2 w-12 sm:w-24 hidden sm:block"
                           role="progressbar"
                         />
                         <Badge
-                          className={
+                          className={`text-[10px] sm:text-xs px-1.5 sm:px-2 ${
                             parseFloat(champion.winRate) >= 50
                               ? "bg-win hover:bg-win text-win-foreground"
                               : "bg-loss hover:bg-loss text-loss-foreground"
-                          }
+                          }`}
                         >
                           {champion.winRate}%
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 sm:py-4">
                       <div className="font-medium">
                         <span
                           className={
@@ -518,19 +524,20 @@ export default function ChampionsByIdPage() {
                           {champion.kda}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">moyen</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">moyen</p>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell py-2 sm:py-4">
                       <div className="font-mono text-sm">
                         {champion.avgKills} / {champion.avgDeaths} /{" "}
                         {champion.avgAssists}
                       </div>
                       <p className="text-xs text-muted-foreground">par match</p>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 sm:py-4">
                       {champion.score === null ? (
-                        <div className="text-xs text-muted-foreground">
-                          Min {MIN_GAMES_FOR_SCORE} parties
+                        <div className="text-[10px] sm:text-xs text-muted-foreground">
+                          <span className="hidden sm:inline">Min {MIN_GAMES_FOR_SCORE} parties</span>
+                          <span className="sm:hidden">-</span>
                         </div>
                       ) : (
                         <div

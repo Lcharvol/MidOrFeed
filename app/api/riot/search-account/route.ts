@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import { z } from "zod";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("riot-search-account");
 
 const searchSchema = z.object({
   gameName: z.string().min(1, "Le nom de jeu est requis"),
@@ -109,7 +112,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Erreur lors de la recherche du compte:", error);
+    logger.error("Erreur lors de la recherche du compte", error as Error);
     return NextResponse.json(
       { error: "Erreur lors de la recherche du compte" },
       { status: 500 }

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { REGION_TO_BASE_URL } from "@/constants/regions";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("leaderboard-enrich");
 
 const schema = z.object({
   region: z.string().default("euw1"),
@@ -84,7 +87,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (e) {
-    console.error("[LEADERBOARD/ENRICH]", e);
+    logger.error("Error", e as Error);
     return NextResponse.json(
       { success: false, error: "Erreur interne" },
       { status: 500 }

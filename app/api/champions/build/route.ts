@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getItemImageUrl } from "@/constants/ddragon";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("champion-build");
 
 const BOOT_ITEM_IDS = new Set([
   "1001",
@@ -270,7 +273,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("[CHAMPION-BUILD] Error:", error);
+    logger.error("Error", error as Error);
     return NextResponse.json(
       {
         success: false,

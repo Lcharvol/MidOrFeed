@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { getOrSetCache, CacheTTL, invalidateCachePrefix } from "@/lib/cache";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("riot-versions");
 
 export const GET = async () => {
   try {
@@ -35,7 +38,7 @@ export const GET = async () => {
       { status: 200 }
     );
   } catch (error) {
-    console.error("[RIOT-VERSIONS] GET error:", error);
+    logger.error("GET error", error as Error);
     return NextResponse.json(
       {
         success: false,
@@ -103,7 +106,7 @@ export const PATCH = async (request: NextRequest) => {
       { status: 200 }
     );
   } catch (error) {
-    console.error("[RIOT-VERSIONS] PATCH error:", error);
+    logger.error("PATCH error", error as Error);
     return NextResponse.json(
       {
         success: false,

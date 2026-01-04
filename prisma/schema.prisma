@@ -116,6 +116,9 @@ model Match {
   @@index([region])
   @@index([region, queueId])
   @@index([gameVersion])
+  // Composite indexes for common queries
+  @@index([region, gameCreation(sort: Desc)])
+  @@index([queueId, gameCreation(sort: Desc)])
   @@map("matches")
 }
 
@@ -158,6 +161,10 @@ model MatchParticipant {
   @@index([matchId])
   @@index([participantPUuid])
   @@index([role])
+  // Composite indexes for common queries
+  @@index([championId, role])
+  @@index([participantPUuid, createdAt(sort: Desc)])
+  @@index([championId, win])
   @@map("match_participants")
 }
 

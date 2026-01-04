@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("champion-stats");
 
 // Calculer la tendance du win rate en comparant avec l'historique récent (7 jours)
 const calculateWinRateTrend = (
@@ -107,7 +110,7 @@ export async function GET() {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Erreur lors de la récupération des stats:", error);
+    logger.error("Erreur lors de la récupération des stats", error as Error);
     return NextResponse.json(
       {
         success: false,

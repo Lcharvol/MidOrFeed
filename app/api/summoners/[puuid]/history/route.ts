@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("summoner-history");
 
 type HistoryParams = { params: Promise<{ puuid: string }> };
 
@@ -131,7 +134,7 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
       },
     });
   } catch (error) {
-    console.error("[HISTORY] Error:", error);
+    logger.error("Error", error as Error);
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }

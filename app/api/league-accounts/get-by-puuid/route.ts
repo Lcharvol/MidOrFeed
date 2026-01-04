@@ -3,6 +3,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { REGION_TO_ROUTING, REGION_TO_BASE_URL, PLATFORM_TO_REGION } from "@/constants/regions";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("league-accounts-get-by-puuid");
 
 const schema = z.object({
   puuid: z.string().min(1),
@@ -117,7 +120,7 @@ async function fetchFromRiotAndSave(
       },
     };
   } catch (error) {
-    console.error("[RIOT-FETCH]", error);
+    logger.error("Riot fetch error", error as Error);
     return { success: false, error: "Failed to fetch from Riot API" };
   }
 }
@@ -199,7 +202,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    console.error("[LEAGUE-ACCOUNTS/GET-BY-PUUID]", error);
+    logger.error("Error", error as Error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

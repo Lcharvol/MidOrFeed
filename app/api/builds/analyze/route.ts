@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("builds-analyze");
 
 interface ItemBuildData {
   items: number[];
@@ -204,7 +207,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error analyzing build:", error);
+    logger.error("Error analyzing build", error as Error);
     return NextResponse.json(
       { success: false, error: "Failed to analyze build" },
       { status: 500 }

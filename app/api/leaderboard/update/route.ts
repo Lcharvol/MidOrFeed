@@ -3,6 +3,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { REGION_TO_BASE_URL } from "@/constants/regions";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("leaderboard-update");
 
 const schema = z.object({
   region: z.string().min(1), // platform id like euw1
@@ -208,7 +211,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    console.error("[LEADERBOARD/UPDATE]", error);
+    logger.error("Error", error as Error);
     return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
   }
 }

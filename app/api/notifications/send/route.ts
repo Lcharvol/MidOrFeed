@@ -2,6 +2,9 @@ import { broadcastNotification } from "@/lib/server/notification-hub";
 import type { NotificationPayload, NotificationVariant } from "@/types";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("notifications-send");
 
 const notificationSchema = z.object({
   title: z.string().min(1).max(120),
@@ -33,7 +36,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: payload });
   } catch (error) {
-    console.error("Notification broadcast failure", error);
+    logger.error("Notification broadcast failure", error as Error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid notification payload" },

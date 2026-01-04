@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n-context";
+import { authenticatedFetch } from "@/lib/api-client";
 
 // Note: Ce schéma est utilisé côté client, donc on utilise useI18n
 // Le schéma sera créé dynamiquement dans le hook
@@ -93,12 +94,11 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
 
       const { puuid } = searchResult.data;
 
-      // Sauvegarder le compte dans la base de données
-      const response = await fetch("/api/user/save-riot-account", {
+      // Sauvegarder le compte dans la base de données (with auth + CSRF)
+      const response = await authenticatedFetch("/api/user/save-riot-account", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": user?.id || "",
         },
         body: JSON.stringify({
           gameName,
@@ -123,8 +123,7 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
       toast.success("Compte Riot sauvegardé avec succès!");
       setIsEditing(false);
       form.reset();
-    } catch (error) {
-      console.error("Erreur:", error);
+    } catch {
       toast.error("Une erreur est survenue");
     } finally {
       setIsSaving(false);
@@ -183,8 +182,7 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
       }
 
       toast.success("Analyse des matchs terminée!");
-    } catch (error) {
-      console.error("Erreur:", error);
+    } catch {
       toast.error("Une erreur est survenue");
     } finally {
       setIsAnalyzing(false);
@@ -207,11 +205,10 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
     setIsDeleting(true);
     setShowDeleteConfirm(false);
     try {
-      const response = await fetch("/api/user/remove-riot-account", {
+      const response = await authenticatedFetch("/api/user/remove-riot-account", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": user.id,
         },
       });
 
@@ -230,8 +227,7 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
       toast.success(t("profile.deleteAccountSuccess"));
       setIsEditing(false);
       form.reset();
-    } catch (error) {
-      console.error("Erreur:", error);
+    } catch {
       toast.error(t("profile.deleteAccountError"));
     } finally {
       setIsDeleting(false);

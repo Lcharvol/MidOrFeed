@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("champion-runes");
 
 // Mapping des IDs de sorts d'invocateur vers leurs noms
 const SUMMONER_SPELL_NAMES: Record<number, string> = {
@@ -119,7 +122,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des runes:", error);
+    logger.error("Erreur lors de la récupération des runes", error as Error);
     return NextResponse.json(
       {
         success: false,

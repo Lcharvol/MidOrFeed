@@ -1,39 +1,46 @@
 /**
- * Cache simple en mémoire avec TTL (Time To Live)
- * En production, utiliser Redis ou un autre cache distribué pour les instances multiples
+ * Cache hybride avec Redis comme backend principal et fallback sur mémoire
+ * Redis est utilisé pour le cache distribué entre instances
+ * Memory est utilisé comme fallback si Redis n'est pas disponible
  */
+
+import { createLogger } from "./logger";
+
+const logger = createLogger("cache");
 
 interface CacheEntry<T> {
   value: T;
   expiresAt: number;
 }
 
+// ========================
+// Memory Cache (fallback)
+// ========================
+
 class MemoryCache {
   private store: Map<string, CacheEntry<unknown>> = new Map();
-  private cleanupInterval: NodeJS.Timeout;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     // Nettoyer les entrées expirées toutes les minutes
-    this.cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      for (const [key, entry] of this.store.entries()) {
-        if (entry.expiresAt < now) {
-          this.store.delete(key);
+    if (typeof setInterval !== "undefined") {
+      this.cleanupInterval = setInterval(() => {
+        const now = Date.now();
+        for (const [key, entry] of this.store.entries()) {
+          if (entry.expiresAt < now) {
+            this.store.delete(key);
+          }
         }
-      }
-    }, 60000); // 1 minute
+      }, 60000);
+    }
   }
 
-  /**
-   * Récupère une valeur du cache
-   */
   get<T>(key: string): T | null {
     const entry = this.store.get(key);
     if (!entry) {
       return null;
     }
 
-    // Vérifier si l'entrée a expiré
     if (entry.expiresAt < Date.now()) {
       this.store.delete(key);
       return null;
@@ -42,9 +49,6 @@ class MemoryCache {
     return entry.value as T;
   }
 
-  /**
-   * Stocke une valeur dans le cache avec un TTL en millisecondes
-   */
   set<T>(key: string, value: T, ttlMs: number): void {
     this.store.set(key, {
       value,
@@ -52,82 +56,205 @@ class MemoryCache {
     });
   }
 
-  /**
-   * Supprime une valeur du cache
-   */
   delete(key: string): void {
     this.store.delete(key);
   }
 
-  /**
-   * Vide le cache
-   */
+  keys(): IterableIterator<string> {
+    return this.store.keys();
+  }
+
   clear(): void {
     this.store.clear();
   }
 
-  /**
-   * Détruit le cache et arrête le cleanup
-   */
   destroy(): void {
-    clearInterval(this.cleanupInterval);
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
     this.store.clear();
   }
 }
 
-// Instance globale du cache
-export const cache = new MemoryCache();
+// ========================
+// Redis Cache
+// ========================
+
+let redisClient: import("ioredis").Redis | null = null;
+let redisAvailable = false;
+
+async function getRedisClient(): Promise<import("ioredis").Redis | null> {
+  if (redisClient) {
+    return redisClient;
+  }
+
+  try {
+    const redisUrl = process.env.REDIS_URL;
+    if (!redisUrl) {
+      return null;
+    }
+
+    const Redis = (await import("ioredis")).default;
+    redisClient = new Redis(redisUrl, {
+      maxRetriesPerRequest: 3,
+      enableReadyCheck: true,
+      lazyConnect: true,
+      retryStrategy: (times) => {
+        if (times > 3) return null;
+        return Math.min(times * 100, 1000);
+      },
+    });
+
+    await redisClient.connect();
+    redisAvailable = true;
+    logger.info("Redis cache connected");
+
+    redisClient.on("error", () => {
+      redisAvailable = false;
+    });
+
+    redisClient.on("ready", () => {
+      redisAvailable = true;
+    });
+
+    return redisClient;
+  } catch {
+    logger.warn("Redis not available, using memory cache");
+    return null;
+  }
+}
+
+// ========================
+// Hybrid Cache
+// ========================
+
+const memoryCache = new MemoryCache();
+
+async function getFromRedis<T>(key: string): Promise<T | null> {
+  if (!redisAvailable) return null;
+
+  try {
+    const client = await getRedisClient();
+    if (!client) return null;
+
+    const data = await client.get(`cache:${key}`);
+    if (!data) return null;
+
+    return JSON.parse(data) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function setInRedis<T>(key: string, value: T, ttlMs: number): Promise<void> {
+  if (!redisAvailable) return;
+
+  try {
+    const client = await getRedisClient();
+    if (!client) return;
+
+    const ttlSeconds = Math.ceil(ttlMs / 1000);
+    await client.setex(`cache:${key}`, ttlSeconds, JSON.stringify(value));
+  } catch {
+    // Silently fail - memory cache will be used
+  }
+}
+
+async function deleteFromRedis(key: string): Promise<void> {
+  if (!redisAvailable) return;
+
+  try {
+    const client = await getRedisClient();
+    if (!client) return;
+
+    await client.del(`cache:${key}`);
+  } catch {
+    // Silently fail
+  }
+}
+
+async function deleteByPrefixFromRedis(prefix: string): Promise<void> {
+  if (!redisAvailable) return;
+
+  try {
+    const client = await getRedisClient();
+    if (!client) return;
+
+    const keys = await client.keys(`cache:${prefix}*`);
+    if (keys.length > 0) {
+      await client.del(...keys);
+    }
+  } catch {
+    // Silently fail
+  }
+}
+
+// ========================
+// Public API (unchanged)
+// ========================
+
+export const cache = memoryCache;
 
 /**
  * Cache avec TTL en millisecondes
- * @param key Clé du cache
- * @param ttlMs Durée de vie en millisecondes
- * @param fetcher Fonction pour récupérer la valeur si elle n'est pas en cache
- * @returns Valeur du cache ou résultat du fetcher
+ * Utilise Redis si disponible, sinon fallback sur mémoire
  */
 export const getOrSetCache = async <T>(
   key: string,
   ttlMs: number,
   fetcher: () => Promise<T>
 ): Promise<T> => {
-  // Vérifier le cache
-  const cached = cache.get<T>(key);
-  if (cached !== null) {
-    return cached;
+  // 1. Try Redis first
+  const redisValue = await getFromRedis<T>(key);
+  if (redisValue !== null) {
+    // Also warm memory cache
+    memoryCache.set(key, redisValue, ttlMs);
+    return redisValue;
   }
 
-  // Récupérer la valeur
+  // 2. Try memory cache
+  const memoryValue = memoryCache.get<T>(key);
+  if (memoryValue !== null) {
+    return memoryValue;
+  }
+
+  // 3. Fetch and cache
   const value = await fetcher();
 
-  // Mettre en cache
-  cache.set(key, value, ttlMs);
+  // Cache in both
+  memoryCache.set(key, value, ttlMs);
+  await setInRedis(key, value, ttlMs);
 
   return value;
 };
 
 /**
- * Invalide une clé du cache
+ * Invalide une clé du cache (Redis + mémoire)
  */
 export const invalidateCache = (key: string): void => {
-  cache.delete(key);
+  memoryCache.delete(key);
+  deleteFromRedis(key).catch(() => {});
 };
 
 /**
  * Invalide toutes les clés qui commencent par un préfixe
  */
 export const invalidateCachePrefix = (prefix: string): void => {
-  for (const key of cache["store"].keys()) {
+  // Memory cache
+  for (const key of memoryCache.keys()) {
     if (key.startsWith(prefix)) {
-      cache.delete(key);
+      memoryCache.delete(key);
     }
   }
+  // Redis
+  deleteByPrefixFromRedis(prefix).catch(() => {});
 };
 
 /**
  * Vérifie si une clé existe dans le cache
  */
 export const hasCache = (key: string): boolean => {
-  return cache.get(key) !== null;
+  return memoryCache.get(key) !== null;
 };
 
 /**
@@ -145,4 +272,3 @@ export const CacheTTL = {
   /** 24 heures */
   DAY: 24 * 60 * 60 * 1000,
 } as const;
-

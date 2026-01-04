@@ -1,6 +1,9 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/constants/site";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("sitemap");
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getSiteUrl();
@@ -81,7 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     championPages = [...counterPicksPages, ...championDetailPages];
   } catch (error) {
-    console.warn("[Sitemap] Failed to fetch champions:", error);
+    logger.warn("Failed to fetch champions", { error: String(error) });
   }
 
   return [...staticPages, ...championPages];

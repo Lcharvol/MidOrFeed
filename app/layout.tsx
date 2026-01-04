@@ -9,6 +9,7 @@ import { I18nProvider } from "@/lib/i18n-context";
 import { GameVersionProvider } from "@/components/GameVersionProvider";
 import { ServerStatusBanner } from "@/components/ServerStatusBanner";
 import { ConstructionBanner } from "@/components/ConstructionBanner";
+import { JsonLd } from "@/components/JsonLd";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -66,6 +67,33 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://midorfeed.gg"),
 };
 
+// Global JSON-LD schemas for SEO
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Mid or Feed",
+  alternateName: "MidOrFeed",
+  url: "https://midorfeed.gg",
+  description: "Find the best League of Legends counter picks, analyze your performance, and get team composition suggestions with AI-powered coaching.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://midorfeed.gg/summoners?search={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Mid or Feed",
+  url: "https://midorfeed.gg",
+  logo: "https://midorfeed.gg/logo.png",
+  sameAs: ["https://twitter.com/MidOrFeed"],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -73,6 +101,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        <JsonLd data={websiteSchema} />
+        <JsonLd data={organizationSchema} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

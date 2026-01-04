@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("champion-pool");
 
 interface ChampionStats {
   championId: string;
@@ -167,7 +170,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error analyzing champion pool:", error);
+    logger.error("Error analyzing champion pool", error as Error);
     return NextResponse.json(
       { success: false, error: "Failed to analyze champion pool" },
       { status: 500 }

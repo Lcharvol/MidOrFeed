@@ -135,27 +135,28 @@ export const ChampionLeadershipSection = ({
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-hidden rounded-lg border border-border/60">
-            <Table>
+        <CardContent className="p-3 sm:p-6">
+          <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-border/60">
+            <Table className="text-xs sm:text-sm">
               <TableHeader className="bg-muted/30">
                 <TableRow className="border-border/50">
-                  <TableHead className="w-16 text-[11px] uppercase text-muted-foreground">
+                  <TableHead className="w-10 sm:w-16 text-[10px] sm:text-[11px] uppercase text-muted-foreground">
                     {t("championDetails.rank")}
                   </TableHead>
-                  <TableHead className="text-[11px] uppercase text-muted-foreground">
+                  <TableHead className="text-[10px] sm:text-[11px] uppercase text-muted-foreground">
                     {t("championDetails.player")}
                   </TableHead>
-                  <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
+                  <TableHead className="text-right text-[10px] sm:text-[11px] uppercase text-muted-foreground hidden sm:table-cell">
                     {t("championDetails.games")}
                   </TableHead>
-                  <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
-                    {t("championDetails.winRate")}
+                  <TableHead className="text-right text-[10px] sm:text-[11px] uppercase text-muted-foreground">
+                    <span className="hidden sm:inline">{t("championDetails.winRate")}</span>
+                    <span className="sm:hidden">WR</span>
                   </TableHead>
-                  <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
+                  <TableHead className="text-right text-[10px] sm:text-[11px] uppercase text-muted-foreground hidden md:table-cell">
                     {t("championDetails.kda")}
                   </TableHead>
-                  <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
+                  <TableHead className="text-right text-[10px] sm:text-[11px] uppercase text-muted-foreground">
                     {t("championDetails.score")}
                   </TableHead>
                 </TableRow>
@@ -170,13 +171,13 @@ export const ChampionLeadershipSection = ({
 
                   return (
                     <TableRow key={player.puuid} className="border-border/50">
-                      <TableCell className="font-medium text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          {rankIcon && <span>{rankIcon}</span>}
-                          <span>#{rank}</span>
+                      <TableCell className="font-medium text-muted-foreground py-2 sm:py-4">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          {rankIcon && <span className="text-sm sm:text-base">{rankIcon}</span>}
+                          <span className="text-xs sm:text-sm">#{rank}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2 sm:py-4">
                         <Link
                           href={`/summoners/${encodeURIComponent(player.puuid)}`}
                           className="flex items-center gap-2 hover:underline"
@@ -185,50 +186,52 @@ export const ChampionLeadershipSection = ({
                             <Image
                               src={getProfileIconUrl(player.profileIconId)}
                               alt=""
-                              width={32}
-                              height={32}
-                              className="rounded-full border border-border/60"
+                              width={24}
+                              height={24}
+                              className="rounded-full border border-border/60 sm:w-8 sm:h-8"
                               unoptimized
                             />
                           )}
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[100px] sm:max-w-none">
                               {displayName}
                             </p>
                             {player.region && (
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">
                                 {player.region.toUpperCase()}
+                                {/* Mobile: show games inline */}
+                                <span className="sm:hidden"> • {player.totalGames}g</span>
                               </p>
                             )}
                           </div>
                         </Link>
                       </TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">
+                      <TableCell className="text-right text-xs sm:text-sm text-muted-foreground hidden sm:table-cell py-2 sm:py-4">
                         {player.totalGames}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right py-2 sm:py-4">
                         <Badge
                           variant={
                             player.winRate >= 0.5
                               ? "success"
                               : "destructive"
                           }
-                          className="text-xs"
+                          className="text-[10px] sm:text-xs px-1.5 sm:px-2"
                         >
                           {formatPercentage(player.winRate)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">
+                      <TableCell className="text-right text-xs sm:text-sm text-muted-foreground hidden md:table-cell py-2 sm:py-4">
                         {formatKDA(
                           player.totalKills,
                           player.totalDeaths,
                           player.totalAssists
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right py-2 sm:py-4">
                         <Badge
                           variant={getRankBadgeVariant(rank)}
-                          className="font-semibold"
+                          className="font-semibold text-[10px] sm:text-xs px-1.5 sm:px-2"
                         >
                           {player.score.toFixed(1)}
                         </Badge>
