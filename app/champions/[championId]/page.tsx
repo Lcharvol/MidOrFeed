@@ -58,11 +58,11 @@ const ChampionPage = async ({ params }: { params: Promise<PageParams> }) => {
   const [hpAggregates, mpAggregates] = await Promise.all([
     prisma.$queryRaw<[{ max_hp_18: number }]>`
       SELECT MAX("hp" + "hpPerLevel" * 17) as max_hp_18
-      FROM "Champion"
+      FROM "champions"
     `,
     prisma.$queryRaw<[{ max_mp_18: number }]>`
       SELECT MAX("mp" + COALESCE("mpPerLevel", 0) * 17) as max_mp_18
-      FROM "Champion"
+      FROM "champions"
       WHERE "mp" IS NOT NULL
     `,
   ]);
