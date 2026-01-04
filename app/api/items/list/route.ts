@@ -8,7 +8,7 @@ import { applySecurityHeaders } from "@/lib/security-headers";
 import { logger } from "@/lib/logger";
 import { measureTiming } from "@/lib/metrics";
 
-// Route GET pour obtenir la liste des items avec pagination
+// Route GET pour obtenir la liste des items avec pagination et filtrage
 export async function GET(request: NextRequest) {
   // Rate limiting modéré pour les API publiques
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
@@ -20,9 +20,33 @@ export async function GET(request: NextRequest) {
     const { page, limit } = getPaginationParams(request);
     const skip = getSkip(page, limit);
 
+    // Paramètres de filtrage
+    const { searchParams } = new URL(request.url);
+    const tag = searchParams.get("tag"); // Filtrer par tag (Boots, Jungle, etc.)
+    const completedOnly = searchParams.get("completed") === "true"; // Items finaux seulement
+    const starterOnly = searchParams.get("starter") === "true"; // Items de départ (depth 1)
+
+    // Construire le filtre where
+    const where: Record<string, unknown> = {};
+
+    if (tag) {
+      // Filtrer les items qui contiennent ce tag dans leur JSON array
+      where.tags = { contains: `"${tag}"` };
+    }
+
+    if (completedOnly) {
+      // Items avec depth >= 2 (items complets, pas les composants de base)
+      where.depth = { gte: 2 };
+    }
+
+    if (starterOnly) {
+      // Items de départ (peu chers, depth 1)
+      where.depth = 1;
+    }
+
     // Utiliser le cache pour les données statiques (15 minutes)
-    const cacheKey = `items:list:${page}:${limit}`;
-    
+    const cacheKey = `items:list:${page}:${limit}:${tag || "all"}:${completedOnly}:${starterOnly}`;
+
     const paginatedResponse = await measureTiming(
       "api.items.list",
       () =>
@@ -33,12 +57,13 @@ export async function GET(request: NextRequest) {
             // Compter le total et récupérer les données avec timeout
             const [total, items] = await Promise.all([
               measureTiming("db.item.count", () =>
-                prismaWithTimeout(() => prisma.item.count(), 10000)
+                prismaWithTimeout(() => prisma.item.count({ where }), 10000)
               ),
               measureTiming("db.item.findMany", () =>
                 prismaWithTimeout(
                   () =>
                     prisma.item.findMany({
+                      where,
                       skip,
                       take: limit,
                       orderBy: { name: "asc" },
@@ -51,7 +76,7 @@ export async function GET(request: NextRequest) {
             return createPaginatedResponse(items, total, page, limit);
           }
         ),
-      { page: page.toString(), limit: limit.toString() }
+      { page: page.toString(), limit: limit.toString(), tag: tag || "all" }
     );
 
     const response = NextResponse.json(

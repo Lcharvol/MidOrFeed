@@ -20,6 +20,8 @@ import {
   ChampionSelector,
   ItemSelector,
   SkillOrderEditor,
+  SummonerSpellSelector,
+  RuneSelector,
 } from "@/components/build-tools";
 import {
   ArrowLeftIcon,
@@ -34,11 +36,18 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useGuide, useUpdateGuide } from "@/lib/hooks/use-guide";
+import { useApiSWR, STATIC_DATA_CONFIG } from "@/lib/hooks/swr";
 import { toast } from "sonner";
+
+interface VersionsResponse {
+  success: boolean;
+  data: string[];
+}
 import type {
   UpdateGuideRequest,
   ItemBuildConfig,
   SkillOrderConfig,
+  RuneConfig,
   GuideRole,
 } from "@/types/guides";
 
@@ -58,6 +67,13 @@ const EditGuidePage = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { guide, isLoading: guideLoading } = useGuide(guideId);
   const { updateGuide } = useUpdateGuide();
+
+  // Fetch available patch versions
+  const { data: versionsData } = useApiSWR<VersionsResponse>(
+    "/api/versions",
+    STATIC_DATA_CONFIG
+  );
+  const availableVersions = versionsData?.data ?? [];
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -80,6 +96,12 @@ const EditGuidePage = () => {
     levels: {},
     maxOrder: [],
   });
+
+  // Summoner spells
+  const [summonerSpells, setSummonerSpells] = useState<string[]>([]);
+
+  // Runes
+  const [runeConfig, setRuneConfig] = useState<RuneConfig | null>(null);
 
   // Tips
   const [earlyGameTips, setEarlyGameTips] = useState("");
@@ -110,6 +132,16 @@ const EditGuidePage = () => {
       // Skill order
       if (guide.skillOrder) {
         setSkillOrder(guide.skillOrder);
+      }
+
+      // Summoner spells
+      if (guide.summonerSpells) {
+        setSummonerSpells(guide.summonerSpells);
+      }
+
+      // Runes
+      if (guide.runeConfig) {
+        setRuneConfig(guide.runeConfig);
       }
 
       // Tips
@@ -263,6 +295,11 @@ const EditGuidePage = () => {
           Object.keys(skillOrder.levels).length > 0 || skillOrder.maxOrder.length > 0
             ? skillOrder
             : undefined,
+        summonerSpells:
+          summonerSpells.length === 2
+            ? (summonerSpells as [string, string])
+            : undefined,
+        runeConfig: runeConfig ?? undefined,
         earlyGameTips: earlyGameTips.trim() || undefined,
         midGameTips: midGameTips.trim() || undefined,
         lateGameTips: lateGameTips.trim() || undefined,
@@ -355,13 +392,21 @@ const EditGuidePage = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="patch">Version du patch</Label>
-                <Input
-                  id="patch"
+                <Select
                   value={patchVersion}
-                  onChange={(e) => setPatchVersion(e.target.value)}
-                  placeholder="Ex: 14.10"
-                  maxLength={20}
-                />
+                  onValueChange={setPatchVersion}
+                >
+                  <SelectTrigger id="patch">
+                    <SelectValue placeholder="Sélectionner une version" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableVersions.map((version) => (
+                      <SelectItem key={version} value={version}>
+                        Patch {version.replace(".1", "")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -431,19 +476,34 @@ const EditGuidePage = () => {
           </CardContent>
         </Card>
 
-        {/* Skill Order */}
+        {/* Skill Order & Summoner Spells */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ZapIcon className="size-5" />
-              Ordre des compétences
+              Compétences et sorts
             </CardTitle>
             <CardDescription>
-              Définissez l&apos;ordre d&apos;amélioration des compétences
+              Définissez l&apos;ordre des compétences et les sorts d&apos;invocateur
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <SkillOrderEditor value={skillOrder} onChange={setSkillOrder} />
+          <CardContent className="space-y-6">
+            <div>
+              <Label className="mb-2 block">Ordre des compétences</Label>
+              <SkillOrderEditor value={skillOrder} onChange={setSkillOrder} />
+            </div>
+            <Separator />
+            <SummonerSpellSelector
+              label="Sorts d'invocateur"
+              selectedSpells={summonerSpells}
+              onSpellsChange={setSummonerSpells}
+            />
+            <Separator />
+            <RuneSelector
+              label="Runes"
+              value={runeConfig}
+              onChange={setRuneConfig}
+            />
           </CardContent>
         </Card>
 

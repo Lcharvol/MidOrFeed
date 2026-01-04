@@ -21,6 +21,8 @@ import {
   ChampionSelector,
   ItemSelector,
   SkillOrderEditor,
+  SummonerSpellSelector,
+  RuneSelector,
 } from "@/components/build-tools";
 import {
   ArrowLeftIcon,
@@ -35,11 +37,18 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useCreateGuide } from "@/lib/hooks/use-guide";
+import { useApiSWR, STATIC_DATA_CONFIG } from "@/lib/hooks/swr";
 import { toast } from "sonner";
+
+interface VersionsResponse {
+  success: boolean;
+  data: string[];
+}
 import type {
   CreateGuideRequest,
   ItemBuildConfig,
   SkillOrderConfig,
+  RuneConfig,
   GuideRole,
 } from "@/types/guides";
 
@@ -74,11 +83,56 @@ const ROLES: { value: GuideRole; label: string }[] = [
   { value: "SUPPORT", label: "Support" },
 ];
 
+// Suggestions de points forts pré-définies
+const STRENGTH_SUGGESTIONS = [
+  "Bon waveclear",
+  "Fort en 1v1",
+  "Excellent engage",
+  "Très mobile",
+  "Bon sustain",
+  "Fort en late game",
+  "Burst élevé",
+  "Bon poke",
+  "Bon split push",
+  "Forte pression de map",
+  "Bon pour les objectifs",
+  "Contrôle de zone",
+  "CC puissant",
+  "Bon scaling",
+  "Fort en teamfight",
+];
+
+// Suggestions de points faibles pré-définies
+const WEAKNESS_SUGGESTIONS = [
+  "Vulnérable aux ganks",
+  "Faible early game",
+  "Peu mobile",
+  "Dépendant des items",
+  "Faible contre les tanks",
+  "Vulnérable au CC",
+  "Difficile à maîtriser",
+  "Faible waveclear",
+  "Mauvais objectifs",
+  "Peu de sustain",
+  "Vulnérable au poke",
+  "Team dépendant",
+  "Facilement kité",
+  "Mana dépendant",
+  "Faible contre les assassins",
+];
+
 const CreateGuideContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const { createGuide } = useCreateGuide();
+
+  // Fetch available patch versions
+  const { data: versionsData } = useApiSWR<VersionsResponse>(
+    "/api/versions",
+    STATIC_DATA_CONFIG
+  );
+  const availableVersions = versionsData?.data ?? [];
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -110,6 +164,12 @@ const CreateGuideContent = () => {
     levels: {},
     maxOrder: [],
   });
+
+  // Summoner spells
+  const [summonerSpells, setSummonerSpells] = useState<string[]>([]);
+
+  // Runes
+  const [runeConfig, setRuneConfig] = useState<RuneConfig | null>(null);
 
   // Tips
   const [earlyGameTips, setEarlyGameTips] = useState("");
@@ -171,6 +231,28 @@ const CreateGuideContent = () => {
     setWeaknesses(newWeaknesses);
   };
 
+  const handleAddStrengthSuggestion = (suggestion: string) => {
+    // Don't add if already at max or already exists
+    if (strengths.length >= 5 || strengths.includes(suggestion)) return;
+    // Replace empty first entry or add new
+    if (strengths.length === 1 && strengths[0] === "") {
+      setStrengths([suggestion]);
+    } else {
+      setStrengths([...strengths, suggestion]);
+    }
+  };
+
+  const handleAddWeaknessSuggestion = (suggestion: string) => {
+    // Don't add if already at max or already exists
+    if (weaknesses.length >= 5 || weaknesses.includes(suggestion)) return;
+    // Replace empty first entry or add new
+    if (weaknesses.length === 1 && weaknesses[0] === "") {
+      setWeaknesses([suggestion]);
+    } else {
+      setWeaknesses([...weaknesses, suggestion]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -211,6 +293,11 @@ const CreateGuideContent = () => {
           Object.keys(skillOrder.levels).length > 0 || skillOrder.maxOrder.length > 0
             ? skillOrder
             : undefined,
+        summonerSpells:
+          summonerSpells.length === 2
+            ? (summonerSpells as [string, string])
+            : undefined,
+        runeConfig: runeConfig ?? undefined,
         earlyGameTips: earlyGameTips.trim() || undefined,
         midGameTips: midGameTips.trim() || undefined,
         lateGameTips: lateGameTips.trim() || undefined,
@@ -304,13 +391,21 @@ const CreateGuideContent = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="patch">Version du patch</Label>
-                <Input
-                  id="patch"
+                <Select
                   value={patchVersion}
-                  onChange={(e) => setPatchVersion(e.target.value)}
-                  placeholder="Ex: 14.10"
-                  maxLength={20}
-                />
+                  onValueChange={setPatchVersion}
+                >
+                  <SelectTrigger id="patch">
+                    <SelectValue placeholder="Sélectionner une version" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableVersions.map((version) => (
+                      <SelectItem key={version} value={version}>
+                        Patch {version.replace(".1", "")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -346,6 +441,8 @@ const CreateGuideContent = () => {
               onItemsChange={setStarterItems}
               maxItems={3}
               placeholder="Ajouter un item de départ"
+              starterOnly
+              dialogTitle="Sélectionner un item de départ"
             />
 
             <Separator />
@@ -356,6 +453,8 @@ const CreateGuideContent = () => {
               onItemsChange={setCoreItems}
               maxItems={4}
               placeholder="Ajouter un item core"
+              completedOnly
+              dialogTitle="Sélectionner un item core"
             />
 
             <Separator />
@@ -366,6 +465,8 @@ const CreateGuideContent = () => {
               onItemsChange={setSituationalItems}
               maxItems={6}
               placeholder="Ajouter un item situationnel"
+              completedOnly
+              dialogTitle="Sélectionner un item situationnel"
             />
 
             <Separator />
@@ -376,23 +477,40 @@ const CreateGuideContent = () => {
               onItemsChange={setBootsItems}
               maxItems={2}
               placeholder="Ajouter des bottes"
+              filterTag="Boots"
+              dialogTitle="Sélectionner des bottes"
             />
           </CardContent>
         </Card>
 
-        {/* Skill Order */}
+        {/* Skill Order & Summoner Spells */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ZapIcon className="size-5" />
-              Ordre des compétences
+              Compétences et sorts
             </CardTitle>
             <CardDescription>
-              Définissez l'ordre d'amélioration des compétences
+              Définissez l'ordre des compétences et les sorts d'invocateur
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <SkillOrderEditor value={skillOrder} onChange={setSkillOrder} />
+          <CardContent className="space-y-6">
+            <div>
+              <Label className="mb-2 block">Ordre des compétences</Label>
+              <SkillOrderEditor value={skillOrder} onChange={setSkillOrder} />
+            </div>
+            <Separator />
+            <SummonerSpellSelector
+              label="Sorts d'invocateur"
+              selectedSpells={summonerSpells}
+              onSpellsChange={setSummonerSpells}
+            />
+            <Separator />
+            <RuneSelector
+              label="Runes"
+              value={runeConfig}
+              onChange={setRuneConfig}
+            />
           </CardContent>
         </Card>
 
@@ -408,7 +526,7 @@ const CreateGuideContent = () => {
             <div className="grid gap-6 md:grid-cols-2">
               {/* Strengths */}
               <div className="space-y-3">
-                <Label className="text-green-500">Points forts</Label>
+                <Label className="text-win">Points forts</Label>
                 {strengths.map((strength, index) => (
                   <div key={index} className="flex gap-2">
                     <Input
@@ -440,11 +558,28 @@ const CreateGuideContent = () => {
                     Ajouter
                   </Button>
                 )}
+                {/* Suggestions */}
+                <div className="pt-2">
+                  <p className="text-xs text-muted-foreground mb-2">Suggestions :</p>
+                  <div className="flex flex-wrap gap-1">
+                    {STRENGTH_SUGGESTIONS.filter(s => !strengths.includes(s)).slice(0, 8).map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => handleAddStrengthSuggestion(suggestion)}
+                        disabled={strengths.length >= 5}
+                        className="text-xs px-2 py-1 rounded-full bg-win/10 text-win hover:bg-win/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        + {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Weaknesses */}
               <div className="space-y-3">
-                <Label className="text-red-500">Points faibles</Label>
+                <Label className="text-loss">Points faibles</Label>
                 {weaknesses.map((weakness, index) => (
                   <div key={index} className="flex gap-2">
                     <Input
@@ -476,6 +611,23 @@ const CreateGuideContent = () => {
                     Ajouter
                   </Button>
                 )}
+                {/* Suggestions */}
+                <div className="pt-2">
+                  <p className="text-xs text-muted-foreground mb-2">Suggestions :</p>
+                  <div className="flex flex-wrap gap-1">
+                    {WEAKNESS_SUGGESTIONS.filter(s => !weaknesses.includes(s)).slice(0, 8).map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => handleAddWeaknessSuggestion(suggestion)}
+                        disabled={weaknesses.length >= 5}
+                        className="text-xs px-2 py-1 rounded-full bg-loss/10 text-loss hover:bg-loss/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        + {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>

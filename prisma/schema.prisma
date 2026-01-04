@@ -83,6 +83,9 @@ model Item {
   plaintext   String?
   image       String?
   gold        String?
+  tags        String?  // JSON array of tags (Boots, Jungle, etc.)
+  depth       Int?     // Item depth (1=component, 2=tier2, 3=completed)
+  fromItems   String?  // JSON array of item IDs this builds from
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

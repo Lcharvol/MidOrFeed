@@ -36,6 +36,20 @@ export const getChampionDetailDataUrl = (
 export const getItemDataUrl = (version: string, locale: string) =>
   buildDdragonUrl("cdn", version, "data", locale, "item.json");
 
+export const getSummonerSpellDataUrl = (version: string, locale: string) =>
+  buildDdragonUrl("cdn", version, "data", locale, "summoner.json");
+
+export const getRunesDataUrl = (version: string, locale: string) =>
+  buildDdragonUrl("cdn", version, "data", locale, "runesReforged.json");
+
+export const getRuneImageUrl = (path: string) =>
+  buildDdragonUrl("cdn", "img", path);
+
+export const getSummonerSpellImageUrl = (
+  spellImage: string,
+  version = DDRAGON_VERSION
+) => buildDdragonUrl("cdn", version, "img", "spell", spellImage);
+
 export const getChampionImageUrl = (
   championName: string,
   version = DDRAGON_VERSION

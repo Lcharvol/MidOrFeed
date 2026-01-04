@@ -131,7 +131,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       itemBuild: guide.itemBuild as ItemBuildConfig | null,
       skillOrder: guide.skillOrder as SkillOrderConfig | null,
       runeConfig: guide.runeConfig as RuneConfig | null,
-      summonerSpells: guide.summonerSpells as [number, number] | null,
+      summonerSpells: guide.summonerSpells as [string, string] | null,
       earlyGameTips: guide.earlyGameTips,
       midGameTips: guide.midGameTips,
       lateGameTips: guide.lateGameTips,

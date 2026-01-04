@@ -43,6 +43,14 @@ interface ItemSelectorProps {
   label?: string;
   placeholder?: string;
   className?: string;
+  /** Filter items by tag (e.g., "Boots", "Jungle") */
+  filterTag?: string;
+  /** Only show completed items (depth >= 2) */
+  completedOnly?: boolean;
+  /** Only show starter items (depth = 1) */
+  starterOnly?: boolean;
+  /** Custom dialog title */
+  dialogTitle?: string;
 }
 
 export const ItemSelector = ({
@@ -52,35 +60,55 @@ export const ItemSelector = ({
   label,
   placeholder = "Ajouter un item",
   className,
+  filterTag,
+  completedOnly,
+  starterOnly,
+  dialogTitle = "Sélectionner un item",
 }: ItemSelectorProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Fetch all items (they're static, so we fetch a large batch)
+  // Build API URL with filters
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams({ limit: "500" });
+    if (filterTag) params.set("tag", filterTag);
+    if (completedOnly) params.set("completed", "true");
+    if (starterOnly) params.set("starter", "true");
+    return `/api/items/list?${params.toString()}`;
+  }, [filterTag, completedOnly, starterOnly]);
+
+  // Fetch items with filters
   const { data: itemsData, isLoading } = useApiSWR<ItemsResponse>(
+    apiUrl,
+    STATIC_DATA_CONFIG
+  );
+
+  // Also fetch all items for displaying selected items (in case they don't match filter)
+  const { data: allItemsData } = useApiSWR<ItemsResponse>(
     "/api/items/list?limit=500",
     STATIC_DATA_CONFIG
   );
 
-  const allItems = itemsData?.data ?? [];
+  const filteredListItems = itemsData?.data ?? [];
+  const allItemsLookup = allItemsData?.data ?? [];
 
   // Filter items by search
   const filteredItems = useMemo(() => {
-    if (!search.trim()) return allItems;
+    if (!search.trim()) return filteredListItems;
     const searchLower = search.toLowerCase();
-    return allItems.filter(
+    return filteredListItems.filter(
       (item) =>
         item.name.toLowerCase().includes(searchLower) ||
         item.plaintext?.toLowerCase().includes(searchLower)
     );
-  }, [allItems, search]);
+  }, [filteredListItems, search]);
 
-  // Get selected item objects
+  // Get selected item objects (use all items lookup for display)
   const selectedItemObjects = useMemo(() => {
     return selectedItems
-      .map((itemId) => allItems.find((i) => i.itemId === itemId))
+      .map((itemId) => allItemsLookup.find((i) => i.itemId === itemId))
       .filter(Boolean) as Item[];
-  }, [selectedItems, allItems]);
+  }, [selectedItems, allItemsLookup]);
 
   const handleSelectItem = (itemId: string) => {
     if (selectedItems.includes(itemId)) {
@@ -140,7 +168,7 @@ export const ItemSelector = ({
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[80vh]">
               <DialogHeader>
-                <DialogTitle>Sélectionner un item</DialogTitle>
+                <DialogTitle>{dialogTitle}</DialogTitle>
               </DialogHeader>
 
               {/* Search */}

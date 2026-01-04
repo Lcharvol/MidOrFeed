@@ -19,6 +19,9 @@ interface RiotItem {
     total: number;
     sell: number;
   };
+  tags?: string[];
+  depth?: number;
+  from?: string[];
 }
 
 interface RiotItemData {
@@ -84,6 +87,9 @@ export async function POST(request: Request) {
         plaintext: item.plaintext || null,
         image: item.image?.full || null,
         gold: item.gold ? JSON.stringify(item.gold) : null,
+        tags: item.tags ? JSON.stringify(item.tags) : null,
+        depth: item.depth || null,
+        fromItems: item.from ? JSON.stringify(item.from) : null,
       }));
 
     const itemsToUpdate = items.filter(([itemId]) => existingItemIds.has(itemId));
@@ -112,6 +118,9 @@ export async function POST(request: Request) {
             plaintext: item.plaintext || null,
             image: item.image?.full || null,
             gold: item.gold ? JSON.stringify(item.gold) : null,
+            tags: item.tags ? JSON.stringify(item.tags) : null,
+            depth: item.depth || null,
+            fromItems: item.from ? JSON.stringify(item.from) : null,
           },
         });
         updated++;

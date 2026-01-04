@@ -53,7 +53,7 @@ export interface ChampionGuide {
   itemBuild: ItemBuildConfig | null;
   skillOrder: SkillOrderConfig | null;
   runeConfig: RuneConfig | null;
-  summonerSpells: [number, number] | null;
+  summonerSpells: [string, string] | null;
 
   // Gameplay sections
   earlyGameTips: string | null;
@@ -136,7 +136,7 @@ export interface CreateGuideRequest {
   itemBuild?: ItemBuildConfig;
   skillOrder?: SkillOrderConfig;
   runeConfig?: RuneConfig;
-  summonerSpells?: [number, number];
+  summonerSpells?: [string, string];
   earlyGameTips?: string;
   midGameTips?: string;
   lateGameTips?: string;
