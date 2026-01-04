@@ -244,7 +244,7 @@ const StrengthsWeaknessesSection = ({
       {strengths && strengths.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-green-500 flex items-center gap-2">
+            <CardTitle className="text-success flex items-center gap-2">
               <ThumbsUpIcon className="size-4" />
               Points forts
             </CardTitle>
@@ -253,7 +253,7 @@ const StrengthsWeaknessesSection = ({
             <ul className="space-y-1">
               {strengths.map((s, i) => (
                 <li key={i} className="text-sm flex items-start gap-2">
-                  <span className="text-green-500">+</span>
+                  <span className="text-success">+</span>
                   {s}
                 </li>
               ))}
@@ -265,7 +265,7 @@ const StrengthsWeaknessesSection = ({
       {weaknesses && weaknesses.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-red-500 flex items-center gap-2">
+            <CardTitle className="text-danger flex items-center gap-2">
               <ThumbsDownIcon className="size-4" />
               Points faibles
             </CardTitle>
@@ -274,7 +274,7 @@ const StrengthsWeaknessesSection = ({
             <ul className="space-y-1">
               {weaknesses.map((w, i) => (
                 <li key={i} className="text-sm flex items-start gap-2">
-                  <span className="text-red-500">-</span>
+                  <span className="text-danger">-</span>
                   {w}
                 </li>
               ))}
@@ -321,7 +321,7 @@ const VoteButton = ({
         aria-pressed={guide.viewerVote === 1}
       >
         <ThumbsUpIcon className="size-4 mr-1" aria-hidden="true" />
-        {guide.upvotes}
+        <span aria-live="polite">{guide.upvotes}</span>
       </Button>
       <Button
         variant={guide.viewerVote === -1 ? "destructive" : "outline"}
@@ -332,7 +332,7 @@ const VoteButton = ({
         aria-pressed={guide.viewerVote === -1}
       >
         <ThumbsDownIcon className="size-4 mr-1" aria-hidden="true" />
-        {guide.downvotes}
+        <span aria-live="polite">{guide.downvotes}</span>
       </Button>
     </div>
   );

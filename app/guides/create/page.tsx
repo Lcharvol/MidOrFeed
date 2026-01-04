@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -17,13 +18,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  ChampionSelector,
-  ItemSelector,
-  SkillOrderEditor,
-  SummonerSpellSelector,
-  RuneSelector,
-} from "@/components/build-tools";
+
+// Dynamic imports for heavy build-tool components
+const ChampionSelector = dynamic(
+  () => import("@/components/build-tools").then((mod) => mod.ChampionSelector),
+  { ssr: false, loading: () => <Skeleton className="h-12 w-full" /> }
+);
+const ItemSelector = dynamic(
+  () => import("@/components/build-tools").then((mod) => mod.ItemSelector),
+  { ssr: false, loading: () => <Skeleton className="h-32 w-full" /> }
+);
+const SkillOrderEditor = dynamic(
+  () => import("@/components/build-tools").then((mod) => mod.SkillOrderEditor),
+  { ssr: false, loading: () => <Skeleton className="h-24 w-full" /> }
+);
+const SummonerSpellSelector = dynamic(
+  () => import("@/components/build-tools").then((mod) => mod.SummonerSpellSelector),
+  { ssr: false, loading: () => <Skeleton className="h-12 w-full" /> }
+);
+const RuneSelector = dynamic(
+  () => import("@/components/build-tools").then((mod) => mod.RuneSelector),
+  { ssr: false, loading: () => <Skeleton className="h-48 w-full" /> }
+);
 import {
   ArrowLeftIcon,
   SaveIcon,

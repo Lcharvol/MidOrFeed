@@ -55,9 +55,9 @@ const TrendIcon = ({ trend }: { trend?: "up" | "down" | "stable" | null }) => {
     return <MinusIcon className="size-3 text-muted-foreground" />;
   }
   if (trend === "up") {
-    return <TrendingUpIcon className="size-3 text-green-500" />;
+    return <TrendingUpIcon className="size-3 text-win" />;
   }
-  return <TrendingDownIcon className="size-3 text-red-500" />;
+  return <TrendingDownIcon className="size-3 text-loss" />;
 };
 
 export default function Home() {
@@ -230,10 +230,10 @@ export default function Home() {
                               <span
                                 className={`text-sm font-semibold ${
                                   champion.winRate >= 52
-                                    ? "text-green-500"
+                                    ? "text-win"
                                     : champion.winRate >= 48
                                       ? "text-foreground"
-                                      : "text-red-500"
+                                      : "text-loss"
                                 }`}
                               >
                                 {champion.winRate.toFixed(1)}%

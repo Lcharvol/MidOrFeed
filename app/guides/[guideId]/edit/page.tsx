@@ -519,7 +519,7 @@ const EditGuidePage = () => {
             <div className="grid gap-6 md:grid-cols-2">
               {/* Strengths */}
               <div className="space-y-3">
-                <Label className="text-green-500">Points forts</Label>
+                <Label className="text-success">Points forts</Label>
                 {strengths.map((strength, index) => (
                   <div key={index} className="flex gap-2">
                     <Input
@@ -555,7 +555,7 @@ const EditGuidePage = () => {
 
               {/* Weaknesses */}
               <div className="space-y-3">
-                <Label className="text-red-500">Points faibles</Label>
+                <Label className="text-danger">Points faibles</Label>
                 {weaknesses.map((weakness, index) => (
                   <div key={index} className="flex gap-2">
                     <Input

@@ -207,7 +207,7 @@ export default function DownloadPage() {
         <Card className="bg-muted/50">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <CheckCircleIcon className="h-5 w-5 text-green-500" />
+              <CheckCircleIcon className="h-5 w-5 text-success" />
               <span className="font-semibold">Conforme aux conditions d'utilisation de Riot Games</span>
             </div>
             <p className="text-sm text-muted-foreground">

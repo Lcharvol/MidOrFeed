@@ -73,15 +73,15 @@ export default function PricingPage() {
           <CardContent className="space-y-4">
             <ul className="space-y-3">
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>3 analyses IA par jour</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>Statistiques de base</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>Accès aux tier lists</span>
               </li>
               <li className="flex items-center gap-2">
@@ -140,27 +140,27 @@ export default function PricingPage() {
           <CardContent className="space-y-4">
             <ul className="space-y-3">
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>Analyses IA illimitées</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>Statistiques avancées</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>Tier lists & synergies</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>Coaching IA personnalisé</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>Assistant in-game temps réel</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="size-5 text-green-500" />
+                <CheckIcon className="size-5 text-success" />
                 <span>Suggestions de composition IA</span>
               </li>
             </ul>

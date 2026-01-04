@@ -81,9 +81,9 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
                   <div
                     className={`text-sm sm:text-base font-bold px-2 py-0.5 rounded ${
                       netVotes > 0
-                        ? "text-green-500 bg-green-500/10"
+                        ? "text-win bg-win/10"
                         : netVotes < 0
-                          ? "text-red-500 bg-red-500/10"
+                          ? "text-loss bg-loss/10"
                           : "text-muted-foreground bg-muted"
                     }`}
                   >

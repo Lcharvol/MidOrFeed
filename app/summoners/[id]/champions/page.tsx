@@ -90,11 +90,11 @@ export default function ChampionsByIdPage() {
   };
 
   const getScoreTextClass = (score: number) => {
-    if (score >= 80) return "text-green-600 dark:text-green-400";
+    if (score >= 80) return "text-win";
     if (score >= 65) return "text-emerald-500";
     if (score >= 50) return "text-amber-500";
     if (score >= 35) return "text-orange-500";
-    return "text-red-500";
+    return "text-loss";
   };
 
   const matchesUrl = puuid
@@ -479,7 +479,7 @@ export default function ChampionsByIdPage() {
                       <p className="text-xs text-muted-foreground">parties</p>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium text-green-600 dark:text-green-400">
+                      <div className="font-medium text-win">
                         {champion.wins}
                       </div>
                       <div className="text-xs text-muted-foreground">
@@ -496,8 +496,8 @@ export default function ChampionsByIdPage() {
                         <Badge
                           className={
                             parseFloat(champion.winRate) >= 50
-                              ? "bg-green-500 hover:bg-green-500 text-white"
-                              : "bg-red-500 hover:bg-red-500 text-white"
+                              ? "bg-win hover:bg-win text-win-foreground"
+                              : "bg-loss hover:bg-loss text-loss-foreground"
                           }
                         >
                           {champion.winRate}%
@@ -509,7 +509,7 @@ export default function ChampionsByIdPage() {
                         <span
                           className={
                             parseFloat(champion.kda) >= 3
-                              ? "text-green-600 dark:text-green-400"
+                              ? "text-win"
                               : parseFloat(champion.kda) >= 2
                               ? "text-amber-600 dark:text-amber-400"
                               : ""
