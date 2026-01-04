@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import useSWR from "swr";
+import { useApiSWR } from "@/lib/hooks/swr";
 import { useParams, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -17,8 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TrophyIcon, TargetIcon, AwardIcon, FlameIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const LEVEL_ORDER = [
   "CHALLENGER",
@@ -160,10 +158,13 @@ export default function SummonerChallengesPage() {
   const puuid = typeof params?.id === "string" ? params.id : undefined;
   const region = searchParams.get("region") || undefined;
 
-  const { data, error, isLoading } = useSWR(
-    puuid ? `/api/challenges/player?puuid=${puuid}` : null,
-    fetcher
-  );
+  const { data, error, isLoading } = useApiSWR<{
+    data?: {
+      challenges?: Array<Record<string, unknown>>;
+      preferences?: Record<string, unknown>;
+      totalPoints?: { challengePoints?: number };
+    };
+  }>(puuid ? `/api/challenges/player?puuid=${puuid}` : null);
 
   const challenges: SummonerChallenge[] = useMemo(() => {
     if (!data?.data?.challenges) return [];

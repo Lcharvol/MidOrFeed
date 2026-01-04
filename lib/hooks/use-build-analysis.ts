@@ -1,4 +1,4 @@
-import useSWR from "swr";
+import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "./swr";
 
 interface ItemBuildData {
   items: number[];
@@ -23,8 +23,6 @@ interface BuildAnalysisResponse {
   error?: string;
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
 /**
  * Hook to fetch build analysis for a champion with specific items
  * @param championId - The champion ID to analyze
@@ -44,13 +42,9 @@ export function useBuildAnalysis(
     ? `/api/builds/analyze?championId=${championId}&items=${itemsParam}${queueParam}`
     : null;
 
-  const { data, error, isLoading } = useSWR<BuildAnalysisResponse>(
+  const { data, error, isLoading } = useApiSWR<BuildAnalysisResponse>(
     url,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 120000, // Cache for 2 minutes
-    }
+    SEMI_DYNAMIC_CONFIG
   );
 
   return {

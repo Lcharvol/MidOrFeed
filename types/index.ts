@@ -5,6 +5,7 @@ export * from "./counter-picks";
 export * from "./guides";
 export * from "./matches";
 export * from "./notifications";
+export * from "./roles";
 export * from "./summoners";
 export * from "./tier-list";
 export * from "./user";

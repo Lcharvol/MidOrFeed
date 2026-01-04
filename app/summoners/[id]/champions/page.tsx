@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import useSWR from "swr";
+import { useApiSWR } from "@/lib/hooks/swr";
 import {
   Card,
   CardContent,
@@ -32,8 +32,6 @@ import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import type { SummonerChampionStats } from "@/types";
 import { useParams } from "next/navigation";
 import { useChampions } from "@/lib/hooks/use-champions";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // Image helper centralized in constants/ddragon
 
@@ -100,7 +98,10 @@ export default function ChampionsByIdPage() {
   const matchesUrl = puuid
     ? `/api/matches/list?puuid=${puuid}`
     : "/api/matches/list";
-  const { data, error, isLoading } = useSWR(matchesUrl, fetcher);
+  const { data, error, isLoading } = useApiSWR<{
+    success: boolean;
+    data?: { championStats?: Record<string, SummonerChampionStats> }
+  }>(matchesUrl);
   const { championNameMap, championKeyToIdMap } = useChampions();
 
   const resolveChampionSlug = (idOrKey: string): string => {

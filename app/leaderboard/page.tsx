@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
 import { useMemo, useState } from "react";
 import {
   Card,
@@ -38,8 +38,6 @@ import { HomeIcon } from "lucide-react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
-
 const REGIONS = [
   { label: "EUW", value: "euw1" },
   { label: "NA", value: "na1" },
@@ -64,9 +62,9 @@ export default function LeaderboardPage() {
   const [tier, setTier] = useState("CHALLENGER");
   const [search, setSearch] = useState("");
 
-  const { data, isLoading } = useSWR(
+  const { data, isLoading } = useApiSWR(
     `/api/leaderboard/list?region=${region}&tier=${tier}`,
-    fetcher
+    SEMI_DYNAMIC_CONFIG
   );
 
   const rows = useMemo(() => {

@@ -1,4 +1,4 @@
-import useSWR from "swr";
+import { useApiSWR } from "./swr";
 
 interface MatchPrediction {
   matchId: string;
@@ -17,8 +17,6 @@ interface PredictionsResponse {
   error?: string;
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
 /**
  * Hook to fetch ML win predictions for a list of matches
  * @param matchIds - Array of match IDs to fetch predictions for
@@ -34,14 +32,7 @@ export function useMatchPredictions(matchIds: string[], puuid?: string) {
     ? `/api/ml/predictions/by-matches?matchIds=${matchIdsParam}${puuidParam}`
     : null;
 
-  const { data, error, isLoading } = useSWR<PredictionsResponse>(
-    url,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000, // Cache for 1 minute
-    }
-  );
+  const { data, error, isLoading } = useApiSWR<PredictionsResponse>(url);
 
   // Create a map for easy access: matchId -> prediction for this player
   const predictionsMap = new Map<string, number>();
