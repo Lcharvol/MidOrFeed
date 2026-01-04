@@ -1,21 +1,21 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import type {
   DataCleanupJobData,
   DataCleanupJobResult,
-  JobProgress,
 } from "../queues/types";
+
+const logger = createLogger("data-cleanup-worker");
 
 /**
  * Data Cleanup Worker
  * Cleans old/stale data to optimize database size
  */
-export function createDataCleanupWorker() {
-  const worker = new Worker<DataCleanupJobData, DataCleanupJobResult>(
+export async function createDataCleanupWorker() {
+  return registerWorker<DataCleanupJobData, DataCleanupJobResult>(
     QUEUE_NAMES.DATA_CLEANUP,
     async (job: Job<DataCleanupJobData>) => {
       const startTime = Date.now();
@@ -25,7 +25,7 @@ export function createDataCleanupWorker() {
       let spaceFreedMB = 0;
 
       try {
-        console.log(`[Data Cleanup] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const {
           matchesOlderThanDays = 180,
@@ -42,12 +42,7 @@ export function createDataCleanupWorker() {
         accountCutoff.setDate(accountCutoff.getDate() - inactiveAccountsDays);
 
         // Step 1: Clean old matches
-        const progress1: JobProgress = {
-          current: 1,
-          total: 3,
-          message: `Cleaning matches older than ${matchesOlderThanDays} days`,
-        };
-        await job.updateProgress(progress1);
+        logger.info(`Cleaning matches older than ${matchesOlderThanDays} days`);
 
         try {
           // Count matches to delete
@@ -57,7 +52,7 @@ export function createDataCleanupWorker() {
             },
           });
 
-          console.log(`[Data Cleanup] Found ${oldMatchesCount} old matches`);
+          logger.info(`Found ${oldMatchesCount} old matches`);
 
           if (!dryRun && oldMatchesCount > 0) {
             // Delete in batches to avoid timeout
@@ -84,10 +79,10 @@ export function createDataCleanupWorker() {
               deleted += matchesToDelete.length;
               matchesDeleted += matchesToDelete.length;
 
-              console.log(`[Data Cleanup] Deleted ${deleted}/${oldMatchesCount} matches`);
+              logger.info(`Deleted ${deleted}/${oldMatchesCount} matches`);
             }
           } else if (dryRun) {
-            console.log(`[Data Cleanup] DRY RUN: Would delete ${oldMatchesCount} matches`);
+            logger.info(`DRY RUN: Would delete ${oldMatchesCount} matches`);
             matchesDeleted = oldMatchesCount;
           }
         } catch (err) {
@@ -95,16 +90,11 @@ export function createDataCleanupWorker() {
             err instanceof Error ? err.message : "Unknown error"
           }`;
           errors.push(errorMsg);
-          console.error(`[Data Cleanup] ${errorMsg}`);
+          logger.error(errorMsg);
         }
 
         // Step 2: Clean inactive discovered players
-        const progress2: JobProgress = {
-          current: 2,
-          total: 3,
-          message: `Cleaning inactive accounts (${inactiveAccountsDays}+ days)`,
-        };
-        await job.updateProgress(progress2);
+        logger.info(`Cleaning inactive accounts (${inactiveAccountsDays}+ days)`);
 
         try {
           // Count inactive accounts
@@ -118,7 +108,7 @@ export function createDataCleanupWorker() {
             },
           });
 
-          console.log(`[Data Cleanup] Found ${inactiveCount} inactive discovered players`);
+          logger.info(`Found ${inactiveCount} inactive discovered players`);
 
           if (!dryRun && inactiveCount > 0) {
             const result = await prisma.discoveredPlayer.deleteMany({
@@ -133,7 +123,7 @@ export function createDataCleanupWorker() {
 
             accountsDeleted = result.count;
           } else if (dryRun) {
-            console.log(`[Data Cleanup] DRY RUN: Would delete ${inactiveCount} discovered players`);
+            logger.info(`DRY RUN: Would delete ${inactiveCount} discovered players`);
             accountsDeleted = inactiveCount;
           }
         } catch (err) {
@@ -141,27 +131,18 @@ export function createDataCleanupWorker() {
             err instanceof Error ? err.message : "Unknown error"
           }`;
           errors.push(errorMsg);
-          console.error(`[Data Cleanup] ${errorMsg}`);
+          logger.error(errorMsg);
         }
 
-        // Step 3: Clean old job history (completed/failed jobs older than 7 days)
-        const progress3: JobProgress = {
-          current: 3,
-          total: 3,
-          message: "Cleaning old job history",
-        };
-        await job.updateProgress(progress3);
-
-        // BullMQ handles job cleanup via removeOnComplete/removeOnFail options
-        // So we just log this step
-        console.log(`[Data Cleanup] Job history cleanup handled by BullMQ`);
+        // Step 3: pg-boss handles job cleanup automatically
+        logger.info("Job history cleanup handled by pg-boss");
 
         // Estimate space freed (rough calculation)
         spaceFreedMB = Math.round((matchesDeleted * 0.002 + accountsDeleted * 0.001) * 10) / 10;
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Data Cleanup] Completed: ${matchesDeleted} matches, ${accountsDeleted} accounts deleted (~${spaceFreedMB}MB freed) in ${duration}ms`
+        logger.info(
+          `Completed: ${matchesDeleted} matches, ${accountsDeleted} accounts deleted (~${spaceFreedMB}MB freed) in ${duration}ms`
         );
 
         if (errors.length > 0) {
@@ -177,7 +158,7 @@ export function createDataCleanupWorker() {
         return { matchesDeleted, accountsDeleted, spaceFreedMB, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Data Cleanup] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -189,22 +170,6 @@ export function createDataCleanupWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Data Cleanup] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.DATA_CLEANUP, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Data Cleanup] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.DATA_CLEANUP, job?.id, err);
-  });
-
-  return worker;
 }

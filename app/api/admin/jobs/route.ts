@@ -3,12 +3,11 @@ import {
   getAllQueuesStatus,
   getRecentJobs,
   QUEUE_NAMES,
-  getQueue,
-} from "@/lib/queues";
-import { isRedisAvailable } from "@/lib/redis";
+  sendJob,
+  type QueueName,
+} from "@/lib/job-queue";
 import { requireAdmin } from "@/lib/auth-utils";
 import { createLogger } from "@/lib/logger";
-import type { ChampionStatsJobData, CompositionJobData } from "@/lib/queues/types";
 
 const logger = createLogger("admin-jobs");
 
@@ -22,27 +21,13 @@ export async function GET(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    // Check Redis availability
-    const redisAvailable = await isRedisAvailable();
-    if (!redisAvailable) {
-      return NextResponse.json(
-        {
-          error: "Redis not available",
-          redisConnected: false,
-          queues: {},
-          recentJobs: [],
-        },
-        { status: 503 }
-      );
-    }
-
     const [queuesStatus, recentJobs] = await Promise.all([
       getAllQueuesStatus(),
       getRecentJobs(30),
     ]);
 
     return NextResponse.json({
-      redisConnected: true,
+      connected: true,
       queues: queuesStatus,
       recentJobs,
       timestamp: Date.now(),
@@ -52,7 +37,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Unknown error",
-        redisConnected: false,
+        connected: false,
         queues: {},
         recentJobs: [],
       },
@@ -79,37 +64,20 @@ export async function POST(request: NextRequest) {
 
     // Validate queue name
     const validQueues = Object.values(QUEUE_NAMES);
-    if (!validQueues.includes(queue as typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES])) {
+    if (!validQueues.includes(queue as QueueName)) {
       return NextResponse.json(
         { error: `Invalid queue: ${queue}. Valid queues: ${validQueues.join(", ")}` },
         { status: 400 }
       );
     }
 
-    // Check Redis availability
-    const redisAvailable = await isRedisAvailable();
-    if (!redisAvailable) {
-      return NextResponse.json(
-        { error: "Redis not available" },
-        { status: 503 }
-      );
-    }
-
-    // Get the queue and add job
-    const q = getQueue(queue as typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES]);
-
-    // Generate job name with timestamp
-    const jobName = `${queue}-${Date.now()}`;
-
-    const job = await q.add(jobName, data || {}, {
-      jobId: jobName,
-    });
+    // Send job to pg-boss queue
+    const jobId = await sendJob(queue as QueueName, data || {});
 
     return NextResponse.json({
       success: true,
-      jobId: job.id,
+      jobId,
       queue,
-      name: jobName,
       timestamp: Date.now(),
     });
   } catch (error) {

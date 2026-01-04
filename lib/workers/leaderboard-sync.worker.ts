@@ -1,16 +1,16 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import { MAIN_REGIONS } from "../../constants/riot-regions";
 import type {
   LeaderboardSyncJobData,
   LeaderboardSyncJobResult,
-  JobProgress,
 } from "../queues/types";
+
+const logger = createLogger("leaderboard-sync-worker");
 
 type LeagueEntry = {
   summonerId: string;
@@ -29,8 +29,8 @@ type LeagueListResponse = {
  * Leaderboard Sync Worker
  * Synchronizes leaderboard data from Riot API for each region
  */
-export function createLeaderboardSyncWorker() {
-  const worker = new Worker<LeaderboardSyncJobData, LeaderboardSyncJobResult>(
+export async function createLeaderboardSyncWorker() {
+  return registerWorker<LeaderboardSyncJobData, LeaderboardSyncJobResult>(
     QUEUE_NAMES.LEADERBOARD_SYNC,
     async (job: Job<LeaderboardSyncJobData>) => {
       const startTime = Date.now();
@@ -39,7 +39,7 @@ export function createLeaderboardSyncWorker() {
       let regionsProcessed = 0;
 
       try {
-        console.log(`[Leaderboard Sync] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const {
           regions = MAIN_REGIONS,
@@ -47,21 +47,10 @@ export function createLeaderboardSyncWorker() {
           tiers = ["challenger", "grandmaster", "master"],
         } = job.data;
 
-        const totalSteps = regions.length * queueTypes.length * tiers.length;
-        let currentStep = 0;
-
         for (const region of regions) {
           for (const queueType of queueTypes) {
             for (const tier of tiers) {
               try {
-                currentStep++;
-                const progress: JobProgress = {
-                  current: currentStep,
-                  total: totalSteps,
-                  message: `Syncing ${tier} ${queueType} for ${region}`,
-                };
-                await job.updateProgress(progress);
-
                 // Build API URL
                 const url = `https://${region}.api.riotgames.com/lol/league/v4/${tier}leagues/by-queue/${queueType}`;
 
@@ -107,15 +96,15 @@ export function createLeaderboardSyncWorker() {
                   entriesSynced++;
                 }
 
-                console.log(
-                  `[Leaderboard Sync] Synced ${data.entries.length} entries for ${tier} ${queueType} ${region}`
+                logger.info(
+                  `Synced ${data.entries.length} entries for ${tier} ${queueType} ${region}`
                 );
               } catch (err) {
                 const errorMsg = `Failed to sync ${tier} ${queueType} for ${region}: ${
                   err instanceof Error ? err.message : "Unknown error"
                 }`;
                 errors.push(errorMsg);
-                console.error(`[Leaderboard Sync] ${errorMsg}`);
+                logger.error(errorMsg);
               }
             }
           }
@@ -123,8 +112,8 @@ export function createLeaderboardSyncWorker() {
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Leaderboard Sync] Completed: ${entriesSynced} entries from ${regionsProcessed} regions in ${duration}ms`
+        logger.info(
+          `Completed: ${entriesSynced} entries from ${regionsProcessed} regions in ${duration}ms`
         );
 
         if (errors.length > 0) {
@@ -140,7 +129,7 @@ export function createLeaderboardSyncWorker() {
         return { entriesSynced, regionsProcessed, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Leaderboard Sync] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -152,22 +141,6 @@ export function createLeaderboardSyncWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Leaderboard Sync] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.LEADERBOARD_SYNC, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Leaderboard Sync] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.LEADERBOARD_SYNC, job?.id, err);
-  });
-
-  return worker;
 }

@@ -8,13 +8,13 @@ League of Legends performance analysis platform with AI-powered composition sugg
 - **UI**: shadcn/ui, Tailwind CSS, Recharts
 - **Backend**: Next.js API Routes, Prisma ORM
 - **Database**: PostgreSQL with region-based sharding
-- **Queue**: BullMQ + Redis (async jobs)
+- **Queue**: pg-boss (PostgreSQL-based jobs)
 - **AI**: Anthropic Claude (analysis, reasoning)
 - **Authentication**: bcryptjs, JWT (HTTP-only cookies)
 - **Validation**: Zod, react-hook-form
 - **Internationalization**: next-intl (FR/EN)
 - **Monitoring**: Custom metrics, health checks, alerting, real-time notifications
-- **Cache**: Redis + in-memory cache with TTL
+- **Cache**: In-memory cache with TTL
 - **Security**: Rate limiting, timeouts, security headers, encryption
 
 ## Installation
@@ -245,9 +245,9 @@ pnpm run sync:items
 - Monitoring and alerts
 - **Admin notifications**: SSE alerts when jobs complete
 
-### 9. Async Jobs (BullMQ)
+### 9. Async Jobs (pg-boss)
 
-The application uses BullMQ + Redis for background tasks:
+The application uses pg-boss (PostgreSQL-based job queue) for background tasks:
 
 | Queue | Description |
 |-------|-------------|
@@ -307,12 +307,12 @@ mid-or-feed/
 │   ├── ai/                  # AI modules (Claude)
 │   │   ├── match-analysis.ts       # Match analysis
 │   │   └── composition-analysis.ts # Composition reasoning
-│   ├── workers/             # BullMQ workers
+│   ├── workers/             # pg-boss workers
 │   │   ├── champion-stats.worker.ts
 │   │   ├── composition.worker.ts
 │   │   ├── synergy-analysis.worker.ts
 │   │   └── ...
-│   ├── queues/              # Queue configuration
+│   ├── job-queue.ts         # pg-boss queue configuration
 │   ├── alerting.ts          # Alert system
 │   ├── api-monitoring.ts    # Automatic API monitoring
 │   ├── cache.ts             # In-memory cache with TTL
@@ -325,7 +325,6 @@ mid-or-feed/
 │   ├── prisma.ts            # Configured Prisma client
 │   ├── prisma-sharded-accounts.ts  # Sharding management
 │   ├── rate-limit.ts        # Rate limiting
-│   ├── redis.ts             # Redis client (BullMQ)
 │   ├── riot-api.ts          # Riot API client with retry and cache
 │   ├── security-headers.ts  # Security headers
 │   ├── sharding-config.ts   # Sharding configuration
@@ -613,7 +612,7 @@ See [docs/TODOS.md](./docs/TODOS.md) for the complete list of planned improvemen
 - [x] Add security headers
 - [x] Implement monitoring and alerting
 - [x] Optimize Riot API with retry and cache
-- [x] Add async jobs (BullMQ + Redis)
+- [x] Add async jobs (pg-boss)
 - [x] Implement real-time admin notifications
 - [x] Improve SEO for "lol counter"
 - [x] Add AI reasoning to compositions

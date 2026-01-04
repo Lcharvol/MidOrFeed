@@ -9,8 +9,10 @@ import { createItemBuildsWorker } from "./item-builds.worker";
 import { createDataCleanupWorker } from "./data-cleanup.worker";
 import { createAccountRefreshWorker } from "./account-refresh.worker";
 import { createDailyResetWorker } from "./daily-reset.worker";
-import { closeAllQueues } from "../queues";
-import { closeRedis } from "../redis";
+import { closeJobQueue } from "../job-queue";
+import { createLogger } from "../logger";
+
+const logger = createLogger("workers");
 
 // Export individual worker creators
 export { createChampionStatsWorker } from "./champion-stats.worker";
@@ -30,9 +32,12 @@ export { createDailyResetWorker } from "./daily-reset.worker";
  * Call this from a separate process (not from Next.js API routes)
  */
 export async function startAllWorkers() {
-  console.log("[Workers] Starting all workers...");
+  logger.info("Starting all workers...");
 
-  const workers = [
+  const workerIds: string[] = [];
+
+  // Start all workers (they now return worker IDs)
+  const workers = await Promise.all([
     // Data collection & analysis
     createChampionStatsWorker(),
     createCompositionWorker(),
@@ -49,29 +54,23 @@ export async function startAllWorkers() {
     // Maintenance jobs
     createDataCleanupWorker(),
     createDailyResetWorker(),
-  ];
+  ]);
 
-  console.log(`[Workers] Started ${workers.length} workers`);
+  workerIds.push(...workers);
+  logger.info(`Started ${workerIds.length} workers`);
 
   // Graceful shutdown handler
   const shutdown = async () => {
-    console.log("[Workers] Shutting down...");
-
-    for (const worker of workers) {
-      await worker.close();
-    }
-
-    await closeAllQueues();
-    await closeRedis();
-
-    console.log("[Workers] Shutdown complete");
+    logger.info("Shutting down...");
+    await closeJobQueue();
+    logger.info("Shutdown complete");
     process.exit(0);
   };
 
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);
 
-  return workers;
+  return workerIds;
 }
 
 /**

@@ -1,21 +1,21 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import type {
   ChampionStatsJobData,
   ChampionStatsJobResult,
-  JobProgress,
 } from "../queues/types";
+
+const logger = createLogger("champion-stats-worker");
 
 /**
  * Champion Stats Worker
  * Computes statistics for each champion from match data
  */
-export function createChampionStatsWorker() {
-  const worker = new Worker<ChampionStatsJobData, ChampionStatsJobResult>(
+export async function createChampionStatsWorker() {
+  return registerWorker<ChampionStatsJobData, ChampionStatsJobResult>(
     QUEUE_NAMES.CHAMPION_STATS,
     async (job: Job<ChampionStatsJobData>) => {
       const startTime = Date.now();
@@ -23,7 +23,7 @@ export function createChampionStatsWorker() {
       let championsProcessed = 0;
 
       try {
-        console.log(`[Champion Stats] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         // Get all unique champion IDs from match participants
         const championIds = job.data.championIds?.length
@@ -31,7 +31,7 @@ export function createChampionStatsWorker() {
           : await getUniqueChampionIds();
 
         const total = championIds.length;
-        console.log(`[Champion Stats] Processing ${total} champions`);
+        logger.info(`Processing ${total} champions`);
 
         // Process each champion
         for (let i = 0; i < championIds.length; i++) {
@@ -40,27 +40,17 @@ export function createChampionStatsWorker() {
           try {
             await computeChampionStats(championId);
             championsProcessed++;
-
-            // Report progress
-            const progress: JobProgress = {
-              current: i + 1,
-              total,
-              message: `Processing champion ${championId} (${i + 1}/${total})`,
-            };
-            await job.updateProgress(progress);
           } catch (err) {
             const errorMsg = `Failed to process champion ${championId}: ${
               err instanceof Error ? err.message : "Unknown error"
             }`;
             errors.push(errorMsg);
-            console.error(`[Champion Stats] ${errorMsg}`);
+            logger.error(errorMsg);
           }
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Champion Stats] Completed: ${championsProcessed}/${total} champions in ${duration}ms`
-        );
+        logger.info(`Completed: ${championsProcessed}/${total} champions in ${duration}ms`);
 
         // Send alert if there were errors
         if (errors.length > 0) {
@@ -76,7 +66,7 @@ export function createChampionStatsWorker() {
         return { championsProcessed, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Champion Stats] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -87,24 +77,8 @@ export function createChampionStatsWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1, // Process one job at a time
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Champion Stats] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.CHAMPION_STATS, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Champion Stats] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.CHAMPION_STATS, job?.id, err);
-  });
-
-  return worker;
 }
 
 /**

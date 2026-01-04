@@ -1,16 +1,16 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import { REGION_TO_ROUTING } from "../../constants/regions";
 import type {
   AccountRefreshJobData,
   AccountRefreshJobResult,
-  JobProgress,
 } from "../queues/types";
+
+const logger = createLogger("account-refresh-worker");
 
 type SummonerResponse = {
   id: string;
@@ -32,8 +32,8 @@ type AccountResponse = {
  * Account Refresh Worker
  * Refreshes linked account information (level, icon, name, etc.)
  */
-export function createAccountRefreshWorker() {
-  const worker = new Worker<AccountRefreshJobData, AccountRefreshJobResult>(
+export async function createAccountRefreshWorker() {
+  return registerWorker<AccountRefreshJobData, AccountRefreshJobResult>(
     QUEUE_NAMES.ACCOUNT_REFRESH,
     async (job: Job<AccountRefreshJobData>) => {
       const startTime = Date.now();
@@ -42,7 +42,7 @@ export function createAccountRefreshWorker() {
       let accountsNotFound = 0;
 
       try {
-        console.log(`[Account Refresh] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const { limit = 100, staleHours = 24 } = job.data;
 
@@ -60,17 +60,10 @@ export function createAccountRefreshWorker() {
         });
 
         const total = accounts.length;
-        console.log(`[Account Refresh] Found ${total} accounts to refresh`);
+        logger.info(`Found ${total} accounts to refresh`);
 
         for (let i = 0; i < accounts.length; i++) {
           const account = accounts[i];
-
-          const progress: JobProgress = {
-            current: i + 1,
-            total,
-            message: `Refreshing ${account.riotGameName || account.puuid.slice(0, 8)} (${i + 1}/${total})`,
-          };
-          await job.updateProgress(progress);
 
           try {
             const routing = REGION_TO_ROUTING[account.riotRegion] || "europe";
@@ -89,7 +82,7 @@ export function createAccountRefreshWorker() {
               tagLine = accountData.tagLine;
             } catch (err) {
               // Account might not exist anymore
-              console.warn(`[Account Refresh] Could not fetch account data for ${account.puuid}`);
+              logger.warn(`Could not fetch account data for ${account.puuid}`);
             }
 
             // Fetch summoner info (level, icon)
@@ -116,14 +109,14 @@ export function createAccountRefreshWorker() {
               });
 
               accountsRefreshed++;
-              console.log(
-                `[Account Refresh] Refreshed ${gameName}#${tagLine} (level ${summonerData.summonerLevel})`
+              logger.debug(
+                `Refreshed ${gameName}#${tagLine} (level ${summonerData.summonerLevel})`
               );
             } catch (err) {
               // Summoner not found - might have been deleted or name changed
               if (err instanceof Error && err.message.includes("404")) {
                 accountsNotFound++;
-                console.warn(`[Account Refresh] Summoner not found: ${account.puuid}`);
+                logger.warn(`Summoner not found: ${account.puuid}`);
               } else {
                 throw err;
               }
@@ -133,7 +126,7 @@ export function createAccountRefreshWorker() {
               err instanceof Error ? err.message : "Unknown error"
             }`;
             errors.push(errorMsg);
-            console.error(`[Account Refresh] ${errorMsg}`);
+            logger.error(errorMsg);
           }
 
           // Small delay to respect rate limits
@@ -141,8 +134,8 @@ export function createAccountRefreshWorker() {
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Account Refresh] Completed: ${accountsRefreshed} refreshed, ${accountsNotFound} not found in ${duration}ms`
+        logger.info(
+          `Completed: ${accountsRefreshed} refreshed, ${accountsNotFound} not found in ${duration}ms`
         );
 
         if (errors.length > 0) {
@@ -158,7 +151,7 @@ export function createAccountRefreshWorker() {
         return { accountsRefreshed, accountsNotFound, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Account Refresh] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -170,22 +163,6 @@ export function createAccountRefreshWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Account Refresh] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.ACCOUNT_REFRESH, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Account Refresh] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.ACCOUNT_REFRESH, job?.id, err);
-  });
-
-  return worker;
 }

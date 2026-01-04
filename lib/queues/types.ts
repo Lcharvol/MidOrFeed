@@ -1,13 +1,17 @@
 /**
- * Job data types for each queue
+ * Job data and result types for all queue workers
  */
 
-// Champion Stats Job
+// Common job progress structure
+export interface JobProgress {
+  current: number;
+  total: number;
+  message?: string;
+}
+
+// Champion Stats Worker
 export interface ChampionStatsJobData {
-  // Optional: specific champion IDs to process (if empty, process all)
-  championIds?: number[];
-  // Force recalculation even if recently computed
-  force?: boolean;
+  championIds?: string[];
 }
 
 export interface ChampionStatsJobResult {
@@ -16,11 +20,9 @@ export interface ChampionStatsJobResult {
   errors: string[];
 }
 
-// Composition Generation Job
+// Composition Worker
 export interface CompositionJobData {
-  // Optional: specific roles to generate (if empty, all roles)
-  roles?: ("top" | "jungle" | "mid" | "adc" | "support")[];
-  // Minimum sample size for confidence
+  roles?: string[];
   minSampleSize?: number;
 }
 
@@ -30,12 +32,10 @@ export interface CompositionJobResult {
   errors: string[];
 }
 
-// Data Crawl Job
+// Data Crawl Worker
 export interface DataCrawlJobData {
   region?: string;
-  // Number of players to crawl
   limit?: number;
-  // Max matches to collect per player
   matchesPerPlayer?: number;
 }
 
@@ -47,27 +47,11 @@ export interface DataCrawlJobResult {
   errors: string[];
 }
 
-// Account Sync Job
-export interface AccountSyncJobData {
-  riotApiQuota?: number;
-  batchSize?: number;
-}
-
-export interface AccountSyncJobResult {
-  accountsSynced: number;
-  apiCallsMade: number;
-  duration: number;
-  errors: string[];
-}
-
-// Leaderboard Sync Job
+// Leaderboard Sync Worker
 export interface LeaderboardSyncJobData {
-  // Regions to sync (if empty, all main regions)
   regions?: string[];
-  // Queue types to sync
-  queueTypes?: ("RANKED_SOLO_5x5" | "RANKED_FLEX_SR")[];
-  // Tiers to sync (Challenger, Grandmaster, Master)
-  tiers?: ("challenger" | "grandmaster" | "master")[];
+  queueTypes?: string[];
+  tiers?: string[];
 }
 
 export interface LeaderboardSyncJobResult {
@@ -77,12 +61,10 @@ export interface LeaderboardSyncJobResult {
   errors: string[];
 }
 
-// DDragon Sync Job
+// DDragon Sync Worker
 export interface DDragonSyncJobData {
-  // Force update even if version hasn't changed
   force?: boolean;
-  // Specific resources to sync
-  resources?: ("champions" | "items" | "versions")[];
+  resources?: string[];
 }
 
 export interface DDragonSyncJobResult {
@@ -93,11 +75,9 @@ export interface DDragonSyncJobResult {
   errors: string[];
 }
 
-// Meta Analysis Job
+// Meta Analysis Worker
 export interface MetaAnalysisJobData {
-  // Minimum games for a champion to be considered
   minGames?: number;
-  // Number of days to analyze
   daysToAnalyze?: number;
 }
 
@@ -108,11 +88,9 @@ export interface MetaAnalysisJobResult {
   errors: string[];
 }
 
-// Synergy Analysis Job
+// Synergy Analysis Worker
 export interface SynergyAnalysisJobData {
-  // Minimum games together for synergy calculation
   minGamesTogether?: number;
-  // Top synergies to keep per champion
   topSynergiesPerChampion?: number;
 }
 
@@ -123,11 +101,9 @@ export interface SynergyAnalysisJobResult {
   errors: string[];
 }
 
-// Item Builds Job
+// Item Builds Worker
 export interface ItemBuildsJobData {
-  // Specific champions to analyze (if empty, all)
   championIds?: string[];
-  // Minimum games for a build to be considered
   minGames?: number;
 }
 
@@ -138,13 +114,10 @@ export interface ItemBuildsJobResult {
   errors: string[];
 }
 
-// Data Cleanup Job
+// Data Cleanup Worker
 export interface DataCleanupJobData {
-  // Delete matches older than X days
   matchesOlderThanDays?: number;
-  // Delete inactive accounts (no matches in X days)
   inactiveAccountsDays?: number;
-  // Dry run mode (don't actually delete)
   dryRun?: boolean;
 }
 
@@ -156,12 +129,11 @@ export interface DataCleanupJobResult {
   errors: string[];
 }
 
-// Account Refresh Job
+// Account Refresh Worker
 export interface AccountRefreshJobData {
-  // Max accounts to refresh per run
   limit?: number;
-  // Only refresh accounts not updated in X hours
   staleHours?: number;
+  puuid?: string;
 }
 
 export interface AccountRefreshJobResult {
@@ -171,11 +143,9 @@ export interface AccountRefreshJobResult {
   errors: string[];
 }
 
-// Daily Reset Job
+// Daily Reset Worker
 export interface DailyResetJobData {
-  // Reset analysis quotas
   resetAnalysisQuotas?: boolean;
-  // Archive old notifications
   archiveNotifications?: boolean;
 }
 
@@ -184,11 +154,4 @@ export interface DailyResetJobResult {
   notificationsArchived: number;
   duration: number;
   errors: string[];
-}
-
-// Job progress reporting
-export interface JobProgress {
-  current: number;
-  total: number;
-  message?: string;
 }

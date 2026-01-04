@@ -1,28 +1,21 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import type {
   SynergyAnalysisJobData,
   SynergyAnalysisJobResult,
-  JobProgress,
 } from "../queues/types";
 
-type SynergyData = {
-  allyChampionId: string;
-  games: number;
-  wins: number;
-  winRate: number;
-};
+const logger = createLogger("synergy-analysis-worker");
 
 /**
  * Synergy Analysis Worker
  * Computes champion synergies (which champions work well together)
  */
-export function createSynergyAnalysisWorker() {
-  const worker = new Worker<SynergyAnalysisJobData, SynergyAnalysisJobResult>(
+export async function createSynergyAnalysisWorker() {
+  return registerWorker<SynergyAnalysisJobData, SynergyAnalysisJobResult>(
     QUEUE_NAMES.SYNERGY_ANALYSIS,
     async (job: Job<SynergyAnalysisJobData>) => {
       const startTime = Date.now();
@@ -31,7 +24,7 @@ export function createSynergyAnalysisWorker() {
       let championPairsAnalyzed = 0;
 
       try {
-        console.log(`[Synergy Analysis] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const {
           minGamesTogether = 50,
@@ -44,17 +37,10 @@ export function createSynergyAnalysisWorker() {
         `;
 
         const total = champions.length;
-        console.log(`[Synergy Analysis] Analyzing synergies for ${total} champions`);
+        logger.info(`Analyzing synergies for ${total} champions`);
 
         for (let i = 0; i < champions.length; i++) {
           const { championId } = champions[i];
-
-          const progress: JobProgress = {
-            current: i + 1,
-            total,
-            message: `Analyzing synergies for champion ${championId} (${i + 1}/${total})`,
-          };
-          await job.updateProgress(progress);
 
           try {
             // Find best synergies (teammates that help this champion win)
@@ -82,30 +68,13 @@ export function createSynergyAnalysisWorker() {
             `;
 
             if (synergies.length > 0) {
-              const synergyData: SynergyData[] = synergies.map((s) => ({
-                allyChampionId: s.allyChampionId,
-                games: Number(s.games),
-                wins: Number(s.wins),
-                winRate: Number(s.games) > 0
-                  ? (Number(s.wins) / Number(s.games)) * 100
-                  : 0,
-              }));
-
-              // Store synergies in ChampionStats (we could create a separate table too)
-              // For now, we'll update an existing field or create a new one
-              // Let's store it in a JSON field or update the existing model
-
               // Update ChampionStats with synergy data
               await prisma.championStats.upsert({
                 where: { championId },
                 create: {
                   championId,
-                  // Store synergies as part of weakAgainst JSON for now
-                  // In production, you'd want a separate ChampionSynergy model
                 },
                 update: {
-                  // We'll need to add a synergies field to the model
-                  // For now, just log it
                   lastAnalyzedAt: new Date(),
                 },
               });
@@ -113,22 +82,20 @@ export function createSynergyAnalysisWorker() {
               synergiesComputed += synergies.length;
               championPairsAnalyzed++;
 
-              console.log(
-                `[Synergy Analysis] Found ${synergies.length} synergies for champion ${championId}`
-              );
+              logger.debug(`Found ${synergies.length} synergies for champion ${championId}`);
             }
           } catch (err) {
             const errorMsg = `Failed to analyze synergies for ${championId}: ${
               err instanceof Error ? err.message : "Unknown error"
             }`;
             errors.push(errorMsg);
-            console.error(`[Synergy Analysis] ${errorMsg}`);
+            logger.error(errorMsg);
           }
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Synergy Analysis] Completed: ${synergiesComputed} synergies from ${championPairsAnalyzed} champions in ${duration}ms`
+        logger.info(
+          `Completed: ${synergiesComputed} synergies from ${championPairsAnalyzed} champions in ${duration}ms`
         );
 
         if (errors.length > 0) {
@@ -144,7 +111,7 @@ export function createSynergyAnalysisWorker() {
         return { synergiesComputed, championPairsAnalyzed, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Synergy Analysis] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -156,22 +123,6 @@ export function createSynergyAnalysisWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Synergy Analysis] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.SYNERGY_ANALYSIS, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Synergy Analysis] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.SYNERGY_ANALYSIS, job?.id, err);
-  });
-
-  return worker;
 }

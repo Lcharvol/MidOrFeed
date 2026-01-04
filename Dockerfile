@@ -35,7 +35,7 @@ COPY --from=builder /app/public ./public
 # Copy scripts directory (for workers and migration scripts)
 COPY --from=builder /app/scripts ./scripts
 
-# Copy lib directory (for workers, queues, redis, and utilities)
+# Copy lib directory (for workers and utilities)
 COPY --from=builder /app/lib ./lib
 
 # Copy constants directory (for workers)
@@ -48,7 +48,7 @@ COPY --from=builder /app/types ./types
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
-# Copy full node_modules for workers (tsx, bullmq, ioredis, etc.)
+# Copy full node_modules for workers (tsx, pg-boss, etc.)
 COPY --from=builder /app/node_modules ./node_modules
 
 # Copy startup script

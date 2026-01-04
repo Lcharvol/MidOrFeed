@@ -1,23 +1,23 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import { REGION_TO_ROUTING } from "../../constants/regions";
 import type {
   DataCrawlJobData,
   DataCrawlJobResult,
-  JobProgress,
 } from "../queues/types";
+
+const logger = createLogger("data-crawl-worker");
 
 /**
  * Data Crawl Worker
  * Crawls discovered players to collect their match history
  */
-export function createDataCrawlWorker() {
-  const worker = new Worker<DataCrawlJobData, DataCrawlJobResult>(
+export async function createDataCrawlWorker() {
+  return registerWorker<DataCrawlJobData, DataCrawlJobResult>(
     QUEUE_NAMES.DATA_CRAWL,
     async (job: Job<DataCrawlJobData>) => {
       const startTime = Date.now();
@@ -27,7 +27,7 @@ export function createDataCrawlWorker() {
       let newPlayersDiscovered = 0;
 
       try {
-        console.log(`[Data Crawl] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const {
           region,
@@ -46,7 +46,7 @@ export function createDataCrawlWorker() {
         });
 
         const total = players.length;
-        console.log(`[Data Crawl] Found ${total} players to crawl`);
+        logger.info(`Found ${total} players to crawl`);
 
         for (let i = 0; i < players.length; i++) {
           const player = players[i];
@@ -199,7 +199,7 @@ export function createDataCrawlWorker() {
                 }
               } catch (matchErr) {
                 // Skip individual match errors
-                console.error(`[Data Crawl] Error processing match ${matchId}:`, matchErr);
+                logger.error(`Error processing match ${matchId}: ${matchErr}`);
               }
             }
 
@@ -214,19 +214,12 @@ export function createDataCrawlWorker() {
             });
 
             playersCrawled++;
-
-            const progress: JobProgress = {
-              current: i + 1,
-              total,
-              message: `Crawled ${player.riotGameName || player.puuid.slice(0, 8)} (${i + 1}/${total})`,
-            };
-            await job.updateProgress(progress);
           } catch (err) {
             const errorMsg = `Failed to crawl player ${player.puuid}: ${
               err instanceof Error ? err.message : "Unknown error"
             }`;
             errors.push(errorMsg);
-            console.error(`[Data Crawl] ${errorMsg}`);
+            logger.error(errorMsg);
 
             // Mark as failed
             await prisma.discoveredPlayer.update({
@@ -237,8 +230,8 @@ export function createDataCrawlWorker() {
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Data Crawl] Completed: ${playersCrawled} players, ${matchesCollected} matches, ${newPlayersDiscovered} new players in ${duration}ms`
+        logger.info(
+          `Completed: ${playersCrawled} players, ${matchesCollected} matches, ${newPlayersDiscovered} new players in ${duration}ms`
         );
 
         if (errors.length > 0) {
@@ -254,7 +247,7 @@ export function createDataCrawlWorker() {
         return { playersCrawled, matchesCollected, newPlayersDiscovered, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Data Crawl] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -266,22 +259,6 @@ export function createDataCrawlWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Data Crawl] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.DATA_CRAWL, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Data Crawl] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.DATA_CRAWL, job?.id, err);
-  });
-
-  return worker;
 }

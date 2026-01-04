@@ -1,5 +1,5 @@
 /**
- * Script to start BullMQ workers
+ * Script to start pg-boss workers
  * Run with: npx tsx scripts/start-workers.ts
  */
 
@@ -7,7 +7,7 @@ import { startAllWorkers } from "../lib/workers";
 
 async function main() {
   console.log("=".repeat(50));
-  console.log("Starting BullMQ Workers");
+  console.log("Starting pg-boss Workers");
   console.log("=".repeat(50));
 
   try {

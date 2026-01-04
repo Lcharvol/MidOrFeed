@@ -1,15 +1,14 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import type {
   DDragonSyncJobData,
   DDragonSyncJobResult,
-  JobProgress,
 } from "../queues/types";
 
+const logger = createLogger("ddragon-sync-worker");
 const DDRAGON_BASE = "https://ddragon.leagueoflegends.com";
 
 type ChampionData = {
@@ -60,8 +59,8 @@ type ItemData = {
  * DDragon Sync Worker
  * Updates champions, items, and versions from DDragon CDN
  */
-export function createDDragonSyncWorker() {
-  const worker = new Worker<DDragonSyncJobData, DDragonSyncJobResult>(
+export async function createDDragonSyncWorker() {
+  return registerWorker<DDragonSyncJobData, DDragonSyncJobResult>(
     QUEUE_NAMES.DDRAGON_SYNC,
     async (job: Job<DDragonSyncJobData>) => {
       const startTime = Date.now();
@@ -71,18 +70,11 @@ export function createDDragonSyncWorker() {
       let newVersion: string | null = null;
 
       try {
-        console.log(`[DDragon Sync] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const { force = false, resources = ["champions", "items", "versions"] } = job.data;
 
         // Step 1: Get latest version
-        const progress1: JobProgress = {
-          current: 1,
-          total: 4,
-          message: "Fetching latest version",
-        };
-        await job.updateProgress(progress1);
-
         const versionsRes = await fetch(`${DDRAGON_BASE}/api/versions.json`);
         const versions = (await versionsRes.json()) as string[];
         const latestVersion = versions[0];
@@ -93,7 +85,7 @@ export function createDDragonSyncWorker() {
         });
 
         if (!force && currentVersion?.version === latestVersion) {
-          console.log(`[DDragon Sync] Already up to date (${latestVersion})`);
+          logger.info(`Already up to date (${latestVersion})`);
           return {
             championsUpdated: 0,
             itemsUpdated: 0,
@@ -104,17 +96,10 @@ export function createDDragonSyncWorker() {
         }
 
         newVersion = latestVersion;
-        console.log(`[DDragon Sync] Updating to version ${latestVersion}`);
+        logger.info(`Updating to version ${latestVersion}`);
 
         // Step 2: Update champions
         if (resources.includes("champions")) {
-          const progress2: JobProgress = {
-            current: 2,
-            total: 4,
-            message: "Syncing champions",
-          };
-          await job.updateProgress(progress2);
-
           try {
             const championsRes = await fetch(
               `${DDRAGON_BASE}/cdn/${latestVersion}/data/en_US/champion.json`
@@ -190,7 +175,7 @@ export function createDDragonSyncWorker() {
               championsUpdated++;
             }
 
-            console.log(`[DDragon Sync] Updated ${championsUpdated} champions`);
+            logger.info(`Updated ${championsUpdated} champions`);
           } catch (err) {
             errors.push(`Champions sync failed: ${err instanceof Error ? err.message : "Unknown"}`);
           }
@@ -198,13 +183,6 @@ export function createDDragonSyncWorker() {
 
         // Step 3: Update items
         if (resources.includes("items")) {
-          const progress3: JobProgress = {
-            current: 3,
-            total: 4,
-            message: "Syncing items",
-          };
-          await job.updateProgress(progress3);
-
           try {
             const itemsRes = await fetch(
               `${DDRAGON_BASE}/cdn/${latestVersion}/data/en_US/item.json`
@@ -235,7 +213,7 @@ export function createDDragonSyncWorker() {
               itemsUpdated++;
             }
 
-            console.log(`[DDragon Sync] Updated ${itemsUpdated} items`);
+            logger.info(`Updated ${itemsUpdated} items`);
           } catch (err) {
             errors.push(`Items sync failed: ${err instanceof Error ? err.message : "Unknown"}`);
           }
@@ -243,13 +221,6 @@ export function createDDragonSyncWorker() {
 
         // Step 4: Update version
         if (resources.includes("versions")) {
-          const progress4: JobProgress = {
-            current: 4,
-            total: 4,
-            message: "Updating version",
-          };
-          await job.updateProgress(progress4);
-
           // Set all versions to not current
           await prisma.gameVersion.updateMany({
             data: { isCurrent: false },
@@ -264,8 +235,8 @@ export function createDDragonSyncWorker() {
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[DDragon Sync] Completed: ${championsUpdated} champions, ${itemsUpdated} items, version ${newVersion} in ${duration}ms`
+        logger.info(
+          `Completed: ${championsUpdated} champions, ${itemsUpdated} items, version ${newVersion} in ${duration}ms`
         );
 
         if (errors.length > 0) {
@@ -281,7 +252,7 @@ export function createDDragonSyncWorker() {
         return { championsUpdated, itemsUpdated, newVersion, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[DDragon Sync] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -293,22 +264,6 @@ export function createDDragonSyncWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[DDragon Sync] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.DDRAGON_SYNC, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[DDragon Sync] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.DDRAGON_SYNC, job?.id, err);
-  });
-
-  return worker;
 }

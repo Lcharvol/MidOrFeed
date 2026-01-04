@@ -1,9 +1,8 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import {
   generateCompositionReasoning,
   type CompositionAnalysisInput,
@@ -11,8 +10,9 @@ import {
 import type {
   CompositionJobData,
   CompositionJobResult,
-  JobProgress,
 } from "../queues/types";
+
+const logger = createLogger("composition-worker");
 
 const ROLES = ["top", "jungle", "mid", "adc", "support"] as const;
 type Role = (typeof ROLES)[number];
@@ -49,8 +49,8 @@ interface RoleSynergy {
  * Composition Generation Worker
  * Generates champion pick suggestions based on team composition analysis
  */
-export function createCompositionWorker() {
-  const worker = new Worker<CompositionJobData, CompositionJobResult>(
+export async function createCompositionWorker() {
+  return registerWorker<CompositionJobData, CompositionJobResult>(
     QUEUE_NAMES.COMPOSITIONS,
     async (job: Job<CompositionJobData>) => {
       const startTime = Date.now();
@@ -58,11 +58,10 @@ export function createCompositionWorker() {
       let suggestionsGenerated = 0;
 
       try {
-        console.log(`[Compositions] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const rolesToProcess = job.data.roles || [...ROLES];
         const minSampleSize = job.data.minSampleSize || 20;
-        const total = rolesToProcess.length;
 
         // Clear existing AI-generated suggestions
         await prisma.compositionSuggestion.deleteMany({
@@ -70,31 +69,22 @@ export function createCompositionWorker() {
         });
 
         for (let i = 0; i < rolesToProcess.length; i++) {
-          const role = rolesToProcess[i];
+          const role = rolesToProcess[i] as Role;
 
           try {
             const count = await generateSuggestionsForRole(role, minSampleSize);
             suggestionsGenerated += count;
-
-            const progress: JobProgress = {
-              current: i + 1,
-              total,
-              message: `Generated ${count} suggestions for ${role} (${i + 1}/${total})`,
-            };
-            await job.updateProgress(progress);
           } catch (err) {
             const errorMsg = `Failed to generate suggestions for ${role}: ${
               err instanceof Error ? err.message : "Unknown error"
             }`;
             errors.push(errorMsg);
-            console.error(`[Compositions] ${errorMsg}`);
+            logger.error(errorMsg);
           }
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Compositions] Completed: ${suggestionsGenerated} suggestions in ${duration}ms`
-        );
+        logger.info(`Completed: ${suggestionsGenerated} suggestions in ${duration}ms`);
 
         if (errors.length > 0) {
           sendAlert(
@@ -109,7 +99,7 @@ export function createCompositionWorker() {
         return { suggestionsGenerated, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Compositions] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -120,24 +110,8 @@ export function createCompositionWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Compositions] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.COMPOSITIONS, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Compositions] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.COMPOSITIONS, job?.id, err);
-  });
-
-  return worker;
 }
 
 /**

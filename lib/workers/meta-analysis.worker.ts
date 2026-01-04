@@ -1,14 +1,14 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import type {
   MetaAnalysisJobData,
   MetaAnalysisJobResult,
-  JobProgress,
 } from "../queues/types";
+
+const logger = createLogger("meta-analysis-worker");
 
 const ROLES = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"] as const;
 
@@ -16,8 +16,8 @@ const ROLES = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"] as const;
  * Meta Analysis Worker
  * Analyzes current meta: top picks per role, trends, etc.
  */
-export function createMetaAnalysisWorker() {
-  const worker = new Worker<MetaAnalysisJobData, MetaAnalysisJobResult>(
+export async function createMetaAnalysisWorker() {
+  return registerWorker<MetaAnalysisJobData, MetaAnalysisJobResult>(
     QUEUE_NAMES.META_ANALYSIS,
     async (job: Job<MetaAnalysisJobData>) => {
       const startTime = Date.now();
@@ -26,7 +26,7 @@ export function createMetaAnalysisWorker() {
       let topPicksGenerated = 0;
 
       try {
-        console.log(`[Meta Analysis] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const { minGames = 100, daysToAnalyze = 7 } = job.data;
 
@@ -37,13 +37,6 @@ export function createMetaAnalysisWorker() {
         // Analyze each role
         for (let i = 0; i < ROLES.length; i++) {
           const role = ROLES[i];
-
-          const progress: JobProgress = {
-            current: i + 1,
-            total: ROLES.length,
-            message: `Analyzing ${role} meta`,
-          };
-          await job.updateProgress(progress);
 
           try {
             // Get champion stats for this role
@@ -120,19 +113,19 @@ export function createMetaAnalysisWorker() {
               topPicksGenerated++;
             }
 
-            console.log(`[Meta Analysis] Analyzed ${stats.length} champions for ${role}`);
+            logger.info(`Analyzed ${stats.length} champions for ${role}`);
           } catch (err) {
             const errorMsg = `Failed to analyze ${role}: ${
               err instanceof Error ? err.message : "Unknown error"
             }`;
             errors.push(errorMsg);
-            console.error(`[Meta Analysis] ${errorMsg}`);
+            logger.error(errorMsg);
           }
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Meta Analysis] Completed: ${championsAnalyzed} champions, ${topPicksGenerated} top picks in ${duration}ms`
+        logger.info(
+          `Completed: ${championsAnalyzed} champions, ${topPicksGenerated} top picks in ${duration}ms`
         );
 
         if (errors.length > 0) {
@@ -148,7 +141,7 @@ export function createMetaAnalysisWorker() {
         return { championsAnalyzed, topPicksGenerated, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Meta Analysis] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -160,22 +153,6 @@ export function createMetaAnalysisWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Meta Analysis] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.META_ANALYSIS, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Meta Analysis] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.META_ANALYSIS, job?.id, err);
-  });
-
-  return worker;
 }

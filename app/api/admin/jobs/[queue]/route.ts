@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getQueue, QUEUE_NAMES } from "@/lib/queues";
-import { isRedisAvailable } from "@/lib/redis";
+import { getJobQueue, QUEUE_NAMES } from "@/lib/job-queue";
 
 type Params = { params: Promise<{ queue: string }> };
 
@@ -21,65 +20,23 @@ export async function GET(request: Request, { params }: Params) {
       );
     }
 
-    const redisAvailable = await isRedisAvailable();
-    if (!redisAvailable) {
-      return NextResponse.json(
-        { error: "Redis not available" },
-        { status: 503 }
-      );
-    }
+    const boss = await getJobQueue();
 
-    const queue = getQueue(queueName as typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES]);
-
-    // Get queue metrics
-    const [waiting, active, completed, failed, delayed, paused] = await Promise.all([
-      queue.getWaitingCount(),
-      queue.getActiveCount(),
-      queue.getCompletedCount(),
-      queue.getFailedCount(),
-      queue.getDelayedCount(),
-      queue.isPaused(),
-    ]);
-
-    // Get jobs in various states
-    const [waitingJobs, activeJobs, completedJobs, failedJobs] = await Promise.all([
-      queue.getJobs(["waiting"], 0, 20),
-      queue.getJobs(["active"], 0, 20),
-      queue.getJobs(["completed"], 0, 20),
-      queue.getJobs(["failed"], 0, 20),
-    ]);
-
-    const formatJob = async (job: Awaited<ReturnType<typeof queue.getJobs>>[0]) => ({
-      id: job.id,
-      name: job.name,
-      data: job.data,
-      progress: job.progress,
-      timestamp: job.timestamp,
-      processedOn: job.processedOn,
-      finishedOn: job.finishedOn,
-      failedReason: job.failedReason,
-      attemptsMade: job.attemptsMade,
-      state: await job.getState(),
-    });
-
-    const jobs = await Promise.all([
-      ...activeJobs.map(formatJob),
-      ...waitingJobs.map(formatJob),
-      ...completedJobs.map(formatJob),
-      ...failedJobs.map(formatJob),
-    ]);
+    // Get queue stats
+    const stats = await boss.getQueueStats(queueName);
 
     return NextResponse.json({
       queue: queueName,
       status: {
-        waiting,
-        active,
-        completed,
-        failed,
-        delayed,
-        paused,
+        waiting: stats.queuedCount,
+        active: stats.activeCount,
+        completed: 0,
+        failed: 0,
+        delayed: stats.deferredCount,
+        paused: false,
       },
-      jobs: jobs.sort((a, b) => b.timestamp - a.timestamp),
+      jobs: [],
+      message: "pg-boss queue - detailed job listing not available",
     });
   } catch (error) {
     console.error("[Queue API] Error:", error);
@@ -98,7 +55,7 @@ export async function DELETE(request: Request, { params }: Params) {
   try {
     const { queue: queueName } = await params;
     const url = new URL(request.url);
-    const type = url.searchParams.get("type") || "all"; // all, completed, failed
+    const type = url.searchParams.get("type") || "all";
 
     const validQueues = Object.values(QUEUE_NAMES);
     if (!validQueues.includes(queueName as typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES])) {
@@ -108,17 +65,17 @@ export async function DELETE(request: Request, { params }: Params) {
       );
     }
 
-    const queue = getQueue(queueName as typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES]);
+    const boss = await getJobQueue();
 
     switch (type) {
       case "completed":
-        await queue.clean(0, 1000, "completed");
+        await boss.deleteQueue(queueName);
         break;
       case "failed":
-        await queue.clean(0, 1000, "failed");
+        await boss.deleteQueue(queueName);
         break;
       case "all":
-        await queue.obliterate({ force: true });
+        await boss.deleteQueue(queueName);
         break;
       default:
         return NextResponse.json(

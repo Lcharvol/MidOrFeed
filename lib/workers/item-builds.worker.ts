@@ -1,28 +1,21 @@
-import { Worker, Job } from "bullmq";
-import { getRedisConnection } from "../redis";
-import { QUEUE_NAMES } from "../queues";
+import { Job } from "pg-boss";
+import { registerWorker, QUEUE_NAMES } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
-import { notifyJobCompleted, notifyJobFailed } from "./job-notifications";
+import { createLogger } from "../logger";
 import type {
   ItemBuildsJobData,
   ItemBuildsJobResult,
-  JobProgress,
 } from "../queues/types";
 
-type BuildData = {
-  items: number[];
-  games: number;
-  wins: number;
-  winRate: number;
-};
+const logger = createLogger("item-builds-worker");
 
 /**
  * Item Builds Worker
  * Calculates the most effective item builds per champion
  */
-export function createItemBuildsWorker() {
-  const worker = new Worker<ItemBuildsJobData, ItemBuildsJobResult>(
+export async function createItemBuildsWorker() {
+  return registerWorker<ItemBuildsJobData, ItemBuildsJobResult>(
     QUEUE_NAMES.ITEM_BUILDS,
     async (job: Job<ItemBuildsJobData>) => {
       const startTime = Date.now();
@@ -31,7 +24,7 @@ export function createItemBuildsWorker() {
       let championsProcessed = 0;
 
       try {
-        console.log(`[Item Builds] Starting job ${job.id}`);
+        logger.info(`Starting job ${job.id}`);
 
         const { championIds, minGames = 50 } = job.data;
 
@@ -47,21 +40,13 @@ export function createItemBuildsWorker() {
         }
 
         const total = champions.length;
-        console.log(`[Item Builds] Analyzing builds for ${total} champions`);
+        logger.info(`Analyzing builds for ${total} champions`);
 
         for (let i = 0; i < champions.length; i++) {
           const { championId } = champions[i];
 
-          const progress: JobProgress = {
-            current: i + 1,
-            total,
-            message: `Analyzing builds for champion ${championId} (${i + 1}/${total})`,
-          };
-          await job.updateProgress(progress);
-
           try {
             // Get most common winning item combinations
-            // We group by the final build (items 0-5, excluding boots/wards in item6)
             const builds = await prisma.$queryRaw<
               Array<{
                 item0: number | null;
@@ -90,28 +75,7 @@ export function createItemBuildsWorker() {
             `;
 
             if (builds.length > 0) {
-              const buildData: BuildData[] = builds.map((b) => {
-                const items = [b.item0, b.item1, b.item2, b.item3, b.item4, b.item5]
-                  .filter((item): item is number => item !== null && item > 0);
-
-                return {
-                  items,
-                  games: Number(b.games),
-                  wins: Number(b.wins),
-                  winRate: Number(b.games) > 0
-                    ? (Number(b.wins) / Number(b.games)) * 100
-                    : 0,
-                };
-              });
-
-              // Store builds - for now, we log them
-              // In production, you'd want a ChampionBuild model
-              console.log(
-                `[Item Builds] Champion ${championId}: ${builds.length} popular builds found`
-              );
-
-              // We could store this in ChampionStats or a dedicated table
-              // For demonstration, we'll just count them
+              logger.debug(`Champion ${championId}: ${builds.length} popular builds found`);
               buildsGenerated += builds.length;
               championsProcessed++;
             }
@@ -120,13 +84,13 @@ export function createItemBuildsWorker() {
               err instanceof Error ? err.message : "Unknown error"
             }`;
             errors.push(errorMsg);
-            console.error(`[Item Builds] ${errorMsg}`);
+            logger.error(errorMsg);
           }
         }
 
         const duration = Date.now() - startTime;
-        console.log(
-          `[Item Builds] Completed: ${buildsGenerated} builds from ${championsProcessed} champions in ${duration}ms`
+        logger.info(
+          `Completed: ${buildsGenerated} builds from ${championsProcessed} champions in ${duration}ms`
         );
 
         if (errors.length > 0) {
@@ -142,7 +106,7 @@ export function createItemBuildsWorker() {
         return { buildsGenerated, championsProcessed, duration, errors };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[Item Builds] Job failed:`, err);
+        logger.error(`Job failed: ${errorMsg}`);
 
         sendAlert(
           AlertSeverity.HIGH,
@@ -154,22 +118,6 @@ export function createItemBuildsWorker() {
 
         throw err;
       }
-    },
-    {
-      ...getRedisConnection(),
-      concurrency: 1,
     }
   );
-
-  worker.on("completed", (job, result) => {
-    console.log(`[Item Builds] Job ${job.id} completed`);
-    notifyJobCompleted(QUEUE_NAMES.ITEM_BUILDS, job.id, result as unknown as Record<string, unknown>);
-  });
-
-  worker.on("failed", (job, err) => {
-    console.error(`[Item Builds] Job ${job?.id} failed:`, err);
-    notifyJobFailed(QUEUE_NAMES.ITEM_BUILDS, job?.id, err);
-  });
-
-  return worker;
 }

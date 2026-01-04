@@ -1,21 +1,8 @@
 /**
- * Tests pour le rate limiting
+ * Tests pour le rate limiting (memory-based)
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-
-// Mock Redis pour éviter la connexion
-vi.mock("ioredis", () => {
-  return {
-    default: vi.fn().mockImplementation(() => ({
-      on: vi.fn(),
-      get: vi.fn().mockResolvedValue(null),
-      set: vi.fn().mockResolvedValue("OK"),
-      incr: vi.fn().mockResolvedValue(1),
-      quit: vi.fn().mockResolvedValue("OK"),
-    })),
-  };
-});
 
 vi.mock("@/lib/logger", () => ({
   createLogger: () => ({
