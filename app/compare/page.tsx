@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,57 +13,213 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   UsersIcon,
   SearchIcon,
   Loader2Icon,
-  ArrowRightIcon,
   SwordsIcon,
   ShieldIcon,
   ZapIcon,
   EyeIcon,
   TrophyIcon,
   TargetIcon,
+  CoinsIcon,
+  FlameIcon,
+  HeartIcon,
+  BanIcon,
+  SparklesIcon,
+  TrendingUpIcon,
+  ClockIcon,
+  CrownIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
 import { useApiSWR } from "@/lib/hooks/swr";
 import { PlayerSearchInput } from "@/components/PlayerSearchInput";
 import { DDRAGON_VERSION } from "@/constants/ddragon";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  Radar,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from "recharts";
 
-type PlayerData = {
+// Types
+interface ChampionStat {
+  championId: string;
+  games: number;
+  wins: number;
+  winRate: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  kda: number;
+}
+
+interface RoleDistribution {
+  role: string;
+  games: number;
+  percentage: number;
+  winRate: number;
+}
+
+interface RankedInfo {
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  queueType: string;
+}
+
+interface PlaystyleAnalysis {
+  aggressionScore: number;
+  visionScore: number;
+  farmingScore: number;
+  teamfightScore: number;
+  survivabilityScore: number;
+  earlyGameScore: number;
+  objectiveScore: number;
+}
+
+interface RankProgression {
+  date: string;
+  tier: string;
+  rank: string;
+  lp: number;
+}
+
+interface PlayerStats {
+  totalGames: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  avgKills: number;
+  avgDeaths: number;
+  avgAssists: number;
+  avgKDA: number;
+  avgVisionScore: number;
+  avgDamageDealt: number;
+  avgDamageTaken: number;
+  avgGoldEarned: number;
+  goldPerMin: number;
+  damagePerMin: number;
+  avgGameDuration: number;
+}
+
+interface PlayerData {
   puuid: string;
   gameName: string;
   tagLine: string;
   region: string;
   profileIconId?: number;
   summonerLevel?: number;
-  stats: {
-    totalGames: number;
-    wins: number;
-    losses: number;
-    winRate: number;
-    avgKills: number;
-    avgDeaths: number;
-    avgAssists: number;
-    avgKDA: number;
-    avgVisionScore: number;
-    avgDamageDealt: number;
+  stats: PlayerStats;
+  rankedInfo: RankedInfo | null;
+  rankProgression: RankProgression[];
+  topChampions: ChampionStat[];
+  roleDistribution: RoleDistribution[];
+  playstyle: PlaystyleAnalysis;
+  recentForm: {
+    last10WinRate: number;
+    currentStreak: number;
+    streakType: "win" | "loss" | null;
   };
-  topChampions: Array<{
-    championId: string;
-    games: number;
-    wins: number;
-    winRate: number;
-  }>;
-};
+}
 
-type CompareResponse = {
+interface CommonChampion {
+  championId: string;
+  player1: ChampionStat;
+  player2: ChampionStat;
+}
+
+interface DuoSynergy {
+  roleCompatibility: number;
+  playstyleCompatibility: number;
+  recommendations: string[];
+}
+
+interface BanRecommendation {
+  championId: string;
+  reason: string;
+  priority: number;
+}
+
+interface CompareResponse {
   success: boolean;
   data: {
     player1: PlayerData;
     player2: PlayerData;
+    comparison: {
+      commonChampions: CommonChampion[];
+      duoSynergy: DuoSynergy;
+      bansAgainstPlayer1: BanRecommendation[];
+      bansAgainstPlayer2: BanRecommendation[];
+    };
   };
+}
+
+// Utility components
+const TIER_COLORS: Record<string, string> = {
+  IRON: "bg-gray-600",
+  BRONZE: "bg-amber-700",
+  SILVER: "bg-gray-400",
+  GOLD: "bg-yellow-500",
+  PLATINUM: "bg-cyan-500",
+  EMERALD: "bg-emerald-500",
+  DIAMOND: "bg-blue-500",
+  MASTER: "bg-purple-500",
+  GRANDMASTER: "bg-red-500",
+  CHALLENGER: "bg-amber-400",
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  TOP: "Top",
+  JUNGLE: "Jungle",
+  MIDDLE: "Mid",
+  MID: "Mid",
+  BOTTOM: "ADC",
+  BOT: "ADC",
+  UTILITY: "Support",
+  SUPPORT: "Support",
+  NONE: "Fill",
+  UNKNOWN: "Autre",
+};
+
+const RankBadge = ({ rankedInfo }: { rankedInfo: RankedInfo | null }) => {
+  if (!rankedInfo) {
+    return (
+      <Badge variant="secondary" className="text-xs">
+        Non classe
+      </Badge>
+    );
+  }
+
+  const tierColor = TIER_COLORS[rankedInfo.tier] || "bg-gray-500";
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <Badge className={`${tierColor} text-white text-xs font-bold`}>
+        {rankedInfo.tier} {rankedInfo.rank}
+      </Badge>
+      <span className="text-xs text-muted-foreground">
+        {rankedInfo.leaguePoints} LP
+      </span>
+      <span className="text-xs text-muted-foreground">
+        {rankedInfo.wins}V / {rankedInfo.losses}D ({rankedInfo.winRate.toFixed(0)}%)
+      </span>
+    </div>
+  );
 };
 
 const StatCompareRow = ({
@@ -95,7 +251,7 @@ const StatCompareRow = ({
   return (
     <div className="flex items-center gap-2 sm:gap-4 py-2 sm:py-3 border-b border-border/50 last:border-0">
       <div
-        className={`flex-1 text-right font-semibold text-sm sm:text-lg ${winner === 1 ? "text-emerald-500" : "text-foreground"}`}
+        className={`flex-1 text-right font-semibold text-sm sm:text-lg ${winner === 1 ? "text-win" : "text-foreground"}`}
       >
         {format(value1)}
       </div>
@@ -104,7 +260,7 @@ const StatCompareRow = ({
         <span className="truncate">{label}</span>
       </div>
       <div
-        className={`flex-1 text-left font-semibold text-sm sm:text-lg ${winner === 2 ? "text-emerald-500" : "text-foreground"}`}
+        className={`flex-1 text-left font-semibold text-sm sm:text-lg ${winner === 2 ? "text-win" : "text-foreground"}`}
       >
         {format(value2)}
       </div>
@@ -167,12 +323,305 @@ const PlayerCard = ({
           {player.summonerLevel || "?"}
         </div>
       </div>
-      <Badge
-        variant={player.stats.winRate >= 50 ? "default" : "secondary"}
-        className="text-[10px] sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1"
-      >
-        {player.stats.winRate.toFixed(1)}% WR ({player.stats.totalGames})
-      </Badge>
+      <RankBadge rankedInfo={player.rankedInfo} />
+      {player.recentForm.streakType && (
+        <Badge variant={player.recentForm.streakType === "win" ? "default" : "secondary"} className="text-xs">
+          {player.recentForm.streakType === "win" ? "🔥" : "❄️"} {player.recentForm.currentStreak} {player.recentForm.streakType === "win" ? "victoires" : "defaites"}
+        </Badge>
+      )}
+    </div>
+  );
+};
+
+const ChampionIcon = ({ championId, size = 32 }: { championId: string; size?: number }) => (
+  <img
+    src={`https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${championId}.png`}
+    alt={championId}
+    className="rounded"
+    style={{ width: size, height: size }}
+  />
+);
+
+const TopChampionsSection = ({
+  champions,
+  title,
+}: {
+  champions: ChampionStat[];
+  title: string;
+}) => (
+  <div className="space-y-2">
+    <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
+    <div className="space-y-2">
+      {champions.slice(0, 5).map((champ) => (
+        <div key={champ.championId} className="flex items-center gap-2 text-sm">
+          <ChampionIcon championId={champ.championId} size={28} />
+          <div className="flex-1 min-w-0">
+            <div className="truncate font-medium">{champ.championId}</div>
+            <div className="text-xs text-muted-foreground">
+              {champ.games} parties - {champ.kda.toFixed(2)} KDA
+            </div>
+          </div>
+          <Badge variant={champ.winRate >= 50 ? "default" : "secondary"} className="text-xs">
+            {champ.winRate.toFixed(0)}%
+          </Badge>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const RoleDistributionSection = ({ roles }: { roles: RoleDistribution[] }) => (
+  <div className="space-y-2">
+    {roles.slice(0, 4).map((role) => (
+      <div key={role.role} className="space-y-1">
+        <div className="flex justify-between text-xs">
+          <span>{ROLE_LABELS[role.role] || role.role}</span>
+          <span className="text-muted-foreground">{role.percentage.toFixed(0)}%</span>
+        </div>
+        <Progress value={role.percentage} className="h-1.5" />
+      </div>
+    ))}
+  </div>
+);
+
+const PlaystyleRadar = ({
+  player1,
+  player2,
+}: {
+  player1: PlayerData;
+  player2: PlayerData;
+}) => {
+  const data = useMemo(() => [
+    { metric: "Agressivite", p1: player1.playstyle.aggressionScore, p2: player2.playstyle.aggressionScore },
+    { metric: "Vision", p1: player1.playstyle.visionScore, p2: player2.playstyle.visionScore },
+    { metric: "Farm", p1: player1.playstyle.farmingScore, p2: player2.playstyle.farmingScore },
+    { metric: "Teamfight", p1: player1.playstyle.teamfightScore, p2: player2.playstyle.teamfightScore },
+    { metric: "Survie", p1: player1.playstyle.survivabilityScore, p2: player2.playstyle.survivabilityScore },
+    { metric: "Early Game", p1: player1.playstyle.earlyGameScore, p2: player2.playstyle.earlyGameScore },
+    { metric: "Objectifs", p1: player1.playstyle.objectiveScore, p2: player2.playstyle.objectiveScore },
+  ], [player1.playstyle, player2.playstyle]);
+
+  return (
+    <div className="h-[280px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart data={data} cx="50%" cy="50%" outerRadius="70%">
+          <PolarGrid className="stroke-muted" />
+          <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10 }} />
+          <Radar
+            name={player1.gameName}
+            dataKey="p1"
+            stroke="hsl(221 83% 53%)"
+            fill="hsl(221 83% 53%)"
+            fillOpacity={0.3}
+          />
+          <Radar
+            name={player2.gameName}
+            dataKey="p2"
+            stroke="hsl(0 84% 60%)"
+            fill="hsl(0 84% 60%)"
+            fillOpacity={0.3}
+          />
+          <Legend />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--background))",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: "8px",
+              fontSize: "12px",
+            }}
+          />
+        </RadarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+const RankProgressionChart = ({
+  player1,
+  player2,
+}: {
+  player1: PlayerData;
+  player2: PlayerData;
+}) => {
+  const tierToValue = (tier: string, rank: string, lp: number): number => {
+    const tierValues: Record<string, number> = {
+      IRON: 0, BRONZE: 400, SILVER: 800, GOLD: 1200,
+      PLATINUM: 1600, EMERALD: 2000, DIAMOND: 2400,
+      MASTER: 2800, GRANDMASTER: 3200, CHALLENGER: 3600,
+    };
+    const rankValues: Record<string, number> = { IV: 0, III: 100, II: 200, I: 300 };
+    return (tierValues[tier] || 0) + (rankValues[rank] || 0) + lp;
+  };
+
+  const data = useMemo(() => {
+    const allDates = new Set<string>();
+    player1.rankProgression.forEach(r => allDates.add(r.date));
+    player2.rankProgression.forEach(r => allDates.add(r.date));
+
+    const sortedDates = Array.from(allDates).sort();
+
+    return sortedDates.map(date => {
+      const p1Entry = player1.rankProgression.find(r => r.date === date);
+      const p2Entry = player2.rankProgression.find(r => r.date === date);
+
+      return {
+        date: new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
+        p1: p1Entry ? tierToValue(p1Entry.tier, p1Entry.rank, p1Entry.lp) : null,
+        p2: p2Entry ? tierToValue(p2Entry.tier, p2Entry.rank, p2Entry.lp) : null,
+      };
+    });
+  }, [player1.rankProgression, player2.rankProgression]);
+
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
+        Pas de donnees de progression
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[200px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+          <YAxis hide />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--background))",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: "8px",
+              fontSize: "12px",
+            }}
+          />
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey="p1"
+            name={player1.gameName}
+            stroke="hsl(221 83% 53%)"
+            strokeWidth={2}
+            dot={false}
+            connectNulls
+          />
+          <Line
+            type="monotone"
+            dataKey="p2"
+            name={player2.gameName}
+            stroke="hsl(0 84% 60%)"
+            strokeWidth={2}
+            dot={false}
+            connectNulls
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+const CommonChampionsSection = ({ champions }: { champions: CommonChampion[] }) => {
+  if (champions.length === 0) {
+    return (
+      <div className="text-center text-sm text-muted-foreground py-4">
+        Aucun champion en commun avec suffisamment de parties
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {champions.slice(0, 5).map((champ) => (
+        <div key={champ.championId} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
+          <ChampionIcon championId={champ.championId} size={40} />
+          <div className="flex-1 grid grid-cols-2 gap-4 text-sm">
+            <div className="text-center">
+              <div className={champ.player1.winRate >= champ.player2.winRate ? "text-win font-semibold" : ""}>
+                {champ.player1.winRate.toFixed(0)}% WR
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {champ.player1.kda.toFixed(2)} KDA ({champ.player1.games} games)
+              </div>
+            </div>
+            <div className="text-center">
+              <div className={champ.player2.winRate > champ.player1.winRate ? "text-win font-semibold" : ""}>
+                {champ.player2.winRate.toFixed(0)}% WR
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {champ.player2.kda.toFixed(2)} KDA ({champ.player2.games} games)
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const DuoSynergySection = ({ synergy }: { synergy: DuoSynergy }) => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>Compatibilite Roles</span>
+          <span className="font-semibold">{synergy.roleCompatibility.toFixed(0)}%</span>
+        </div>
+        <Progress value={synergy.roleCompatibility} className="h-2" />
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>Compatibilite Style</span>
+          <span className="font-semibold">{synergy.playstyleCompatibility.toFixed(0)}%</span>
+        </div>
+        <Progress value={synergy.playstyleCompatibility} className="h-2" />
+      </div>
+    </div>
+    {synergy.recommendations.length > 0 && (
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium">Recommandations</h4>
+        <ul className="space-y-1">
+          {synergy.recommendations.map((rec, i) => (
+            <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
+              <SparklesIcon className="size-3 text-primary" />
+              {rec}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </div>
+);
+
+const BanRecommendationsSection = ({
+  bans,
+  playerName,
+}: {
+  bans: BanRecommendation[];
+  playerName: string;
+}) => {
+  if (bans.length === 0) {
+    return (
+      <div className="text-center text-sm text-muted-foreground py-2">
+        Aucun ban recommande
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium flex items-center gap-2">
+        <BanIcon className="size-4 text-loss" />
+        Bans contre {playerName}
+      </h4>
+      <div className="flex gap-2">
+        {bans.map((ban) => (
+          <div key={ban.championId} className="flex flex-col items-center gap-1">
+            <ChampionIcon championId={ban.championId} size={36} />
+            <span className="text-xs text-muted-foreground text-center max-w-[60px] truncate">
+              {ban.reason}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -274,17 +723,18 @@ export default function ComparePage() {
 
   const player1 = data?.data?.player1 || null;
   const player2 = data?.data?.player2 || null;
-  const hasData = player1 && player2;
+  const comparison = data?.data?.comparison || null;
+  const hasData = player1 && player2 && comparison;
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 px-4 max-w-4xl">
+    <div className="container mx-auto py-6 sm:py-8 px-4 max-w-6xl">
       <div className="text-center mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-2 sm:gap-3 mb-2">
           <SwordsIcon className="size-6 sm:size-8 text-primary" />
           Comparer des joueurs
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Comparez les statistiques de deux joueurs
+          Analyse complete de deux joueurs
         </p>
       </div>
 
@@ -369,90 +819,301 @@ export default function ComparePage() {
 
       {/* Comparison results */}
       {(isLoading || hasData) && (
-        <Card className="border-border/60 shadow-lg overflow-hidden">
-          <CardHeader className="bg-muted/30 border-b border-border/50 p-4 sm:p-6">
-            <CardTitle className="text-center flex items-center justify-center gap-2 text-base sm:text-lg">
-              <TrophyIcon className="size-4 sm:size-5 text-primary" />
-              Resultats
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
-            {/* Player headers */}
-            <div className="flex items-start justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
-              <div className="flex-1 min-w-0">
-                <PlayerCard player={player1} loading={isLoading} />
-              </div>
-              <div className="flex items-center justify-center pt-4 sm:pt-8 shrink-0">
-                <div className="size-10 sm:size-14 rounded-full bg-gradient-to-br from-blue-500/20 to-red-500/20 flex items-center justify-center border border-border/50">
-                  <span className="font-bold text-sm sm:text-lg text-muted-foreground">
-                    VS
-                  </span>
+        <div className="space-y-6">
+          {/* Player headers */}
+          <Card className="border-border/60 shadow-lg overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50 p-4 sm:p-6">
+              <CardTitle className="text-center flex items-center justify-center gap-2 text-base sm:text-lg">
+                <TrophyIcon className="size-4 sm:size-5 text-primary" />
+                Vue d&apos;ensemble
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+              <div className="flex items-start justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
+                <div className="flex-1 min-w-0">
+                  <PlayerCard player={player1} loading={isLoading} />
+                </div>
+                <div className="flex items-center justify-center pt-4 sm:pt-8 shrink-0">
+                  <div className="size-10 sm:size-14 rounded-full bg-gradient-to-br from-blue-500/20 to-red-500/20 flex items-center justify-center border border-border/50">
+                    <span className="font-bold text-sm sm:text-lg text-muted-foreground">
+                      VS
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <PlayerCard player={player2} loading={isLoading} />
                 </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <PlayerCard player={player2} loading={isLoading} />
-              </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Stats comparison */}
-            {hasData && (
-              <div className="space-y-1 bg-muted/20 rounded-xl p-3 sm:p-4 border border-border/50">
-                <StatCompareRow
-                  label="Win Rate"
-                  value1={player1.stats.winRate}
-                  value2={player2.stats.winRate}
-                  icon={<TrophyIcon className="size-4" />}
-                  format={(v) => `${v.toFixed(1)}%`}
-                />
-                <StatCompareRow
-                  label="KDA"
-                  value1={player1.stats.avgKDA}
-                  value2={player2.stats.avgKDA}
-                  icon={<TargetIcon className="size-4" />}
-                />
-                <StatCompareRow
-                  label="Kills"
-                  value1={player1.stats.avgKills}
-                  value2={player2.stats.avgKills}
-                  icon={<SwordsIcon className="size-4" />}
-                />
-                <StatCompareRow
-                  label="Deaths"
-                  value1={player1.stats.avgDeaths}
-                  value2={player2.stats.avgDeaths}
-                  icon={<ShieldIcon className="size-4" />}
-                  higherIsBetter={false}
-                />
-                <StatCompareRow
-                  label="Assists"
-                  value1={player1.stats.avgAssists}
-                  value2={player2.stats.avgAssists}
-                  icon={<UsersIcon className="size-4" />}
-                />
-                <StatCompareRow
-                  label="Vision"
-                  value1={player1.stats.avgVisionScore}
-                  value2={player2.stats.avgVisionScore}
-                  icon={<EyeIcon className="size-4" />}
-                />
-                <StatCompareRow
-                  label="Degats"
-                  value1={player1.stats.avgDamageDealt}
-                  value2={player2.stats.avgDamageDealt}
-                  icon={<ZapIcon className="size-4" />}
-                  format={(v) => `${(v / 1000).toFixed(1)}k`}
-                />
-                <StatCompareRow
-                  label="Parties"
-                  value1={player1.stats.totalGames}
-                  value2={player2.stats.totalGames}
-                  icon={<ArrowRightIcon className="size-4" />}
-                  format={(v) => v.toString()}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {hasData && (
+            <Tabs defaultValue="stats" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-4">
+                <TabsTrigger value="stats" className="text-xs sm:text-sm">
+                  <TargetIcon className="size-3 sm:size-4 mr-1" />
+                  Stats
+                </TabsTrigger>
+                <TabsTrigger value="champions" className="text-xs sm:text-sm">
+                  <CrownIcon className="size-3 sm:size-4 mr-1" />
+                  Champions
+                </TabsTrigger>
+                <TabsTrigger value="playstyle" className="text-xs sm:text-sm">
+                  <FlameIcon className="size-3 sm:size-4 mr-1" />
+                  Playstyle
+                </TabsTrigger>
+                <TabsTrigger value="synergy" className="text-xs sm:text-sm">
+                  <UsersIcon className="size-3 sm:size-4 mr-1" />
+                  Duo
+                </TabsTrigger>
+                <TabsTrigger value="progression" className="text-xs sm:text-sm">
+                  <TrendingUpIcon className="size-3 sm:size-4 mr-1" />
+                  Progression
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Stats Tab */}
+              <TabsContent value="stats">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Combat Stats */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <SwordsIcon className="size-4 text-primary" />
+                        Stats de combat
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-1 bg-muted/20 rounded-xl p-3 border border-border/50">
+                      <StatCompareRow
+                        label="Win Rate"
+                        value1={player1.stats.winRate}
+                        value2={player2.stats.winRate}
+                        icon={<TrophyIcon className="size-4" />}
+                        format={(v) => `${v.toFixed(1)}%`}
+                      />
+                      <StatCompareRow
+                        label="KDA"
+                        value1={player1.stats.avgKDA}
+                        value2={player2.stats.avgKDA}
+                        icon={<TargetIcon className="size-4" />}
+                      />
+                      <StatCompareRow
+                        label="Kills"
+                        value1={player1.stats.avgKills}
+                        value2={player2.stats.avgKills}
+                        icon={<SwordsIcon className="size-4" />}
+                      />
+                      <StatCompareRow
+                        label="Deaths"
+                        value1={player1.stats.avgDeaths}
+                        value2={player2.stats.avgDeaths}
+                        icon={<ShieldIcon className="size-4" />}
+                        higherIsBetter={false}
+                      />
+                      <StatCompareRow
+                        label="Assists"
+                        value1={player1.stats.avgAssists}
+                        value2={player2.stats.avgAssists}
+                        icon={<UsersIcon className="size-4" />}
+                      />
+                      <StatCompareRow
+                        label="Degats"
+                        value1={player1.stats.avgDamageDealt}
+                        value2={player2.stats.avgDamageDealt}
+                        icon={<ZapIcon className="size-4" />}
+                        format={(v) => `${(v / 1000).toFixed(1)}k`}
+                      />
+                      <StatCompareRow
+                        label="Degats subis"
+                        value1={player1.stats.avgDamageTaken}
+                        value2={player2.stats.avgDamageTaken}
+                        icon={<HeartIcon className="size-4" />}
+                        format={(v) => `${(v / 1000).toFixed(1)}k`}
+                        higherIsBetter={false}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Economy & Vision Stats */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <CoinsIcon className="size-4 text-primary" />
+                        Economie & Vision
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-1 bg-muted/20 rounded-xl p-3 border border-border/50">
+                      <StatCompareRow
+                        label="Gold/min"
+                        value1={player1.stats.goldPerMin}
+                        value2={player2.stats.goldPerMin}
+                        icon={<CoinsIcon className="size-4" />}
+                        format={(v) => v.toFixed(0)}
+                      />
+                      <StatCompareRow
+                        label="Degats/min"
+                        value1={player1.stats.damagePerMin}
+                        value2={player2.stats.damagePerMin}
+                        icon={<ZapIcon className="size-4" />}
+                        format={(v) => v.toFixed(0)}
+                      />
+                      <StatCompareRow
+                        label="Vision"
+                        value1={player1.stats.avgVisionScore}
+                        value2={player2.stats.avgVisionScore}
+                        icon={<EyeIcon className="size-4" />}
+                      />
+                      <StatCompareRow
+                        label="Gold moyen"
+                        value1={player1.stats.avgGoldEarned}
+                        value2={player2.stats.avgGoldEarned}
+                        icon={<CoinsIcon className="size-4" />}
+                        format={(v) => `${(v / 1000).toFixed(1)}k`}
+                      />
+                      <StatCompareRow
+                        label="Duree moy."
+                        value1={player1.stats.avgGameDuration}
+                        value2={player2.stats.avgGameDuration}
+                        icon={<ClockIcon className="size-4" />}
+                        format={(v) => `${v.toFixed(0)}m`}
+                        higherIsBetter={false}
+                      />
+                      <StatCompareRow
+                        label="Parties"
+                        value1={player1.stats.totalGames}
+                        value2={player2.stats.totalGames}
+                        icon={<TargetIcon className="size-4" />}
+                        format={(v) => v.toString()}
+                      />
+                      <StatCompareRow
+                        label="Forme recente"
+                        value1={player1.recentForm.last10WinRate}
+                        value2={player2.recentForm.last10WinRate}
+                        icon={<FlameIcon className="size-4" />}
+                        format={(v) => `${v.toFixed(0)}%`}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Champions Tab */}
+              <TabsContent value="champions">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <div className="size-2 rounded-full bg-blue-500" />
+                        {player1.gameName}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TopChampionsSection champions={player1.topChampions} title="Top Champions" />
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Roles</h4>
+                        <RoleDistributionSection roles={player1.roleDistribution} />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <SwordsIcon className="size-4 text-primary" />
+                        Champions en commun
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CommonChampionsSection champions={comparison.commonChampions} />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <div className="size-2 rounded-full bg-red-500" />
+                        {player2.gameName}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TopChampionsSection champions={player2.topChampions} title="Top Champions" />
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Roles</h4>
+                        <RoleDistributionSection roles={player2.roleDistribution} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Playstyle Tab */}
+              <TabsContent value="playstyle">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <FlameIcon className="size-4 text-primary" />
+                      Analyse du Playstyle
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <PlaystyleRadar player1={player1} player2={player2} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Duo/Synergy Tab */}
+              <TabsContent value="synergy">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <UsersIcon className="size-4 text-primary" />
+                        Synergie Duo
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <DuoSynergySection synergy={comparison.duoSynergy} />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <BanIcon className="size-4 text-loss" />
+                        Bans Recommandes
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <BanRecommendationsSection
+                        bans={comparison.bansAgainstPlayer1}
+                        playerName={player1.gameName}
+                      />
+                      <BanRecommendationsSection
+                        bans={comparison.bansAgainstPlayer2}
+                        playerName={player2.gameName}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Progression Tab */}
+              <TabsContent value="progression">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <TrendingUpIcon className="size-4 text-primary" />
+                      Progression de Rang
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RankProgressionChart player1={player1} player2={player2} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
       )}
 
       {/* Empty state */}
