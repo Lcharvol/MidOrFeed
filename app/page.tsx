@@ -125,17 +125,17 @@ export default function Home() {
 
         <div className="relative z-10">
           <div className="mx-auto max-w-4xl text-center">
-            <Badge className="mb-4" variant="secondary">
+            <Badge className="mb-4 animate-fade-up" variant="secondary">
               <BrainIcon className="mr-2 size-3" />
               {t("home.poweredByAI")}
             </Badge>
-            <h1 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-6xl">
+            <h1 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-6xl animate-fade-up-delay-1">
               {t("home.aiCoach")}{" "}
               <span className="bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent">
                 {t("home.dominateRift")}
               </span>
             </h1>
-            <p className="mb-8 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
+            <p className="mb-8 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto animate-fade-up-delay-2">
               {t("home.subtitle")}
             </p>
 

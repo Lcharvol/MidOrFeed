@@ -60,14 +60,14 @@ export default function PricingPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="text-center mb-16">
+      <div className="text-center mb-16 animate-fade-up">
         <h1 className="text-5xl font-bold mb-4">Choisissez votre plan</h1>
         <p className="text-xl text-muted-foreground">
           Débloquez tout le potentiel de l'IA pour progresser plus rapidement
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto animate-fade-up-delay-1">
         {/* Free Plan */}
         <Card className="border-2 relative">
           <CardHeader className="text-center">

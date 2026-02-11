@@ -98,7 +98,7 @@ export default function SummonersPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[120px] opacity-50" />
 
         <div className="container relative mx-auto px-4 py-16 sm:py-24">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
+          <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-up">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-sm text-primary mb-4">
               <SparklesIcon className="size-4" />
               <span>Analysez n&apos;importe quel joueur</span>

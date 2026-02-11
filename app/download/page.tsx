@@ -100,7 +100,7 @@ export default function DownloadPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="text-center mb-12">
+      <div className="text-center mb-12 animate-fade-up">
         <Badge emphasis="info" emphasisVariant="subtle" className="mb-4">
           Version {APP_VERSION}
         </Badge>
