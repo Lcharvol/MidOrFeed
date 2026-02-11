@@ -32,6 +32,7 @@ import {
   KDA_STYLES,
   getKdaLevel,
 } from "@/lib/styles/game-colors";
+import { GoldDifferenceChart } from "./GoldDifferenceChart";
 
 interface MatchTimelineProps {
   matchId: string;
@@ -214,6 +215,25 @@ export function MatchTimeline({ matchId, puuid }: MatchTimelineProps) {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Gold Difference Chart */}
+              <div className="bg-muted/30 rounded-xl p-4">
+                <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                  <CoinsIcon className="size-4 text-muted-foreground" />
+                  {t("matchTimeline.goldDifference") || "Différence de gold"}
+                </h4>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className="size-2.5 rounded-full bg-blue-500" />
+                    {t("matchTimeline.blueAdvantage") || "Avantage bleu"}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="size-2.5 rounded-full bg-red-500" />
+                    {t("matchTimeline.redAdvantage") || "Avantage rouge"}
+                  </div>
+                </div>
+                <GoldDifferenceChart matchId={matchId} enabled={isOpen} />
               </div>
 
               {/* Teams */}
