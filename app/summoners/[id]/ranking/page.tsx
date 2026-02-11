@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2Icon, TrophyIcon } from "lucide-react";
+import { Loader2Icon, TrophyIcon, InfoIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ColorBadge } from "@/components/ui/badge";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { useParams, useSearchParams } from "next/navigation";
 import { useI18n } from "@/lib/i18n-context";
@@ -224,9 +225,14 @@ export default function RankingByIdPage() {
                   </div>
                   <div className="flex-1">
                     <div className="text-3xl font-bold">{rankDisplay}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {league.leaguePoints} LP
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-sm text-muted-foreground cursor-help">
+                          {league.leaguePoints} LP
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>League Points — Points de classement accumulés dans cette division</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </CardHeader>
@@ -248,12 +254,17 @@ export default function RankingByIdPage() {
                       {t("ranking.defeats")}
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{winRate}%</div>
-                    <div className="text-xs text-muted-foreground">
-                      {t("ranking.winRate")}
-                    </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="text-center cursor-help">
+                        <div className="text-2xl font-bold">{winRate}%</div>
+                        <div className="text-xs text-muted-foreground">
+                          {t("ranking.winRate")}
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>Victoires / (Victoires + Défaites) × 100</TooltipContent>
+                  </Tooltip>
                 </div>
                 {league.freshBlood && (
                   <ColorBadge

@@ -23,6 +23,7 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@/components/ui/empty";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import {
   Table,
@@ -406,28 +407,38 @@ export default function ChampionsByIdPage() {
                     className="cursor-pointer hover:bg-accent"
                     onClick={() => handleSort("winRate")}
                   >
-                    <div className="flex items-center">
-                      <span className="hidden sm:inline">Win rate</span>
-                      <span className="sm:hidden">WR</span>
-                      <SortIcon
-                        column="winRate"
-                        sortColumn={sortColumn}
-                        sortDirection={sortDirection}
-                      />
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center">
+                          <span className="hidden sm:inline">Win rate</span>
+                          <span className="sm:hidden">WR</span>
+                          <SortIcon
+                            column="winRate"
+                            sortColumn={sortColumn}
+                            sortDirection={sortDirection}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Pourcentage de victoires avec ce champion</TooltipContent>
+                    </Tooltip>
                   </TableHead>
                   <TableHead
                     className="cursor-pointer hover:bg-accent"
                     onClick={() => handleSort("kda")}
                   >
-                    <div className="flex items-center">
-                      KDA
-                      <SortIcon
-                        column="kda"
-                        sortColumn={sortColumn}
-                        sortDirection={sortDirection}
-                      />
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center">
+                          KDA
+                          <SortIcon
+                            column="kda"
+                            sortColumn={sortColumn}
+                            sortDirection={sortDirection}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>(Kills + Assists) / Deaths — Ratio moyen par partie</TooltipContent>
+                    </Tooltip>
                   </TableHead>
                   <TableHead
                     className="cursor-pointer hover:bg-accent hidden lg:table-cell"
@@ -446,14 +457,19 @@ export default function ChampionsByIdPage() {
                     className="cursor-pointer hover:bg-accent"
                     onClick={() => handleSort("score")}
                   >
-                    <div className="flex items-center">
-                      Score
-                      <SortIcon
-                        column="score"
-                        sortColumn={sortColumn}
-                        sortDirection={sortDirection}
-                      />
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center">
+                          Score
+                          <SortIcon
+                            column="score"
+                            sortColumn={sortColumn}
+                            sortDirection={sortDirection}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Score de performance agrégé (0-100) combinant win rate, KDA et volume de parties</TooltipContent>
+                    </Tooltip>
                   </TableHead>
                 </TableRow>
               </TableHeader>

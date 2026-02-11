@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getTierIconUrl } from "@/constants/ddragon";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useSummonerRanked } from "@/lib/hooks/use-summoner-ranked";
 import { useI18n } from "@/lib/i18n-context";
 
@@ -204,18 +205,28 @@ const RankCard = ({ title, data, queueType }: RankCardProps) => {
               <div className="text-base font-bold lowercase text-foreground">
                 {currentRankDisplay}
               </div>
-              <div className="text-xs text-muted-foreground">
-                {data.current.lp} LP
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-xs text-muted-foreground cursor-help">
+                    {data.current.lp} LP
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>League Points — Points de classement dans cette division</TooltipContent>
+              </Tooltip>
             </div>
           </div>
           <div className="flex items-center justify-between text-xs">
             <div className="text-muted-foreground">
               {data.current.wins}V {data.current.losses}D
             </div>
-            <div className="font-semibold text-foreground">
-              {t("summoners.winRateLabel")} {winRate.toFixed(0)}%
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="font-semibold text-foreground cursor-help">
+                  {t("summoners.winRateLabel")} {winRate.toFixed(0)}%
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Victoires / (Victoires + Défaites) × 100</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 

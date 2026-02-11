@@ -2,6 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
 import type { SummonerOverviewAggregate, ChampionIdToStats } from "@/types";
 import { BestChampionCard } from "./BestChampionCard";
@@ -33,7 +35,15 @@ export const StatsGrid = ({
         className="border-blue-500/25 from-background to-blue-500/10 dark:border-blue-500/25 dark:from-background dark:to-blue-500/10"
       >
         <CardHeader>
-          <CardTitle>{t("summoners.globalWinRate")}</CardTitle>
+          <CardTitle className="flex items-center gap-1.5">
+            {t("summoners.globalWinRate")}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <InfoIcon className="size-3.5 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>Pourcentage de victoires sur l'ensemble des parties analysées</TooltipContent>
+            </Tooltip>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-lg font-semibold">{stats.winRate}</p>
@@ -65,7 +75,15 @@ export const StatsGrid = ({
         className="border-purple-500/25 from-background to-purple-500/10 dark:border-purple-500/25 dark:from-background dark:to-purple-500/10"
       >
         <CardHeader>
-          <CardTitle>{t("summoners.analyzedMatches")}</CardTitle>
+          <CardTitle className="flex items-center gap-1.5">
+            {t("summoners.analyzedMatches")}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <InfoIcon className="size-3.5 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>Nombre total de parties récupérées et analysées, toutes files confondues</TooltipContent>
+            </Tooltip>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-lg font-semibold">
@@ -82,7 +100,15 @@ export const StatsGrid = ({
         className="border-amber-500/25 from-background to-amber-500/10 dark:border-amber-500/25 dark:from-background dark:to-amber-500/10"
       >
         <CardHeader>
-          <CardTitle>{t("summoners.victoriesTitle")}</CardTitle>
+          <CardTitle className="flex items-center gap-1.5">
+            {t("summoners.victoriesTitle")}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <InfoIcon className="size-3.5 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>Nombre total de parties gagnées parmi les matchs analysés</TooltipContent>
+            </Tooltip>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-lg font-semibold">

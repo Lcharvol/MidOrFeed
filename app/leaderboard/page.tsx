@@ -41,6 +41,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
 
@@ -162,10 +163,20 @@ export default function LeaderboardPage() {
                 <TableRow>
                   <TableHead className="w-10 sm:w-12">#</TableHead>
                   <TableHead>{t("leaderboard.player")}</TableHead>
-                  <TableHead className="hidden sm:table-cell">LP</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    <Tooltip>
+                      <TooltipTrigger asChild><span className="cursor-help">LP</span></TooltipTrigger>
+                      <TooltipContent>League Points — Points de classement</TooltipContent>
+                    </Tooltip>
+                  </TableHead>
                   <TableHead className="hidden sm:table-cell">{t("leaderboard.victories")}</TableHead>
                   <TableHead className="hidden sm:table-cell">{t("leaderboard.defeats")}</TableHead>
-                  <TableHead>WR</TableHead>
+                  <TableHead>
+                    <Tooltip>
+                      <TooltipTrigger asChild><span className="cursor-help">WR</span></TooltipTrigger>
+                      <TooltipContent>Win Rate — Pourcentage de victoires</TooltipContent>
+                    </Tooltip>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
