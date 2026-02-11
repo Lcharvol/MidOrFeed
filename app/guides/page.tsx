@@ -242,6 +242,7 @@ const GuidesPage = () => {
               <Select
                 value={role}
                 onValueChange={(v) => handleRoleChange(v as GuideRole | "all")}
+                disabled={isLoading}
               >
                 <SelectTrigger className="w-full sm:w-[150px]">
                   <FilterIcon className="size-4 mr-2 shrink-0" />
@@ -261,6 +262,7 @@ const GuidesPage = () => {
                 onValueChange={(v) =>
                   handleSortChange(v as "popular" | "recent" | "views")
                 }
+                disabled={isLoading}
               >
                 <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue />
