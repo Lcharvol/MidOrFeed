@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 
 const logger = createLogger("guides-vote");
 
@@ -13,6 +14,10 @@ const voteSchema = z.object({
 });
 
 export const POST = async (request: NextRequest) => {
+  // Rate limiting
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.vote);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // CSRF validation
   const csrfError = await requireCsrf(request);
   if (csrfError) return csrfError;

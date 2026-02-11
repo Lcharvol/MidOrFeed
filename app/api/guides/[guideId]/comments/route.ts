@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import type { GuideComment } from "@/types/guides";
 
 const logger = createLogger("guide-comments");
@@ -167,6 +168,10 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
 
 // POST /api/guides/[guideId]/comments - Create comment
 export const POST = async (request: NextRequest, context: RouteContext) => {
+  // Rate limiting
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.ugc);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // CSRF validation
   const csrfError = await requireCsrf(request);
   if (csrfError) return csrfError;

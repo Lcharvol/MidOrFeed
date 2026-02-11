@@ -109,4 +109,16 @@ export const rateLimitPresets = {
     windowMs: 60 * 60 * 1000,
     message: "Limite de requêtes atteinte, veuillez réessayer plus tard",
   },
+  /** User-generated content: guides, advice, comments */
+  ugc: {
+    limit: 20,
+    windowMs: 60 * 1000,
+    message: "Trop de créations, veuillez patienter",
+  },
+  /** Votes (higher limit since they are lightweight) */
+  vote: {
+    limit: 60,
+    windowMs: 60 * 1000,
+    message: "Trop de votes, veuillez ralentir",
+  },
 };
