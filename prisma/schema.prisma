@@ -24,7 +24,7 @@ model User {
   lastLoginAt               DateTime?
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
-  leagueAccount             LeagueOfLegendsAccount?    @relation(fields: [leagueAccountId], references: [id])
+  leagueAccount             LeagueOfLegendsAccount?    @relation(fields: [leagueAccountId], references: [id], onDelete: SetNull)
   championAdvices           ChampionAdvice[]
   championAdviceVotes       ChampionAdviceVote[]
   compositions              Composition[]
@@ -32,6 +32,8 @@ model User {
   championGuideVotes        ChampionGuideVote[]
   championGuideComments     ChampionGuideComment[]
   championGuideCommentVotes ChampionGuideCommentVote[]
+  favoritePlayers           FavoritePlayer[]
+  compositionSuggestions    CompositionSuggestion[]
 
   passwordResetTokens PasswordResetToken[]
 
@@ -208,6 +210,8 @@ model CompositionSuggestion {
   avgGoldPerMin   Float?
   avgVisionPerMin Float?
   aiReasoning     String? @db.Text // AI-generated reasoning
+
+  user            User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([role])
   @@index([userId])
@@ -459,10 +463,12 @@ model FavoritePlayer {
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, puuid])
   @@index([userId])
   @@index([puuid])
+  @@index([userId, createdAt])
   @@map("favorite_players")
 }
 
@@ -480,6 +486,7 @@ model RankHistory {
 
   @@index([puuid, queueType])
   @@index([puuid, recordedAt])
+  @@index([region, queueType, recordedAt(sort: Desc)])
   @@map("rank_history")
 }
 
