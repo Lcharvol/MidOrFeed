@@ -215,6 +215,7 @@ model Composition {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([userId, createdAt])
   @@map("compositions")
 }
 
@@ -348,6 +349,7 @@ model ChampionAdvice {
   @@index([championId])
   @@index([score])
   @@index([score, createdAt])
+  @@index([championId, score, createdAt])
   @@map("champion_advices")
 }
 
@@ -522,6 +524,7 @@ model ChampionGuide {
   @@index([score, createdAt])
   @@index([championId, role])
   @@index([status, championId])
+  @@index([status, createdAt])
   @@index([viewCount, createdAt])
   @@index([patchVersion])
   @@map("champion_guides")
