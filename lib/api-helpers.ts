@@ -96,6 +96,7 @@ export function serializeUser(user: UserForSerialization): SerializedUser {
  * Format d'erreur API standardisé
  */
 export interface ApiErrorFormat {
+  success: false;
   error: string;
   details?: unknown;
 }
@@ -106,7 +107,7 @@ export interface ApiErrorFormat {
 export function handleZodError(error: z.ZodError): NextResponse<ApiErrorFormat> {
   logger.warn("Erreur de validation", { errors: error.errors });
   return NextResponse.json(
-    { error: "Données invalides", details: error.errors },
+    { success: false as const, error: "Données invalides", details: error.errors },
     { status: 400 }
   );
 }
@@ -126,7 +127,7 @@ export function handleApiError(
     alertCategory
   );
   return NextResponse.json(
-    { error: `Erreur: ${context}` },
+    { success: false as const, error: `Erreur: ${context}` },
     { status: 500 }
   );
 }
@@ -154,7 +155,7 @@ export function errorResponse(
   status: number = 400,
   details?: unknown
 ): NextResponse<ApiErrorFormat> {
-  const body: ApiErrorFormat = { error: message };
+  const body: ApiErrorFormat = { success: false, error: message };
   if (details !== undefined) {
     body.details = details;
   }
