@@ -38,7 +38,7 @@ import {
 import { toast } from "sonner";
 import { STATUS_STYLES } from "@/lib/styles/game-colors";
 import { cn } from "@/lib/utils";
-import { WORKER_DESCRIPTIONS } from "@/lib/workers/index";
+import { WORKER_DESCRIPTIONS } from "@/lib/workers/descriptions";
 
 // ---------------------------------------------------------------------------
 // Types
