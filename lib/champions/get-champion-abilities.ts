@@ -23,13 +23,32 @@ const abilitySlots: ChampionAbilitySlot[] = ["Q", "W", "E", "R"];
 const sanitizeChampionId = (identifier: string) =>
   identifier.replace(/\.json$/i, "").trim();
 
+interface DDragonSpell {
+  name?: string;
+  description?: string;
+  tooltip?: string;
+  image?: { full?: string };
+  cooldownBurn?: string;
+  costBurn?: string;
+  resource?: string;
+}
+
+interface DDragonChampionData {
+  passive?: {
+    name?: string;
+    description?: string;
+    image?: { full?: string };
+  };
+  spells?: DDragonSpell[];
+}
+
 const extractChampionPayload = (
-  payload: Record<string, any>,
+  payload: Record<string, unknown>,
   championId: string
-) => {
-  const directHit = payload?.[championId];
+): DDragonChampionData | null => {
+  const directHit = payload?.[championId] as DDragonChampionData | undefined;
   if (directHit) return directHit;
-  const fallbackEntry = Object.values(payload ?? {})[0];
+  const fallbackEntry = Object.values(payload ?? {})[0] as DDragonChampionData | undefined;
   return fallbackEntry ?? null;
 };
 
@@ -60,7 +79,7 @@ const fetchChampionPayload = async (
 const normalizeDescription = (raw: string | null | undefined) =>
   raw?.trim() ?? "";
 
-const mapPassive = (championData: any): ChampionAbility | null => {
+const mapPassive = (championData: DDragonChampionData): ChampionAbility | null => {
   const passive = championData?.passive;
   if (!passive) return null;
 
@@ -74,12 +93,12 @@ const mapPassive = (championData: any): ChampionAbility | null => {
   };
 };
 
-const mapSpells = (championData: any): ChampionAbility[] => {
+const mapSpells = (championData: DDragonChampionData): ChampionAbility[] => {
   if (!Array.isArray(championData?.spells)) {
     return [];
   }
 
-  return championData.spells.map((spell: any, index: number) => ({
+  return championData.spells.map((spell: DDragonSpell, index: number) => ({
     slot: abilitySlots[index] ?? "Q",
     name: spell?.name ?? `Sort ${abilitySlots[index] ?? "Q"}`,
     description: normalizeDescription(spell?.description ?? spell?.tooltip),

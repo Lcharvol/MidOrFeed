@@ -28,16 +28,16 @@ const messages = {
 };
 
 // Helper function to get nested translation
-const getNestedTranslation = (obj: any, key: string): string => {
+const getNestedTranslation = (obj: Record<string, unknown>, key: string): string => {
   const keys = key.split(".");
-  let result = obj;
+  let result: unknown = obj;
   for (const k of keys) {
-    if (result === undefined || result === null) {
+    if (result === undefined || result === null || typeof result !== "object") {
       return key;
     }
-    result = result[k];
+    result = (result as Record<string, unknown>)[k];
   }
-  return result || key;
+  return typeof result === "string" ? result : key;
 };
 
 export function I18nProvider({ children }: { children: ReactNode }) {

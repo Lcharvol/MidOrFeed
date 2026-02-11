@@ -64,21 +64,31 @@ export const fetchChallengeConfig = async (
 ): Promise<RiotChallengeConfig[]> => {
   const routing = buildRoutingHostname(region);
   const url = `https://${routing}.api.riotgames.com/lol/challenges/v1/config`;
-  const data = await fetchJson<any[]>(url, apiKey);
+  interface RiotChallengeConfigRaw {
+    id: number;
+    name?: string;
+    category?: string;
+    level?: string;
+    tags?: string[];
+    thresholds?: Record<string, number>;
+    maxValue?: number;
+    localizedNames?: Record<string, { name?: string; description?: string; shortDescription?: string }>;
+  }
+
+  const data = await fetchJson<RiotChallengeConfigRaw[]>(url, apiKey);
 
   return data.map((item) => {
     const localizedNames =
       item.localizedNames?.["fr_FR"] || item.localizedNames?.["en_US"] || {};
     return {
-      id: item.id as number,
-      name:
-        (localizedNames.name as string) ?? item.name ?? `Challenge ${item.id}`,
-      description: localizedNames.description as string | undefined,
-      shortDescription: localizedNames.shortDescription as string | undefined,
-      category: item.category as string | undefined,
-      level: item.level as string | undefined,
-      tags: Array.isArray(item.tags) ? (item.tags as string[]) : undefined,
-      thresholds: item.thresholds as Record<string, number> | undefined,
+      id: item.id,
+      name: localizedNames.name ?? item.name ?? `Challenge ${item.id}`,
+      description: localizedNames.description,
+      shortDescription: localizedNames.shortDescription,
+      category: item.category,
+      level: item.level,
+      tags: Array.isArray(item.tags) ? item.tags : undefined,
+      thresholds: item.thresholds,
       maxValue: typeof item.maxValue === "number" ? item.maxValue : undefined,
     } satisfies RiotChallengeConfig;
   });
@@ -91,13 +101,30 @@ export const fetchPlayerChallenges = async (
 ): Promise<RiotPlayerChallengeData> => {
   const baseUrl = buildRegionalBaseUrl(region);
   const url = `${baseUrl}/lol/challenges/v1/player-data/${puuid}`;
-  const data = await fetchJson<any>(url, apiKey);
+  interface RiotPlayerChallengeRaw {
+    totalPoints?: Record<string, unknown>;
+    challenges?: Array<{
+      challengeId: number;
+      value?: number;
+      level?: string;
+      highestLevel?: string;
+      percentile?: number;
+      achievedTime?: string | number;
+      achievedDate?: string | number;
+      nextLevel?: number;
+      progress?: number;
+      pointsEarned?: number;
+      completedObjectives?: string[];
+    }>;
+  }
+
+  const data = await fetchJson<RiotPlayerChallengeRaw>(url, apiKey);
 
   const challenges = Array.isArray(data.challenges) ? data.challenges : [];
 
   return {
     totalPoints: data.totalPoints ?? {},
-    challenges: challenges.map((entry: any) => ({
+    challenges: challenges.map((entry) => ({
       challengeId: entry.challengeId,
       value: entry.value,
       level: entry.level,
