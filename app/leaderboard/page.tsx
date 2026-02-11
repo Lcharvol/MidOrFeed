@@ -1,7 +1,8 @@
 "use client";
 
 import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -34,7 +35,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { HomeIcon, SearchIcon } from "lucide-react";
+import { HomeIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import {
   Empty,
   EmptyHeader,
@@ -63,18 +64,24 @@ const TIERS = [
   { label: "Master", value: "MASTER" },
 ];
 
+const LB_PAGE_SIZE = 50;
+
 export default function LeaderboardPage() {
   const { t } = useI18n();
   const [region, setRegion] = useState("euw1");
   const [tier, setTier] = useState("CHALLENGER");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(0); }, [region, tier, search]);
 
   const { data, isLoading } = useApiSWR(
     `/api/leaderboard/list?region=${region}&tier=${tier}`,
     SEMI_DYNAMIC_CONFIG
   );
 
-  const rows = useMemo(() => {
+  const allRows = useMemo(() => {
     const list: Array<{
       summonerName: string;
       leaguePoints: number;
@@ -82,13 +89,15 @@ export default function LeaderboardPage() {
       losses: number;
       rank?: string | null;
     }> = data?.data ?? [];
-    const filtered = search
+    return search
       ? list.filter((e) =>
           e.summonerName.toLowerCase().includes(search.toLowerCase())
         )
       : list;
-    return filtered;
   }, [data, search]);
+
+  const totalPages = Math.ceil(allRows.length / LB_PAGE_SIZE);
+  const rows = allRows.slice(page * LB_PAGE_SIZE, (page + 1) * LB_PAGE_SIZE);
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-10 space-y-4 sm:space-y-6">
@@ -225,13 +234,14 @@ export default function LeaderboardPage() {
                     const total = e.wins + e.losses;
                     const wr =
                       total > 0 ? ((e.wins / total) * 100).toFixed(1) : "0.0";
+                    const globalIdx = page * LB_PAGE_SIZE + idx;
                     return (
                       <TableRow
-                        key={`${e.summonerId}-${idx}`}
+                        key={`${e.summonerId}-${globalIdx}`}
                         className="odd:bg-muted/30"
                       >
                         <TableCell className="tabular-nums py-2 sm:py-4">
-                          {idx + 1}
+                          {globalIdx + 1}
                         </TableCell>
                         <TableCell className="py-2 sm:py-4">
                           <div className="flex flex-col sm:hidden">
@@ -255,6 +265,35 @@ export default function LeaderboardPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {!isLoading && totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {page * LB_PAGE_SIZE + 1}-{Math.min((page + 1) * LB_PAGE_SIZE, allRows.length)} sur {allRows.length} joueurs
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page === 0}
+                >
+                  <ChevronLeftIcon className="size-4 mr-1" />
+                  <span className="hidden sm:inline">Précédent</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= totalPages - 1}
+                >
+                  <span className="hidden sm:inline">Suivant</span>
+                  <ChevronRightIcon className="size-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

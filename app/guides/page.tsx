@@ -24,6 +24,8 @@ import {
   EyeIcon,
   FilterIcon,
   HomeIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "lucide-react";
 import {
   Empty,
@@ -143,17 +145,25 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
   );
 };
 
+const PAGE_SIZE = 20;
+
 const GuidesPage = () => {
   const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [role, setRole] = useState<GuideRole | "all">("all");
   const [sort, setSort] = useState<"popular" | "recent" | "views">("popular");
+  const [page, setPage] = useState(0);
+
+  // Reset page when filters change
+  const handleRoleChange = (v: GuideRole | "all") => { setRole(v); setPage(0); };
+  const handleSortChange = (v: "popular" | "recent" | "views") => { setSort(v); setPage(0); };
 
   // Build API URL
   const params = new URLSearchParams();
   if (role !== "all") params.set("role", role);
   params.set("sort", sort);
-  params.set("limit", "20");
+  params.set("limit", String(PAGE_SIZE));
+  params.set("offset", String(page * PAGE_SIZE));
 
   const { data, isLoading, error } = useApiSWR<ApiResponse<GuideListResponse>>(
     `/api/guides?${params.toString()}`,
@@ -161,6 +171,8 @@ const GuidesPage = () => {
   );
 
   const guides = data?.data?.guides ?? [];
+  const total = data?.data?.total ?? 0;
+  const hasMore = data?.data?.hasMore ?? false;
 
   // Filter by search locally (champion name in title)
   const filteredGuides = search
@@ -220,7 +232,7 @@ const GuidesPage = () => {
             <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
               <Select
                 value={role}
-                onValueChange={(v) => setRole(v as GuideRole | "all")}
+                onValueChange={(v) => handleRoleChange(v as GuideRole | "all")}
               >
                 <SelectTrigger className="w-full sm:w-[150px]">
                   <FilterIcon className="size-4 mr-2 shrink-0" />
@@ -238,7 +250,7 @@ const GuidesPage = () => {
               <Select
                 value={sort}
                 onValueChange={(v) =>
-                  setSort(v as "popular" | "recent" | "views")
+                  handleSortChange(v as "popular" | "recent" | "views")
                 }
               >
                 <SelectTrigger className="w-full sm:w-[140px]">
@@ -314,6 +326,35 @@ const GuidesPage = () => {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {!isLoading && total > PAGE_SIZE && !search && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, total)} sur {total} guides
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 0}
+            >
+              <ChevronLeftIcon className="size-4 mr-1" />
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!hasMore}
+            >
+              Suivant
+              <ChevronRightIcon className="size-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
