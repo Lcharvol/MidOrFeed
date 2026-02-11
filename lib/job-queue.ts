@@ -28,46 +28,49 @@ export const QUEUE_NAMES = {
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
 
-// Singleton instance
-let boss: PgBoss | null = null;
+// Singleton: store the initialization promise to prevent race conditions
+let bossPromise: Promise<PgBoss> | null = null;
 
 /**
  * Get or create pg-boss instance
  */
 export async function getJobQueue(): Promise<PgBoss> {
-  if (boss) {
-    return boss;
+  if (!bossPromise) {
+    bossPromise = initJobQueue();
   }
+  return bossPromise;
+}
 
+async function initJobQueue(): Promise<PgBoss> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is required for job queue");
   }
 
-  boss = new PgBoss({
+  const instance = new PgBoss({
     connectionString: databaseUrl,
-    // Monitoring settings
     monitorIntervalSeconds: 60,
   });
 
-  boss.on("error", (error: Error) => {
+  instance.on("error", (error: Error) => {
     logger.error("pg-boss error", error);
   });
 
-  await boss.start();
+  await instance.start();
   logger.info("pg-boss started successfully");
 
   // Create all queues (required since pg-boss v10+)
-  await Promise.all(
-    Object.values(QUEUE_NAMES).map((name) =>
-      boss!.createQueue(name).catch(() => {
-        // Queue already exists, ignore
-      })
-    )
-  );
-  logger.info("All queues created");
+  for (const name of Object.values(QUEUE_NAMES)) {
+    try {
+      await instance.createQueue(name);
+    } catch (err) {
+      // Queue already exists — safe to ignore
+      logger.info(`Queue ${name} already exists or created`);
+    }
+  }
+  logger.info("All queues ensured");
 
-  return boss;
+  return instance;
 }
 
 /**
@@ -252,9 +255,10 @@ export async function retryJob(queueName: QueueName, jobId: string) {
  * Close the job queue gracefully
  */
 export async function closeJobQueue(): Promise<void> {
-  if (boss) {
-    await boss.stop({ graceful: true, timeout: 30000 });
-    boss = null;
+  if (bossPromise) {
+    const instance = await bossPromise;
+    await instance.stop({ graceful: true, timeout: 30000 });
+    bossPromise = null;
     logger.info("pg-boss stopped");
   }
 }
