@@ -3,6 +3,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { requireCsrf } from "@/lib/csrf";
 import { logger } from "@/lib/logger";
 import { errorResponse } from "@/lib/api-helpers";
 
@@ -21,6 +22,10 @@ const resetPasswordSchema = z.object({
  * Validate a reset token and set a new password.
  */
 export async function POST(request: NextRequest) {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.auth);
   if (rateLimitResponse) return rateLimitResponse;
 

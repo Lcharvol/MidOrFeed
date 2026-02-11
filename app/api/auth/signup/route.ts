@@ -11,6 +11,7 @@ import {
   handleApiError,
   errorResponse,
 } from "@/lib/api-helpers";
+import { requireCsrf } from "@/lib/csrf";
 import type { SignupRequest, SignupResponse } from "@/types/api";
 
 const createSignupSchema = (t: (key: string) => string) =>
@@ -37,6 +38,10 @@ export async function POST(request: NextRequest) {
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
+
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
 
   // Récupérer le contexte de la requête une seule fois
   const { t } = getRequestContext(request);

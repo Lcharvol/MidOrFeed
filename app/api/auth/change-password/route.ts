@@ -8,6 +8,7 @@ import { withApiMonitoring } from "@/lib/api-monitoring";
 import { logger } from "@/lib/logger";
 import { verifyToken, AUTH_COOKIE_NAME } from "@/lib/jwt";
 import { errorResponse } from "@/lib/api-helpers";
+import { requireCsrf } from "@/lib/csrf";
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Mot de passe actuel requis"),
@@ -23,6 +24,10 @@ export async function POST(request: NextRequest) {
   return withApiMonitoring(
     request,
     async () => {
+      // CSRF validation
+      const csrfError = await requireCsrf(request);
+      if (csrfError) return csrfError;
+
       // Rate limiting strict
       const rateLimitResponse = await rateLimit(request, rateLimitPresets.auth);
       if (rateLimitResponse) {

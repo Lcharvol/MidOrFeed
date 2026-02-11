@@ -16,6 +16,7 @@ import {
   handleApiError,
   errorResponse,
 } from "@/lib/api-helpers";
+import { requireCsrf } from "@/lib/csrf";
 import type { LoginRequest, LoginResponse } from "@/types/api";
 
 const createLoginSchema = (t: (key: string) => string) =>
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest) {
   return withApiMonitoring(
     request,
     async () => {
+      // CSRF validation
+      const csrfError = await requireCsrf(request);
+      if (csrfError) return csrfError;
+
       // Rate limiting strict pour l'authentification
       const rateLimitResponse = await rateLimit(request, rateLimitPresets.auth);
       if (rateLimitResponse) {

@@ -3,6 +3,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { requireCsrf } from "@/lib/csrf";
 import { logger } from "@/lib/logger";
 
 const forgotPasswordSchema = z.object({
@@ -15,6 +16,10 @@ const forgotPasswordSchema = z.object({
  * Always returns 200 to avoid leaking whether the email exists.
  */
 export async function POST(request: NextRequest) {
+  // CSRF validation
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.auth);
   if (rateLimitResponse) return rateLimitResponse;
 
