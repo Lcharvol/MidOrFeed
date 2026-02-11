@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { LoadingState } from "./components/LoadingState";
 import { ErrorState } from "./components/ErrorState";
 import { EmptyStateCard } from "./components/EmptyStateCard";
@@ -11,11 +12,16 @@ import type { RecentMatchEntry } from "./components/RecentMatchesSection";
 import { RankInfoSection } from "./components/RankInfoSection";
 import { RecentGamesSummary } from "./components/RecentGamesSummary";
 import { RecentMatchesList } from "./components/RecentMatchesList";
-import { ProgressionCharts } from "./components/ProgressionCharts";
 import { ChampionMasterySection } from "./components/ChampionMasterySection";
 import { ChampionPoolAdvisor } from "./components/ChampionPoolAdvisor";
 import { LiveGameBanner } from "./components/LiveGameBanner";
 import { useSummonerOverview } from "@/lib/hooks/use-summoner-overview";
+import { LazyLoadingFallback } from "@/lib/lazy-components";
+
+const ProgressionCharts = dynamic(
+  () => import("./components/ProgressionCharts").then((m) => ({ default: m.ProgressionCharts })),
+  { loading: LazyLoadingFallback, ssr: false }
+);
 
 const MATCH_LIMIT_OPTIONS = [10, 20, 50] as const;
 type MatchLimitOption = (typeof MATCH_LIMIT_OPTIONS)[number];

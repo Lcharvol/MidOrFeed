@@ -18,13 +18,23 @@ import {
   CrownIcon,
   UsersIcon,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { PlayerCard } from "./PlayerCard";
 import { StatCompareRow } from "./StatCompareRow";
 import { TopChampionsSection, RoleDistributionSection, CommonChampionsSection } from "./ChampionComponents";
-import { PlaystyleRadar } from "./PlaystyleRadar";
-import { RankProgressionChart } from "./RankProgressionChart";
 import { DuoSynergySection, BanRecommendationsSection } from "./DuoSynergySection";
+import { LazyLoadingFallback } from "@/lib/lazy-components";
 import type { PlayerData, CommonChampion, DuoSynergy, BanRecommendation } from "./types";
+
+const PlaystyleRadar = dynamic(
+  () => import("./PlaystyleRadar").then((m) => ({ default: m.PlaystyleRadar })),
+  { loading: LazyLoadingFallback, ssr: false }
+);
+
+const RankProgressionChart = dynamic(
+  () => import("./RankProgressionChart").then((m) => ({ default: m.RankProgressionChart })),
+  { loading: LazyLoadingFallback, ssr: false }
+);
 
 export const ComparisonResults = ({
   player1,
