@@ -230,8 +230,8 @@ async function computeChampionStats(championId: string): Promise<void> {
 }
 
 /**
- * Get counter champions (champions that beat this champion most often)
- * Returns data in WeakAgainstItem format for the tier list UI
+ * Get counter champions via a single SQL aggregation (no in-memory loading).
+ * Returns the top 5 champions with highest win rate against this champion.
  */
 async function getCounterChampions(
   championId: string
@@ -243,79 +243,44 @@ async function getCounterChampions(
   winRate: number;
   lastPlayedAt: string;
 }>> {
-  // Get all matches where this champion participated
-  const participations = await prisma.matchParticipant.findMany({
-    where: { championId },
-    select: { matchId: true, teamId: true, win: true, createdAt: true },
+  const counters = await prisma.$queryRaw<
+    Array<{
+      enemyChampionId: string;
+      games: bigint;
+      enemyWins: bigint;
+      enemyLosses: bigint;
+      lastPlayedAt: Date;
+    }>
+  >`
+    SELECT
+      enemy."championId" AS "enemyChampionId",
+      COUNT(*) AS games,
+      SUM(CASE WHEN enemy.win THEN 1 ELSE 0 END) AS "enemyWins",
+      SUM(CASE WHEN enemy.win THEN 0 ELSE 1 END) AS "enemyLosses",
+      MAX(enemy."createdAt") AS "lastPlayedAt"
+    FROM match_participants mp
+    JOIN match_participants enemy
+      ON mp."matchId" = enemy."matchId"
+      AND mp."teamId" != enemy."teamId"
+    WHERE mp."championId" = ${championId}
+      AND enemy."championId" != ${championId}
+    GROUP BY enemy."championId"
+    HAVING COUNT(*) >= 5
+    ORDER BY SUM(CASE WHEN enemy.win THEN 1 ELSE 0 END)::float / COUNT(*) DESC
+    LIMIT 5
+  `;
+
+  return counters.map((c) => {
+    const games = Number(c.games);
+    const wins = Number(c.enemyWins);
+    const losses = Number(c.enemyLosses);
+    return {
+      enemyChampionId: c.enemyChampionId,
+      games,
+      wins,
+      losses,
+      winRate: wins / games,
+      lastPlayedAt: c.lastPlayedAt.toISOString(),
+    };
   });
-
-  if (participations.length === 0) return [];
-
-  // Count opponent champions in those matches
-  const opponentCounts: Record<string, {
-    wins: number;
-    losses: number;
-    lastPlayed: Date;
-  }> = {};
-
-  // Process in batches to avoid memory issues
-  const batchSize = 100;
-  for (let i = 0; i < participations.length; i += batchSize) {
-    const batch = participations.slice(i, i + batchSize);
-    const matchIds = batch.map((p) => p.matchId);
-    const teamIdsByMatch = new Map(batch.map((p) => [p.matchId, p.teamId]));
-    const winByMatch = new Map(batch.map((p) => [p.matchId, p.win]));
-    const dateByMatch = new Map(batch.map((p) => [p.matchId, p.createdAt]));
-
-    const opponents = await prisma.matchParticipant.findMany({
-      where: {
-        matchId: { in: matchIds },
-        championId: { not: championId },
-      },
-      select: { championId: true, matchId: true, teamId: true },
-    });
-
-    for (const opp of opponents) {
-      // Only count opponents on the enemy team
-      const ourTeamId = teamIdsByMatch.get(opp.matchId);
-      if (opp.teamId === ourTeamId) continue;
-
-      const weWon = winByMatch.get(opp.matchId) ?? false;
-      const matchDate = dateByMatch.get(opp.matchId) ?? new Date();
-
-      if (!opponentCounts[opp.championId]) {
-        opponentCounts[opp.championId] = { wins: 0, losses: 0, lastPlayed: matchDate };
-      }
-
-      // Count from opponent's perspective (their wins = our losses)
-      if (weWon) {
-        opponentCounts[opp.championId].losses++;
-      } else {
-        opponentCounts[opp.championId].wins++;
-      }
-
-      if (matchDate > opponentCounts[opp.championId].lastPlayed) {
-        opponentCounts[opp.championId].lastPlayed = matchDate;
-      }
-    }
-  }
-
-  // Calculate win rates and sort by opponent's win rate (descending)
-  const counters = Object.entries(opponentCounts)
-    .filter(([, stats]) => stats.wins + stats.losses >= 5) // Minimum 5 games
-    .map(([enemyChampionId, stats]) => {
-      const games = stats.wins + stats.losses;
-      return {
-        enemyChampionId,
-        games,
-        wins: stats.wins,
-        losses: stats.losses,
-        winRate: stats.wins / games, // Opponent's win rate against us
-        lastPlayedAt: stats.lastPlayed.toISOString(),
-      };
-    })
-    .sort((a, b) => b.winRate - a.winRate)
-    .slice(0, 5); // Top 5 counters
-
-  return counters;
 }
