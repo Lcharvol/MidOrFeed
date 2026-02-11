@@ -7,16 +7,19 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import Image from "next/image";
 import { getChampionImageUrl } from "@/constants/ddragon";
 import { ROLE_LABELS } from "./types";
 import type { ChampionStat, RoleDistribution, CommonChampion } from "./types";
 
 export const ChampionIcon = ({ championId, size = 32 }: { championId: string; size?: number }) => (
-  <img
+  <Image
     src={getChampionImageUrl(championId)}
     alt={championId}
     className="rounded"
-    style={{ width: size, height: size }}
+    width={size}
+    height={size}
+    unoptimized
   />
 );
 
