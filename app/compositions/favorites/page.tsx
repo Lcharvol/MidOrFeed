@@ -92,7 +92,7 @@ const CompositionCard = ({
   };
 
   return (
-    <Card className="group hover:border-primary/50 transition-colors">
+    <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
       <CardContent className="pt-4">
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="min-w-0">

@@ -71,7 +71,7 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
 
   return (
     <Link href={`/guides/${guide.id}`}>
-      <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
+      <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
         <CardContent className="p-3 sm:p-4">
           <div className="flex gap-3 sm:gap-4">
             {/* Champion icon */}

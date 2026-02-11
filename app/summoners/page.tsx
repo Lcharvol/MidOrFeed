@@ -214,7 +214,7 @@ export default function SummonersPage() {
 
           {/* Feature Cards */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="group hover:border-primary/30 transition-colors">
+            <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
               <CardContent className="p-6 space-y-3">
                 <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <BarChart3Icon className="size-6 text-primary" />
@@ -226,7 +226,7 @@ export default function SummonersPage() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:border-primary/30 transition-colors">
+            <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
               <CardContent className="p-6 space-y-3">
                 <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <SwordsIcon className="size-6 text-primary" />
@@ -238,7 +238,7 @@ export default function SummonersPage() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:border-primary/30 transition-colors">
+            <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
               <CardContent className="p-6 space-y-3">
                 <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <TrophyIcon className="size-6 text-primary" />
@@ -250,7 +250,7 @@ export default function SummonersPage() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:border-primary/30 transition-colors">
+            <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
               <CardContent className="p-6 space-y-3">
                 <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <TargetIcon className="size-6 text-primary" />

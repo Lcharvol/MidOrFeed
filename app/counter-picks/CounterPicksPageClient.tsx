@@ -161,7 +161,7 @@ const CounterPicksPageClient = ({
 
       {/* Features */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50 bg-card/50">
+        <Card className="border-border/50 bg-card/50 hover:border-primary/50 hover:shadow-md transition-all">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-success-muted p-2">
               <ShieldIcon className="size-5 text-success-muted-foreground" />
@@ -174,7 +174,7 @@ const CounterPicksPageClient = ({
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/50 bg-card/50">
+        <Card className="border-border/50 bg-card/50 hover:border-primary/50 hover:shadow-md transition-all">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-info-muted p-2">
               <SwordsIcon className="size-5 text-info-muted-foreground" />
@@ -187,7 +187,7 @@ const CounterPicksPageClient = ({
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/50 bg-card/50">
+        <Card className="border-border/50 bg-card/50 hover:border-primary/50 hover:shadow-md transition-all">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-warning-muted p-2">
               <SparklesIcon className="size-5 text-warning-muted-foreground" />
