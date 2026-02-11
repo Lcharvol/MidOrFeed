@@ -259,8 +259,9 @@ async function processPlayersInBackground(batchSize: number, delayBetweenPlayers
 
           // Appeler l'endpoint de collecte de matches
           const { POST } = await import("@/app/api/matches/collect/route");
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
           const mockRequest = new Request(
-            "http://localhost:3000/api/matches/collect",
+            `${appUrl}/api/matches/collect`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
