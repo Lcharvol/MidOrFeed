@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/card";
 import {
   SwordsIcon,
-  Loader2Icon,
   ArrowDownIcon,
   ArrowUpIcon,
   ChevronsUpDownIcon,
 } from "lucide-react";
+import { DataState } from "@/components/ui/data-state";
 import {
   Empty,
   EmptyHeader,
@@ -295,19 +295,24 @@ export default function ChampionsByIdPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2Icon className="size-12 animate-spin text-muted-foreground" />
-      </div>
+      <DataState
+        isLoading
+        variant="plain"
+        title="Chargement des champions..."
+        containerClassName="py-20"
+      />
     );
   }
 
   if (error || !data?.success) {
     return (
-      <div className="text-center py-20">
-        <p className="text-muted-foreground">
-          Erreur lors du chargement des champions
-        </p>
-      </div>
+      <DataState
+        tone="danger"
+        variant="plain"
+        title="Erreur de chargement"
+        description="Erreur lors du chargement des champions"
+        containerClassName="py-20"
+      />
     );
   }
 

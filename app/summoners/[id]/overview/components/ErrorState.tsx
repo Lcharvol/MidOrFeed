@@ -1,9 +1,13 @@
 "use client";
 
+import { DataState } from "@/components/ui/data-state";
+
 export const ErrorState = () => (
-  <div className="text-center py-20">
-    <p className="text-muted-foreground">
-      Erreur lors du chargement des données
-    </p>
-  </div>
+  <DataState
+    tone="danger"
+    variant="plain"
+    title="Erreur de chargement"
+    description="Erreur lors du chargement des données"
+    containerClassName="py-20"
+  />
 );

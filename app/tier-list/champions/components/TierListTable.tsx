@@ -25,7 +25,8 @@ import {
   resolveTier,
 } from "../utils";
 import { SortIndicator } from "./SortIndicator";
-import { Loader2Icon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
+import { TrendingUpIcon, TrendingDownIcon } from "lucide-react";
+import { DataState } from "@/components/ui/data-state";
 import { ColorBadge } from "@/components/ui/badge";
 import { TierBadge } from "@/components/TierBadge";
 import Link from "next/link";
@@ -99,20 +100,22 @@ export const TierListTable = ({
   const { championNameMap, championKeyToIdMap } = useChampions();
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border bg-background/80 py-12" role="status">
-        <Loader2Icon className="size-8 animate-spin text-primary" aria-hidden="true" />
-        <span className="sr-only">Chargement de la tier list...</span>
-      </div>
+      <DataState
+        isLoading
+        variant="plain"
+        title="Chargement de la tier list..."
+        containerClassName="rounded-2xl border bg-background/80 py-12"
+      />
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-destructive bg-destructive/10 p-6 text-center">
-        <p className="font-medium text-destructive">
-          {t("tierListChampions.loadingError")}
-        </p>
-      </div>
+      <DataState
+        tone="danger"
+        title={t("tierListChampions.loadingError")}
+        containerClassName="rounded-2xl"
+      />
     );
   }
 

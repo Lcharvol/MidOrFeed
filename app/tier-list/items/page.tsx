@@ -16,10 +16,10 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   ChevronsUpDownIcon,
-  Loader2Icon,
   HomeIcon,
   SearchIcon,
 } from "lucide-react";
+import { DataState } from "@/components/ui/data-state";
 import {
   Empty,
   EmptyHeader,
@@ -217,17 +217,20 @@ export default function ItemsPage() {
       </div>
 
       {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2Icon className="size-8 animate-spin text-primary" />
-        </div>
+        <DataState
+          isLoading
+          variant="plain"
+          title={t("tierList.items.loading") || "Chargement..."}
+          containerClassName="py-12"
+        />
       )}
 
       {error && (
-        <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
-          <p className="text-destructive">
-            {t("tierList.items.loadingError")}
-          </p>
-        </div>
+        <DataState
+          tone="danger"
+          title={t("tierList.items.loadingError") || "Erreur de chargement"}
+          description="Impossible de charger les données des objets"
+        />
       )}
 
       {!isLoading && !error && (

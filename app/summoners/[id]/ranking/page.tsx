@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2Icon, TrophyIcon, InfoIcon } from "lucide-react";
+import { TrophyIcon, InfoIcon } from "lucide-react";
+import { DataState } from "@/components/ui/data-state";
 import { Badge } from "@/components/ui/badge";
 import { ColorBadge } from "@/components/ui/badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -146,16 +147,22 @@ export default function RankingByIdPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2Icon className="size-12 animate-spin text-muted-foreground" />
-      </div>
+      <DataState
+        isLoading
+        variant="plain"
+        title="Chargement du classement..."
+        containerClassName="py-20"
+      />
     );
   }
   if (error) {
     return (
-      <div className="text-center py-20">
-        <p className="text-muted-foreground">{error}</p>
-      </div>
+      <DataState
+        tone="warning"
+        variant="plain"
+        title={error}
+        containerClassName="py-20"
+      />
     );
   }
   if (!leagueData || leagueData.length === 0) {
