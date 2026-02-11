@@ -191,8 +191,8 @@ export default function DownloadPage() {
           {features.map((feature, index) => (
             <Card key={index} className="text-center">
               <CardContent className="pt-6">
-                <div className="inline-flex p-3 bg-primary/10 rounded-full mb-4">
-                  <feature.icon className="h-6 w-6 text-primary" />
+                <div className="inline-flex p-3 bg-muted rounded-full mb-4">
+                  <feature.icon className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <h3 className="font-semibold mb-2">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground">{feature.description}</p>

@@ -111,13 +111,8 @@ const CounterPicksPageClient = ({
   const renderEmptyState = () => (
     <div className="space-y-6 sm:space-y-8">
       {/* Hero placeholder */}
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-border/50 bg-gradient-to-br from-primary/5 via-background to-primary/10 p-5 sm:p-8 md:p-12">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--color-primary),transparent_70%)] opacity-10" />
-        <div className="relative z-10 max-w-2xl">
-          <div className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-2.5 sm:px-3 py-1 text-xs sm:text-sm text-primary">
-            <TargetIcon className="size-3 sm:size-4" />
-            Analysez vos matchups
-          </div>
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-border/50 bg-gradient-to-br from-primary/5 via-background to-background p-5 sm:p-8 md:p-12">
+        <div className="max-w-2xl">
           <h2 className="mb-2 sm:mb-3 text-xl sm:text-2xl font-bold md:text-3xl">
             Trouvez le counter parfait
           </h2>
@@ -126,7 +121,6 @@ const CounterPicksPageClient = ({
             picks.
           </p>
         </div>
-        <div className="absolute -right-20 -top-20 size-64 rounded-full bg-primary/5 blur-3xl" />
       </div>
 
       {/* Popular champions grid */}
@@ -142,13 +136,13 @@ const CounterPicksPageClient = ({
               <button
                 key={champId}
                 onClick={() => handleQuickSelect(champId)}
-                className="group flex flex-col items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border border-border/50 bg-card/50 p-2 sm:p-3 transition-all hover:border-primary/50 hover:bg-primary/5"
+                className="group flex flex-col items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border border-border/50 bg-card/50 p-2 sm:p-3 transition-all hover:bg-accent/50"
               >
                 <ChampionIcon
                   championId={champId}
                   size={36}
                   shape="circle"
-                  className="sm:w-12 sm:h-12 border-2 border-border/50 transition-all group-hover:border-primary/50 group-hover:scale-105"
+                  className="sm:w-12 sm:h-12 border border-border/50 transition-all group-hover:scale-105"
                 />
                 <span className="text-[10px] sm:text-xs font-medium text-muted-foreground group-hover:text-foreground truncate max-w-full">
                   {name}
@@ -161,7 +155,7 @@ const CounterPicksPageClient = ({
 
       {/* Features */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50 bg-card/50 hover:border-primary/50 hover:shadow-md transition-all">
+        <Card className="border-border/50 bg-card/50 hover:bg-accent/50 hover:shadow-md transition-all">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-success-muted p-2">
               <ShieldIcon className="size-5 text-success-muted-foreground" />
@@ -174,7 +168,7 @@ const CounterPicksPageClient = ({
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/50 bg-card/50 hover:border-primary/50 hover:shadow-md transition-all">
+        <Card className="border-border/50 bg-card/50 hover:bg-accent/50 hover:shadow-md transition-all">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-info-muted p-2">
               <SwordsIcon className="size-5 text-info-muted-foreground" />
@@ -187,7 +181,7 @@ const CounterPicksPageClient = ({
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/50 bg-card/50 hover:border-primary/50 hover:shadow-md transition-all">
+        <Card className="border-border/50 bg-card/50 hover:bg-accent/50 hover:shadow-md transition-all">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-warning-muted p-2">
               <SparklesIcon className="size-5 text-warning-muted-foreground" />
@@ -214,7 +208,7 @@ const CounterPicksPageClient = ({
         <div className="flex flex-col items-center justify-center gap-4 py-20">
           <div className="relative">
             <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
-            <div className="relative rounded-full bg-primary/10 p-4">
+            <div className="relative rounded-full bg-muted p-4">
               <Loader2Icon className="size-8 animate-spin text-primary" />
             </div>
           </div>

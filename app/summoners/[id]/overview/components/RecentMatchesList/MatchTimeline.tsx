@@ -127,8 +127,8 @@ export function MatchTimeline({ matchId, puuid }: MatchTimelineProps) {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <ActivityIcon className="size-5 text-primary" />
+            <div className="p-2 rounded-lg bg-muted">
+              <ActivityIcon className="size-5 text-muted-foreground" />
             </div>
             <div>
               <span className="text-lg">{t("matchTimeline.title")}</span>

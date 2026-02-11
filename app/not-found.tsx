@@ -10,19 +10,11 @@ export default function NotFound() {
 
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-4 py-20">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 -z-0">
-        <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute right-1/4 bottom-1/4 h-96 w-96 rounded-full bg-destructive/5 blur-3xl" />
-      </div>
-
       <div className="relative z-10 mx-auto max-w-2xl text-center">
-        {/* Large 404 with gradient */}
+        {/* Large 404 */}
         <div className="mb-8">
-          <h1 className="text-9xl font-black tracking-tighter md:text-[12rem]">
-            <span className="bg-gradient-to-r from-primary via-primary/80 to-destructive bg-clip-text text-transparent">
-              404
-            </span>
+          <h1 className="text-9xl font-black tracking-tighter md:text-[12rem] text-primary">
+            404
           </h1>
         </div>
 
@@ -39,7 +31,7 @@ export default function NotFound() {
         {/* Decorative divider */}
         <div className="mb-12 flex items-center justify-center gap-4">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-          <SwordIcon className="size-6 text-primary" />
+          <SwordIcon className="size-6 text-muted-foreground" />
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
 

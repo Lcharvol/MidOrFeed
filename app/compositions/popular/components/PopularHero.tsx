@@ -20,7 +20,7 @@ export const PopularHero = ({
       <div
         className={cn(
           "inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm",
-          "bg-primary/10 text-primary"
+          "bg-muted text-muted-foreground"
         )}
       >
         <RefreshCwIcon className="size-4 animate-spin-slow" />

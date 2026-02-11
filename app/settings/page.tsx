@@ -118,8 +118,8 @@ export default function SettingsPage() {
 
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <SettingsIcon className="size-6 text-primary" />
+            <div className="p-2 rounded-lg bg-muted">
+              <SettingsIcon className="size-6 text-muted-foreground" />
             </div>
             <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
           </div>
@@ -130,11 +130,11 @@ export default function SettingsPage() {
         <Card className="mb-4">
           <CardHeader>
             <div className="flex items-center gap-2 mb-1">
-              <div className="p-2 rounded-md bg-primary/10">
+              <div className="p-2 rounded-md bg-muted">
                 {mounted && theme === "dark" ? (
-                  <MoonIcon className="size-4 text-primary" />
+                  <MoonIcon className="size-4 text-muted-foreground" />
                 ) : (
-                  <SunIcon className="size-4 text-primary" />
+                  <SunIcon className="size-4 text-muted-foreground" />
                 )}
               </div>
               <CardTitle>{t("settings.appearance")}</CardTitle>

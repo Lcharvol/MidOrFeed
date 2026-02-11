@@ -20,7 +20,6 @@ import {
   Loader2Icon,
   TrophyIcon,
   ChevronRightIcon,
-  SparklesIcon,
   BarChart3Icon,
   SwordsIcon,
   TargetIcon,
@@ -105,16 +104,8 @@ export default function SummonersPage() {
     <div className="min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
-        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[120px] opacity-50" />
-
         <div className="container relative mx-auto px-4 py-16 sm:py-24">
           <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-up">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-sm text-primary mb-4">
-              <SparklesIcon className="size-4" />
-              <span>Analysez n&apos;importe quel joueur</span>
-            </div>
-
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
               Rechercher un{" "}
               <span className="text-primary">Invocateur</span>
@@ -125,7 +116,7 @@ export default function SummonersPage() {
             </p>
 
             {/* Search Box */}
-            <Card className="mt-8 border-border/60 shadow-xl bg-card/80 backdrop-blur-sm">
+            <Card className="mt-8 border-border/60 shadow-md bg-card/80 backdrop-blur-sm">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row gap-3" onKeyDown={handleKeyDown}>
                   <Select value={region} onValueChange={setRegion}>
@@ -239,7 +230,7 @@ export default function SummonersPage() {
               </h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {recentSearches.map((s) => (
-                  <Card key={`${s.puuid}-${s.region}`} className="group hover:border-primary/50 transition-colors">
+                  <Card key={`${s.puuid}-${s.region}`} className="group hover:bg-accent/50 transition-colors">
                     <CardContent className="p-3">
                       <Link
                         href={`/summoners/${s.puuid}/overview?region=${s.region}`}
@@ -275,10 +266,10 @@ export default function SummonersPage() {
 
           {/* Feature Cards */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
+            <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <BarChart3Icon className="size-6 text-primary" />
+                <div className="size-12 rounded-lg bg-info-muted flex items-center justify-center">
+                  <BarChart3Icon className="size-6 text-info" />
                 </div>
                 <h3 className="font-semibold text-lg">Statistiques detaillees</h3>
                 <p className="text-sm text-muted-foreground">
@@ -287,10 +278,10 @@ export default function SummonersPage() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
+            <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <SwordsIcon className="size-6 text-primary" />
+                <div className="size-12 rounded-lg bg-danger-muted flex items-center justify-center">
+                  <SwordsIcon className="size-6 text-danger" />
                 </div>
                 <h3 className="font-semibold text-lg">Historique des matchs</h3>
                 <p className="text-sm text-muted-foreground">
@@ -299,10 +290,10 @@ export default function SummonersPage() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
+            <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <TrophyIcon className="size-6 text-primary" />
+                <div className="size-12 rounded-lg bg-warning-muted flex items-center justify-center">
+                  <TrophyIcon className="size-6 text-warning" />
                 </div>
                 <h3 className="font-semibold text-lg">Classement</h3>
                 <p className="text-sm text-muted-foreground">
@@ -311,10 +302,10 @@ export default function SummonersPage() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
+            <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <TargetIcon className="size-6 text-primary" />
+                <div className="size-12 rounded-lg bg-success-muted flex items-center justify-center">
+                  <TargetIcon className="size-6 text-success" />
                 </div>
                 <h3 className="font-semibold text-lg">Champions maitrise</h3>
                 <p className="text-sm text-muted-foreground">
@@ -323,9 +314,9 @@ export default function SummonersPage() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:border-primary/30 transition-colors sm:col-span-2 lg:col-span-2">
+            <Card className="group hover:bg-accent/50 transition-colors sm:col-span-2 lg:col-span-2">
               <CardContent className="p-6 flex items-center gap-6">
-                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <UserIcon className="size-6 text-primary" />
                 </div>
                 <div className="flex-1">

@@ -82,27 +82,27 @@
 :root {
   --radius: 0.625rem;
 
-  /* 🌞 Light mode - neutre et lisible */
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.18 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0 0);
+  /* 🌞 Light mode - teinte violette subtile */
+  --background: oklch(0.98 0.005 280);
+  --foreground: oklch(0.15 0.01 280);
+  --card: oklch(1 0.003 280);
+  --card-foreground: oklch(0.15 0.01 280);
+  --popover: oklch(1 0.003 280);
+  --popover-foreground: oklch(0.15 0.01 280);
 
   /* Accent violet LoL */
   --primary: oklch(0.55 0.2 280); /* Violet #7C3AED */
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.92 0 0);
-  --secondary-foreground: oklch(0.18 0 0);
+  --secondary: oklch(0.95 0.008 280);
+  --secondary-foreground: oklch(0.15 0.01 280);
 
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.92 0 0);
-  --accent-foreground: oklch(0.18 0 0);
+  --muted: oklch(0.94 0.008 280);
+  --muted-foreground: oklch(0.45 0.01 280);
+  --accent: oklch(0.95 0.008 280);
+  --accent-foreground: oklch(0.15 0.01 280);
   --destructive: oklch(0.55 0.2 20);
-  --border: oklch(0.88 0 0);
-  --input: oklch(0.88 0 0);
+  --border: oklch(0.90 0.01 280);
+  --input: oklch(0.90 0.01 280);
   --ring: oklch(0.55 0.2 280);
 
   /* Couleurs des rôles */
@@ -113,13 +113,13 @@
   --chart-5: oklch(0.55 0.15 150); /* Support */
 
   /* Sidebar clair */
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.18 0 0);
+  --sidebar: oklch(0.98 0.005 280);
+  --sidebar-foreground: oklch(0.15 0.01 280);
   --sidebar-primary: oklch(0.55 0.2 280);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.92 0 0);
-  --sidebar-accent-foreground: oklch(0.18 0 0);
-  --sidebar-border: oklch(0.88 0 0);
+  --sidebar-accent: oklch(0.95 0.008 280);
+  --sidebar-accent-foreground: oklch(0.15 0.01 280);
+  --sidebar-border: oklch(0.90 0.01 280);
   --sidebar-ring: oklch(0.55 0.2 280);
 
   /* Couleurs sémantiques - Light mode */

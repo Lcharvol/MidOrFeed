@@ -125,11 +125,11 @@ const FavoriteCard = ({
 
   return (
     <>
-      <Card className="group hover:border-primary/50 transition-colors">
+      <Card className="group hover:bg-accent/50 transition-colors">
         <CardContent className="p-3 sm:pt-4 sm:p-4">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="relative shrink-0">
-              <Avatar className="size-10 sm:size-14 border-2 border-primary/20">
+              <Avatar className="size-10 sm:size-14 border border-border">
                 {favorite.profileIconId != null && (
                   <AvatarImage
                     src={getProfileIconUrl(favorite.profileIconId)}

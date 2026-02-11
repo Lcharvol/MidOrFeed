@@ -125,7 +125,7 @@ export default function ComparePage() {
 
       <div className="text-center mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-2 sm:gap-3 mb-2">
-          <SwordsIcon className="size-6 sm:size-8 text-primary" />
+          <SwordsIcon className="size-6 sm:size-8 text-muted-foreground" />
           Comparer des joueurs
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">

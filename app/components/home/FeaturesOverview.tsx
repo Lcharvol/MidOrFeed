@@ -15,10 +15,10 @@ export const FeaturesOverview = () => {
     <section className="py-12 md:py-16">
       <div className="container mx-auto px-4">
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="group border-2 hover:border-primary/50 transition-all hover:shadow-lg">
+          <Card className="group hover:bg-accent/50 transition-all hover:shadow-lg">
             <CardHeader>
-              <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <BrainIcon className="size-5 text-primary" />
+              <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-info-muted">
+                <BrainIcon className="size-5 text-info" />
               </div>
               <CardTitle className="text-lg">{t("home.matchAnalysis")}</CardTitle>
             </CardHeader>
@@ -29,10 +29,10 @@ export const FeaturesOverview = () => {
             </CardContent>
           </Card>
 
-          <Card className="group border-2 hover:border-primary/50 transition-all hover:shadow-lg">
+          <Card className="group hover:bg-accent/50 transition-all hover:shadow-lg">
             <CardHeader>
-              <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <UsersIcon className="size-5 text-primary" />
+              <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-success-muted">
+                <UsersIcon className="size-5 text-success" />
               </div>
               <CardTitle className="text-lg">{t("home.teamCoaching")}</CardTitle>
             </CardHeader>
@@ -43,10 +43,10 @@ export const FeaturesOverview = () => {
             </CardContent>
           </Card>
 
-          <Card className="group border-2 hover:border-primary/50 transition-all hover:shadow-lg">
+          <Card className="group hover:bg-accent/50 transition-all hover:shadow-lg">
             <CardHeader>
-              <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <TrophyIcon className="size-5 text-primary" />
+              <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-warning-muted">
+                <TrophyIcon className="size-5 text-warning" />
               </div>
               <CardTitle className="text-lg">{t("home.soloQueueCoaching")}</CardTitle>
             </CardHeader>

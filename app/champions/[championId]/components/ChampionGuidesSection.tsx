@@ -29,7 +29,7 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
 
   return (
     <Link href={`/guides/${guide.id}`}>
-      <Card className="hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
+      <Card className="hover:bg-accent/50 hover:shadow-md transition-all cursor-pointer">
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-start justify-between gap-2 sm:gap-4">
             <div className="min-w-0 flex-1">

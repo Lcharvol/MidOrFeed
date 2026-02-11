@@ -41,17 +41,17 @@ export const HeroSection = ({ stats, statsLoading }: HeroSectionProps) => {
 
       <div className="relative z-10">
         <div className="mx-auto max-w-4xl text-center">
-          <Badge className="mb-4 animate-fade-up" variant="secondary">
+          <Badge className="mb-4" variant="secondary">
             <BrainIcon className="mr-2 size-3" />
             {t("home.poweredByAI")}
           </Badge>
-          <h1 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-6xl animate-fade-up-delay-1">
+          <h1 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-6xl animate-fade-up">
             {t("home.aiCoach")}{" "}
-            <span className="bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent">
+            <span className="text-primary">
               {t("home.dominateRift")}
             </span>
           </h1>
-          <p className="mb-8 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto animate-fade-up-delay-2">
+          <p className="mb-8 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
             {t("home.subtitle")}
           </p>
 

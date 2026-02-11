@@ -13,7 +13,7 @@ export const CTASection = () => {
     <section className="py-12 md:py-16">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl">
-          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-primary/5">
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
             <CardContent className="p-8 text-center">
               <h2 className="mb-3 text-2xl font-bold md:text-3xl">
                 {t("home.readyToImprove")}

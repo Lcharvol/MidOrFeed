@@ -83,7 +83,7 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
 
   return (
     <Link href={`/guides/${guide.id}`}>
-      <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
+      <Card className="h-full hover:bg-accent/50 hover:shadow-md transition-all cursor-pointer">
         <CardContent className="p-3 sm:p-4">
           <div className="flex gap-3 sm:gap-4">
             {/* Champion icon */}
@@ -213,7 +213,7 @@ const GuidesPage = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <BookOpenIcon className="size-8 text-primary" />
+            <BookOpenIcon className="size-8 text-muted-foreground" />
             Guides Champions
           </h1>
           <p className="text-muted-foreground mt-1">

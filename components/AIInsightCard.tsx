@@ -107,7 +107,7 @@ export function AIInsightCard({
     return (
       <Card
         className={cn(
-          "border border-border/40 bg-background/85 shadow-sm backdrop-blur-sm transition-colors hover:border-primary/30",
+          "border border-border/40 bg-background/85 shadow-sm backdrop-blur-sm transition-colors hover:border-border",
           className
         )}
       >
@@ -189,7 +189,7 @@ export function AIInsightCard({
             >
               <Icon className={`size-5 ${config.iconColor}`} />
             </div>
-            <CardTitle className="text-lg bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
+            <CardTitle className="text-lg">
               Analyse IA
             </CardTitle>
           </div>
@@ -221,8 +221,8 @@ export function AIInsightCard({
         </div>
 
         {insight.recommendation && (
-          <div className="rounded-lg bg-primary/10 border border-primary/20 p-3">
-            <p className="text-sm font-medium mb-1">💡 Recommandation</p>
+          <div className="rounded-lg bg-muted border border-border p-3">
+            <p className="text-sm font-medium mb-1">Recommandation</p>
             <p className="text-sm text-muted-foreground">
               {insight.recommendation}
             </p>

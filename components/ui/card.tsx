@@ -12,7 +12,7 @@ const cardVariants = cva(
         gradient:
           "border-2 border-blue-500/20 bg-linear-to-br from-background to-blue-500/5",
         interactive:
-          "hover:shadow-md hover:border-primary/30 cursor-pointer",
+          "hover:shadow-md hover:bg-accent/50 cursor-pointer",
       },
     },
     defaultVariants: {

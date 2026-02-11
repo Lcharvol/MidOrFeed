@@ -36,7 +36,7 @@ export const FeaturedGamesSection = ({
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-bold md:text-3xl flex items-center gap-2">
-              <EyeIcon className="size-6 text-primary" />
+              <EyeIcon className="size-6 text-muted-foreground" />
               Parties en direct
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -67,7 +67,7 @@ export const FeaturedGamesSection = ({
                 const queueLabel = game.queueId === 420 ? "Solo/Duo" : "Flex";
                 return (
                   <CarouselItem key={game.gameId} className="md:basis-1/2 lg:basis-1/3">
-                    <Card className="hover:border-primary/50 transition-all hover:shadow-md">
+                    <Card className="hover:bg-accent/50 transition-all hover:shadow-md">
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <Badge emphasis="info" emphasisVariant="subtle" className="text-xs">

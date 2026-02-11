@@ -84,7 +84,7 @@ const CompositionCard = ({
   ).length;
 
   return (
-    <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
+    <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
       <CardContent className="pt-4">
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="min-w-0">
@@ -223,7 +223,7 @@ export default function CompositionsFavoritesPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FolderHeartIcon className="size-8 text-primary" />
+            <FolderHeartIcon className="size-8 text-muted-foreground" />
             Mes Compositions
           </h1>
           <p className="text-muted-foreground mt-1">

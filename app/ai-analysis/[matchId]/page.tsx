@@ -232,9 +232,8 @@ function AIAnalysisContent() {
       <div className="container mx-auto py-20">
         <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center">
           <div className="relative mb-8">
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
-            <div className="relative bg-gradient-to-br from-primary/10 to-primary/5 rounded-full p-8 border border-primary/20">
-              <BrainIcon className="size-12 text-primary animate-pulse" />
+            <div className="relative bg-muted rounded-full p-8 border border-border">
+              <BrainIcon className="size-12 text-muted-foreground animate-pulse" />
             </div>
           </div>
           <Loader2Icon className="size-6 animate-spin text-primary mb-4" />
@@ -306,8 +305,8 @@ function AIAnalysisContent() {
     return (
       <div className="container mx-auto py-20">
         <div className="max-w-md mx-auto text-center">
-          <div className="bg-primary/10 rounded-full p-6 w-fit mx-auto mb-6">
-            <BrainIcon className="size-12 text-primary" />
+          <div className="bg-muted rounded-full p-6 w-fit mx-auto mb-6">
+            <BrainIcon className="size-12 text-muted-foreground" />
           </div>
           <h3 className="text-xl font-semibold mb-3">Prêt à analyser</h3>
           <p className="text-muted-foreground mb-6">
@@ -517,8 +516,8 @@ function AIAnalysisContent() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <SwordsIcon className="size-4 text-primary" />
+            <div className="p-2 rounded-lg bg-muted">
+              <SwordsIcon className="size-4 text-muted-foreground" />
             </div>
             <h3 className="font-semibold">Moments Clés</h3>
           </div>

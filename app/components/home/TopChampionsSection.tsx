@@ -40,7 +40,7 @@ export const TopChampionsSection = ({
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-bold md:text-3xl flex items-center gap-2">
-              <SwordsIcon className="size-6 text-primary" />
+              <SwordsIcon className="size-6 text-muted-foreground" />
               {t("homeStats.topChampions") ?? "Top Champions"}
             </h2>
             {totalUniqueMatches && (
@@ -78,7 +78,7 @@ export const TopChampionsSection = ({
                       href={`/champions/${champion.championId}`}
                       className="block"
                     >
-                      <Card className="overflow-hidden hover:border-primary/50 transition-colors group">
+                      <Card className="overflow-hidden hover:bg-accent/50 transition-colors group">
                         <CardContent className="p-4">
                           <div className="flex flex-col items-center gap-3">
                             <div className="relative">

@@ -67,9 +67,9 @@ export default function PricingPage() {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto animate-fade-up-delay-1">
+      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
         {/* Free Plan */}
-        <Card className="border-2 relative">
+        <Card className="relative">
           <CardHeader className="text-center">
             <div className="mb-4 flex justify-center">
               <div className="size-16 rounded-full bg-muted flex items-center justify-center">
@@ -128,7 +128,7 @@ export default function PricingPage() {
         </Card>
 
         {/* Premium Plan */}
-        <Card className="border-2 border-primary relative">
+        <Card className="border-primary relative">
           {isPremium && (
             <Badge
               className="absolute -top-3 left-1/2 -translate-x-1/2"
