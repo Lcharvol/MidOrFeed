@@ -2,9 +2,25 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty";
+import { SkeletonAvatar } from "@/components/ui/skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -21,8 +37,9 @@ import {
   Trash2Icon,
   ExternalLinkIcon,
   UsersIcon,
-  Loader2Icon,
   HomeIcon,
+  SearchIcon,
+  StickyNoteIcon,
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -35,6 +52,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useApiSWR } from "@/lib/hooks/swr";
+import { getProfileIconUrl } from "@/constants/ddragon";
 
 type FavoritePlayer = {
   id: string;
@@ -44,6 +62,8 @@ type FavoritePlayer = {
   tagLine: string | null;
   note: string | null;
   createdAt: string;
+  profileIconId: number | null;
+  summonerLevel: number | null;
 };
 
 type FavoritesResponse = {
@@ -63,6 +83,20 @@ type RecentMatch = {
 type MatchesResponse = {
   success: boolean;
   data: RecentMatch[];
+};
+
+const REGION_EMPHASIS: Record<string, "info" | "positive" | "warning" | "neutral"> = {
+  euw1: "info",
+  eun1: "info",
+  na1: "positive",
+  kr: "warning",
+  br1: "positive",
+  la1: "neutral",
+  la2: "neutral",
+  oc1: "neutral",
+  tr1: "warning",
+  ru: "info",
+  jp1: "neutral",
 };
 
 const FavoriteCard = ({
@@ -87,16 +121,31 @@ const FavoriteCard = ({
     setShowDeleteDialog(false);
   };
 
+  const regionEmphasis = REGION_EMPHASIS[favorite.region.toLowerCase()] ?? "neutral";
+
   return (
     <>
       <Card className="group hover:border-primary/50 transition-colors">
         <CardContent className="p-3 sm:pt-4 sm:p-4">
           <div className="flex items-start gap-3 sm:gap-4">
-            <Avatar className="size-10 sm:size-14 border-2 border-primary/20 shrink-0">
-              <AvatarFallback className="text-sm sm:text-lg">
-                {favorite.gameName?.[0]?.toUpperCase() || "?"}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative shrink-0">
+              <Avatar className="size-10 sm:size-14 border-2 border-primary/20">
+                {favorite.profileIconId != null && (
+                  <AvatarImage
+                    src={getProfileIconUrl(favorite.profileIconId)}
+                    alt={favorite.gameName || "Profile icon"}
+                  />
+                )}
+                <AvatarFallback className="text-sm sm:text-lg">
+                  {favorite.gameName?.[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+              {favorite.summonerLevel != null && (
+                <span className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-bold rounded-full size-5 sm:size-6 flex items-center justify-center border-2 border-background">
+                  {favorite.summonerLevel}
+                </span>
+              )}
+            </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
@@ -106,7 +155,9 @@ const FavoriteCard = ({
                 >
                   {favorite.gameName || favorite.puuid.slice(0, 8)}
                   {favorite.tagLine && (
-                    <span className="text-muted-foreground text-xs sm:text-sm">#{favorite.tagLine}</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">
+                      #{favorite.tagLine}
+                    </span>
                   )}
                 </Link>
                 <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
@@ -130,39 +181,58 @@ const FavoriteCard = ({
                 </div>
               </div>
 
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              {favorite.region.toUpperCase()}
-            </div>
+              <div className="mt-0.5">
+                <Badge emphasis={regionEmphasis} emphasisVariant="subtle" rounded="full" className="text-[10px] sm:text-xs">
+                  {favorite.region.toUpperCase()}
+                </Badge>
+              </div>
 
-            {recentMatches.length > 0 && (
-              <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
-                <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">Recent:</span>
-                <div className="flex gap-0.5 sm:gap-1">
-                  {recentMatches.map((match, i) => (
-                    <div
-                      key={i}
-                      className={`size-1.5 sm:size-2 rounded-full ${match.win ? "bg-win" : "bg-loss"}`}
-                      title={`${match.kills}/${match.deaths}/${match.assists}`}
-                    />
-                  ))}
+              {recentMatches.length > 0 && (
+                <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
+                    Recent:
+                  </span>
+                  <div className="flex gap-0.5 sm:gap-1">
+                    {recentMatches.map((match, i) => (
+                      <Tooltip key={i}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`size-1.5 sm:size-2 rounded-full cursor-default ${match.win ? "bg-win" : "bg-loss"}`}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={4}>
+                          {match.win ? "Victoire" : "Défaite"} — {match.kills}/{match.deaths}/{match.assists}
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </div>
+                  <span className="text-[10px] sm:text-xs">
+                    <span className="text-win">{recentWins}W</span>
+                    {" / "}
+                    <span className="text-loss">{recentLosses}L</span>
+                  </span>
                 </div>
-                <span className="text-[10px] sm:text-xs">
-                  <span className="text-win">{recentWins}W</span>
-                  {" / "}
-                  <span className="text-loss">{recentLosses}L</span>
-                </span>
-              </div>
-            )}
+              )}
 
-            {favorite.note && (
-              <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground italic line-clamp-1 sm:line-clamp-none">
-                {favorite.note}
-              </div>
-            )}
+              {favorite.note && (
+                <div className="mt-1.5 sm:mt-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1 text-muted-foreground cursor-default">
+                        <StickyNoteIcon className="size-3 sm:size-3.5" />
+                        <span className="text-[10px] sm:text-xs">Note</span>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={4} className="max-w-xs">
+                      {favorite.note}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
@@ -193,6 +263,7 @@ const FavoriteCard = ({
 
 export default function FavoritesPage() {
   const { user } = useAuth();
+  const [search, setSearch] = useState("");
 
   const { data, isLoading, mutate } = useApiSWR<FavoritesResponse>(
     user ? "/api/favorites" : null,
@@ -201,10 +272,8 @@ export default function FavoritesPage() {
 
   const handleRemove = useCallback(
     async (puuid: string) => {
-      // Store previous data for rollback
       const previousData = data;
 
-      // Optimistically update UI
       mutate(
         (current) => {
           if (!current) return current;
@@ -226,7 +295,6 @@ export default function FavoritesPage() {
         }
         toast.success("Joueur retire des favoris");
       } catch (error) {
-        // Rollback on error
         mutate(previousData, { revalidate: false });
         const message = error instanceof Error ? error.message : "Erreur inconnue";
         toast.error(`Impossible de retirer le joueur : ${message}`, {
@@ -253,9 +321,18 @@ export default function FavoritesPage() {
   }
 
   const favorites = data?.data || [];
+  const searchLower = search.toLowerCase();
+  const filteredFavorites = search
+    ? favorites.filter(
+        (f) =>
+          f.gameName?.toLowerCase().includes(searchLower) ||
+          f.tagLine?.toLowerCase().includes(searchLower) ||
+          f.region.toLowerCase().includes(searchLower)
+      )
+    : favorites;
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 px-4 max-w-4xl">
+    <div className="container mx-auto py-6 sm:py-8 px-4 max-w-6xl">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -279,7 +356,9 @@ export default function FavoritesPage() {
             Mes Favoris
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            Suivez vos joueurs preferes
+            {isLoading
+              ? "Chargement..."
+              : `${favorites.length} joueur${favorites.length !== 1 ? "s" : ""} suivi${favorites.length !== 1 ? "s" : ""}`}
           </p>
         </div>
         <Button variant="outline" size="sm" asChild className="w-fit">
@@ -290,17 +369,33 @@ export default function FavoritesPage() {
         </Button>
       </div>
 
+      {!isLoading && favorites.length > 0 && (
+        <div className="relative mb-6">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher par nom ou region..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      )}
+
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
-              <CardContent className="pt-4">
-                <div className="flex items-start gap-4">
-                  <Skeleton className="size-14 rounded-full" />
+              <CardContent className="p-3 sm:pt-4 sm:p-4">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <SkeletonAvatar size="lg" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-3 w-40" />
+                    <Skeleton className="h-5 w-14 rounded-full" />
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((j) => (
+                        <Skeleton key={j} className="size-2 rounded-full" />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -308,21 +403,42 @@ export default function FavoritesPage() {
           ))}
         </div>
       ) : favorites.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <HeartIcon className="size-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Aucun favori</h2>
-            <p className="text-muted-foreground mb-6">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <HeartIcon />
+            </EmptyMedia>
+            <EmptyTitle>Aucun favori</EmptyTitle>
+            <EmptyDescription>
               Ajoutez des joueurs a vos favoris depuis leur profil pour les suivre ici
-            </p>
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
             <Button asChild>
               <Link href="/leaderboard">Parcourir le classement</Link>
             </Button>
-          </CardContent>
-        </Card>
+          </EmptyContent>
+        </Empty>
+      ) : search && filteredFavorites.length === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <SearchIcon />
+            </EmptyMedia>
+            <EmptyTitle>Aucun resultat</EmptyTitle>
+            <EmptyDescription>
+              Aucun joueur ne correspond a &quot;{search}&quot;
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button variant="outline" onClick={() => setSearch("")}>
+              Effacer la recherche
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {favorites.map((favorite) => (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filteredFavorites.map((favorite) => (
             <FavoriteCard
               key={favorite.id}
               favorite={favorite}

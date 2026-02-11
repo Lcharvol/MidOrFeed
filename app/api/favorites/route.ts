@@ -22,7 +22,23 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ success: true, data: favorites });
+    const puuids = favorites.map((f) => f.puuid);
+    const accounts =
+      puuids.length > 0
+        ? await prisma.leagueOfLegendsAccount.findMany({
+            where: { puuid: { in: puuids } },
+            select: { puuid: true, profileIconId: true, summonerLevel: true },
+          })
+        : [];
+    const accountMap = new Map(accounts.map((a) => [a.puuid, a]));
+
+    const enriched = favorites.map((f) => ({
+      ...f,
+      profileIconId: accountMap.get(f.puuid)?.profileIconId ?? null,
+      summonerLevel: accountMap.get(f.puuid)?.summonerLevel ?? null,
+    }));
+
+    return NextResponse.json({ success: true, data: enriched });
   } catch (error) {
     logger.error("Error:", error as Error);
     return NextResponse.json(
