@@ -1,10 +1,25 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { SwordsIcon } from "lucide-react";
+import Link from "next/link";
+import { SwordsIcon, HomeIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useApiSWR } from "@/lib/hooks/swr";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 import { ComparisonFilters } from "./ComparisonFilters";
 import { ComparisonResults } from "./ComparisonResults";
 import { parsePlayerQuery } from "./types";
@@ -88,6 +103,22 @@ export default function ComparePage() {
 
   return (
     <div className="container mx-auto py-6 sm:py-8 px-4 max-w-6xl">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/">
+                <HomeIcon className="size-4" />
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Comparer</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div className="text-center mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-2 sm:gap-3 mb-2">
           <SwordsIcon className="size-6 sm:size-8 text-primary" />
@@ -98,7 +129,6 @@ export default function ComparePage() {
         </p>
       </div>
 
-      {/* Search form */}
       <ComparisonFilters
         player1Query={player1Query}
         setPlayer1Query={setPlayer1Query}
@@ -113,7 +143,6 @@ export default function ComparePage() {
         isLoading={isLoading}
       />
 
-      {/* Comparison results */}
       {(isLoading || hasData) && (
         <ComparisonResults
           player1={player1}
@@ -123,22 +152,19 @@ export default function ComparePage() {
         />
       )}
 
-      {/* Empty state */}
       {!isLoading && !hasData && (
-        <Card className="border-dashed border-border/50 bg-muted/10">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="size-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-              <SwordsIcon className="size-8 text-muted-foreground/50" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">
-              Aucune comparaison en cours
-            </h3>
-            <p className="text-muted-foreground text-sm max-w-md">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <SwordsIcon />
+            </EmptyMedia>
+            <EmptyTitle>Aucune comparaison en cours</EmptyTitle>
+            <EmptyDescription>
               Entrez les noms de deux joueurs au format <strong>Nom#TAG</strong>{" "}
               et cliquez sur Comparer pour voir leurs statistiques cote a cote.
-            </p>
-          </CardContent>
-        </Card>
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </div>
   );

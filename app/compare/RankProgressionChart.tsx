@@ -51,7 +51,7 @@ export const RankProgressionChart = ({
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
-        Pas de donnees de progression
+        Pas de donnees de progression disponibles
       </div>
     );
   }

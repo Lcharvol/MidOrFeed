@@ -1,12 +1,27 @@
 "use client";
 
+import { SkeletonAvatar } from "@/components/ui/skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { UsersIcon } from "lucide-react";
-import { DDRAGON_VERSION } from "@/constants/ddragon";
+import { getProfileIconUrl } from "@/constants/ddragon";
 import { TIER_COLORS } from "./types";
 import type { RankedInfo, PlayerData } from "./types";
+
+const REGION_EMPHASIS: Record<string, "info" | "positive" | "warning" | "neutral"> = {
+  euw1: "info",
+  eun1: "info",
+  na1: "positive",
+  kr: "warning",
+  br1: "positive",
+  la1: "neutral",
+  la2: "neutral",
+  oc1: "neutral",
+  tr1: "warning",
+  ru: "info",
+  jp1: "neutral",
+};
 
 export const RankBadge = ({ rankedInfo }: { rankedInfo: RankedInfo | null }) => {
   if (!rankedInfo) {
@@ -44,9 +59,9 @@ export const PlayerCard = ({
   if (loading) {
     return (
       <div className="flex flex-col items-center gap-2 sm:gap-3">
-        <Skeleton className="size-16 sm:size-24 rounded-full" />
+        <SkeletonAvatar size="lg" className="size-16 sm:size-24" />
         <Skeleton className="h-5 sm:h-6 w-24 sm:w-36" />
-        <Skeleton className="h-4 sm:h-5 w-20 sm:w-28" />
+        <Skeleton className="h-5 w-14 rounded-full" />
         <Skeleton className="h-5 sm:h-6 w-24 sm:w-32" />
       </div>
     );
@@ -63,20 +78,25 @@ export const PlayerCard = ({
     );
   }
 
-  const iconUrl = player.profileIconId
-    ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/profileicon/${player.profileIconId}.png`
-    : null;
+  const regionEmphasis = REGION_EMPHASIS[player.region.toLowerCase()] ?? "neutral";
 
   return (
     <div className="flex flex-col items-center gap-2 sm:gap-3">
-      <Avatar className="size-16 sm:size-24 border-2 border-primary/30 shadow-lg">
-        {iconUrl ? (
-          <AvatarImage src={iconUrl} alt={player.gameName} />
-        ) : null}
-        <AvatarFallback className="text-xl sm:text-3xl bg-muted">
-          {player.gameName[0]?.toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
+      <div className="relative">
+        <Avatar className="size-16 sm:size-24 border-2 border-primary/30 shadow-lg">
+          {player.profileIconId != null && (
+            <AvatarImage src={getProfileIconUrl(player.profileIconId)} alt={player.gameName} />
+          )}
+          <AvatarFallback className="text-xl sm:text-3xl bg-muted">
+            {player.gameName[0]?.toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        {player.summonerLevel != null && (
+          <span className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-bold rounded-full size-5 sm:size-7 flex items-center justify-center border-2 border-background">
+            {player.summonerLevel}
+          </span>
+        )}
+      </div>
       <div className="text-center">
         <div className="text-sm sm:text-lg font-semibold">
           <span className="truncate max-w-[80px] sm:max-w-none inline-block align-bottom">{player.gameName}</span>
@@ -84,9 +104,10 @@ export const PlayerCard = ({
             #{player.tagLine}
           </span>
         </div>
-        <div className="text-[10px] sm:text-sm text-muted-foreground">
-          {player.region.toUpperCase()} - Niv.{" "}
-          {player.summonerLevel || "?"}
+        <div className="mt-1">
+          <Badge emphasis={regionEmphasis} emphasisVariant="subtle" rounded="full" className="text-[10px] sm:text-xs">
+            {player.region.toUpperCase()}
+          </Badge>
         </div>
       </div>
       <RankBadge rankedInfo={player.rankedInfo} />

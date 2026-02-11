@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -44,8 +45,9 @@ export const ComparisonFilters = ({
         {/* Player 1 */}
         <div className="space-y-2 w-full">
           <label className="text-xs sm:text-sm font-medium flex items-center gap-2">
-            <div className="size-2 rounded-full bg-blue-500" />
-            Joueur 1
+            <Badge emphasis="info" emphasisVariant="subtle" rounded="full" className="text-[10px] sm:text-xs px-2">
+              Joueur 1
+            </Badge>
           </label>
           <div className="flex gap-2">
             <Select value={region1} onValueChange={setRegion1}>
@@ -73,8 +75,9 @@ export const ComparisonFilters = ({
         {/* Player 2 */}
         <div className="space-y-2 w-full">
           <label className="text-xs sm:text-sm font-medium flex items-center gap-2">
-            <div className="size-2 rounded-full bg-red-500" />
-            Joueur 2
+            <Badge emphasis="danger" emphasisVariant="subtle" rounded="full" className="text-[10px] sm:text-xs px-2">
+              Joueur 2
+            </Badge>
           </label>
           <div className="flex gap-2">
             <Select value={region2} onValueChange={setRegion2}>
