@@ -10,6 +10,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
@@ -82,11 +93,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!confirm(t("settings.deleteAccountConfirmation"))) {
-      return;
-    }
-
+  const handleDeleteAccount = () => {
     toast.info(t("settings.deleteAccountComingSoon"));
   };
 
@@ -378,15 +385,35 @@ export default function SettingsPage() {
                   {t("settings.permanentlyDeleteAccount")}
                 </p>
               </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDeleteAccount}
-                className="flex items-center gap-2"
-              >
-                <Trash2Icon className="size-4" />
-                {t("settings.delete")}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2Icon className="size-4" />
+                    {t("settings.delete")}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("settings.deleteAccount")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("settings.deleteAccountConfirmation")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      className="bg-destructive text-white hover:bg-destructive/90"
+                    >
+                      {t("settings.delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardContent>
         </Card>
