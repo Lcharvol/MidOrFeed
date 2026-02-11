@@ -107,6 +107,17 @@ export function useAccount(puuid?: string | null, region?: string | null) {
         >("/api/riot/get-account-details", { puuid, region, force: true });
         await mutate();
         return res;
+      } catch (err) {
+        let message = "Erreur lors du rafraîchissement";
+        if (err instanceof Error) {
+          try {
+            const parsed = JSON.parse(err.message);
+            message = parsed.error || message;
+          } catch {
+            message = err.message || message;
+          }
+        }
+        return { success: false as const, error: message };
       } finally {
         isRefreshingRef.current = false;
       }
@@ -165,6 +176,18 @@ export function useAccount(puuid?: string | null, region?: string | null) {
           participantsCreated: matchResponse.participantsCreated ?? 0,
           totalFound: matchResponse.totalFound ?? 0,
         };
+      } catch (err) {
+        // postRequest throws on non-200 responses with the raw body as message
+        let message = "Erreur lors de la mise à jour";
+        if (err instanceof Error) {
+          try {
+            const parsed = JSON.parse(err.message);
+            message = parsed.error || message;
+          } catch {
+            message = err.message || message;
+          }
+        }
+        return { success: false as const, error: message };
       } finally {
         isRefreshingRef.current = false;
       }
