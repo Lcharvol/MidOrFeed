@@ -26,6 +26,8 @@ import {
   HomeIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ExternalLinkIcon,
+  CopyIcon,
 } from "lucide-react";
 import {
   Empty,
@@ -43,6 +45,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+} from "@/components/ui/context-menu";
 import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
 import { useI18n } from "@/lib/i18n-context";
 import type { GuideSummary, GuideListResponse, GuideRole } from "@/types/guides";
@@ -322,7 +330,30 @@ const GuidesPage = () => {
         ) : (
           // Guides list
           filteredGuides.map((guide) => (
-            <GuideCard key={guide.id} guide={guide} />
+            <ContextMenu key={guide.id}>
+              <ContextMenuTrigger asChild>
+                <div>
+                  <GuideCard guide={guide} />
+                </div>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem
+                  onClick={() => window.open(`/guides/${guide.id}`, "_blank")}
+                >
+                  <ExternalLinkIcon className="size-4" />
+                  Ouvrir dans un nouvel onglet
+                </ContextMenuItem>
+                <ContextMenuItem
+                  onClick={() => {
+                    const url = `${window.location.origin}/guides/${guide.id}`;
+                    navigator.clipboard.writeText(url);
+                  }}
+                >
+                  <CopyIcon className="size-4" />
+                  Copier le lien
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           ))
         )}
       </div>

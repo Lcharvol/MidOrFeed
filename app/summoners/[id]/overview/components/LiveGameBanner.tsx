@@ -5,6 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import {
   RadioIcon,
@@ -63,7 +68,7 @@ const formatGameTime = (seconds: number): string => {
 
 export function LiveGameBanner({ puuid, region }: LiveGameBannerProps) {
   const { championKeyToIdMap, resolveName } = useChampions();
-  const [expanded, setExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
   const [gameTime, setGameTime] = useState(0);
 
   const { data, isLoading, mutate } = useApiSWR<LiveGameResponse>(
@@ -132,175 +137,178 @@ export function LiveGameBanner({ puuid, region }: LiveGameBannerProps) {
   const game = data.data;
 
   return (
-    <Card className="border-green-500/30 bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent overflow-hidden">
-      <CardContent className="py-3">
-        {/* Main banner */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <RadioIcon className="size-5 text-green-500 animate-pulse" />
-              <span className="absolute -top-0.5 -right-0.5 size-2 bg-green-500 rounded-full animate-ping" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-green-600 dark:text-green-400">
-                  En partie
-                </span>
-                <Badge variant="secondary" className="text-xs">
-                  {game.gameType}
-                </Badge>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card className="border-green-500/30 bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent overflow-hidden">
+        <CardContent className="py-3">
+          {/* Main banner */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <RadioIcon className="size-5 text-green-500 animate-pulse" />
+                <span className="absolute -top-0.5 -right-0.5 size-2 bg-green-500 rounded-full animate-ping" />
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <ClockIcon className="size-3" />
-                <span>{formatGameTime(gameTime)}</span>
-                {currentPlayer && (
-                  <>
-                    <span className="text-muted-foreground/50">|</span>
-                    <span className="flex items-center gap-1">
-                      <ChampionIcon
-                        championId={championKeyToIdMap.get(String(currentPlayer.championId)) || String(currentPlayer.championId)}
-                        size={16}
-                        className="rounded"
-                      />
-                      {resolveName(String(currentPlayer.championId))}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => mutate()}
-              className="h-8 px-2"
-            >
-              <RefreshCwIcon className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setExpanded(!expanded)}
-              className="h-8 px-2"
-            >
-              {expanded ? (
-                <ChevronUpIcon className="size-4" />
-              ) : (
-                <ChevronDownIcon className="size-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Expanded view */}
-        {expanded && (
-          <div className="mt-4 pt-4 border-t border-border/50">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Blue team */}
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30">
-                    Equipe Bleue
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-green-600 dark:text-green-400">
+                    En partie
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {game.gameType}
                   </Badge>
                 </div>
-                <div className="space-y-1.5">
-                  {blueTeam.map((p) => {
-                    const champSlug = championKeyToIdMap.get(String(p.championId)) || String(p.championId);
-                    return (
-                      <div
-                        key={p.puuid}
-                        className={cn(
-                          "flex items-center gap-2 p-1.5 rounded-md",
-                          p.isCurrentPlayer && "bg-primary/10 ring-1 ring-primary/30"
-                        )}
-                      >
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <ClockIcon className="size-3" />
+                  <span>{formatGameTime(gameTime)}</span>
+                  {currentPlayer && (
+                    <>
+                      <span className="text-muted-foreground/50">|</span>
+                      <span className="flex items-center gap-1">
                         <ChampionIcon
-                          championId={champSlug}
-                          size={28}
+                          championId={championKeyToIdMap.get(String(currentPlayer.championId)) || String(currentPlayer.championId)}
+                          size={16}
                           className="rounded"
                         />
-                        <span className="text-sm truncate flex-1">
-                          {p.riotId || resolveName(String(p.championId))}
-                        </span>
-                        {p.isCurrentPlayer && (
-                          <Badge variant="outline" className="text-[10px] px-1">
-                            Vous
-                          </Badge>
-                        )}
-                      </div>
-                    );
-                  })}
+                        {resolveName(String(currentPlayer.championId))}
+                      </span>
+                    </>
+                  )}
                 </div>
-                {blueBans.length > 0 && (
-                  <div className="mt-2 flex items-center gap-1">
-                    <span className="text-[10px] text-muted-foreground mr-1">Bans:</span>
-                    {blueBans.map((b, i) => (
-                      <ChampionIcon
-                        key={i}
-                        championId={championKeyToIdMap.get(String(b.championId)) || String(b.championId)}
-                        size={20}
-                        className="rounded opacity-50 grayscale"
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Red team */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className="bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30">
-                    Equipe Rouge
-                  </Badge>
-                </div>
-                <div className="space-y-1.5">
-                  {redTeam.map((p) => {
-                    const champSlug = championKeyToIdMap.get(String(p.championId)) || String(p.championId);
-                    return (
-                      <div
-                        key={p.puuid}
-                        className={cn(
-                          "flex items-center gap-2 p-1.5 rounded-md",
-                          p.isCurrentPlayer && "bg-primary/10 ring-1 ring-primary/30"
-                        )}
-                      >
-                        <ChampionIcon
-                          championId={champSlug}
-                          size={28}
-                          className="rounded"
-                        />
-                        <span className="text-sm truncate flex-1">
-                          {p.riotId || resolveName(String(p.championId))}
-                        </span>
-                        {p.isCurrentPlayer && (
-                          <Badge variant="outline" className="text-[10px] px-1">
-                            Vous
-                          </Badge>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {redBans.length > 0 && (
-                  <div className="mt-2 flex items-center gap-1">
-                    <span className="text-[10px] text-muted-foreground mr-1">Bans:</span>
-                    {redBans.map((b, i) => (
-                      <ChampionIcon
-                        key={i}
-                        championId={championKeyToIdMap.get(String(b.championId)) || String(b.championId)}
-                        size={20}
-                        className="rounded opacity-50 grayscale"
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => mutate()}
+                className="h-8 px-2"
+              >
+                <RefreshCwIcon className="size-4" />
+              </Button>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                >
+                  {open ? (
+                    <ChevronUpIcon className="size-4" />
+                  ) : (
+                    <ChevronDownIcon className="size-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Expanded view */}
+          <CollapsibleContent>
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Blue team */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30">
+                      Equipe Bleue
+                    </Badge>
+                  </div>
+                  <div className="space-y-1.5">
+                    {blueTeam.map((p) => {
+                      const champSlug = championKeyToIdMap.get(String(p.championId)) || String(p.championId);
+                      return (
+                        <div
+                          key={p.puuid}
+                          className={cn(
+                            "flex items-center gap-2 p-1.5 rounded-md",
+                            p.isCurrentPlayer && "bg-primary/10 ring-1 ring-primary/30"
+                          )}
+                        >
+                          <ChampionIcon
+                            championId={champSlug}
+                            size={28}
+                            className="rounded"
+                          />
+                          <span className="text-sm truncate flex-1">
+                            {p.riotId || resolveName(String(p.championId))}
+                          </span>
+                          {p.isCurrentPlayer && (
+                            <Badge variant="outline" className="text-[10px] px-1">
+                              Vous
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {blueBans.length > 0 && (
+                    <div className="mt-2 flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground mr-1">Bans:</span>
+                      {blueBans.map((b, i) => (
+                        <ChampionIcon
+                          key={i}
+                          championId={championKeyToIdMap.get(String(b.championId)) || String(b.championId)}
+                          size={20}
+                          className="rounded opacity-50 grayscale"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Red team */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className="bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30">
+                      Equipe Rouge
+                    </Badge>
+                  </div>
+                  <div className="space-y-1.5">
+                    {redTeam.map((p) => {
+                      const champSlug = championKeyToIdMap.get(String(p.championId)) || String(p.championId);
+                      return (
+                        <div
+                          key={p.puuid}
+                          className={cn(
+                            "flex items-center gap-2 p-1.5 rounded-md",
+                            p.isCurrentPlayer && "bg-primary/10 ring-1 ring-primary/30"
+                          )}
+                        >
+                          <ChampionIcon
+                            championId={champSlug}
+                            size={28}
+                            className="rounded"
+                          />
+                          <span className="text-sm truncate flex-1">
+                            {p.riotId || resolveName(String(p.championId))}
+                          </span>
+                          {p.isCurrentPlayer && (
+                            <Badge variant="outline" className="text-[10px] px-1">
+                              Vous
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {redBans.length > 0 && (
+                    <div className="mt-2 flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground mr-1">Bans:</span>
+                      {redBans.map((b, i) => (
+                        <ChampionIcon
+                          key={i}
+                          championId={championKeyToIdMap.get(String(b.championId)) || String(b.championId)}
+                          size={20}
+                          className="rounded opacity-50 grayscale"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </CardContent>
+      </Card>
+    </Collapsible>
   );
 }

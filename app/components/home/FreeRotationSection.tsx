@@ -9,6 +9,13 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import {
   RefreshCwIcon,
@@ -54,40 +61,50 @@ export const FreeRotationSection = ({
           </Button>
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10 gap-3">
-          {rotationLoading || championsListLoading
-            ? Array.from({ length: 20 }).map((_, i) => (
-                <div key={i} className="flex flex-col items-center gap-2">
-                  <SkeletonAvatar size="lg" className="size-14 rounded-xl" />
-                  <Skeleton className="h-3 w-12" />
-                </div>
-              ))
-            : freeChampionIds.map((key) => {
+        {rotationLoading || championsListLoading ? (
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10 gap-3">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-2">
+                <SkeletonAvatar size="lg" className="size-14 rounded-xl" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Carousel opts={{ align: "start", slidesToScroll: 5 }} className="mx-12">
+            <CarouselContent>
+              {freeChampionIds.map((key) => {
                 const champId = championKeyToIdMap.get(String(key)) ?? String(key);
                 const champName = resolveName(String(key));
                 return (
-                  <Tooltip key={key}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={`/champions/${encodeURIComponent(champId)}`}
-                        className="flex flex-col items-center gap-2 group"
-                      >
-                        <ChampionIcon
-                          championId={champId}
-                          size={56}
-                          alt={champName}
-                          className="group-hover:scale-105 transition-transform"
-                        />
-                        <span className="text-xs text-muted-foreground truncate max-w-[64px] text-center">
-                          {champName}
-                        </span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent sideOffset={4}>{champName}</TooltipContent>
-                  </Tooltip>
+                  <CarouselItem key={key} className="basis-1/4 sm:basis-1/5 md:basis-1/7 lg:basis-1/10">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          href={`/champions/${encodeURIComponent(champId)}`}
+                          className="flex flex-col items-center gap-2 group"
+                        >
+                          <ChampionIcon
+                            championId={champId}
+                            size={56}
+                            alt={champName}
+                            className="group-hover:scale-105 transition-transform"
+                          />
+                          <span className="text-xs text-muted-foreground truncate max-w-[64px] text-center">
+                            {champName}
+                          </span>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent sideOffset={4}>{champName}</TooltipContent>
+                    </Tooltip>
+                  </CarouselItem>
                 );
               })}
-        </div>
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        )}
       </div>
     </section>
   );

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -143,26 +144,34 @@ export default function SettingsPage() {
                   {t("settings.chooseTheme")}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={mounted && theme === "light" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleThemeChange("light")}
-                  className="flex items-center gap-2"
+              <RadioGroup
+                value={mounted ? theme : undefined}
+                onValueChange={handleThemeChange}
+                className="flex gap-2"
+              >
+                <label
+                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    mounted && theme === "light"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  }`}
                 >
+                  <RadioGroupItem value="light" className="sr-only" />
                   <SunIcon className="size-4" />
                   {t("settings.light")}
-                </Button>
-                <Button
-                  variant={mounted && theme === "dark" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleThemeChange("dark")}
-                  className="flex items-center gap-2"
+                </label>
+                <label
+                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    mounted && theme === "dark"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  }`}
                 >
+                  <RadioGroupItem value="dark" className="sr-only" />
                   <MoonIcon className="size-4" />
                   {t("settings.dark")}
-                </Button>
-              </div>
+                </label>
+              </RadioGroup>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
@@ -174,26 +183,34 @@ export default function SettingsPage() {
                   {t("settings.interfaceLanguage")}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={locale === "fr" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleLanguageChange("fr")}
-                  className="flex items-center gap-2"
+              <RadioGroup
+                value={locale}
+                onValueChange={(value) => handleLanguageChange(value as "fr" | "en")}
+                className="flex gap-2"
+              >
+                <label
+                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    locale === "fr"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  }`}
                 >
+                  <RadioGroupItem value="fr" className="sr-only" />
                   <GlobeIcon className="size-4" />
                   Français
-                </Button>
-                <Button
-                  variant={locale === "en" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleLanguageChange("en")}
-                  className="flex items-center gap-2"
+                </label>
+                <label
+                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    locale === "en"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  }`}
                 >
+                  <RadioGroupItem value="en" className="sr-only" />
                   <GlobeIcon className="size-4" />
                   English
-                </Button>
-              </div>
+                </label>
+              </RadioGroup>
             </div>
           </CardContent>
         </Card>

@@ -18,6 +18,7 @@ import { apiKeys } from '@/lib/api/keys';
 import { authenticatedFetch } from '@/lib/api-client';
 import type { ChampionAdviceEntry } from '@/types';
 import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Card,
@@ -476,28 +477,24 @@ export const ChampionAdviceSection = ({
 
       <div className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-background/80 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant={sortKey === 'popular' ? 'default' : 'outline'}
-              className="flex items-center gap-1"
-              onClick={() => setSortKey('popular')}
-            >
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={sortKey}
+            onValueChange={(value) => {
+              if (value) setSortKey(value as typeof sortKey);
+            }}
+          >
+            <ToggleGroupItem value="popular" className="flex items-center gap-1">
               <ArrowUpNarrowWideIcon className="size-4" aria-hidden="true" />
               Populaire
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={sortKey === 'recent' ? 'default' : 'outline'}
-              className="flex items-center gap-1"
-              onClick={() => setSortKey('recent')}
-            >
+            </ToggleGroupItem>
+            <ToggleGroupItem value="recent" className="flex items-center gap-1">
               <ClockIcon className="size-4" aria-hidden="true" />
               Récent
-            </Button>
-          </div>
+            </ToggleGroupItem>
+          </ToggleGroup>
 
           <div className="flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">

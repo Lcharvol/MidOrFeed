@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { ColorBadge } from '@/components/ui/badge';
 import { TierBadge } from '@/components/TierBadge';
 import type { ChampionEntity } from '@/types';
@@ -92,14 +93,15 @@ export const ChampionHero = ({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60 bg-background shadow-xl">
-      <Image
-        src={splashUrl}
-        alt={`Illustration de ${champion.name}`}
-        width={640}
-        height={360}
-        className="h-auto w-full object-cover"
-        priority
-      />
+      <AspectRatio ratio={16 / 9}>
+        <Image
+          src={splashUrl}
+          alt={`Illustration de ${champion.name}`}
+          fill
+          className="object-cover"
+          priority
+        />
+      </AspectRatio>
       <div className="space-y-5 p-6">
         <div className="space-y-1">
           <h1 id="champion-heading" className="text-3xl font-bold tracking-tight text-foreground">

@@ -43,6 +43,8 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
 
@@ -244,11 +246,41 @@ export default function LeaderboardPage() {
                           {globalIdx + 1}
                         </TableCell>
                         <TableCell className="py-2 sm:py-4">
-                          <div className="flex flex-col sm:hidden">
-                            <span className="font-medium truncate max-w-[120px]">{e.summonerName}</span>
-                            <span className="text-[10px] text-muted-foreground">{e.leaguePoints} LP • {e.wins}W {e.losses}L</span>
-                          </div>
-                          <span className="hidden sm:inline">{e.summonerName}</span>
+                          <HoverCard>
+                            <HoverCardTrigger asChild>
+                              <span className="cursor-default">
+                                <span className="flex flex-col sm:hidden">
+                                  <span className="font-medium truncate max-w-[120px]">{e.summonerName}</span>
+                                  <span className="text-[10px] text-muted-foreground">{e.leaguePoints} LP • {e.wins}W {e.losses}L</span>
+                                </span>
+                                <span className="hidden sm:inline font-medium">{e.summonerName}</span>
+                              </span>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-64">
+                              <div className="space-y-3">
+                                <p className="text-sm font-semibold">{e.summonerName}</p>
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-muted-foreground">LP</span>
+                                  <span className="font-semibold tabular-nums">{e.leaguePoints}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-muted-foreground">W / L</span>
+                                  <span className="tabular-nums">
+                                    <span className="text-win">{e.wins}W</span>
+                                    {" / "}
+                                    <span className="text-loss">{e.losses}L</span>
+                                  </span>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">Win rate</span>
+                                    <span className="font-semibold tabular-nums">{wr}%</span>
+                                  </div>
+                                  <Progress value={Number(wr)} className="h-2" />
+                                </div>
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
                         </TableCell>
                         <TableCell className="tabular-nums hidden sm:table-cell">
                           {e.leaguePoints}

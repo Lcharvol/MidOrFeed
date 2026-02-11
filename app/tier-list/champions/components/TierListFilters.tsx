@@ -8,8 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -86,30 +85,35 @@ export const TierListFilters = ({
           <label className="text-[10px] sm:text-xs font-medium text-muted-foreground">
             {t("tierListChampions.role")}
           </label>
-          <ButtonGroup orientation="horizontal" className="h-7 sm:h-8">
-            <Button
-              size="sm"
-              variant={roleFilter === "ALL" ? "default" : "outline"}
-              onClick={() => setRoleFilter("ALL")}
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={roleFilter}
+            onValueChange={(value) => {
+              if (value) setRoleFilter(value as typeof roleFilter);
+            }}
+            className="h-7 sm:h-8"
+          >
+            <ToggleGroupItem
+              value="ALL"
               className="px-2 sm:px-3 text-xs"
               title={t("tierListChampions.allRoles")}
             >
               <span className="hidden sm:inline">{t("tierListChampions.allRoles")}</span>
               <span className="sm:hidden">All</span>
-            </Button>
+            </ToggleGroupItem>
             {ROLE_FILTER_OPTIONS.map(({ key, label, Icon }) => (
-              <Button
+              <ToggleGroupItem
                 key={key}
-                size="sm"
-                variant={roleFilter === key ? "default" : "outline"}
-                onClick={() => setRoleFilter(key)}
+                value={key}
                 className="px-2 sm:px-3"
                 title={label}
               >
                 <Icon className="size-3.5 sm:size-4" />
-              </Button>
+              </ToggleGroupItem>
             ))}
-          </ButtonGroup>
+          </ToggleGroup>
         </div>
 
         {/* Filtre par tier */}
