@@ -24,20 +24,6 @@ interface RiotChampionMastery {
   chestGranted: boolean;
 }
 
-interface MasteryResponse {
-  success: boolean;
-  data: {
-    totalScore: number;
-    topMasteries: Array<{
-      championId: number;
-      level: number;
-      points: number;
-      lastPlayed: string;
-      chestGranted: boolean;
-      tokensEarned: number;
-    }>;
-  };
-}
 
 export async function GET(
   request: NextRequest,
@@ -65,6 +51,7 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
     const region = searchParams.get("region");
     const count = Math.min(parseInt(searchParams.get("count") || "10", 10), 20);
+    const fetchAll = searchParams.get("all") === "true";
 
     if (!region) {
       return NextResponse.json({ error: "Region requise" }, { status: 400 });
@@ -77,15 +64,22 @@ export async function GET(
       return NextResponse.json({ error: "Region invalide" }, { status: 400 });
     }
 
-    // Fetch top champion masteries
+    // Fetch champion masteries — full list or top N
+    const masteryUrl = fetchAll
+      ? `${baseUrl}/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}`
+      : `${baseUrl}/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=${count}`;
+    const masteryCacheKey = fetchAll
+      ? `riot:mastery:all:${puuid}:${normalizedRegion}`
+      : `riot:mastery:top:${puuid}:${normalizedRegion}:${count}`;
+
     const masteryResponse = await measureTiming(
-      "api.riot.mastery.top",
+      fetchAll ? "api.riot.mastery.all" : "api.riot.mastery.top",
       () =>
         riotApiRequest<RiotChampionMastery[]>(
-          `${baseUrl}/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=${count}`,
+          masteryUrl,
           {
             region: normalizedRegion,
-            cacheKey: `riot:mastery:top:${puuid}:${normalizedRegion}:${count}`,
+            cacheKey: masteryCacheKey,
             cacheTTL: CacheTTL.MEDIUM,
           }
         ).catch((error) => {
@@ -123,11 +117,27 @@ export async function GET(
       tokensEarned: m.tokensEarned,
     }));
 
-    const response: MasteryResponse = {
+    // Build pool depth stats when fetching all masteries
+    const poolDepth = fetchAll
+      ? {
+          totalChampions: topMasteries.length,
+          byLevel: [1, 2, 3, 4, 5, 6, 7].reduce(
+            (acc, level) => {
+              acc[level] = topMasteries.filter((m) => m.level >= level).length;
+              return acc;
+            },
+            {} as Record<number, number>
+          ),
+          totalPoints: topMasteries.reduce((sum, m) => sum + m.points, 0),
+        }
+      : undefined;
+
+    const response = {
       success: true,
       data: {
         totalScore: scoreResponse.data,
-        topMasteries,
+        topMasteries: fetchAll ? topMasteries.slice(0, 20) : topMasteries,
+        ...(poolDepth ? { poolDepth } : {}),
       },
     };
 

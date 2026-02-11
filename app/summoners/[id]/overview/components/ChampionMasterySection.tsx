@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton, SkeletonAvatar } from "@/components/ui/skeleton";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Badge } from "@/components/ui/badge";
-import { TrophyIcon, GemIcon } from "lucide-react";
+import { TrophyIcon, GemIcon, LayersIcon } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useApiSWR } from "@/lib/hooks/swr";
 import { useChampions } from "@/lib/hooks/use-champions";
 import { cn } from "@/lib/utils";
@@ -25,11 +26,18 @@ type MasteryEntry = {
   tokensEarned: number;
 };
 
+type PoolDepth = {
+  totalChampions: number;
+  byLevel: Record<number, number>;
+  totalPoints: number;
+};
+
 type MasteryResponse = {
   success: boolean;
   data: {
     totalScore: number;
     topMasteries: MasteryEntry[];
+    poolDepth?: PoolDepth;
   };
 };
 
@@ -53,7 +61,7 @@ export function ChampionMasterySection({ puuid, region }: ChampionMasterySection
   const { resolveName, championKeyToIdMap } = useChampions();
 
   const { data, isLoading } = useApiSWR<MasteryResponse>(
-    puuid && region ? `/api/summoners/${puuid}/mastery?region=${region}&count=6` : null,
+    puuid && region ? `/api/summoners/${puuid}/mastery?region=${region}&all=true` : null,
     { revalidateOnFocus: false }
   );
 
@@ -89,8 +97,9 @@ export function ChampionMasterySection({ puuid, region }: ChampionMasterySection
   }
 
   const totalScore = data?.data?.totalScore || 0;
+  const poolDepth = data?.data?.poolDepth;
   const topThree = masteries.slice(0, 3);
-  const others = masteries.slice(3);
+  const others = masteries.slice(3, 6);
 
   return (
     <Card className="border-border/70 bg-background/90 shadow-sm">
@@ -216,6 +225,48 @@ export function ChampionMasterySection({ puuid, region }: ChampionMasterySection
                     <span className="w-12 text-right text-[11px] text-muted-foreground">
                       {formatPoints(mastery.points)}
                     </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Pool Depth */}
+        {poolDepth && (
+          <div className="rounded-lg border border-border/60 bg-muted/10 p-3 space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+              <LayersIcon className="size-3.5 text-muted-foreground" />
+              Champion Pool
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <div>
+                <p className="text-lg font-bold text-foreground">{poolDepth.totalChampions}</p>
+                <p className="text-[10px] text-muted-foreground">Champions joues</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-foreground">{formatPoints(poolDepth.totalPoints)}</p>
+                <p className="text-[10px] text-muted-foreground">Points totaux</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              {[7, 6, 5, 4].map((level) => {
+                const count = poolDepth.byLevel[level] || 0;
+                if (count === 0) return null;
+                const pct = Math.round((count / poolDepth.totalChampions) * 100);
+                return (
+                  <div key={level} className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "h-4 w-8 justify-center px-1 text-[9px] font-semibold shrink-0",
+                        getMasteryBadgeStyle(level)
+                      )}
+                    >
+                      M{level}+
+                    </Badge>
+                    <Progress value={pct} className="h-1.5 flex-1" />
+                    <span className="text-[10px] text-muted-foreground w-6 text-right">{count}</span>
                   </div>
                 );
               })}
