@@ -16,7 +16,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { HomeIcon } from "lucide-react";
+import {
+  HomeIcon,
+  LayoutDashboardIcon,
+  SwordsIcon,
+  TrophyIcon,
+  TargetIcon,
+} from "lucide-react";
 import Link from "next/link";
 import {
   usePathname,
@@ -58,23 +64,23 @@ export default function SummonerByIdLayout({
     if (region) return;
     const accRegion: string | undefined = account?.riotRegion;
     if (!accRegion) return;
-    router.replace(
-      `/summoners/${puuid}${
-        pathname.endsWith("overview")
-          ? "/overview"
-          : pathname.endsWith("champions")
-          ? "/champions"
-          : pathname.endsWith("challenges")
-          ? "/challenges"
-          : ""
-      }?region=${accRegion}`
-    );
+    const sub = pathname.endsWith("overview")
+      ? "/overview"
+      : pathname.endsWith("ranking")
+      ? "/ranking"
+      : pathname.endsWith("champions")
+      ? "/champions"
+      : pathname.endsWith("challenges")
+      ? "/challenges"
+      : "";
+    router.replace(`/summoners/${puuid}${sub}?region=${accRegion}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puuid, region, account]);
 
   const currentTab = useMemo(() => {
     if (pathname?.endsWith("/challenges")) return "challenges";
     if (pathname?.endsWith("/champions")) return "champions";
+    if (pathname?.endsWith("/ranking")) return "ranking";
     return "overview";
   }, [pathname]);
 
@@ -145,10 +151,11 @@ export default function SummonerByIdLayout({
 
       {loading ? (
         <div className="mb-6">
-          <div className="flex gap-8">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-28" />
-            <Skeleton className="h-10 w-24" />
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-10 sm:w-32 rounded-md" />
+            <Skeleton className="h-9 w-10 sm:w-28 rounded-md" />
+            <Skeleton className="h-9 w-10 sm:w-28 rounded-md" />
+            <Skeleton className="h-9 w-10 sm:w-20 rounded-md" />
           </div>
         </div>
       ) : (
@@ -162,11 +169,27 @@ export default function SummonerByIdLayout({
           className="mb-6"
         >
           <TabsList>
-            <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
-            <TabsTrigger value="champions">Champions</TabsTrigger>
-            <TabsTrigger value="challenges">Défis</TabsTrigger>
+            <TabsTrigger value="overview">
+              <LayoutDashboardIcon className="size-4" />
+              <span className="hidden sm:inline">Vue d&apos;ensemble</span>
+            </TabsTrigger>
+            <TabsTrigger value="ranking">
+              <TrophyIcon className="size-4" />
+              <span className="hidden sm:inline">Classement</span>
+            </TabsTrigger>
+            <TabsTrigger value="champions">
+              <SwordsIcon className="size-4" />
+              <span className="hidden sm:inline">Champions</span>
+            </TabsTrigger>
+            <TabsTrigger value="challenges">
+              <TargetIcon className="size-4" />
+              <span className="hidden sm:inline">Défis</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="mt-6">
+            {children}
+          </TabsContent>
+          <TabsContent value="ranking" className="mt-6">
             {children}
           </TabsContent>
           <TabsContent value="champions" className="mt-6">
