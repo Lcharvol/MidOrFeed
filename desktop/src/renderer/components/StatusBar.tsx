@@ -1,4 +1,5 @@
 import type { LCUConnectionStatus, GameFlowPhase, CurrentSummoner } from '../../shared/types';
+import { getProfileIconUrl } from '../../shared/ddragon';
 
 interface StatusBarProps {
   status: LCUConnectionStatus;
@@ -27,7 +28,7 @@ export function StatusBar({ status, gamePhase, summoner, onReconnect }: StatusBa
       {summoner && (
         <div className="flex items-center gap-2 text-sm">
           <img
-            src={`https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${summoner.profileIconId}.png`}
+            src={getProfileIconUrl(summoner.profileIconId)}
             alt="Profile"
             className="w-6 h-6 rounded-full border border-lol-gold-dark"
           />

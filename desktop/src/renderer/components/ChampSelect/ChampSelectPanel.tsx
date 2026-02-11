@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { ChampSelectSession } from '../../../shared/types';
+import { getChampionDataUrl, getChampionImageUrl } from '../../../shared/ddragon';
 import { TeamPanel } from './TeamPanel';
 import { BansPanel } from './BansPanel';
 import { Timer } from './Timer';
@@ -21,14 +22,14 @@ export function ChampSelectPanel({ session }: ChampSelectPanelProps) {
 
   // Fetch champion data on mount
   useEffect(() => {
-    fetch('https://ddragon.leagueoflegends.com/cdn/14.24.1/data/en_US/champion.json')
+    fetch(getChampionDataUrl())
       .then((res) => res.json())
       .then((data) => {
         const champions: Record<number, { name: string; imageUrl: string }> = {};
         Object.values(data.data as Record<string, { key: string; name: string; id: string }>).forEach((champ) => {
           champions[parseInt(champ.key)] = {
             name: champ.name,
-            imageUrl: `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${champ.id}.png`,
+            imageUrl: getChampionImageUrl(champ.id),
           };
         });
         setChampionData(champions);
