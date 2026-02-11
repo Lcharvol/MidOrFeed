@@ -304,13 +304,14 @@ export const RightsTab = () => {
           <div className="text-sm text-muted-foreground">
             {t("admin.rights.page")} {pagination.page} / {pagination.totalPages}
           </div>
-          <div className="flex items-center gap-1">
+          <nav className="flex items-center gap-1" aria-label="Pagination">
             <Button
               variant="outline"
               size="icon"
               className="size-8"
               onClick={() => goToPage(1)}
               disabled={pagination.page === 1 || loading}
+              aria-label="Première page"
             >
               <ChevronsLeftIcon className="size-4" />
             </Button>
@@ -320,6 +321,7 @@ export const RightsTab = () => {
               className="size-8"
               onClick={() => goToPage(pagination.page - 1)}
               disabled={pagination.page === 1 || loading}
+              aria-label="Page précédente"
             >
               <ChevronLeftIcon className="size-4" />
             </Button>
@@ -343,6 +345,8 @@ export const RightsTab = () => {
                     className="size-8"
                     onClick={() => goToPage(pageNum)}
                     disabled={loading}
+                    aria-label={`Page ${pageNum}`}
+                    aria-current={pageNum === pagination.page ? "page" : undefined}
                   >
                     {pageNum}
                   </Button>
@@ -355,6 +359,7 @@ export const RightsTab = () => {
               className="size-8"
               onClick={() => goToPage(pagination.page + 1)}
               disabled={pagination.page === pagination.totalPages || loading}
+              aria-label="Page suivante"
             >
               <ChevronRightIcon className="size-4" />
             </Button>
@@ -364,10 +369,11 @@ export const RightsTab = () => {
               className="size-8"
               onClick={() => goToPage(pagination.totalPages)}
               disabled={pagination.page === pagination.totalPages || loading}
+              aria-label="Dernière page"
             >
               <ChevronsRightIcon className="size-4" />
             </Button>
-          </div>
+          </nav>
         </div>
       )}
     </div>

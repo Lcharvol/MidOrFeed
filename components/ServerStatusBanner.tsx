@@ -147,6 +147,8 @@ export function ServerStatusBanner({ region = "euw1" }: ServerStatusBannerProps)
               size="sm"
               onClick={() => setExpanded(!expanded)}
               className="h-7 px-2"
+              aria-label={expanded ? "Réduire les détails" : "Afficher les détails"}
+              aria-expanded={expanded}
             >
               {expanded ? (
                 <ChevronUpIcon className="size-4" />
@@ -159,6 +161,7 @@ export function ServerStatusBanner({ region = "euw1" }: ServerStatusBannerProps)
               size="sm"
               onClick={() => setDismissed(true)}
               className="h-7 px-2"
+              aria-label="Fermer la bannière"
             >
               <XIcon className="size-4" />
             </Button>

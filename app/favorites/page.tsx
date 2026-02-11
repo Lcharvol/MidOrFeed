@@ -115,12 +115,14 @@ const FavoriteCard = ({
                     size="icon"
                     className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                     onClick={() => setShowDeleteDialog(true)}
+                    aria-label="Supprimer des favoris"
                   >
                     <Trash2Icon className="size-3.5 sm:size-4 text-destructive" />
                   </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" asChild>
                     <Link
                       href={`/summoners/${favorite.puuid}/overview?region=${favorite.region}`}
+                      aria-label="Voir le profil"
                     >
                       <ExternalLinkIcon className="size-3.5 sm:size-4" />
                     </Link>

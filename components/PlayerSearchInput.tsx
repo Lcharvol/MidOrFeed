@@ -230,9 +230,11 @@ export const PlayerSearchInput = ({
             placeholder={placeholder}
             disabled={disabled}
             className="pr-8"
+            aria-busy={isLoading}
+            aria-autocomplete="list"
           />
           {isLoading && (
-            <Loader2Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" />
+            <Loader2Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" aria-label="Chargement" />
           )}
         </div>
       </PopoverTrigger>

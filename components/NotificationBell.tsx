@@ -77,7 +77,11 @@ export const NotificationBell = () => {
         >
           <BellIcon className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="pointer-events-none absolute -right-1 -top-1 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+            <span
+              className="pointer-events-none absolute -right-1 -top-1 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
+              aria-live="polite"
+              aria-label={`${unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}`}
+            >
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}

@@ -99,8 +99,9 @@ export const TierListTable = ({
   const { championNameMap } = useChampions();
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border bg-background/80 py-12">
-        <Loader2Icon className="size-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center rounded-2xl border bg-background/80 py-12" role="status">
+        <Loader2Icon className="size-8 animate-spin text-primary" aria-hidden="true" />
+        <span className="sr-only">Chargement de la tier list...</span>
       </div>
     );
   }
@@ -123,6 +124,11 @@ export const TierListTable = ({
     );
   }
 
+  const getAriaSortValue = (column: SortColumn): "ascending" | "descending" | "none" => {
+    if (sortColumn !== column) return "none";
+    return sortDirection === "asc" ? "ascending" : "descending";
+  };
+
   return (
     <div className="rounded-2xl border bg-background/80 shadow-sm overflow-x-auto">
       <Table className="text-xs sm:text-sm">
@@ -135,6 +141,10 @@ export const TierListTable = ({
             <TableHead
               className="cursor-pointer select-none hidden sm:table-cell"
               onClick={() => onSort("score")}
+              role="columnheader"
+              aria-sort={getAriaSortValue("score")}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && onSort("score")}
             >
               <div className="flex items-center">
                 {t("tierListChampions.score")}
@@ -148,6 +158,10 @@ export const TierListTable = ({
             <TableHead
               className="cursor-pointer select-none"
               onClick={() => onSort("winRate")}
+              role="columnheader"
+              aria-sort={getAriaSortValue("winRate")}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && onSort("winRate")}
             >
               <div className="flex items-center">
                 <span className="hidden sm:inline">{t("tierListChampions.winRate")}</span>
@@ -162,6 +176,10 @@ export const TierListTable = ({
             <TableHead
               className="cursor-pointer select-none hidden md:table-cell"
               onClick={() => onSort("totalGames")}
+              role="columnheader"
+              aria-sort={getAriaSortValue("totalGames")}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && onSort("totalGames")}
             >
               <div className="flex items-center">
                 {t("tierListChampions.pickRate")}
@@ -175,6 +193,10 @@ export const TierListTable = ({
             <TableHead
               className="cursor-pointer select-none hidden md:table-cell"
               onClick={() => onSort("avgKDA")}
+              role="columnheader"
+              aria-sort={getAriaSortValue("avgKDA")}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && onSort("avgKDA")}
             >
               <div className="flex items-center">
                 {t("tierListChampions.avgKDA")}

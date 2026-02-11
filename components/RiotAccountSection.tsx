@@ -125,6 +125,7 @@ export const RiotAccountSection = ({
                       size="icon"
                       onClick={handleEditAccount}
                       title={t("profile.editAccount")}
+                      aria-label={t("profile.editAccount")}
                     >
                       <EditIcon className="size-4" />
                     </Button>
@@ -134,6 +135,7 @@ export const RiotAccountSection = ({
                       onClick={handleDeleteAccount}
                       disabled={isDeleting}
                       title={t("profile.deleteAccount")}
+                      aria-label={t("profile.deleteAccount")}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       {isDeleting ? (
@@ -187,6 +189,7 @@ export const RiotAccountSection = ({
                       variant="ghost"
                       size="icon"
                       onClick={handleCancelEdit}
+                      aria-label="Annuler la modification"
                     >
                       <XIcon className="size-4" />
                     </Button>
