@@ -168,7 +168,7 @@ export default function LeaderboardPage() {
           </div>
         </CardHeader>
         <CardContent className="p-3 sm:p-6">
-          <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-md border">
+          <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-md border" aria-live="polite" aria-busy={isLoading}>
             <Table className="text-xs sm:text-sm">
               <TableHeader className="bg-muted/50">
                 <TableRow>

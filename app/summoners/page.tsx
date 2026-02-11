@@ -156,6 +156,7 @@ export default function SummonersPage() {
                     disabled={isSearching}
                     size="lg"
                     className="w-full sm:w-auto"
+                    aria-label="Rechercher un joueur"
                   >
                     {isSearching ? (
                       <Loader2Icon className="size-5 animate-spin" />

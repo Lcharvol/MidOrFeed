@@ -51,7 +51,7 @@ export const ComparisonFilters = ({
           </label>
           <div className="flex gap-2">
             <Select value={region1} onValueChange={setRegion1}>
-              <SelectTrigger className="w-20 sm:w-24">
+              <SelectTrigger className="w-20 sm:w-24" aria-label="Région du joueur 1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -81,7 +81,7 @@ export const ComparisonFilters = ({
           </label>
           <div className="flex gap-2">
             <Select value={region2} onValueChange={setRegion2}>
-              <SelectTrigger className="w-20 sm:w-24">
+              <SelectTrigger className="w-20 sm:w-24" aria-label="Région du joueur 2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
