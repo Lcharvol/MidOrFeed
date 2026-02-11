@@ -9,7 +9,7 @@ import { riotApiRequest } from "@/lib/riot-api";
 import { CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
 import { fetchOpggApi } from "@/lib/opgg-scraper";
-import type { RankedResponse, ApiResponse } from "@/types/api";
+import type { RankedResponse } from "@/types/api";
 
 const getRiotApiKey = (): string | null => {
   const env = getEnv();
@@ -229,128 +229,15 @@ export async function GET(
       return NextResponse.json({ ...response, source: "opgg" }, { status: 200 });
     }
 
-    // === Utiliser l'API Riot (comportement existant) ===
-    let summonerId = account?.riotSummonerId;
-
-    // Si pas de summonerId en DB, récupérer via l'API Riot
-    if (!summonerId) {
-      const summonerResponseData = await measureTiming(
-        "api.riot.summoner.byPuuid",
-        () =>
-          riotApiRequest<{
-            id: string;
-            accountId: string;
-            puuid: string;
-            name: string;
-            profileIconId: number;
-            revisionDate: number;
-            summonerLevel: number;
-          }>(`${baseUrl}/lol/summoner/v4/summoners/by-puuid/${puuid}`, {
-            region: normalizedRegion,
-            cacheKey: `riot:summoner:${puuid}:${normalizedRegion}`,
-            cacheTTL: CacheTTL.MEDIUM,
-          }).catch((error) => {
-            if (error.message.includes("404") || error.message.includes("400")) {
-              return null;
-            }
-            throw error;
-          }),
-        { region: normalizedRegion }
-      );
-
-      if (!summonerResponseData) {
-        return NextResponse.json(
-          {
-            success: true,
-            data: { solo: null, flex: null },
-          },
-          { status: 200 }
-        );
-      }
-
-      const summonerData = summonerResponseData.data;
-      summonerId = summonerData.id;
-
-      // Mettre à jour la DB avec le summonerId
-      if (account && account.riotRegion) {
-        await ShardedLeagueAccounts.upsert({
-          puuid: puuid,
-          riotRegion: account.riotRegion,
-          riotSummonerId: summonerId,
-        });
-      }
-    }
-
-    if (!summonerId) {
-      return NextResponse.json(
-        {
-          success: true,
-          data: {
-            solo: null,
-            flex: null,
-          },
-        },
-        { status: 200 }
-      );
-    }
-
-    // Récupérer les données de ranked via l'API League
-    let leagueResponseData = await measureTiming(
-      "api.riot.league.bySummoner",
+    // === Utiliser l'API Riot par PUUID (pas besoin de summonerId) ===
+    const leagueResponseData = await measureTiming(
+      "api.riot.league.byPuuid",
       () =>
         riotApiRequest<RiotLeagueEntry[]>(
-          `${baseUrl}/lol/league/v4/entries/by-summoner/${summonerId}`,
+          `${baseUrl}/lol/league/v4/entries/by-puuid/${puuid}`,
           {
             region: normalizedRegion,
-            cacheKey: `riot:league:${summonerId}:${normalizedRegion}`,
-            cacheTTL: CacheTTL.MEDIUM,
-          }
-        ).catch((error) => {
-          if (error.message.includes("404")) {
-            return { data: [] as RiotLeagueEntry[], cached: false, attempt: 1 };
-          }
-          if (error.message.includes("400")) {
-            // Stale encrypted summonerId — signal to re-fetch
-            return { data: [] as RiotLeagueEntry[], cached: false, attempt: 1, stale: true };
-          }
-          throw error;
-        }),
-      { region: normalizedRegion }
-    );
-
-    // If 400 (stale encrypted summonerId after API key rotation), re-fetch from PUUID
-    if ("stale" in leagueResponseData && (leagueResponseData as { stale?: boolean }).stale) {
-      rankedLogger.warn("Stale summonerId detected, re-fetching from PUUID", { puuid });
-      const freshSummonerData = await riotApiRequest<{
-        id: string;
-        accountId: string;
-        puuid: string;
-        profileIconId: number;
-        revisionDate: number;
-        summonerLevel: number;
-      }>(`${baseUrl}/lol/summoner/v4/summoners/by-puuid/${puuid}`, {
-        region: normalizedRegion,
-        cacheKey: `riot:summoner:${puuid}:${normalizedRegion}`,
-        cacheTTL: CacheTTL.MEDIUM,
-        useCache: false,
-      }).catch(() => null);
-
-      if (freshSummonerData) {
-        const freshSummonerId = freshSummonerData.data.id;
-        // Update DB with fresh summonerId
-        if (account && account.riotRegion) {
-          await ShardedLeagueAccounts.upsert({
-            puuid,
-            riotRegion: account.riotRegion,
-            riotSummonerId: freshSummonerId,
-          });
-        }
-        // Retry league request with fresh summonerId
-        leagueResponseData = await riotApiRequest<RiotLeagueEntry[]>(
-          `${baseUrl}/lol/league/v4/entries/by-summoner/${freshSummonerId}`,
-          {
-            region: normalizedRegion,
-            cacheKey: `riot:league:${freshSummonerId}:${normalizedRegion}`,
+            cacheKey: `riot:league:puuid:${puuid}:${normalizedRegion}`,
             cacheTTL: CacheTTL.MEDIUM,
           }
         ).catch((error) => {
@@ -358,9 +245,9 @@ export async function GET(
             return { data: [] as RiotLeagueEntry[], cached: false, attempt: 1 };
           }
           throw error;
-        });
-      }
-    }
+        }),
+      { region: normalizedRegion }
+    );
 
     const leagueEntries = leagueResponseData.data;
 

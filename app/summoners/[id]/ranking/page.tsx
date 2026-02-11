@@ -70,9 +70,6 @@ export default function RankingByIdPage() {
   const [leagueData, setLeagueData] = useState<LeagueEntry[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [profileData, setProfileData] = useState<{
-    data?: { summonerId?: string };
-  } | null>(null);
 
   const getTierName = (tier: string) => {
     const key = TIER_KEYS[tier];
@@ -86,31 +83,8 @@ export default function RankingByIdPage() {
   }), [t]);
 
   useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!puuid || !region) {
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const response = await fetch("/api/riot/get-account-details", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ puuid, region }),
-        });
-        const result = await response.json();
-        if (response.ok && result.data) {
-          setProfileData(result);
-        }
-      } catch (err) {
-        console.error("Erreur lors du chargement du profil:", err);
-      }
-    };
-    fetchProfileData();
-  }, [puuid, region]);
-
-  useEffect(() => {
     const fetchLeagueData = async () => {
-      if (!profileData?.data?.summonerId || !region) {
+      if (!puuid || !region) {
         setError(t("ranking.unrankedMessage"));
         setIsLoading(false);
         return;
@@ -121,11 +95,7 @@ export default function RankingByIdPage() {
         const response = await fetch("/api/riot/get-league", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            summonerId: profileData.data.summonerId,
-            region,
-            puuid,
-          }),
+          body: JSON.stringify({ puuid, region }),
         });
         const result = await response.json();
         if (!response.ok) {
@@ -141,7 +111,7 @@ export default function RankingByIdPage() {
       }
     };
     fetchLeagueData();
-  }, [profileData, region]);
+  }, [puuid, region, t]);
 
   const aiInsights = useMemo(() => getRankingInsights(leagueData || [], t, getTierName), [leagueData, t, getTierName]);
 
