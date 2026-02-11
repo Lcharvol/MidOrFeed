@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import {
   normalizeLane,
   resolveChampionRole,
@@ -16,6 +17,9 @@ const clampMatchLimit = (value: unknown): number | null => {
 };
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
 

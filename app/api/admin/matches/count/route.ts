@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("admin-matches");
 
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
 

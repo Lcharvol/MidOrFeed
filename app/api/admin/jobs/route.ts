@@ -7,6 +7,7 @@ import {
   type QueueName,
 } from "@/lib/job-queue";
 import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("admin-jobs");
@@ -16,6 +17,9 @@ const logger = createLogger("admin-jobs");
  * Get all queues status and recent jobs
  */
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // Verify admin access (skip CSRF for GET)
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
@@ -51,6 +55,9 @@ export async function GET(request: NextRequest) {
  * Trigger a new job
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // Verify admin access (skip CSRF - admin routes are protected by auth)
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 
 type PipelineState = {
@@ -148,6 +149,9 @@ async function runOneCycle(
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // Vérifier les permissions admin (skip CSRF for GET)
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) {
@@ -159,6 +163,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // Vérifier les permissions admin
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) {

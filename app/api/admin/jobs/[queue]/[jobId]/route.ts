@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getJobQueue, QUEUE_NAMES } from "@/lib/job-queue";
+import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ queue: string; jobId: string }> };
 
@@ -7,7 +9,13 @@ type Params = { params: Promise<{ queue: string; jobId: string }> };
  * GET /api/admin/jobs/[queue]/[jobId]
  * Get detailed info about a specific job
  */
-export async function GET(request: Request, { params }: Params) {
+export async function GET(request: NextRequest, { params }: Params) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
+  const authError = await requireAdmin(request, { skipCsrf: true });
+  if (authError) return authError;
+
   try {
     const { queue: queueName, jobId } = await params;
 
@@ -56,7 +64,13 @@ export async function GET(request: Request, { params }: Params) {
  * DELETE /api/admin/jobs/[queue]/[jobId]
  * Cancel/remove a specific job
  */
-export async function DELETE(request: Request, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
+  const authError = await requireAdmin(request, { skipCsrf: true });
+  if (authError) return authError;
+
   try {
     const { queue: queueName, jobId } = await params;
 

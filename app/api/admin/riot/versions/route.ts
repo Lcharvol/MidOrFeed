@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getVersionsUrl } from "@/constants/ddragon";
 
@@ -17,6 +18,9 @@ const parseVersions = (input: unknown): string[] => {
 };
 
 export const POST = async (request: NextRequest) => {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) {
     return authError;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("admin-stats");
@@ -10,6 +11,9 @@ const logger = createLogger("admin-stats");
  * Retourne les statistiques globales de la base de données
  */
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // Vérifier les permissions admin (skip CSRF for GET)
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) {
