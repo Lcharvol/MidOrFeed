@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonAvatar } from "@/components/ui/skeleton";
 import { UserIcon } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
 
@@ -33,7 +33,7 @@ export const SummonerHeader = ({
       {/* Avatar avec badge du niveau */}
       <div className="relative shrink-0">
         {loading ? (
-          <Skeleton className="size-28 rounded-full" aria-busy="true" />
+          <SkeletonAvatar size="lg" className="size-28" aria-busy="true" />
         ) : (
           <>
             {profileIconUrl ? (
@@ -60,9 +60,10 @@ export const SummonerHeader = ({
       {/* Informations du profil */}
       <div className="flex-1 space-y-3">
         {loading ? (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Skeleton className="h-8 w-64" />
             <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-48" />
           </div>
         ) : (
           <>

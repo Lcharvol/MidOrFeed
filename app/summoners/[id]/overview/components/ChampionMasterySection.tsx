@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonAvatar } from "@/components/ui/skeleton";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Badge } from "@/components/ui/badge";
 import { TrophyIcon, GemIcon } from "lucide-react";
@@ -69,9 +69,13 @@ export function ChampionMasterySection({ puuid, region }: ChampionMasterySection
           <Skeleton className="h-5 w-32" />
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 flex-1 rounded-lg" />
+              <div key={i} className="flex flex-col items-center gap-2 rounded-lg border border-border/50 p-3">
+                <SkeletonAvatar size="lg" />
+                <Skeleton className="h-3.5 w-16" />
+                <Skeleton className="h-3 w-12" />
+              </div>
             ))}
           </div>
           <Skeleton className="h-16 w-full rounded-lg" />
