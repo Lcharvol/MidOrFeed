@@ -16,6 +16,13 @@ import {
   ArrowUpIcon,
   ChevronsUpDownIcon,
 } from "lucide-react";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import {
   Table,
@@ -305,19 +312,17 @@ export default function ChampionsByIdPage() {
 
   if (Object.keys(championStats).length === 0) {
     return (
-      <Card>
-        <CardContent className="py-20">
-          <div className="text-center">
-            <SwordsIcon className="size-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
-              Aucune donnée de champions
-            </h3>
-            <p className="text-muted-foreground">
-              Les statistiques apparaîtront après collecte
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <SwordsIcon />
+          </EmptyMedia>
+          <EmptyTitle>Aucune donnée de champions</EmptyTitle>
+          <EmptyDescription>
+            Les statistiques apparaîtront après collecte
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 

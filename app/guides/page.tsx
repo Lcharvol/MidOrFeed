@@ -26,6 +26,14 @@ import {
   HomeIcon,
 } from "lucide-react";
 import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty";
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -278,23 +286,27 @@ const GuidesPage = () => {
           </Card>
         ) : filteredGuides.length === 0 ? (
           // Empty state
-          <Card>
-            <CardContent className="p-8 text-center">
-              <BookOpenIcon className="size-12 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="font-semibold mb-2">Aucun guide trouvé</h3>
-              <p className="text-muted-foreground mb-4">
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                {search ? <SearchIcon /> : <BookOpenIcon />}
+              </EmptyMedia>
+              <EmptyTitle>Aucun guide trouvé</EmptyTitle>
+              <EmptyDescription>
                 {search
                   ? "Aucun guide ne correspond à votre recherche"
                   : "Soyez le premier à créer un guide !"}
-              </p>
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
               <Button asChild>
                 <Link href="/guides/create">
                   <PlusIcon className="size-4 mr-2" />
                   Créer un guide
                 </Link>
               </Button>
-            </CardContent>
-          </Card>
+            </EmptyContent>
+          </Empty>
         ) : (
           // Guides list
           filteredGuides.map((guide) => (

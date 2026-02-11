@@ -18,7 +18,15 @@ import {
   ChevronsUpDownIcon,
   Loader2Icon,
   HomeIcon,
+  SearchIcon,
 } from "lucide-react";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -260,8 +268,15 @@ export default function ItemsPage() {
             <TableBody>
               {sortedAndFilteredItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
-                    {t("tierList.items.noItemFound")}
+                  <TableCell colSpan={4}>
+                    <Empty className="py-8">
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <SearchIcon />
+                        </EmptyMedia>
+                        <EmptyTitle>{t("tierList.items.noItemFound")}</EmptyTitle>
+                      </EmptyHeader>
+                    </Empty>
                   </TableCell>
                 </TableRow>
               ) : (

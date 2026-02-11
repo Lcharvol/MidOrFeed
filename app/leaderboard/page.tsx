@@ -34,7 +34,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { HomeIcon } from "lucide-react";
+import { HomeIcon, SearchIcon } from "lucide-react";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
 
@@ -193,9 +199,14 @@ export default function LeaderboardPage() {
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6}>
-                      <div className="py-8 text-center text-muted-foreground">
-                        {t("leaderboard.noResults")}
-                      </div>
+                      <Empty className="py-8">
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <SearchIcon />
+                          </EmptyMedia>
+                          <EmptyTitle>{t("leaderboard.noResults")}</EmptyTitle>
+                        </EmptyHeader>
+                      </Empty>
                     </TableCell>
                   </TableRow>
                 ) : (

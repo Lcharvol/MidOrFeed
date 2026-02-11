@@ -16,6 +16,13 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TrophyIcon, TargetIcon, AwardIcon, FlameIcon } from "lucide-react";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 
 const LEVEL_ORDER = [
@@ -214,20 +221,18 @@ export default function SummonerChallengesPage() {
 
   if (!challenges.length) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Défis Riot</CardTitle>
-          <CardDescription>
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <TrophyIcon />
+          </EmptyMedia>
+          <EmptyTitle>Défis Riot</EmptyTitle>
+          <EmptyDescription>
             Aucun challenge n'a encore été collecté pour ce compte.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Lance une synchronisation depuis l'admin ou joue quelques parties
-            pour débloquer les premiers objectifs.
-          </p>
-        </CardContent>
-      </Card>
+            Lance une synchronisation ou joue quelques parties pour débloquer les premiers objectifs.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 

@@ -7,12 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty";
+import {
   FolderHeartIcon,
   Trash2Icon,
   PlusIcon,
   SparklesIcon,
   Loader2Icon,
   HomeIcon,
+  LogInIcon,
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -178,15 +187,23 @@ export default function CompositionsFavoritesPage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto py-16 px-4 text-center">
-        <FolderHeartIcon className="size-16 mx-auto text-muted-foreground mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Mes Compositions</h1>
-        <p className="text-muted-foreground mb-6">
-          Connectez-vous pour voir et gerer vos compositions sauvegardees
-        </p>
-        <Button asChild>
-          <Link href="/login">Se connecter</Link>
-        </Button>
+      <div className="container mx-auto py-16 px-4">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <LogInIcon />
+            </EmptyMedia>
+            <EmptyTitle>Mes Compositions</EmptyTitle>
+            <EmptyDescription>
+              Connectez-vous pour voir et gerer vos compositions sauvegardees
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/login">Se connecter</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       </div>
     );
   }
@@ -254,21 +271,25 @@ export default function CompositionsFavoritesPage() {
           ))}
         </div>
       ) : compositions.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <FolderHeartIcon className="size-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Aucune composition</h2>
-            <p className="text-muted-foreground mb-6">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FolderHeartIcon />
+            </EmptyMedia>
+            <EmptyTitle>Aucune composition</EmptyTitle>
+            <EmptyDescription>
               Creez votre premiere composition d'equipe pour la sauvegarder ici
-            </p>
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
             <Button asChild>
               <Link href="/compositions/create">
                 <PlusIcon className="size-4 mr-2" />
                 Creer une composition
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+          </EmptyContent>
+        </Empty>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {compositions.map((composition) => (
