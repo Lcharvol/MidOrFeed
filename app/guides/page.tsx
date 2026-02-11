@@ -51,6 +51,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
 } from "@/components/ui/context-menu";
+import { toast } from "sonner";
 import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
 import { useI18n } from "@/lib/i18n-context";
 import type { GuideSummary, GuideListResponse, GuideRole } from "@/types/guides";
@@ -346,7 +347,10 @@ const GuidesPage = () => {
                 <ContextMenuItem
                   onClick={() => {
                     const url = `${window.location.origin}/guides/${guide.id}`;
-                    navigator.clipboard.writeText(url);
+                    navigator.clipboard.writeText(url).then(
+                      () => toast.success("Lien copié"),
+                      () => toast.error("Impossible de copier le lien")
+                    );
                   }}
                 >
                   <CopyIcon className="size-4" />
