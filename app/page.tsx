@@ -35,11 +35,12 @@ import {
   GamepadIcon,
   ShieldIcon,
   RefreshCwIcon,
+  EyeIcon,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
 import { useChampionStats } from "@/lib/hooks/use-champion-stats";
 import { useChampions } from "@/lib/hooks/use-champions";
-import { useApiSWR, STATIC_DATA_CONFIG } from "@/lib/hooks/swr";
+import { useApiSWR, STATIC_DATA_CONFIG, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
 import { SummonerSearchBar } from "@/components/SummonerSearchBar";
 
 type PublicStats = {
@@ -110,6 +111,22 @@ export default function Home() {
   }>("/api/riot/rotation?region=euw1", STATIC_DATA_CONFIG);
 
   const freeChampionIds = rotationData?.data?.freeChampionIds ?? [];
+
+  type FeaturedGame = {
+    gameId: number;
+    gameMode: string;
+    gameLength: number;
+    queueId: number;
+    blueTeam: Array<{ championId: number }>;
+    redTeam: Array<{ championId: number }>;
+  };
+
+  const { data: featuredData, isLoading: featuredLoading } = useApiSWR<{
+    success: boolean;
+    data: { games: FeaturedGame[] };
+  }>("/api/riot/featured-games?region=euw1", SEMI_DYNAMIC_CONFIG);
+
+  const featuredGames = featuredData?.data?.games ?? [];
 
   const { data: leaderboardData, isLoading: leaderboardLoading } = useApiSWR<{
     success: boolean;
@@ -495,6 +512,85 @@ export default function Home() {
           </Card>
         </div>
       </section>
+
+      {/* Featured Live Games */}
+      {featuredGames.length > 0 && (
+        <section className="py-12 md:py-16">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold md:text-3xl flex items-center gap-2">
+                  <EyeIcon className="size-6 text-primary" />
+                  Parties en direct
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Parties ranked en cours sur EUW
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {featuredLoading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <Card key={i}>
+                      <CardContent className="p-4 space-y-3">
+                        <Skeleton className="h-4 w-24" />
+                        <div className="flex justify-between">
+                          <div className="flex gap-1">{Array.from({ length: 5 }).map((_, j) => <SkeletonAvatar key={j} size="sm" />)}</div>
+                          <div className="flex gap-1">{Array.from({ length: 5 }).map((_, j) => <SkeletonAvatar key={j} size="sm" />)}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                : featuredGames.map((game) => {
+                    const minutes = Math.floor(game.gameLength / 60);
+                    const queueLabel = game.queueId === 420 ? "Solo/Duo" : "Flex";
+                    return (
+                      <Card key={game.gameId} className="hover:border-primary/50 transition-all hover:shadow-md">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Badge emphasis="info" emphasisVariant="subtle" className="text-xs">
+                              {queueLabel}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {minutes > 0 ? `${minutes} min` : "En cours"}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] text-blue-500 font-semibold mr-1">Blue</span>
+                              {game.blueTeam.map((p, i) => (
+                                <ChampionIcon
+                                  key={i}
+                                  championKey={p.championId}
+                                  championKeyToId={championKeyToIdMap}
+                                  size={28}
+                                  shape="circle"
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs font-bold text-muted-foreground">VS</span>
+                            <div className="flex items-center gap-1">
+                              {game.redTeam.map((p, i) => (
+                                <ChampionIcon
+                                  key={i}
+                                  championKey={p.championId}
+                                  championKeyToId={championKeyToIdMap}
+                                  size={28}
+                                  shape="circle"
+                                />
+                              ))}
+                              <span className="text-[10px] text-red-500 font-semibold ml-1">Red</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features Overview */}
       <section className="py-12 md:py-16">
