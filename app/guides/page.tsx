@@ -374,7 +374,7 @@ const GuidesPage = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => { setPage((p) => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
               disabled={page === 0}
             >
               <ChevronLeftIcon className="size-4 mr-1" />
@@ -383,7 +383,7 @@ const GuidesPage = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => { setPage((p) => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
               disabled={!hasMore}
             >
               Suivant

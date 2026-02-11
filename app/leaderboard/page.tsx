@@ -308,7 +308,7 @@ export default function LeaderboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => p - 1)}
+                  onClick={() => { setPage((p) => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                   disabled={page === 0}
                 >
                   <ChevronLeftIcon className="size-4 mr-1" />
@@ -317,7 +317,7 @@ export default function LeaderboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => p + 1)}
+                  onClick={() => { setPage((p) => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                   disabled={page >= totalPages - 1}
                 >
                   <span className="hidden sm:inline">Suivant</span>
