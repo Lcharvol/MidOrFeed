@@ -7,6 +7,7 @@ const logger = createLogger("riot-get-league");
 const getLeagueSchema = z.object({
   summonerId: z.string().min(1, "Summoner ID est requis"),
   region: z.string().min(1, "Région est requise"),
+  puuid: z.string().optional(),
 });
 
 // Clé API Riot Games depuis les variables d'environnement
@@ -32,6 +33,23 @@ const REGION_TO_BASE_URL: Record<string, string> = {
   vn2: "https://vn2.api.riotgames.com",
 };
 
+async function fetchLeagueEntries(baseUrl: string, summonerId: string) {
+  return fetch(
+    `${baseUrl}/lol/league/v4/entries/by-summoner/${summonerId}`,
+    { headers: { "X-Riot-Token": RIOT_API_KEY! } }
+  );
+}
+
+async function fetchFreshSummonerId(baseUrl: string, puuid: string): Promise<string | null> {
+  const response = await fetch(
+    `${baseUrl}/lol/summoner/v4/summoners/by-puuid/${puuid}`,
+    { headers: { "X-Riot-Token": RIOT_API_KEY! } }
+  );
+  if (!response.ok) return null;
+  const data = await response.json();
+  return data.id ?? null;
+}
+
 export async function POST(request: Request) {
   try {
     // Vérifier que la clé API est configurée
@@ -55,14 +73,18 @@ export async function POST(request: Request) {
     }
 
     // Appeler l'API League pour obtenir les rangs
-    const leagueResponse = await fetch(
-      `${baseUrl}/lol/league/v4/entries/by-summoner/${validatedData.summonerId}`,
-      {
-        headers: {
-          "X-Riot-Token": RIOT_API_KEY,
-        },
+    let leagueResponse = await fetchLeagueEntries(baseUrl, validatedData.summonerId);
+
+    // Si 400 (stale encrypted summonerId) et qu'on a un puuid, re-fetch un ID frais
+    if (leagueResponse.status === 400 && validatedData.puuid) {
+      logger.warn("Stale summonerId detected, re-fetching from PUUID", {
+        puuid: validatedData.puuid,
+      });
+      const freshId = await fetchFreshSummonerId(baseUrl, validatedData.puuid);
+      if (freshId) {
+        leagueResponse = await fetchLeagueEntries(baseUrl, freshId);
       }
-    );
+    }
 
     if (!leagueResponse.ok) {
       if (leagueResponse.status === 404) {

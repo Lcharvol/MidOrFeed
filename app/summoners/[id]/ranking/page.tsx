@@ -122,6 +122,7 @@ export default function RankingByIdPage() {
           body: JSON.stringify({
             summonerId: profileData.data.summonerId,
             region,
+            puuid,
           }),
         });
         const result = await response.json();
