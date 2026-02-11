@@ -57,6 +57,16 @@ export async function getJobQueue(): Promise<PgBoss> {
   await boss.start();
   logger.info("pg-boss started successfully");
 
+  // Create all queues (required since pg-boss v10+)
+  await Promise.all(
+    Object.values(QUEUE_NAMES).map((name) =>
+      boss!.createQueue(name).catch(() => {
+        // Queue already exists, ignore
+      })
+    )
+  );
+  logger.info("All queues created");
+
   return boss;
 }
 
