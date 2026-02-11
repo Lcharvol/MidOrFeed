@@ -13,6 +13,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Loader2Icon,
@@ -254,10 +265,28 @@ export default function CreateCompositionPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleReset} disabled={filledCount === 0}>
-            <RotateCcwIcon className="size-4 sm:mr-1" />
-            <span className="hidden sm:inline">{t("compositions.reset")}</span>
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={filledCount === 0}>
+                <RotateCcwIcon className="size-4 sm:mr-1" />
+                <span className="hidden sm:inline">{t("compositions.reset")}</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Réinitialiser la composition ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tous les champions sélectionnés seront retirés. Cette action est irréversible.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReset}>
+                  {t("compositions.reset")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button
             size="sm"
             onClick={() => setShowSaveDialog(true)}
