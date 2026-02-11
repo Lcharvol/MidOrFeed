@@ -63,17 +63,16 @@ export async function createCompositionWorker() {
         const rolesToProcess = job.data.roles || [...ROLES];
         const minSampleSize = job.data.minSampleSize || 20;
 
-        // Clear existing AI-generated suggestions
-        await prisma.compositionSuggestion.deleteMany({
-          where: { userId: null },
-        });
+        // Collect all new suggestion IDs to atomically swap at the end
+        const newSuggestionIds: string[] = [];
 
         for (let i = 0; i < rolesToProcess.length; i++) {
           const role = rolesToProcess[i] as Role;
 
           try {
-            const count = await generateSuggestionsForRole(role, minSampleSize);
-            suggestionsGenerated += count;
+            const ids = await generateSuggestionsForRole(role, minSampleSize);
+            newSuggestionIds.push(...ids);
+            suggestionsGenerated += ids.length;
           } catch (err) {
             const errorMsg = `Failed to generate suggestions for ${role}: ${
               err instanceof Error ? err.message : "Unknown error"
@@ -81,6 +80,16 @@ export async function createCompositionWorker() {
             errors.push(errorMsg);
             logger.error(errorMsg);
           }
+        }
+
+        // Delete old AI-generated suggestions only after new ones are created
+        if (newSuggestionIds.length > 0) {
+          await prisma.compositionSuggestion.deleteMany({
+            where: {
+              userId: null,
+              id: { notIn: newSuggestionIds },
+            },
+          });
         }
 
         const duration = Date.now() - startTime;
@@ -120,7 +129,7 @@ export async function createCompositionWorker() {
 async function generateSuggestionsForRole(
   role: Role,
   minSampleSize: number
-): Promise<number> {
+): Promise<string[]> {
   // Map role to position values used in match data
   const positionMap: Record<Role, string[]> = {
     top: ["TOP", "top", "SOLO"],
@@ -156,7 +165,7 @@ async function generateSuggestionsForRole(
     LIMIT 10
   `;
 
-  let count = 0;
+  const createdIds: string[] = [];
 
   for (const champ of championPerformance) {
     const totalGames = Number(champ.totalGames);
@@ -223,7 +232,7 @@ async function generateSuggestionsForRole(
       where: { championId: champ.championId },
     });
 
-    await prisma.compositionSuggestion.create({
+    const created = await prisma.compositionSuggestion.create({
       data: {
         userId: null, // AI-generated
         role,
@@ -251,10 +260,10 @@ async function generateSuggestionsForRole(
       },
     });
 
-    count++;
+    createdIds.push(created.id);
   }
 
-  return count;
+  return createdIds;
 }
 
 /**

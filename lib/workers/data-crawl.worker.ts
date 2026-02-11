@@ -127,73 +127,76 @@ export async function createDataCrawlWorker() {
                 const blueTeam = matchData.info.teams.find(t => t.teamId === 100);
                 const redTeam = matchData.info.teams.find(t => t.teamId === 200);
 
-                await prisma.match.create({
-                  data: {
-                    matchId,
-                    gameCreation: BigInt(matchData.info.gameCreation),
-                    gameDuration: matchData.info.gameDuration,
-                    gameMode: matchData.info.gameMode,
-                    gameType: matchData.info.gameType,
-                    gameVersion: matchData.info.gameVersion,
-                    mapId: matchData.info.mapId,
-                    platformId: matchData.info.platformId,
-                    queueId: matchData.info.queueId,
-                    region: player.riotRegion,
-                    blueTeamWon: blueTeam?.win ?? null,
-                    redTeamWon: redTeam?.win ?? null,
-                    participants: {
-                      create: matchData.info.participants.map((p) => ({
-                        participantId: p.participantId,
-                        teamId: p.teamId,
-                        championId: String(p.championId),
-                        role: p.teamPosition || null,
-                        lane: p.lane || null,
-                        kills: p.kills,
-                        deaths: p.deaths,
-                        assists: p.assists,
-                        goldEarned: p.goldEarned,
-                        goldSpent: p.goldSpent,
-                        totalDamageDealtToChampions: p.totalDamageDealtToChampions,
-                        totalDamageTaken: p.totalDamageTaken,
-                        visionScore: p.visionScore,
-                        win: p.win,
-                        item0: p.item0,
-                        item1: p.item1,
-                        item2: p.item2,
-                        item3: p.item3,
-                        item4: p.item4,
-                        item5: p.item5,
-                        item6: p.item6,
-                        summoner1Id: p.summoner1Id,
-                        summoner2Id: p.summoner2Id,
-                        riotIdGameName: p.riotIdGameName,
-                        riotIdTagline: p.riotIdTagline,
-                        participantPUuid: p.puuid,
-                      })),
+                // Use a transaction to atomically create match + participants
+                await prisma.$transaction(async (tx) => {
+                  await tx.match.create({
+                    data: {
+                      matchId,
+                      gameCreation: BigInt(matchData.info.gameCreation),
+                      gameDuration: matchData.info.gameDuration,
+                      gameMode: matchData.info.gameMode,
+                      gameType: matchData.info.gameType,
+                      gameVersion: matchData.info.gameVersion,
+                      mapId: matchData.info.mapId,
+                      platformId: matchData.info.platformId,
+                      queueId: matchData.info.queueId,
+                      region: player.riotRegion,
+                      blueTeamWon: blueTeam?.win ?? null,
+                      redTeamWon: redTeam?.win ?? null,
+                      participants: {
+                        create: matchData.info.participants.map((p) => ({
+                          participantId: p.participantId,
+                          teamId: p.teamId,
+                          championId: String(p.championId),
+                          role: p.teamPosition || null,
+                          lane: p.lane || null,
+                          kills: p.kills,
+                          deaths: p.deaths,
+                          assists: p.assists,
+                          goldEarned: p.goldEarned,
+                          goldSpent: p.goldSpent,
+                          totalDamageDealtToChampions: p.totalDamageDealtToChampions,
+                          totalDamageTaken: p.totalDamageTaken,
+                          visionScore: p.visionScore,
+                          win: p.win,
+                          item0: p.item0,
+                          item1: p.item1,
+                          item2: p.item2,
+                          item3: p.item3,
+                          item4: p.item4,
+                          item5: p.item5,
+                          item6: p.item6,
+                          summoner1Id: p.summoner1Id,
+                          summoner2Id: p.summoner2Id,
+                          riotIdGameName: p.riotIdGameName,
+                          riotIdTagline: p.riotIdTagline,
+                          participantPUuid: p.puuid,
+                        })),
+                      },
                     },
-                  },
+                  });
                 });
 
                 matchesCollected++;
 
-                // Discover new players from this match
+                // Discover new players from this match (upsert to avoid race conditions on retry)
                 for (const p of matchData.info.participants) {
                   if (p.puuid !== player.puuid) {
-                    const existing = await prisma.discoveredPlayer.findUnique({
-                      where: { puuid: p.puuid },
-                    });
-
-                    if (!existing) {
-                      await prisma.discoveredPlayer.create({
-                        data: {
+                    try {
+                      await prisma.discoveredPlayer.upsert({
+                        where: { puuid: p.puuid },
+                        create: {
                           puuid: p.puuid,
                           riotGameName: p.riotIdGameName,
                           riotTagLine: p.riotIdTagline,
                           riotRegion: player.riotRegion,
                           crawlStatus: "pending",
                         },
+                        update: {}, // Don't overwrite existing data
                       });
                       newPlayersDiscovered++;
+                    } catch {
+                      // Ignore constraint errors from concurrent inserts
                     }
                   }
                 }

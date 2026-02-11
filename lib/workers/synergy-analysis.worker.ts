@@ -68,11 +68,12 @@ export async function createSynergyAnalysisWorker() {
             `;
 
             if (synergies.length > 0) {
-              // Update ChampionStats with synergy data
+              // Idempotent upsert — safe to retry without side effects
               await prisma.championStats.upsert({
                 where: { championId },
                 create: {
                   championId,
+                  lastAnalyzedAt: new Date(),
                 },
                 update: {
                   lastAnalyzedAt: new Date(),
