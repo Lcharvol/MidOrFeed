@@ -229,6 +229,16 @@ const CounterPicksPageClient = ({
     }
 
     if (error || !counterData) {
+      const statusCode = error && typeof error === "object" && "status" in error ? (error as { status: number }).status : null;
+      const errorMessage =
+        statusCode === 404
+          ? `Champion « ${resolvedChampionName} » introuvable. Vérifie l'orthographe.`
+          : statusCode === 429
+            ? "Trop de requêtes — réessaie dans quelques secondes."
+            : typeof error === "string"
+              ? error
+              : `Impossible de récupérer les counter picks pour ${resolvedChampionName}. Réessaie dans quelques instants.`;
+
       return (
         <Card className="border-danger/30 bg-danger-muted/50">
           <CardHeader>
@@ -236,10 +246,7 @@ const CounterPicksPageClient = ({
               <TargetIcon className="size-5" />
               Erreur de chargement
             </CardTitle>
-            <CardDescription>
-              Impossible de récupérer les counter picks pour {resolvedChampionName}.
-              Réessayez dans quelques instants.
-            </CardDescription>
+            <CardDescription>{errorMessage}</CardDescription>
           </CardHeader>
         </Card>
       );
