@@ -1,5 +1,5 @@
 import { Job } from "pg-boss";
-import { registerWorker, QUEUE_NAMES } from "../job-queue";
+import { registerWorker, QUEUE_NAMES, updateJobProgress } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
 import { createLogger } from "../logger";
@@ -41,6 +41,12 @@ export async function createSynergyAnalysisWorker() {
 
         for (let i = 0; i < champions.length; i++) {
           const { championId } = champions[i];
+
+          await updateJobProgress(job.id, {
+            current: i,
+            total,
+            message: `Analyzing synergies for champion ${i + 1}/${total}`,
+          });
 
           try {
             // Find best synergies (teammates that help this champion win)

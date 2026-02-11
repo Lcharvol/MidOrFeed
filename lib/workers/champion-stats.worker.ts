@@ -1,5 +1,5 @@
 import { Job } from "pg-boss";
-import { registerWorker, QUEUE_NAMES } from "../job-queue";
+import { registerWorker, QUEUE_NAMES, updateJobProgress } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
 import { createLogger } from "../logger";
@@ -36,6 +36,12 @@ export async function createChampionStatsWorker() {
         // Process each champion
         for (let i = 0; i < championIds.length; i++) {
           const championId = championIds[i];
+
+          await updateJobProgress(job.id, {
+            current: i,
+            total,
+            message: `Processing champion ${i + 1}/${total}`,
+          });
 
           try {
             await computeChampionStats(championId);

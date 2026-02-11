@@ -1,5 +1,5 @@
 import { Job } from "pg-boss";
-import { registerWorker, QUEUE_NAMES } from "../job-queue";
+import { registerWorker, QUEUE_NAMES, updateJobProgress } from "../job-queue";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
@@ -64,6 +64,12 @@ export async function createAccountRefreshWorker() {
 
         for (let i = 0; i < accounts.length; i++) {
           const account = accounts[i];
+
+          await updateJobProgress(job.id, {
+            current: i,
+            total,
+            message: `Refreshing account ${i + 1}/${total}`,
+          });
 
           try {
             const routing = REGION_TO_ROUTING[account.riotRegion] || "europe";

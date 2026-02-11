@@ -1,5 +1,5 @@
 import { Job } from "pg-boss";
-import { registerWorker, QUEUE_NAMES } from "../job-queue";
+import { registerWorker, QUEUE_NAMES, updateJobProgress } from "../job-queue";
 import { prisma } from "../prisma";
 import { sendAlert, AlertSeverity } from "../alerting";
 import { createLogger } from "../logger";
@@ -68,6 +68,12 @@ export async function createCompositionWorker() {
 
         for (let i = 0; i < rolesToProcess.length; i++) {
           const role = rolesToProcess[i] as Role;
+
+          await updateJobProgress(job.id, {
+            current: i,
+            total: rolesToProcess.length,
+            message: `Generating suggestions for ${role}`,
+          });
 
           try {
             const ids = await generateSuggestionsForRole(role, minSampleSize);

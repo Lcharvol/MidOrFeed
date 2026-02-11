@@ -1,5 +1,5 @@
 import { Job } from "pg-boss";
-import { registerWorker, QUEUE_NAMES } from "../job-queue";
+import { registerWorker, QUEUE_NAMES, updateJobProgress } from "../job-queue";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
@@ -47,9 +47,18 @@ export async function createLeaderboardSyncWorker() {
           tiers = ["challenger", "grandmaster", "master"],
         } = job.data;
 
+        const totalSteps = regions.length * queueTypes.length * tiers.length;
+        let step = 0;
+
         for (const region of regions) {
           for (const queueType of queueTypes) {
             for (const tier of tiers) {
+              await updateJobProgress(job.id, {
+                current: step++,
+                total: totalSteps,
+                message: `Syncing ${tier} ${queueType} for ${region}`,
+              });
+
               try {
                 // Build API URL
                 const url = `https://${region}.api.riotgames.com/lol/league/v4/${tier}leagues/by-queue/${queueType}`;
