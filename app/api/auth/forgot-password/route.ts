@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { requireCsrf } from "@/lib/csrf";
 import { logger } from "@/lib/logger";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -12,7 +13,7 @@ const forgotPasswordSchema = z.object({
 
 /**
  * POST /api/auth/forgot-password
- * Generate a password reset token and (TODO) send it by email.
+ * Generate a password reset token and send it by email.
  * Always returns 200 to avoid leaking whether the email exists.
  */
 export async function POST(request: NextRequest) {
@@ -58,9 +59,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // TODO: Send email with reset link
-      // const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
-      // await sendEmail({ to: email, subject: "Reset password", resetUrl });
+      await sendPasswordResetEmail(email, token);
       logger.info("Password reset token generated", { userId: user.id });
     }
 

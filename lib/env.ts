@@ -48,6 +48,13 @@ const envSchema = z.object({
   // Anthropic API (pour l'analyse AI des matchs)
   ANTHROPIC_API_KEY: z.string().optional(),
 
+  // SMTP (pour les emails transactionnels)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
+
   // Rate limiting (configurable par environnement)
   RATE_LIMIT_AUTH_LIMIT: z
     .string()
