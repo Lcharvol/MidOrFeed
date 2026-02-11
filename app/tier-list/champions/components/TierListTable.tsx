@@ -96,7 +96,7 @@ export const TierListTable = ({
   error,
 }: TierListTableProps) => {
   const { t } = useI18n();
-  const { championNameMap } = useChampions();
+  const { championNameMap, championKeyToIdMap } = useChampions();
   if (isLoading) {
     return (
       <div className="flex items-center justify-center rounded-2xl border bg-background/80 py-12" role="status">
@@ -311,6 +311,7 @@ export const TierListTable = ({
                     <WeakAgainst
                       weakAgainst={stats?.weakAgainst ?? null}
                       championNameMap={championNameMap}
+                      championKeyToIdMap={championKeyToIdMap}
                     />
                   ) : (
                     <span className="text-muted-foreground text-xs sm:text-sm">—</span>

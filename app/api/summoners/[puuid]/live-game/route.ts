@@ -207,7 +207,7 @@ export async function GET(
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
     // 404 means player is not in a game - this is normal
-    if (error instanceof Error && error.message.includes("404")) {
+    if (error instanceof Error && (error.message.includes("404") || error.message.includes("400"))) {
       const response: LiveGameResponse = {
         success: true,
         inGame: false,

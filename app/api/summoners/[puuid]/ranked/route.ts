@@ -249,9 +249,24 @@ export async function GET(
             region: normalizedRegion,
             cacheKey: `riot:summoner:${puuid}:${normalizedRegion}`,
             cacheTTL: CacheTTL.MEDIUM,
+          }).catch((error) => {
+            if (error.message.includes("404") || error.message.includes("400")) {
+              return null;
+            }
+            throw error;
           }),
         { region: normalizedRegion }
       );
+
+      if (!summonerResponseData) {
+        return NextResponse.json(
+          {
+            success: true,
+            data: { solo: null, flex: null },
+          },
+          { status: 200 }
+        );
+      }
 
       const summonerData = summonerResponseData.data;
       summonerId = summonerData.id;
@@ -291,7 +306,7 @@ export async function GET(
             cacheTTL: CacheTTL.MEDIUM,
           }
         ).catch((error) => {
-          if (error.message.includes("404")) {
+          if (error.message.includes("404") || error.message.includes("400")) {
             return { data: [] as RiotLeagueEntry[], cached: false, attempt: 1 };
           }
           throw error;

@@ -89,7 +89,7 @@ export async function GET(
             cacheTTL: CacheTTL.MEDIUM,
           }
         ).catch((error) => {
-          if (error.message.includes("404")) {
+          if (error.message.includes("404") || error.message.includes("400")) {
             return { data: [] as RiotChampionMastery[], cached: false, attempt: 1 };
           }
           throw error;

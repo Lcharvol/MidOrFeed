@@ -8,11 +8,13 @@ import type { WeakAgainstItem } from "@/types";
 type WeakAgainstProps = {
   weakAgainst: WeakAgainstItem[] | null | undefined;
   championNameMap: Map<string, string>;
+  championKeyToIdMap: Map<string, string>;
 };
 
 export const WeakAgainst = ({
   weakAgainst,
   championNameMap,
+  championKeyToIdMap,
 }: WeakAgainstProps) => {
   const { t } = useI18n();
   // Les weakAgainst sont déjà triés par winRate décroissant
@@ -36,7 +38,8 @@ export const WeakAgainst = ({
             <TooltipTrigger asChild>
               <div>
                 <ChampionIcon
-                  championId={pair.enemyChampionId}
+                  championKey={pair.enemyChampionId}
+                  championKeyToId={championKeyToIdMap}
                   size={32}
                   alt={enemyName}
                   className="rounded-full border border-border/50"

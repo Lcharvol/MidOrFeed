@@ -93,7 +93,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     () =>
       champions.map((champion) => ({
         ...champion,
-        stats: statsMap.get(champion.championId),
+        stats: statsMap.get(String(champion.championKey)),
       })),
     [champions, statsMap]
   );

@@ -12,6 +12,7 @@ import { alerting } from "./alerting";
  * Codes d'erreur HTTP spécifiques à l'API Riot
  */
 export enum RiotApiErrorCode {
+  BAD_REQUEST = 400,
   RATE_LIMIT = 429,
   NOT_FOUND = 404,
   UNAUTHORIZED = 401,
@@ -280,7 +281,8 @@ export const riotApiRequest = async <T = unknown>(
         if (
           response.status === RiotApiErrorCode.NOT_FOUND ||
           response.status === RiotApiErrorCode.UNAUTHORIZED ||
-          response.status === RiotApiErrorCode.FORBIDDEN
+          response.status === RiotApiErrorCode.FORBIDDEN ||
+          response.status === RiotApiErrorCode.BAD_REQUEST
         ) {
           throw new Error(
             `Erreur API Riot ${response.status}: ${response.statusText}`
