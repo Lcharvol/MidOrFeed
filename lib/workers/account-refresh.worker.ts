@@ -119,10 +119,10 @@ export async function createAccountRefreshWorker() {
                 `Refreshed ${gameName}#${tagLine} (level ${summonerData.summonerLevel})`
               );
             } catch (err) {
-              // Summoner not found - might have been deleted or name changed
-              if (err instanceof Error && err.message.includes("404")) {
+              // Summoner not found or invalid PUUID — skip gracefully
+              if (err instanceof Error && (err.message.includes("404") || err.message.includes("400"))) {
                 accountsNotFound++;
-                logger.warn(`Summoner not found: ${account.puuid}`);
+                logger.warn(`Summoner not found or invalid: ${account.puuid}`);
               } else {
                 throw err;
               }

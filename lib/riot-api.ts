@@ -329,6 +329,14 @@ export const riotApiRequest = async <T = unknown>(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
+      // Erreurs non récupérables (400, 401, 403, 404) — ne pas réessayer
+      if (
+        error instanceof Error &&
+        /Erreur API Riot (400|401|403|404):/.test(error.message)
+      ) {
+        throw lastError;
+      }
+
       // Si c'est une erreur de timeout et qu'on peut réessayer
       if (
         error instanceof Error &&
