@@ -270,6 +270,23 @@ export async function purgeQueue(queueName: QueueName) {
 }
 
 /**
+ * Update job progress (writes to the output column as JSON).
+ * This does NOT dequeue; it's a plain SQL update on the active job row.
+ */
+export async function updateJobProgress(
+  jobId: string,
+  progress: { current: number; total: number; message?: string }
+) {
+  const boss = await getJobQueue();
+  const db = boss.getDb();
+  const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+  await db.executeSql(
+    `UPDATE pgboss.job SET output = $2 WHERE id = $1 AND state = 'active'`,
+    [jobId, JSON.stringify({ ...progress, percent })]
+  );
+}
+
+/**
  * Get job by ID
  */
 export async function getJobById<T = unknown>(queueName: QueueName, jobId: string) {

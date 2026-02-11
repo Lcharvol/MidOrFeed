@@ -1,5 +1,5 @@
 import { Job } from "pg-boss";
-import { registerWorker, QUEUE_NAMES } from "../job-queue";
+import { registerWorker, QUEUE_NAMES, updateJobProgress } from "../job-queue";
 import { prisma } from "../prisma";
 import { riotApiRequest } from "../riot-api";
 import { sendAlert, AlertSeverity } from "../alerting";
@@ -50,6 +50,12 @@ export async function createDataCrawlWorker() {
 
         for (let i = 0; i < players.length; i++) {
           const player = players[i];
+
+          await updateJobProgress(job.id, {
+            current: i,
+            total,
+            message: `Crawling player ${i + 1}/${total}`,
+          });
 
           try {
             // Mark as in progress
