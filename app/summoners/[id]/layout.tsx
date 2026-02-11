@@ -109,7 +109,7 @@ export default function SummonerByIdLayout({
   );
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-6 sm:py-10 px-4">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
