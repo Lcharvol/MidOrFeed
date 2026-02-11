@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/context-menu";
 import { toast } from "sonner";
 import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
+import { formatRelativeDate } from "@/lib/format-date";
 import { useI18n } from "@/lib/i18n-context";
 import type { GuideSummary, GuideListResponse, GuideRole } from "@/types/guides";
 
@@ -140,6 +141,9 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
                   <EyeIcon className="size-3 sm:size-3.5" aria-hidden="true" />
                   <span>{guide.viewCount}</span>
                 </div>
+                <span className="text-muted-foreground/60 hidden sm:inline">
+                  {formatRelativeDate(new Date(guide.createdAt).getTime())}
+                </span>
                 {guide.patchVersion && (
                   <Badge emphasis="neutral" emphasisVariant="subtle" className="text-xs hidden sm:inline-flex">
                     {guide.patchVersion}
