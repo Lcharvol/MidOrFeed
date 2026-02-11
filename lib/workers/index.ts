@@ -89,6 +89,10 @@ export const WORKER_DESCRIPTIONS: Record<string, { name: string; description: st
     name: "Data Crawl",
     description: "Collecte les matchs des joueurs découverts pour enrichir la base de données",
   },
+  "account-sync": {
+    name: "Account Sync",
+    description: "Synchronise les comptes joueurs depuis l'API Riot",
+  },
   "leaderboard-sync": {
     name: "Leaderboard Sync",
     description: "Synchronise les classements Challenger/GM/Master depuis l'API Riot",

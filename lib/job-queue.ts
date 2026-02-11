@@ -4,7 +4,6 @@ import {
   type SendOptions,
   type ScheduleOptions,
   type WorkOptions,
-  type JobWithMetadata,
 } from "pg-boss";
 import { createLogger } from "./logger";
 
@@ -153,13 +152,13 @@ export async function getQueueStatus(queueName: QueueName) {
   try {
     const stats = await queue.getQueueStats(queueName);
     return {
-      created: stats.queuedCount,
+      waiting: stats.queuedCount,
       active: stats.activeCount,
-      completed: 0,
-      failed: 0,
+      total: stats.totalCount,
+      deferred: stats.deferredCount,
     };
   } catch {
-    return { created: 0, active: 0, completed: 0, failed: 0 };
+    return { waiting: 0, active: 0, total: 0, deferred: 0 };
   }
 }
 
@@ -167,7 +166,7 @@ export async function getQueueStatus(queueName: QueueName) {
  * Get all queues status
  */
 export async function getAllQueuesStatus() {
-  const status: Record<string, { waiting: number; active: number; completed: number; failed: number }> = {};
+  const status: Record<string, { waiting: number; active: number; total: number; deferred: number }> = {};
 
   for (const name of Object.values(QUEUE_NAMES)) {
     try {
@@ -176,11 +175,11 @@ export async function getAllQueuesStatus() {
       status[name] = {
         waiting: stats.queuedCount,
         active: stats.activeCount,
-        completed: 0,
-        failed: 0,
+        total: stats.totalCount,
+        deferred: stats.deferredCount,
       };
     } catch {
-      status[name] = { waiting: 0, active: 0, completed: 0, failed: 0 };
+      status[name] = { waiting: 0, active: 0, total: 0, deferred: 0 };
     }
   }
 
@@ -188,43 +187,84 @@ export async function getAllQueuesStatus() {
 }
 
 /**
- * Get recent jobs
+ * Get recent jobs via SQL (read-only, does NOT dequeue)
  */
-export async function getRecentJobs(limit = 20) {
-  const queue = await getJobQueue();
-  const jobs: Array<{
-    id: string;
-    queue: string;
-    name: string;
-    status: string;
-    progress: number;
-    timestamp: number;
-    duration?: number;
-    failedReason?: string;
-  }> = [];
+export async function getRecentJobs(limit = 30) {
+  const boss = await getJobQueue();
+  const db = boss.getDb();
 
-  for (const queueName of Object.values(QUEUE_NAMES)) {
-    try {
-      const queueJobs = await queue.fetch<unknown>(queueName, { includeMetadata: true });
-      if (queueJobs && queueJobs.length > 0) {
-        for (const job of queueJobs) {
-          const jobMeta = job as JobWithMetadata<unknown>;
-          jobs.push({
-            id: jobMeta.id,
-            queue: queueName,
-            name: jobMeta.name,
-            status: jobMeta.state || "active",
-            progress: 0,
-            timestamp: new Date(jobMeta.createdOn).getTime(),
-          });
-        }
-      }
-    } catch {
-      // Queue might not exist yet
-    }
+  try {
+    const result = await db.executeSql(
+      `SELECT id, name, state, created_on, started_on, completed_on, output, retry_count
+       FROM pgboss.job
+       WHERE name = ANY($1)
+       ORDER BY created_on DESC
+       LIMIT $2`,
+      [Object.values(QUEUE_NAMES), limit]
+    );
+
+    return (result.rows || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      queue: row.name as string,
+      name: row.name as string,
+      state: row.state as string,
+      timestamp: new Date(row.created_on as string).getTime(),
+      startedOn: row.started_on ? new Date(row.started_on as string).getTime() : undefined,
+      completedOn: row.completed_on ? new Date(row.completed_on as string).getTime() : undefined,
+      duration:
+        row.started_on && row.completed_on
+          ? new Date(row.completed_on as string).getTime() - new Date(row.started_on as string).getTime()
+          : undefined,
+      retryCount: row.retry_count as number,
+      output: row.output as Record<string, unknown> | null,
+    }));
+  } catch (err) {
+    logger.error("Failed to fetch recent jobs via SQL", err as Error);
+    return [];
   }
+}
 
-  return jobs.slice(0, limit);
+/**
+ * Get jobs for a specific queue via SQL (read-only)
+ */
+export async function getQueueJobs(queueName: QueueName, limit = 20) {
+  const boss = await getJobQueue();
+  const db = boss.getDb();
+
+  try {
+    const result = await db.executeSql(
+      `SELECT id, name, state, data, created_on, started_on, completed_on, output, retry_count
+       FROM pgboss.job
+       WHERE name = $1
+       ORDER BY created_on DESC
+       LIMIT $2`,
+      [queueName, limit]
+    );
+
+    return (result.rows || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      name: row.name as string,
+      state: row.state as string,
+      data: row.data as Record<string, unknown> | null,
+      createdOn: new Date(row.created_on as string).getTime(),
+      startedOn: row.started_on ? new Date(row.started_on as string).getTime() : undefined,
+      completedOn: row.completed_on ? new Date(row.completed_on as string).getTime() : undefined,
+      retryCount: row.retry_count as number,
+      output: row.output as Record<string, unknown> | null,
+    }));
+  } catch (err) {
+    logger.error(`Failed to fetch jobs for queue ${queueName}`, err as Error);
+    return [];
+  }
+}
+
+/**
+ * Purge jobs from a queue (without destroying the queue itself)
+ */
+export async function purgeQueue(queueName: QueueName) {
+  const boss = await getJobQueue();
+  await boss.deleteQueuedJobs(queueName);
+  await boss.deleteStoredJobs(queueName);
 }
 
 /**

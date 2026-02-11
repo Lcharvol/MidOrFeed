@@ -21,15 +21,28 @@ import {
   ClockIcon,
   Loader2Icon,
   AlertCircleIcon,
-  ServerIcon,
   BarChart3Icon,
   LayersIcon,
   SearchIcon,
   UsersIcon,
+  TrophyIcon,
+  ImageIcon,
+  BrainIcon,
+  SwordsIcon,
+  ShieldIcon,
+  EraserIcon,
+  UserCheckIcon,
+  CalendarIcon,
+  DatabaseIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { STATUS_STYLES } from "@/lib/styles/game-colors";
 import { cn } from "@/lib/utils";
+import { WORKER_DESCRIPTIONS } from "@/lib/workers/index";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface JobProgress {
   current: number;
@@ -41,22 +54,21 @@ interface JobProgress {
 interface QueueStatus {
   waiting: number;
   active: number;
-  completed: number;
-  failed: number;
-  delayed: number;
+  total: number;
+  deferred: number;
 }
 
-interface Job {
+interface RecentJob {
   id: string;
   queue: string;
   name: string;
-  status: string;
-  progress: number | JobProgress;
+  state: string;
   timestamp: number;
+  startedOn?: number;
+  completedOn?: number;
   duration?: number;
-  failedReason?: string;
-  processedOn?: number;
-  finishedOn?: number;
+  retryCount?: number;
+  output?: Record<string, unknown> | null;
 }
 
 interface ActiveJobDetails {
@@ -70,37 +82,98 @@ interface ActiveJobDetails {
 }
 
 interface JobsData {
-  redisConnected: boolean;
+  connected: boolean;
   queues: Record<string, QueueStatus>;
-  recentJobs: Job[];
+  recentJobs: RecentJob[];
   timestamp: number;
 }
 
-const QUEUE_CONFIG: Record<
-  string,
-  { label: string; description: string; icon: React.ReactNode }
-> = {
-  "champion-stats": {
-    label: "Stats Champions",
-    description: "Calcul des winrates, KDA, counters",
-    icon: <BarChart3Icon className="size-4" />,
-  },
-  "composition-gen": {
-    label: "Compositions",
-    description: "Génération des suggestions",
-    icon: <LayersIcon className="size-4" />,
-  },
-  "data-crawl": {
-    label: "Crawl Données",
-    description: "Découverte de joueurs et matchs",
-    icon: <SearchIcon className="size-4" />,
-  },
-  "account-sync": {
-    label: "Sync Comptes",
-    description: "Synchronisation Riot API",
-    icon: <UsersIcon className="size-4" />,
-  },
+// ---------------------------------------------------------------------------
+// Queue configuration — all 12 queues, grouped by category
+// ---------------------------------------------------------------------------
+
+interface QueueConfig {
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  category: "analysis" | "sync" | "maintenance";
+}
+
+const QUEUE_ICONS: Record<string, React.ReactNode> = {
+  "champion-stats": <BarChart3Icon className="size-4" />,
+  "composition-gen": <LayersIcon className="size-4" />,
+  "data-crawl": <SearchIcon className="size-4" />,
+  "account-sync": <UsersIcon className="size-4" />,
+  "leaderboard-sync": <TrophyIcon className="size-4" />,
+  "ddragon-sync": <ImageIcon className="size-4" />,
+  "meta-analysis": <BrainIcon className="size-4" />,
+  "synergy-analysis": <SwordsIcon className="size-4" />,
+  "item-builds": <ShieldIcon className="size-4" />,
+  "data-cleanup": <EraserIcon className="size-4" />,
+  "account-refresh": <UserCheckIcon className="size-4" />,
+  "daily-reset": <CalendarIcon className="size-4" />,
 };
+
+const QUEUE_CATEGORIES: Record<string, "analysis" | "sync" | "maintenance"> = {
+  "champion-stats": "analysis",
+  "composition-gen": "analysis",
+  "data-crawl": "analysis",
+  "meta-analysis": "analysis",
+  "synergy-analysis": "analysis",
+  "item-builds": "analysis",
+  "account-sync": "sync",
+  "leaderboard-sync": "sync",
+  "ddragon-sync": "sync",
+  "account-refresh": "sync",
+  "data-cleanup": "maintenance",
+  "daily-reset": "maintenance",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  analysis: "Analyse & Données",
+  sync: "Synchronisation",
+  maintenance: "Maintenance",
+};
+
+function buildQueueConfig(): Record<string, QueueConfig> {
+  const config: Record<string, QueueConfig> = {};
+  for (const [key, desc] of Object.entries(WORKER_DESCRIPTIONS)) {
+    config[key] = {
+      label: desc.name,
+      description: desc.description,
+      icon: QUEUE_ICONS[key] || <DatabaseIcon className="size-4" />,
+      category: QUEUE_CATEGORIES[key] || "maintenance",
+    };
+  }
+  return config;
+}
+
+const QUEUE_CONFIG = buildQueueConfig();
+
+// ---------------------------------------------------------------------------
+// State badge for pg-boss job states
+// ---------------------------------------------------------------------------
+
+function StateBadge({ state }: { state: string }) {
+  switch (state) {
+    case "completed":
+      return <Badge variant="success">completed</Badge>;
+    case "failed":
+      return <Badge variant="destructive">failed</Badge>;
+    case "active":
+      return <Badge variant="info">active</Badge>;
+    case "created":
+      return <Badge variant="outline">created</Badge>;
+    case "cancelled":
+      return <Badge variant="warning">cancelled</Badge>;
+    default:
+      return <Badge variant="outline">{state}</Badge>;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function JobsTab() {
   const [data, setData] = useState<JobsData | null>(null);
@@ -115,6 +188,10 @@ export function JobsTab() {
   const hasActiveJobs = data?.queues
     ? Object.values(data.queues).some((q) => q.active > 0)
     : false;
+
+  // -----------------------------------------------------------------------
+  // Data fetching
+  // -----------------------------------------------------------------------
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -132,7 +209,6 @@ export function JobsTab() {
           .filter(([, status]) => (status as QueueStatus).active > 0)
           .map(([name]) => name);
 
-        // Clear old active jobs that are no longer active
         if (activeQueues.length === 0) {
           setActiveJobsDetails({});
         } else {
@@ -157,10 +233,9 @@ export function JobsTab() {
           (j: { state: string }) => j.state === "active"
         );
 
-        // Update active jobs, remove ones that are no longer active
         setActiveJobsDetails((prev) => {
           const next = { ...prev };
-          // Remove jobs from this queue that are no longer in activeJobs
+          // Remove jobs from this queue that are no longer active
           Object.keys(next).forEach((key) => {
             if (
               key.startsWith(`${queueName}-`) &&
@@ -171,7 +246,6 @@ export function JobsTab() {
               delete next[key];
             }
           });
-          // Add/update active jobs
           for (const job of activeJobs) {
             next[`${queueName}-${job.id}`] = {
               id: job.id,
@@ -179,8 +253,8 @@ export function JobsTab() {
               queue: queueName,
               progress: normalizeProgress(job.progress),
               state: job.state,
-              timestamp: job.timestamp,
-              processedOn: job.processedOn,
+              timestamp: job.createdOn || job.timestamp,
+              processedOn: job.startedOn,
             };
           }
           return next;
@@ -210,6 +284,10 @@ export function JobsTab() {
     const interval = setInterval(fetchJobs, hasActiveJobs ? 1000 : 5000);
     return () => clearInterval(interval);
   }, [fetchJobs, hasActiveJobs]);
+
+  // -----------------------------------------------------------------------
+  // Actions
+  // -----------------------------------------------------------------------
 
   const triggerJob = async (queue: string) => {
     setTriggeringQueue(queue);
@@ -257,35 +335,38 @@ export function JobsTab() {
     }
   };
 
-  const cleanQueue = async (
-    queue: string,
-    type: "completed" | "failed"
-  ) => {
+  const cleanQueue = async (queue: string) => {
     try {
-      const res = await fetch(`/api/admin/jobs/${queue}?type=${type}`, {
+      const res = await fetch(`/api/admin/jobs/${queue}`, {
         method: "DELETE",
       });
       if (!res.ok) {
         const json = await res.json();
         throw new Error(json.error || "Failed to clean queue");
       }
-      toast.success(`Jobs ${type === "completed" ? "terminés" : "échoués"} nettoyés`);
+      toast.success("Jobs nettoyés");
       await fetchJobs();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur");
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
+  // -----------------------------------------------------------------------
+  // Helpers
+  // -----------------------------------------------------------------------
+
+  const getStatusIcon = (state: string) => {
+    switch (state) {
       case "completed":
         return <CheckCircleIcon className={cn("size-4", STATUS_STYLES.success.icon)} />;
       case "failed":
         return <XCircleIcon className={cn("size-4", STATUS_STYLES.error.icon)} />;
       case "active":
         return <Loader2Icon className={cn("size-4 animate-spin", STATUS_STYLES.info.icon)} />;
-      case "waiting":
+      case "created":
         return <ClockIcon className={cn("size-4", STATUS_STYLES.warning.icon)} />;
+      case "cancelled":
+        return <AlertCircleIcon className={cn("size-4", STATUS_STYLES.pending.icon)} />;
       default:
         return <AlertCircleIcon className={cn("size-4", STATUS_STYLES.pending.icon)} />;
     }
@@ -313,6 +394,10 @@ export function JobsTab() {
     return formatDuration(elapsed);
   };
 
+  // -----------------------------------------------------------------------
+  // Render
+  // -----------------------------------------------------------------------
+
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -323,32 +408,46 @@ export function JobsTab() {
 
   const activeJobs = Object.values(activeJobsDetails);
 
+  // Group queues by category
+  const queuesByCategory = Object.entries(QUEUE_CONFIG).reduce(
+    (acc, [name, config]) => {
+      const cat = config.category;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(name);
+      return acc;
+    },
+    {} as Record<string, string[]>
+  );
+
   return (
     <div className="space-y-6">
-      {/* Redis Status */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="flex items-center gap-2">
-            <ServerIcon className="size-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium">Connexion Redis</CardTitle>
-          </div>
-          <Button variant="outline" size="sm" onClick={fetchJobs}>
-            <RefreshCwIcon
-              className={`size-4 mr-2 ${hasActiveJobs ? "animate-spin" : ""}`}
-            />
-            {hasActiveJobs ? "Auto..." : "Rafraîchir"}
-          </Button>
-        </CardHeader>
-        <CardContent>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold">pg-boss</h2>
           {error ? (
-            <Badge variant="destructive">{error}</Badge>
-          ) : data?.redisConnected ? (
+            <Badge variant="destructive">Erreur</Badge>
+          ) : data?.connected ? (
             <Badge variant="success">Connecté</Badge>
           ) : (
             <Badge variant="outline">Non connecté</Badge>
           )}
-        </CardContent>
-      </Card>
+        </div>
+        <Button variant="outline" size="sm" onClick={fetchJobs}>
+          <RefreshCwIcon
+            className={cn("size-4 mr-2", hasActiveJobs && "animate-spin")}
+          />
+          {hasActiveJobs ? "Auto..." : "Rafraîchir"}
+        </Button>
+      </div>
+
+      {error && (
+        <Card className={cn("border-l-4", STATUS_STYLES.error.border)}>
+          <CardContent className="py-3">
+            <p className="text-sm text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Active Jobs */}
       {activeJobs.length > 0 && (
@@ -430,105 +529,106 @@ export function JobsTab() {
         </Card>
       )}
 
-      {/* Queue Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.entries(QUEUE_CONFIG).map(([queueName, config]) => {
-          const status = data?.queues[queueName];
-          const hasActive = (status?.active || 0) > 0;
+      {/* Queue Cards by Category */}
+      {(["analysis", "sync", "maintenance"] as const).map((category) => {
+        const queues = queuesByCategory[category];
+        if (!queues || queues.length === 0) return null;
 
-          return (
-            <Card
-              key={queueName}
-              className={hasActive ? cn("border-l-4", STATUS_STYLES.info.border) : ""}
-            >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="flex items-center gap-2">
-                  <div className="text-muted-foreground">{config.icon}</div>
-                  <div>
-                    <CardTitle className="text-sm font-medium">
-                      {config.label}
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      {config.description}
-                    </CardDescription>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => triggerJob(queueName)}
-                  disabled={triggeringQueue === queueName || hasActive}
-                >
-                  {triggeringQueue === queueName ? (
-                    <Loader2Icon className="size-4 animate-spin" />
-                  ) : (
-                    <PlayIcon className="size-4" />
-                  )}
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {status ? (
-                  <div className="space-y-3">
-                    <div className="flex gap-2 flex-wrap">
-                      {status.active > 0 && (
-                        <Badge variant="default">
-                          {status.active} actif
-                        </Badge>
-                      )}
-                      {status.waiting > 0 && (
-                        <Badge variant="outline">{status.waiting} en attente</Badge>
-                      )}
-                      {status.completed > 0 && (
-                        <Badge variant="success">{status.completed} terminé</Badge>
-                      )}
-                      {status.failed > 0 && (
-                        <Badge variant="destructive">{status.failed} échoué</Badge>
-                      )}
-                      {status.active === 0 &&
-                        status.waiting === 0 &&
-                        status.completed === 0 &&
-                        status.failed === 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            Aucun job
-                          </span>
-                        )}
-                    </div>
+        return (
+          <div key={category} className="space-y-3">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              {CATEGORY_LABELS[category]}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {queues.map((queueName) => {
+                const config = QUEUE_CONFIG[queueName];
+                const status = data?.queues[queueName];
+                const hasActive = (status?.active || 0) > 0;
 
-                    {(status.completed > 0 || status.failed > 0) && (
-                      <div className="flex gap-2">
-                        {status.completed > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => cleanQueue(queueName, "completed")}
-                          >
-                            <TrashIcon className="size-3 mr-1" />
-                            Nettoyer
-                          </Button>
-                        )}
-                        {status.failed > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => cleanQueue(queueName, "failed")}
-                            className={STATUS_STYLES.error.text}
-                          >
-                            <TrashIcon className="size-3 mr-1" />
-                            Échoués
-                          </Button>
-                        )}
+                return (
+                  <Card
+                    key={queueName}
+                    className={hasActive ? cn("border-l-4", STATUS_STYLES.info.border) : ""}
+                  >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="text-muted-foreground shrink-0">{config.icon}</div>
+                        <div className="min-w-0">
+                          <CardTitle className="text-sm font-medium truncate">
+                            {config.label}
+                          </CardTitle>
+                          <CardDescription className="text-xs line-clamp-2">
+                            {config.description}
+                          </CardDescription>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground">
-                    Aucune donnée
-                  </span>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                      <Button
+                        size="sm"
+                        className="shrink-0 ml-2"
+                        onClick={() => triggerJob(queueName)}
+                        disabled={triggeringQueue === queueName || hasActive}
+                      >
+                        {triggeringQueue === queueName ? (
+                          <Loader2Icon className="size-4 animate-spin" />
+                        ) : (
+                          <PlayIcon className="size-4" />
+                        )}
+                      </Button>
+                    </CardHeader>
+                    <CardContent>
+                      {status ? (
+                        <div className="space-y-3">
+                          <div className="flex gap-2 flex-wrap">
+                            {status.active > 0 && (
+                              <Badge variant="default">
+                                {status.active} actif
+                              </Badge>
+                            )}
+                            {status.waiting > 0 && (
+                              <Badge variant="outline">{status.waiting} en attente</Badge>
+                            )}
+                            {status.deferred > 0 && (
+                              <Badge variant="warning">{status.deferred} différé</Badge>
+                            )}
+                            {status.total > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {status.total} total
+                              </span>
+                            )}
+                            {status.active === 0 &&
+                              status.waiting === 0 &&
+                              status.deferred === 0 &&
+                              status.total === 0 && (
+                                <span className="text-xs text-muted-foreground">
+                                  Aucun job
+                                </span>
+                              )}
+                          </div>
+
+                          {status.total > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => cleanQueue(queueName)}
+                            >
+                              <TrashIcon className="size-3 mr-1" />
+                              Purger
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          Aucune donnée
+                        </span>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
 
       {/* Job History */}
       <Card>
@@ -539,38 +639,27 @@ export function JobsTab() {
         <CardContent>
           {data?.recentJobs && data.recentJobs.length > 0 ? (
             <div className="rounded-md border bg-muted/20 divide-y">
-              {data.recentJobs.slice(0, 15).map((job) => {
+              {data.recentJobs.map((job) => {
                 const config = QUEUE_CONFIG[job.queue];
                 return (
                   <div
-                    key={`${job.queue}-${job.id}`}
+                    key={job.id}
                     className="flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(job.status)}
-                      <div className="text-muted-foreground">{config?.icon}</div>
-                      <div>
-                        <p className="text-sm font-medium">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {getStatusIcon(job.state)}
+                      <div className="text-muted-foreground shrink-0">{config?.icon}</div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
                           {config?.label || job.queue}
                         </p>
-                        <p className="text-xs text-muted-foreground font-mono">
+                        <p className="text-xs text-muted-foreground font-mono truncate">
                           {job.id}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      {job.status === "active" && (
-                        <div className="flex items-center gap-2">
-                          <Progress
-                            value={
-                              typeof job.progress === "number"
-                                ? job.progress
-                                : job.progress?.percent || 0
-                            }
-                            className="w-20 h-1.5"
-                          />
-                        </div>
-                      )}
+                    <div className="flex items-center gap-3 shrink-0">
+                      <StateBadge state={job.state} />
                       <div className="text-right min-w-[70px]">
                         <p className="text-xs font-mono">
                           {job.duration ? formatDuration(job.duration) : "-"}
