@@ -9,6 +9,16 @@ import { RiotConnectionBanner } from "./components/RiotConnectionBanner";
 import { SummonerActions } from "./components/SummonerActions";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { HomeIcon } from "lucide-react";
+import Link from "next/link";
+import {
   usePathname,
   useParams,
   useRouter,
@@ -94,6 +104,25 @@ export default function SummonerByIdLayout({
 
   return (
     <div className="container mx-auto py-10">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/"><HomeIcon className="size-4" /></Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/summoners">Invocateurs</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{details?.gameName || "Profil"}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="mb-8 space-y-4">
         <SummonerHeader
           loading={loading}

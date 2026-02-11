@@ -11,8 +11,18 @@ import {
   CheckCircleIcon,
   ZapIcon,
   ShieldIcon,
-  EyeIcon
+  EyeIcon,
+  HomeIcon,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Link from "next/link";
 
 type Platform = "windows" | "mac" | "unknown";
 
@@ -79,7 +89,17 @@ export default function DownloadPage() {
 
   return (
     <div className="container mx-auto py-10 px-4">
-      {/* Hero Section */}
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Telecharger</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="text-center mb-12">
         <Badge variant="secondary" className="mb-4">
           Version {APP_VERSION}

@@ -1,5 +1,15 @@
 "use client";
 
+import Link from "next/link";
+import { HomeIcon } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { TierListHero } from "./components/TierListHero";
 import { TierListFilters } from "./components/TierListFilters";
 import { TierListTable } from "./components/TierListTable";
@@ -17,6 +27,18 @@ const ChampionsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Tier List Champions</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <TierListHero metrics={metrics} />
 
       <section className="space-y-4">

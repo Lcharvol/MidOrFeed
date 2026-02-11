@@ -22,7 +22,17 @@ import {
   SparklesIcon,
   GlobeIcon,
   UserIcon,
+  HomeIcon,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCounterPicks } from "@/lib/hooks/use-counter-picks";
 import { CounterPickSummaryCard } from "./components/CounterPickSummaryCard";
@@ -277,6 +287,18 @@ const CounterPicksPageClient = ({
 
   return (
     <main className="container mx-auto px-4 py-6 sm:py-8">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Counter Picks</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Hero Section when champion is selected */}
       {selectedChampion && (
         <div className="relative mb-6 sm:mb-8 overflow-hidden rounded-xl sm:rounded-2xl">

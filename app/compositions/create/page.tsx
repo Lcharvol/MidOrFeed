@@ -22,7 +22,17 @@ import {
   SearchIcon,
   CheckIcon,
   ArrowRightLeftIcon,
+  HomeIcon,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Link from "next/link";
 import { toast } from "sonner";
 import { useChampions } from "@/lib/hooks/use-champions";
 import { useI18n } from "@/lib/i18n-context";
@@ -209,7 +219,21 @@ export default function CreateCompositionPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
-      {/* Header */}
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/compositions/popular">Compositions</Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Creer</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">{t("compositions.createTitle")}</h1>

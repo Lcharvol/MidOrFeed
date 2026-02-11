@@ -1,6 +1,16 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import Link from "next/link";
+import { HomeIcon } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import type {
   ApiResponse,
   CompositionSuggestionDTO,
@@ -90,6 +100,18 @@ const PopularCompositionsPage = () => {
 
   return (
     <div className="container mx-auto py-12 space-y-8">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Compositions Populaires</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <PopularHero
         onRefresh={handleRefresh}
         isRefreshing={isValidating}

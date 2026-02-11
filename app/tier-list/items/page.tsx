@@ -17,7 +17,17 @@ import {
   ArrowUpIcon,
   ChevronsUpDownIcon,
   Loader2Icon,
+  HomeIcon,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { DDRAGON_VERSION, getItemImageUrl as buildItemImageUrl } from "@/constants/ddragon";
 import { useI18n } from "@/lib/i18n-context";
@@ -169,6 +179,17 @@ export default function ItemsPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-8">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Tier List Items</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="mb-6 sm:mb-8">
         <h1 className="mb-2 text-2xl sm:text-4xl font-bold">{t("tierList.items.title")}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">

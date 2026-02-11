@@ -23,7 +23,16 @@ import {
   ThumbsDownIcon,
   EyeIcon,
   FilterIcon,
+  HomeIcon,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
 import { useI18n } from "@/lib/i18n-context";
 import type { GuideSummary, GuideListResponse, GuideRole } from "@/types/guides";
@@ -156,7 +165,18 @@ const GuidesPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Guides</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">

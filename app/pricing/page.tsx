@@ -16,11 +16,20 @@ import {
   Loader2Icon,
   XIcon,
   ZapIcon,
+  HomeIcon,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function PricingPage() {
   const { user } = useAuth();
@@ -40,6 +49,17 @@ export default function PricingPage() {
 
   return (
     <div className="container mx-auto py-20 px-4">
+      <Breadcrumb className="mb-8">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Tarifs</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="text-center mb-16">
         <h1 className="text-5xl font-bold mb-4">Choisissez votre plan</h1>
         <p className="text-xl text-muted-foreground">

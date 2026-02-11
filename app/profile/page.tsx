@@ -6,7 +6,16 @@ import { AccountTab } from "./AccountTab";
 import { StatsTab } from "./StatsTab";
 import { SettingsTab } from "./SettingsTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserIcon, BarChart3Icon, SettingsIcon, Loader2Icon } from "lucide-react";
+import { UserIcon, BarChart3Icon, SettingsIcon, Loader2Icon, HomeIcon } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
 
 export default function ProfilePage() {
@@ -39,6 +48,17 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto py-6 sm:py-10">
       <div className="mx-auto max-w-4xl space-y-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Profil</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <ProfileHeader user={user} />
 
         <Tabs defaultValue="account" className="w-full">
