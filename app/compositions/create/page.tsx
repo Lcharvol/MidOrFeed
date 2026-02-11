@@ -61,6 +61,7 @@ export default function CreateCompositionPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [compositionName, setCompositionName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [swapMode, setSwapMode] = useState<RoleKey | null>(null);
 
   const [composition, setComposition] = useState<Record<RoleKey, ChampionEntity | null>>({
@@ -181,9 +182,10 @@ export default function CreateCompositionPage() {
     }
 
     if (!compositionName.trim()) {
-      toast.error(t("compositions.giveCompositionName"));
+      setNameError(t("compositions.giveCompositionName"));
       return;
     }
+    setNameError(null);
 
     setIsSaving(true);
     try {
@@ -451,13 +453,23 @@ export default function CreateCompositionPage() {
             </div>
 
             {/* Name input */}
-            <Input
-              placeholder={t("compositions.compositionNameLabel")}
-              value={compositionName}
-              onChange={(e) => setCompositionName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSave()}
-              autoFocus
-            />
+            <div className="space-y-1.5">
+              <Input
+                placeholder={t("compositions.compositionNameLabel")}
+                value={compositionName}
+                onChange={(e) => {
+                  setCompositionName(e.target.value);
+                  if (nameError) setNameError(null);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                autoFocus
+                aria-invalid={!!nameError}
+                className={nameError ? "border-destructive focus-visible:ring-destructive/30" : ""}
+              />
+              {nameError && (
+                <p className="text-xs text-destructive">{nameError}</p>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
