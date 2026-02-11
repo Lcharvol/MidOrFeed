@@ -104,15 +104,17 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       );
     }
 
-    // Get top-level comments with replies
+    // Get top-level comments with replies (capped to prevent unbounded fetch)
     const comments = await prisma.championGuideComment.findMany({
       where: {
         guideId,
         parentId: null,
       },
+      take: 50,
       include: {
         author: { select: { id: true, name: true } },
         replies: {
+          take: 20,
           include: {
             author: { select: { id: true, name: true } },
           },
