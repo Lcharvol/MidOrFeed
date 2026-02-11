@@ -9,7 +9,7 @@ import { createItemBuildsWorker } from "./item-builds.worker";
 import { createDataCleanupWorker } from "./data-cleanup.worker";
 import { createAccountRefreshWorker } from "./account-refresh.worker";
 import { createDailyResetWorker } from "./daily-reset.worker";
-import { closeJobQueue } from "../job-queue";
+import { closeJobQueue, scheduleJob, QUEUE_NAMES } from "../job-queue";
 import { createLogger } from "../logger";
 
 const logger = createLogger("workers");
@@ -71,6 +71,49 @@ export async function startAllWorkers() {
   process.on("SIGINT", shutdown);
 
   return workerIds;
+}
+
+/**
+ * Schedule all recurring jobs via pg-boss cron
+ * Safe to call multiple times — pg-boss deduplicates schedules by queue name.
+ */
+export async function scheduleAllJobs() {
+  logger.info("Scheduling recurring jobs...");
+
+  const schedules: Array<{ queue: Parameters<typeof scheduleJob>[0]; cron: string; data: Record<string, unknown> }> = [
+    // Every day at 00:00 UTC — reset daily quotas
+    { queue: QUEUE_NAMES.DAILY_RESET, cron: "0 0 * * *", data: {} },
+    // Every day at 01:00 UTC — cleanup old data
+    { queue: QUEUE_NAMES.DATA_CLEANUP, cron: "0 1 * * *", data: { daysToKeep: 90 } },
+    // Every 4 hours — sync leaderboards
+    { queue: QUEUE_NAMES.LEADERBOARD_SYNC, cron: "0 */4 * * *", data: {} },
+    // Every 6 hours — sync DDragon (champion/item data)
+    { queue: QUEUE_NAMES.DDRAGON_SYNC, cron: "0 */6 * * *", data: {} },
+    // Every 2 hours — refresh stale accounts
+    { queue: QUEUE_NAMES.ACCOUNT_REFRESH, cron: "0 */2 * * *", data: {} },
+    // Every hour — meta analysis
+    { queue: QUEUE_NAMES.META_ANALYSIS, cron: "0 * * * *", data: {} },
+    // Every 3 hours — synergy analysis
+    { queue: QUEUE_NAMES.SYNERGY_ANALYSIS, cron: "0 */3 * * *", data: {} },
+    // Every 3 hours — champion stats
+    { queue: QUEUE_NAMES.CHAMPION_STATS, cron: "0 */3 * * *", data: {} },
+    // Every 6 hours — item builds analysis
+    { queue: QUEUE_NAMES.ITEM_BUILDS, cron: "0 */6 * * *", data: {} },
+    // Every 2 hours — crawl new match data
+    { queue: QUEUE_NAMES.DATA_CRAWL, cron: "0 */2 * * *", data: {} },
+    // Every 4 hours — generate compositions
+    { queue: QUEUE_NAMES.COMPOSITIONS, cron: "0 */4 * * *", data: {} },
+  ];
+
+  for (const { queue, cron, data } of schedules) {
+    try {
+      await scheduleJob(queue, cron, data);
+    } catch (err) {
+      logger.error(`Failed to schedule ${queue}`, err as Error);
+    }
+  }
+
+  logger.info(`Scheduled ${schedules.length} recurring jobs`);
 }
 
 /**

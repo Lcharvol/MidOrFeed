@@ -3,7 +3,7 @@
  * Run with: npx tsx scripts/start-workers.ts
  */
 
-import { startAllWorkers } from "../lib/workers";
+import { startAllWorkers, scheduleAllJobs } from "../lib/workers";
 
 async function main() {
   console.log("=".repeat(50));
@@ -12,7 +12,8 @@ async function main() {
 
   try {
     await startAllWorkers();
-    console.log("Workers are running. Press Ctrl+C to stop.");
+    await scheduleAllJobs();
+    console.log("Workers and schedules are running. Press Ctrl+C to stop.");
   } catch (error) {
     console.error("Failed to start workers:", error);
     process.exit(1);
