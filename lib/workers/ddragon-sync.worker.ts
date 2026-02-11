@@ -10,6 +10,11 @@ import type {
 
 const logger = createLogger("ddragon-sync-worker");
 const DDRAGON_BASE = "https://ddragon.leagueoflegends.com";
+const FETCH_TIMEOUT_MS = 30_000;
+
+function fetchWithTimeout(url: string): Promise<Response> {
+  return fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+}
 
 type ChampionData = {
   id: string;
@@ -75,7 +80,7 @@ export async function createDDragonSyncWorker() {
         const { force = false, resources = ["champions", "items", "versions"] } = job.data;
 
         // Step 1: Get latest version
-        const versionsRes = await fetch(`${DDRAGON_BASE}/api/versions.json`);
+        const versionsRes = await fetchWithTimeout(`${DDRAGON_BASE}/api/versions.json`);
         const versions = (await versionsRes.json()) as string[];
         const latestVersion = versions[0];
 
@@ -101,7 +106,7 @@ export async function createDDragonSyncWorker() {
         // Step 2: Update champions
         if (resources.includes("champions")) {
           try {
-            const championsRes = await fetch(
+            const championsRes = await fetchWithTimeout(
               `${DDRAGON_BASE}/cdn/${latestVersion}/data/en_US/champion.json`
             );
             const championsData = (await championsRes.json()) as {
@@ -184,7 +189,7 @@ export async function createDDragonSyncWorker() {
         // Step 3: Update items
         if (resources.includes("items")) {
           try {
-            const itemsRes = await fetch(
+            const itemsRes = await fetchWithTimeout(
               `${DDRAGON_BASE}/cdn/${latestVersion}/data/en_US/item.json`
             );
             const itemsData = (await itemsRes.json()) as {

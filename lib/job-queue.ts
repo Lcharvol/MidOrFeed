@@ -83,7 +83,9 @@ export async function sendJob<T extends object>(
   const queue = await getJobQueue();
   return queue.send(queueName, data, {
     retryLimit: 3,
-    retryDelay: 5,
+    retryDelay: 30,
+    retryBackoff: true,
+    expireInSeconds: 1800, // 30 minutes
     ...options,
   });
 }
