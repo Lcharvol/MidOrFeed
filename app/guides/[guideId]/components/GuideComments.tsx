@@ -22,15 +22,7 @@ import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import type { GuideComment } from "@/types/guides";
 import { cn } from "@/lib/utils";
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
+import { formatRelativeDate } from "@/lib/format-date";
 
 // Single Comment Component
 const CommentItem = ({
@@ -77,7 +69,7 @@ const CommentItem = ({
               {comment.authorName || "Anonyme"}
             </span>
             <span className="text-muted-foreground">
-              {formatDate(comment.createdAt)}
+              {formatRelativeDate(comment.createdAt)}
             </span>
           </div>
           <p className="text-xs sm:text-sm mt-1 whitespace-pre-line">{comment.content}</p>

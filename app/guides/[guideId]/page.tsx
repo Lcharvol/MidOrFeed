@@ -29,15 +29,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import type { ChampionGuide, ItemBuildConfig, SkillOrderConfig } from "@/types/guides";
 import { GuideComments } from "./components/GuideComments";
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-};
+import { formatRelativeDate } from "@/lib/format-date";
 
 // Item Build Section
 const ItemBuildSection = ({ build }: { build: ItemBuildConfig }) => {
@@ -460,7 +452,7 @@ const GuidePage = () => {
                 </span>
                 <span className="flex items-center gap-1">
                   <CalendarIcon className="size-3 sm:size-4" />
-                  {formatDate(guide.createdAt)}
+                  {formatRelativeDate(guide.createdAt)}
                 </span>
                 <span className="flex items-center gap-1">
                   <EyeIcon className="size-3 sm:size-4" />

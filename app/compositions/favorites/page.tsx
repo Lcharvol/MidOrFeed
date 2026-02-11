@@ -37,6 +37,7 @@ import { useApiSWR } from "@/lib/hooks/swr";
 import { useChampions } from "@/lib/hooks/use-champions";
 import { authenticatedFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { formatRelativeDate } from "@/lib/format-date";
 
 type Composition = {
   id: string;
@@ -82,15 +83,6 @@ const CompositionCard = ({
     (role) => composition[role.key as RoleKey] !== null
   ).length;
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
   return (
     <Card className="group hover:border-primary/50 hover:shadow-md transition-all">
       <CardContent className="pt-4">
@@ -98,7 +90,7 @@ const CompositionCard = ({
           <div className="min-w-0">
             <h3 className="font-semibold truncate">{composition.name}</h3>
             <p className="text-xs text-muted-foreground">
-              {filledCount}/5 champions - {formatDate(composition.updatedAt)}
+              {filledCount}/5 champions - {formatRelativeDate(composition.updatedAt)}
             </p>
           </div>
           <Button

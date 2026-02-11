@@ -1,12 +1,15 @@
 "use client";
 
+import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Loader2Icon,
   RefreshCwIcon,
   TrendingUpIcon,
+  LinkIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 type SummonerActionsProps = {
   isUpdating: boolean;
@@ -21,6 +24,14 @@ export const SummonerActions = ({
   region,
   onUpdate,
 }: SummonerActionsProps) => {
+  const handleCopyLink = useCallback(() => {
+    const url = `${window.location.origin}/summoners/${puuid}/overview${region ? `?region=${region}` : ""}`;
+    navigator.clipboard.writeText(url).then(
+      () => toast.success("Lien copié !"),
+      () => toast.error("Impossible de copier le lien")
+    );
+  }, [puuid, region]);
+
   return (
     <div className="flex items-center gap-3">
       <Button
@@ -45,6 +56,16 @@ export const SummonerActions = ({
           <TrendingUpIcon className="mr-2 size-4" />
           Graphique de tier
         </Link>
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleCopyLink}
+        disabled={!puuid}
+        aria-label="Copier le lien du profil"
+        title="Copier le lien"
+      >
+        <LinkIcon className="size-4" />
       </Button>
     </div>
   );
