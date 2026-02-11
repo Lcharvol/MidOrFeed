@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { SwordsIcon, HomeIcon } from "lucide-react";
+import { SwordsIcon, HomeIcon, AlertCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useApiSWR } from "@/lib/hooks/swr";
 import {
@@ -32,6 +32,7 @@ export default function ComparePage() {
   const [region2, setRegion2] = useState("euw1");
   const [compareUrl, setCompareUrl] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const { data, isLoading } = useApiSWR<CompareResponse>(compareUrl, {
     revalidateOnFocus: false,
@@ -51,6 +52,7 @@ export default function ComparePage() {
     }
 
     setIsSearching(true);
+    setSearchError(null);
     try {
       const [res1, res2] = await Promise.all([
         fetch("/api/riot/search-account", {
@@ -77,11 +79,13 @@ export default function ComparePage() {
       const data2 = await res2.json();
 
       if (!res1.ok || !data1.data?.puuid) {
-        toast.error(`Joueur 1 non trouve: ${data1.error || "Erreur"}`);
+        const msg = `Joueur 1 introuvable : ${data1.error || `${parsed1.gameName}#${parsed1.tagLine} n'existe pas sur ${region1.toUpperCase()}`}`;
+        setSearchError(msg);
         return;
       }
       if (!res2.ok || !data2.data?.puuid) {
-        toast.error(`Joueur 2 non trouve: ${data2.error || "Erreur"}`);
+        const msg = `Joueur 2 introuvable : ${data2.error || `${parsed2.gameName}#${parsed2.tagLine} n'existe pas sur ${region2.toUpperCase()}`}`;
+        setSearchError(msg);
         return;
       }
 
@@ -90,7 +94,7 @@ export default function ComparePage() {
       );
     } catch (error) {
       console.error(error);
-      toast.error("Erreur lors de la recherche");
+      setSearchError("Erreur réseau. Vérifie ta connexion et réessaie.");
     } finally {
       setIsSearching(false);
     }
@@ -142,6 +146,13 @@ export default function ComparePage() {
         isSearching={isSearching}
         isLoading={isLoading}
       />
+
+      {searchError && (
+        <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive mb-6">
+          <AlertCircleIcon className="size-5 shrink-0" />
+          <p>{searchError}</p>
+        </div>
+      )}
 
       {(isLoading || hasData) && (
         <ComparisonResults
