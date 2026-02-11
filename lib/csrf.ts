@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 /**
  * CSRF Token Protection (Edge Runtime Compatible)
@@ -204,8 +205,8 @@ export const requireCsrf = async (
 ): Promise<NextResponse | null> => {
   const isValid = await validateCsrfRequest(request);
   if (!isValid) {
-    console.warn(
-      `[CSRF] Validation failed for ${request.method} ${request.url}`,
+    logger.warn(
+      `CSRF validation failed for ${request.method} ${request.url}`,
       {
         hasHeader: !!request.headers.get(CSRF_HEADER_NAME),
         hasCookie: !!request.cookies.get(CSRF_COOKIE_NAME),

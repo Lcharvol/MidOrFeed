@@ -1,4 +1,5 @@
 import type { NotificationPayload } from "@/types";
+import { logger } from "@/lib/logger";
 
 type NotificationMessage = {
   type: "notification";
@@ -59,7 +60,7 @@ export const broadcastNotification = (payload: NotificationPayload): void => {
     try {
       client.controller.enqueue(frame);
     } catch (error) {
-      console.error(`SSE broadcast error for client ${clientId}:`, error);
+      logger.error(`SSE broadcast error for client ${clientId}`, error as Error);
       clients.delete(clientId);
     }
   });
@@ -99,7 +100,7 @@ export const broadcastToAdmins = (payload: NotificationPayload): void => {
     try {
       client.controller.enqueue(frame);
     } catch (error) {
-      console.error(`SSE admin broadcast error for client ${clientId}:`, error);
+      logger.error(`SSE admin broadcast error for client ${clientId}`, error as Error);
       adminClients.delete(clientId);
     }
   });

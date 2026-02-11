@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { NextResponse } from "next/server";
 import { getEnv } from "./env";
+import { logger } from "./logger";
 
 /**
  * Clé secrète pour signer les JWT
@@ -12,9 +13,8 @@ const getJwtSecret = (): Uint8Array => {
   if (!secret) {
     // En développement, on autorise une clé par défaut avec un warning
     if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[JWT] ⚠️  JWT_SECRET non défini - utilisation d'une clé de développement. " +
-        "NE PAS utiliser en production!"
+      logger.warn(
+        "JWT_SECRET non défini - utilisation d'une clé de développement. NE PAS utiliser en production!"
       );
       return new TextEncoder().encode("dev-secret-key-do-not-use-in-production");
     }

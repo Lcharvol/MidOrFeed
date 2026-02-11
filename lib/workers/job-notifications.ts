@@ -1,5 +1,6 @@
 import { broadcastToAdmins } from "../server/notification-hub";
 import { WORKER_DESCRIPTIONS } from "./index";
+import { logger } from "../logger";
 import type { NotificationPayload, NotificationVariant } from "../../types";
 
 /**
@@ -57,7 +58,7 @@ export function notifyJobCompleted(
 ): void {
   const desc = WORKER_DESCRIPTIONS[queueName];
   if (!desc) {
-    console.warn(`[JobNotifications] Unknown queue: ${queueName}`);
+    logger.warn(`Unknown queue in job notifications: ${queueName}`);
     return;
   }
 
@@ -95,7 +96,7 @@ export function notifyJobFailed(
 ): void {
   const desc = WORKER_DESCRIPTIONS[queueName];
   if (!desc) {
-    console.warn(`[JobNotifications] Unknown queue: ${queueName}`);
+    logger.warn(`Unknown queue in job notifications: ${queueName}`);
     return;
   }
 
