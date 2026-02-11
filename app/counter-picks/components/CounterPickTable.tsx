@@ -99,7 +99,7 @@ export const CounterPickTable = ({
                 : `Tous les champions efficaces contre ${championName}`}
             </CardDescription>
           </div>
-          <Badge variant="secondary" className="px-3">
+          <Badge emphasis="info" emphasisVariant="subtle" className="px-3">
             {pairs.length} matchups
           </Badge>
         </div>

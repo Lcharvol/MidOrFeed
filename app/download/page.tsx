@@ -101,7 +101,7 @@ export default function DownloadPage() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="text-center mb-12">
-        <Badge variant="secondary" className="mb-4">
+        <Badge emphasis="info" emphasisVariant="subtle" className="mb-4">
           Version {APP_VERSION}
         </Badge>
         <h1 className="text-4xl font-bold mb-4">
@@ -125,7 +125,7 @@ export default function DownloadPage() {
                 <CardTitle className="flex items-center gap-2">
                   Windows
                   {platform === "windows" && (
-                    <Badge variant="outline" className="text-xs">Recommande</Badge>
+                    <Badge emphasis="positive" emphasisVariant="subtle" className="text-xs">Recommande</Badge>
                   )}
                 </CardTitle>
                 <CardDescription>Windows 10/11 (64-bit)</CardDescription>
@@ -159,7 +159,7 @@ export default function DownloadPage() {
                 <CardTitle className="flex items-center gap-2">
                   macOS
                   {platform === "mac" && (
-                    <Badge variant="outline" className="text-xs">Recommande</Badge>
+                    <Badge emphasis="positive" emphasisVariant="subtle" className="text-xs">Recommande</Badge>
                   )}
                 </CardTitle>
                 <CardDescription>macOS 10.15+ (Intel & Apple Silicon)</CardDescription>

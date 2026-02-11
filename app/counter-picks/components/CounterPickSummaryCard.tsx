@@ -108,7 +108,7 @@ export const CounterPickSummaryCard = ({
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold">{summary.reliableMatchups}</span>
-              <Badge variant="outline" className="text-xs">
+              <Badge emphasis="neutral" emphasisVariant="subtle" className="text-xs">
                 {formatNumber(summary.gamesAnalysed)} matchs
               </Badge>
             </div>

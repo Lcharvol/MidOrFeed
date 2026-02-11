@@ -192,7 +192,7 @@ export default function SummonersPage() {
                         <span className="text-muted-foreground">
                           #{user?.leagueAccount?.riotTagLine}
                         </span>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge emphasis="info" emphasisVariant="subtle" className="text-xs">
                           {user?.leagueAccount?.riotRegion?.toUpperCase()}
                         </Badge>
                       </div>

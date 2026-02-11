@@ -90,7 +90,7 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {guide.role && (
-                    <Badge variant="secondary" className="text-xs hidden xs:inline-flex">
+                    <Badge emphasis="info" emphasisVariant="subtle" className="text-xs hidden xs:inline-flex">
                       {guide.role}
                     </Badge>
                   )}
@@ -130,7 +130,7 @@ const GuideCard = ({ guide }: { guide: GuideSummary }) => {
                   <span>{guide.viewCount}</span>
                 </div>
                 {guide.patchVersion && (
-                  <Badge variant="outline" className="text-xs hidden sm:inline-flex">
+                  <Badge emphasis="neutral" emphasisVariant="subtle" className="text-xs hidden sm:inline-flex">
                     {guide.patchVersion}
                   </Badge>
                 )}
