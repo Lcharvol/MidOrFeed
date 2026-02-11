@@ -43,11 +43,11 @@ export default function ComparePage() {
     const parsed2 = parsePlayerQuery(player2Query);
 
     if (!parsed1) {
-      toast.error("Joueur 1: Format invalide. Utilisez Nom#TAG");
+      setSearchError("Joueur 1 : format invalide. Utilise le format Nom#TAG");
       return;
     }
     if (!parsed2) {
-      toast.error("Joueur 2: Format invalide. Utilisez Nom#TAG");
+      setSearchError("Joueur 2 : format invalide. Utilise le format Nom#TAG");
       return;
     }
 
