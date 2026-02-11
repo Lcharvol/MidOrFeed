@@ -41,6 +41,7 @@ export default function SummonersPage() {
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("euw1");
   const [isSearching, setIsSearching] = useState(false);
+  const [formatHint, setFormatHint] = useState<string | null>(null);
   const { recentSearches } = useRecentSearch();
 
   const hasLinkedAccount = user?.leagueAccount?.puuid && user?.leagueAccount?.riotRegion;
@@ -56,9 +57,10 @@ export default function SummonersPage() {
     const hashIndex = trimmed.lastIndexOf("#");
 
     if (hashIndex === -1 || hashIndex === 0 || hashIndex === trimmed.length - 1) {
-      toast.error("Format invalide. Utilisez Nom#TAG");
+      setFormatHint("Format invalide. Utilisez Nom#TAG");
       return;
     }
+    setFormatHint(null);
 
     const gameName = trimmed.slice(0, hashIndex).trim();
     const tagLine = trimmed.slice(hashIndex + 1).trim();
@@ -139,16 +141,22 @@ export default function SummonersPage() {
                     </SelectContent>
                   </Select>
 
-                  <div className="flex-1">
+                  <div className="flex-1 space-y-1">
                     <PlayerSearchInput
                       value={query}
-                      onChange={setQuery}
+                      onChange={(v) => {
+                        setQuery(v);
+                        if (formatHint) setFormatHint(null);
+                      }}
                       region={region}
                       placeholder="Nom#TAG (ex: Faker#KR1)"
                       onSelect={(result) => {
                         router.push(`/summoners/${result.puuid}/overview?region=${result.region}`);
                       }}
                     />
+                    {formatHint && (
+                      <p className="text-xs text-destructive px-1">{formatHint}</p>
+                    )}
                   </div>
 
                   <Button
