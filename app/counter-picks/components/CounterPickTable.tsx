@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ import {
   MedalIcon,
   AwardIcon,
   ChevronDownIcon,
+  ArrowUpDownIcon,
   SwordsIcon,
 } from "lucide-react";
 import { formatDateTime, formatNumber, formatPercent } from "../utils";
@@ -86,8 +87,28 @@ export const CounterPickTable = ({
   mode,
 }: CounterPickTableProps) => {
   const [open, setOpen] = useState(false);
-  const initialPairs = pairs.slice(0, INITIAL_SHOW);
-  const remainingPairs = pairs.slice(INITIAL_SHOW);
+  const [sortKey, setSortKey] = useState<"winRate" | "games">("winRate");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  const sortedPairs = useMemo(() => {
+    const sorted = [...pairs].sort((a, b) => {
+      const diff = sortKey === "winRate" ? a.winRate - b.winRate : a.games - b.games;
+      return sortAsc ? diff : -diff;
+    });
+    return sorted;
+  }, [pairs, sortKey, sortAsc]);
+
+  const handleSort = (key: "winRate" | "games") => {
+    if (sortKey === key) {
+      setSortAsc((prev) => !prev);
+    } else {
+      setSortKey(key);
+      setSortAsc(false);
+    }
+  };
+
+  const initialPairs = sortedPairs.slice(0, INITIAL_SHOW);
+  const remainingPairs = sortedPairs.slice(INITIAL_SHOW);
   const hasMore = remainingPairs.length > 0;
 
   const renderRow = (pair: CounterPickPair, index: number) => {
@@ -208,8 +229,20 @@ export const CounterPickTable = ({
           <div className="grid grid-cols-12 gap-2 border-b border-border/50 bg-muted/30 px-4 py-2.5 text-xs font-medium text-muted-foreground">
             <div className="col-span-1 text-center">#</div>
             <div className="col-span-4">Champion</div>
-            <div className="col-span-4">Win rate counter</div>
-            <div className="col-span-2 text-right">Matchs</div>
+            <button
+              className="col-span-4 flex items-center gap-1 hover:text-foreground transition-colors text-left"
+              onClick={() => handleSort("winRate")}
+            >
+              Win rate counter
+              <ArrowUpDownIcon className={cn("size-3", sortKey === "winRate" && "text-foreground")} />
+            </button>
+            <button
+              className="col-span-2 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
+              onClick={() => handleSort("games")}
+            >
+              Matchs
+              <ArrowUpDownIcon className={cn("size-3", sortKey === "games" && "text-foreground")} />
+            </button>
             <div className="col-span-1 text-right">Date</div>
           </div>
 
