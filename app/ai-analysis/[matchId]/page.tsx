@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
   ZapIcon,
   ShieldIcon,
   SwordsIcon,
+  LogInIcon,
 } from "lucide-react";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import Link from "next/link";
@@ -132,10 +133,27 @@ const InsightCard = ({
 };
 
 export default function AIAnalysisPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto py-20">
+          <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center">
+            <Loader2Icon className="size-6 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground text-sm">Chargement...</p>
+          </div>
+        </div>
+      }
+    >
+      <AIAnalysisContent />
+    </Suspense>
+  );
+}
+
+function AIAnalysisContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { t } = useI18n();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const matchId = params.matchId as string;
   const participantPuuid = searchParams.get("puuid") || user?.riotPuuid || "";
 
@@ -175,6 +193,38 @@ export default function AIAnalysisPage() {
     const style = PERFORMANCE_STYLES[level];
     return { label: labels[performance] || performance, color: style.bg };
   };
+
+  // Auth loading
+  if (isAuthLoading) {
+    return (
+      <div className="container mx-auto py-20">
+        <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center">
+          <Loader2Icon className="size-6 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground text-sm">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!user) {
+    return (
+      <div className="container mx-auto py-20">
+        <div className="max-w-md mx-auto text-center">
+          <div className="bg-muted rounded-full p-6 w-fit mx-auto mb-6">
+            <LogInIcon className="size-12 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-semibold mb-3">Connexion requise</h3>
+          <p className="text-muted-foreground mb-6">
+            Vous devez être connecté pour utiliser l&apos;analyse IA.
+          </p>
+          <Button asChild>
+            <Link href="/login">Se connecter</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (isAnalyzing) {
@@ -279,7 +329,7 @@ export default function AIAnalysisPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="Retour">
             <Link href="/summoners">
               <ArrowLeftIcon className="size-5" />
             </Link>
