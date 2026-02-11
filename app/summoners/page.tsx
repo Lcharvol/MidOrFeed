@@ -74,14 +74,20 @@ export default function SummonersPage() {
       const data = await response.json();
 
       if (!response.ok || !data.data?.puuid) {
-        toast.error(data.error || "Joueur non trouve");
+        if (response.status === 404) {
+          toast.error(`Joueur introuvable : ${gameName}#${tagLine} n'existe pas sur ${region.toUpperCase()}`);
+        } else if (response.status === 429) {
+          toast.error("Trop de requêtes — réessaie dans quelques secondes");
+        } else {
+          toast.error(data.error || "Erreur serveur — réessaie plus tard");
+        }
         return;
       }
 
       router.push(`/summoners/${data.data.puuid}/overview?region=${region}`);
     } catch (error) {
       console.error(error);
-      toast.error("Erreur lors de la recherche");
+      toast.error("Erreur réseau — vérifie ta connexion");
     } finally {
       setIsSearching(false);
     }

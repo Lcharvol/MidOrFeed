@@ -167,11 +167,15 @@ export default function CompositionsFavoritesPage() {
         const res = await authenticatedFetch(`/api/compositions/${id}`, {
           method: "DELETE",
         });
-        if (!res.ok) throw new Error("Erreur");
-        toast.success("Composition supprimee");
+        if (!res.ok) {
+          if (res.status === 404) throw new Error("Composition introuvable");
+          if (res.status === 401) throw new Error("Connecte-toi pour supprimer");
+          throw new Error("Erreur serveur — réessaie plus tard");
+        }
+        toast.success("Composition supprimée");
         mutate();
-      } catch {
-        toast.error("Erreur lors de la suppression");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Erreur réseau — vérifie ta connexion");
       }
     },
     [mutate]

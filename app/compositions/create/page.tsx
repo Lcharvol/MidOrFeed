@@ -203,7 +203,13 @@ export default function CreateCompositionPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || t("compositions.saveError"));
+        if (response.status === 401) {
+          toast.error("Connecte-toi pour sauvegarder une composition");
+        } else if (response.status === 429) {
+          toast.error("Trop de requêtes — réessaie dans quelques secondes");
+        } else {
+          toast.error(result.error || t("compositions.saveError"));
+        }
         return;
       }
 
@@ -211,7 +217,7 @@ export default function CreateCompositionPage() {
       setShowSaveDialog(false);
       router.push("/compositions/favorites");
     } catch {
-      toast.error(t("compositions.saveError"));
+      toast.error("Erreur réseau — vérifie ta connexion");
     } finally {
       setIsSaving(false);
     }
