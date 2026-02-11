@@ -1,56 +1,12 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-
-// Dynamic imports for heavy build-tool components
-const ChampionSelector = dynamic(
-  () => import("@/components/build-tools").then((mod) => mod.ChampionSelector),
-  { ssr: false, loading: () => <Skeleton className="h-12 w-full" /> }
-);
-const ItemSelector = dynamic(
-  () => import("@/components/build-tools").then((mod) => mod.ItemSelector),
-  { ssr: false, loading: () => <Skeleton className="h-32 w-full" /> }
-);
-const SkillOrderEditor = dynamic(
-  () => import("@/components/build-tools").then((mod) => mod.SkillOrderEditor),
-  { ssr: false, loading: () => <Skeleton className="h-24 w-full" /> }
-);
-const SummonerSpellSelector = dynamic(
-  () => import("@/components/build-tools").then((mod) => mod.SummonerSpellSelector),
-  { ssr: false, loading: () => <Skeleton className="h-12 w-full" /> }
-);
-const RuneSelector = dynamic(
-  () => import("@/components/build-tools").then((mod) => mod.RuneSelector),
-  { ssr: false, loading: () => <Skeleton className="h-48 w-full" /> }
-);
-import {
-  ArrowLeftIcon,
-  SaveIcon,
-  Loader2Icon,
-  SwordIcon,
-  ZapIcon,
-  ShieldIcon,
-  LightbulbIcon,
-  PlusIcon,
-  XIcon,
-} from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useCreateGuide } from "@/lib/hooks/use-guide";
 import { useApiSWR, STATIC_DATA_CONFIG } from "@/lib/hooks/swr";
@@ -67,6 +23,13 @@ import type {
   RuneConfig,
   GuideRole,
 } from "@/types/guides";
+
+import { GuideMetadataForm } from "./GuideMetadataForm";
+import { GuideBuildSection } from "./GuideBuildSection";
+import { GuideSkillsAndSpells } from "./GuideSkillsAndSpells";
+import { GuideStrengthsWeaknesses } from "./GuideStrengthsWeaknesses";
+import { GuideGameplayTips } from "./GuideGameplayTips";
+import { GuideFormActions } from "./GuideFormActions";
 
 // Loading fallback for Suspense
 const CreateGuideLoading = () => (
@@ -90,52 +53,6 @@ const CreateGuideLoading = () => (
     </Card>
   </div>
 );
-
-const ROLES: { value: GuideRole; label: string }[] = [
-  { value: "TOP", label: "Top" },
-  { value: "JUNGLE", label: "Jungle" },
-  { value: "MID", label: "Mid" },
-  { value: "ADC", label: "ADC" },
-  { value: "SUPPORT", label: "Support" },
-];
-
-// Suggestions de points forts pré-définies
-const STRENGTH_SUGGESTIONS = [
-  "Bon waveclear",
-  "Fort en 1v1",
-  "Excellent engage",
-  "Très mobile",
-  "Bon sustain",
-  "Fort en late game",
-  "Burst élevé",
-  "Bon poke",
-  "Bon split push",
-  "Forte pression de map",
-  "Bon pour les objectifs",
-  "Contrôle de zone",
-  "CC puissant",
-  "Bon scaling",
-  "Fort en teamfight",
-];
-
-// Suggestions de points faibles pré-définies
-const WEAKNESS_SUGGESTIONS = [
-  "Vulnérable aux ganks",
-  "Faible early game",
-  "Peu mobile",
-  "Dépendant des items",
-  "Faible contre les tanks",
-  "Vulnérable au CC",
-  "Difficile à maîtriser",
-  "Faible waveclear",
-  "Mauvais objectifs",
-  "Peu de sustain",
-  "Vulnérable au poke",
-  "Team dépendant",
-  "Facilement kité",
-  "Mana dépendant",
-  "Faible contre les assassins",
-];
 
 const CreateGuideContent = () => {
   const router = useRouter();
@@ -214,60 +131,6 @@ const CreateGuideContent = () => {
       </div>
     );
   }
-
-  const handleAddStrength = () => {
-    if (strengths.length < 5) {
-      setStrengths([...strengths, ""]);
-    }
-  };
-
-  const handleRemoveStrength = (index: number) => {
-    setStrengths(strengths.filter((_, i) => i !== index));
-  };
-
-  const handleStrengthChange = (index: number, value: string) => {
-    const newStrengths = [...strengths];
-    newStrengths[index] = value;
-    setStrengths(newStrengths);
-  };
-
-  const handleAddWeakness = () => {
-    if (weaknesses.length < 5) {
-      setWeaknesses([...weaknesses, ""]);
-    }
-  };
-
-  const handleRemoveWeakness = (index: number) => {
-    setWeaknesses(weaknesses.filter((_, i) => i !== index));
-  };
-
-  const handleWeaknessChange = (index: number, value: string) => {
-    const newWeaknesses = [...weaknesses];
-    newWeaknesses[index] = value;
-    setWeaknesses(newWeaknesses);
-  };
-
-  const handleAddStrengthSuggestion = (suggestion: string) => {
-    // Don't add if already at max or already exists
-    if (strengths.length >= 5 || strengths.includes(suggestion)) return;
-    // Replace empty first entry or add new
-    if (strengths.length === 1 && strengths[0] === "") {
-      setStrengths([suggestion]);
-    } else {
-      setStrengths([...strengths, suggestion]);
-    }
-  };
-
-  const handleAddWeaknessSuggestion = (suggestion: string) => {
-    // Don't add if already at max or already exists
-    if (weaknesses.length >= 5 || weaknesses.includes(suggestion)) return;
-    // Replace empty first entry or add new
-    if (weaknesses.length === 1 && weaknesses[0] === "") {
-      setWeaknesses([suggestion]);
-    } else {
-      setWeaknesses([...weaknesses, suggestion]);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -358,366 +221,60 @@ const CreateGuideContent = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations de base</CardTitle>
-            <CardDescription>
-              Choisissez le champion et donnez un titre à votre guide
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Champion *</Label>
-                <ChampionSelector
-                  value={championId}
-                  onChange={setChampionId}
-                />
-              </div>
+        <GuideMetadataForm
+          championId={championId}
+          setChampionId={setChampionId}
+          role={role}
+          setRole={setRole}
+          title={title}
+          setTitle={setTitle}
+          patchVersion={patchVersion}
+          setPatchVersion={setPatchVersion}
+          availableVersions={availableVersions}
+          introduction={introduction}
+          setIntroduction={setIntroduction}
+        />
 
-              <div className="space-y-2">
-                <Label htmlFor="role">Rôle</Label>
-                <Select value={role} onValueChange={(v) => setRole(v as GuideRole)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un rôle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROLES.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        <GuideBuildSection
+          starterItems={starterItems}
+          setStarterItems={setStarterItems}
+          coreItems={coreItems}
+          setCoreItems={setCoreItems}
+          situationalItems={situationalItems}
+          setSituationalItems={setSituationalItems}
+          bootsItems={bootsItems}
+          setBootsItems={setBootsItems}
+        />
 
-            <div className="space-y-2">
-              <Label htmlFor="title">Titre du guide *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Guide Yasuo Mid S14 - Dominez votre lane"
-                maxLength={100}
-              />
-            </div>
+        <GuideSkillsAndSpells
+          skillOrder={skillOrder}
+          setSkillOrder={setSkillOrder}
+          summonerSpells={summonerSpells}
+          setSummonerSpells={setSummonerSpells}
+          runeConfig={runeConfig}
+          setRuneConfig={setRuneConfig}
+        />
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="patch">Version du patch</Label>
-                <Select
-                  value={patchVersion}
-                  onValueChange={setPatchVersion}
-                >
-                  <SelectTrigger id="patch">
-                    <SelectValue placeholder="Sélectionner une version" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableVersions.map((version) => (
-                      <SelectItem key={version} value={version}>
-                        Patch {version.replace(".1", "")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        <GuideStrengthsWeaknesses
+          strengths={strengths}
+          setStrengths={setStrengths}
+          weaknesses={weaknesses}
+          setWeaknesses={setWeaknesses}
+        />
 
-            <div className="space-y-2">
-              <Label htmlFor="introduction">Introduction</Label>
-              <Textarea
-                id="introduction"
-                value={introduction}
-                onChange={(e) => setIntroduction(e.target.value)}
-                placeholder="Présentez votre guide et ce qui le rend unique..."
-                rows={4}
-                maxLength={2000}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <GuideGameplayTips
+          earlyGameTips={earlyGameTips}
+          setEarlyGameTips={setEarlyGameTips}
+          midGameTips={midGameTips}
+          setMidGameTips={setMidGameTips}
+          lateGameTips={lateGameTips}
+          setLateGameTips={setLateGameTips}
+        />
 
-        {/* Item Build */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SwordIcon className="size-5" />
-              Build Items
-            </CardTitle>
-            <CardDescription>
-              Définissez l'ordre des items à acheter
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <ItemSelector
-              label="Items de départ"
-              selectedItems={starterItems}
-              onItemsChange={setStarterItems}
-              maxItems={3}
-              placeholder="Ajouter un item de départ"
-              starterOnly
-              dialogTitle="Sélectionner un item de départ"
-            />
-
-            <Separator />
-
-            <ItemSelector
-              label="Items core"
-              selectedItems={coreItems}
-              onItemsChange={setCoreItems}
-              maxItems={4}
-              placeholder="Ajouter un item core"
-              completedOnly
-              dialogTitle="Sélectionner un item core"
-            />
-
-            <Separator />
-
-            <ItemSelector
-              label="Items situationnels"
-              selectedItems={situationalItems}
-              onItemsChange={setSituationalItems}
-              maxItems={6}
-              placeholder="Ajouter un item situationnel"
-              completedOnly
-              dialogTitle="Sélectionner un item situationnel"
-            />
-
-            <Separator />
-
-            <ItemSelector
-              label="Bottes"
-              selectedItems={bootsItems}
-              onItemsChange={setBootsItems}
-              maxItems={2}
-              placeholder="Ajouter des bottes"
-              filterTag="Boots"
-              dialogTitle="Sélectionner des bottes"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Skill Order & Summoner Spells */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ZapIcon className="size-5" />
-              Compétences et sorts
-            </CardTitle>
-            <CardDescription>
-              Définissez l'ordre des compétences et les sorts d'invocateur
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <Label className="mb-2 block">Ordre des compétences</Label>
-              <SkillOrderEditor value={skillOrder} onChange={setSkillOrder} />
-            </div>
-            <Separator />
-            <SummonerSpellSelector
-              label="Sorts d'invocateur"
-              selectedSpells={summonerSpells}
-              onSpellsChange={setSummonerSpells}
-            />
-            <Separator />
-            <RuneSelector
-              label="Runes"
-              value={runeConfig}
-              onChange={setRuneConfig}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Strengths & Weaknesses */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldIcon className="size-5" />
-              Points forts et faibles
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Strengths */}
-              <div className="space-y-3">
-                <Label className="text-win">Points forts</Label>
-                {strengths.map((strength, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={strength}
-                      onChange={(e) => handleStrengthChange(index, e.target.value)}
-                      placeholder="Ex: Bon waveclear"
-                      maxLength={200}
-                    />
-                    {strengths.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveStrength(index)}
-                      >
-                        <XIcon className="size-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                {strengths.length < 5 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddStrength}
-                  >
-                    <PlusIcon className="size-4 mr-1" />
-                    Ajouter
-                  </Button>
-                )}
-                {/* Suggestions */}
-                <div className="pt-2">
-                  <p className="text-xs text-muted-foreground mb-2">Suggestions :</p>
-                  <div className="flex flex-wrap gap-1">
-                    {STRENGTH_SUGGESTIONS.filter(s => !strengths.includes(s)).slice(0, 8).map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        onClick={() => handleAddStrengthSuggestion(suggestion)}
-                        disabled={strengths.length >= 5}
-                        className="text-xs px-2 py-1 rounded-full bg-win/10 text-win hover:bg-win/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        + {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Weaknesses */}
-              <div className="space-y-3">
-                <Label className="text-loss">Points faibles</Label>
-                {weaknesses.map((weakness, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={weakness}
-                      onChange={(e) => handleWeaknessChange(index, e.target.value)}
-                      placeholder="Ex: Vulnérable aux ganks"
-                      maxLength={200}
-                    />
-                    {weaknesses.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveWeakness(index)}
-                      >
-                        <XIcon className="size-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                {weaknesses.length < 5 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddWeakness}
-                  >
-                    <PlusIcon className="size-4 mr-1" />
-                    Ajouter
-                  </Button>
-                )}
-                {/* Suggestions */}
-                <div className="pt-2">
-                  <p className="text-xs text-muted-foreground mb-2">Suggestions :</p>
-                  <div className="flex flex-wrap gap-1">
-                    {WEAKNESS_SUGGESTIONS.filter(s => !weaknesses.includes(s)).slice(0, 8).map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        onClick={() => handleAddWeaknessSuggestion(suggestion)}
-                        disabled={weaknesses.length >= 5}
-                        className="text-xs px-2 py-1 rounded-full bg-loss/10 text-loss hover:bg-loss/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        + {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Gameplay Tips */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LightbulbIcon className="size-5" />
-              Conseils de jeu
-            </CardTitle>
-            <CardDescription>
-              Partagez vos conseils pour chaque phase du jeu
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="early">Early Game (Niv. 1-6)</Label>
-              <Textarea
-                id="early"
-                value={earlyGameTips}
-                onChange={(e) => setEarlyGameTips(e.target.value)}
-                placeholder="Comment jouer les premières minutes, les trades, le farming..."
-                rows={3}
-                maxLength={2000}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mid">Mid Game (Niv. 7-12)</Label>
-              <Textarea
-                id="mid"
-                value={midGameTips}
-                onChange={(e) => setMidGameTips(e.target.value)}
-                placeholder="Rotations, objectifs, teamfights..."
-                rows={3}
-                maxLength={2000}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="late">Late Game (Niv. 13+)</Label>
-              <Textarea
-                id="late"
-                value={lateGameTips}
-                onChange={(e) => setLateGameTips(e.target.value)}
-                placeholder="Positionnement, focus, closing..."
-                rows={3}
-                maxLength={2000}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Submit */}
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" asChild>
-            <Link href="/guides">Annuler</Link>
-          </Button>
-          <Button type="submit" disabled={isSubmitting || !championId || !title.trim()}>
-            {isSubmitting ? (
-              <>
-                <Loader2Icon className="size-4 mr-2 animate-spin" />
-                Publication...
-              </>
-            ) : (
-              <>
-                <SaveIcon className="size-4 mr-2" />
-                Publier le guide
-              </>
-            )}
-          </Button>
-        </div>
+        <GuideFormActions
+          isSubmitting={isSubmitting}
+          disabled={isSubmitting || !championId || !title.trim()}
+        />
       </form>
     </div>
   );
