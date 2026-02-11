@@ -240,7 +240,8 @@
     "delete": "Delete",
     "deleteAccountComingSoon": "Account deletion feature coming soon",
     "deleteAccountConfirmation": "⚠️ Are you sure you want to delete your account? This action is irreversible.",
-    "private": "Private"
+    "private": "Private",
+    "comingSoon": "Coming soon"
   },
   "ranking": {
     "rankedSoloDuo": "Ranked Solo/Duo",

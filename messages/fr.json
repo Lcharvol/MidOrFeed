@@ -240,7 +240,8 @@
     "delete": "Supprimer",
     "deleteAccountComingSoon": "Fonctionnalité de suppression de compte à venir",
     "deleteAccountConfirmation": "⚠️ Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
-    "private": "Privé"
+    "private": "Privé",
+    "comingSoon": "Bientot"
   },
   "ranking": {
     "rankedSoloDuo": "Classé Solo/Duo",

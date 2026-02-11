@@ -37,13 +37,14 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
+import { useSWRConfig } from "swr";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { locale, setLocale, t } = useI18n();
   const { user, logout } = useAuth();
+  const { cache, mutate } = useSWRConfig();
   const [mounted, setMounted] = useState(false);
-  const [notifications, setNotifications] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Prevent hydration mismatch
@@ -63,20 +64,17 @@ export default function SettingsPage() {
     toast.success(t("settings.languageChanged"));
   };
 
-  const handleNotificationsToggle = (checked: boolean) => {
-    setNotifications(checked);
-    toast.success(
-      t(`settings.notifications${checked ? "Enabled" : "Disabled"}`)
-    );
+  const handleNotificationsToggle = () => {
+    toast.info(t("settings.comingSoon"));
   };
 
   const handleClearCache = async () => {
     setLoading(true);
     try {
-      // Simuler une suppression de cache
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Clear SWR cache: revalidate all keys
+      await mutate(() => true, undefined, { revalidate: true });
       toast.success(t("settings.cacheCleared"));
-    } catch (error) {
+    } catch {
       toast.error(t("settings.cacheError"));
     } finally {
       setLoading(false);
@@ -216,24 +214,27 @@ export default function SettingsPage() {
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">
-                  {t("settings.pushNotifications")}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium">
+                    {t("settings.pushNotifications")}
+                  </h3>
+                  <Badge variant="secondary" className="text-[10px]">{t("settings.comingSoon")}</Badge>
+                </div>
                 <p className="text-sm text-muted-foreground">
                   {t("settings.receiveNotifications")}
                 </p>
               </div>
-              <Switch
-                checked={notifications}
-                onCheckedChange={handleNotificationsToggle}
-              />
+              <Switch disabled />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">
-                  {t("settings.matchAlerts")}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium">
+                    {t("settings.matchAlerts")}
+                  </h3>
+                  <Badge variant="secondary" className="text-[10px]">{t("settings.comingSoon")}</Badge>
+                </div>
                 <p className="text-sm text-muted-foreground">
                   {t("settings.recentMatchNotifications")}
                 </p>
@@ -318,9 +319,12 @@ export default function SettingsPage() {
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm font-medium">
-                  {t("settings.exportData")}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium">
+                    {t("settings.exportData")}
+                  </h3>
+                  <Badge variant="secondary" className="text-[10px]">{t("settings.comingSoon")}</Badge>
+                </div>
                 <p className="text-sm text-muted-foreground">
                   {t("settings.downloadDataCopy")}
                 </p>
