@@ -379,7 +379,12 @@ export async function POST(request: Request) {
       page++;
     }
 
-    await recordSummonerHistory(validatedData.puuid, normalizedRegion);
+    // Record history best-effort — don't fail the request if it errors
+    try {
+      await recordSummonerHistory(validatedData.puuid, normalizedRegion);
+    } catch (historyErr) {
+      console.error("Failed to record summoner history:", historyErr);
+    }
 
     return NextResponse.json(
       {
@@ -406,12 +411,13 @@ export async function POST(request: Request) {
   }
 }
 
-async function recordSummonerHistory(puuid: string, region?: string) {
-  const { ShardedLeagueAccounts } = await import(
-    "@/lib/prisma-sharded-accounts"
-  );
-  // Utiliser la région connue si disponible pour optimiser la recherche
-  const account = await ShardedLeagueAccounts.findUniqueByPuuidGlobal(puuid, region);
+async function recordSummonerHistory(puuid: string, _region?: string) {
+  // SummonerOverviewHistory has a FK to LeagueOfLegendsAccount (non-sharded),
+  // so we must look up the account in that table, NOT the sharded tables.
+  const account = await prisma.leagueOfLegendsAccount.findUnique({
+    where: { puuid },
+    select: { id: true },
+  });
 
   if (!account) {
     return;
