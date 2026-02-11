@@ -74,15 +74,17 @@ export async function createDataCrawlWorker() {
               useCache: false,
             });
 
-            // Process each match
-            for (const matchId of matchIds) {
-              try {
-                // Check if match already exists
-                const existingMatch = await prisma.match.findUnique({
-                  where: { matchId },
-                });
+            // Batch-check which matches already exist
+            const existingMatches = await prisma.match.findMany({
+              where: { matchId: { in: matchIds } },
+              select: { matchId: true },
+            });
+            const existingMatchIds = new Set(existingMatches.map((m) => m.matchId));
+            const newMatchIds = matchIds.filter((id) => !existingMatchIds.has(id));
 
-                if (existingMatch) continue;
+            // Process only new matches
+            for (const matchId of newMatchIds) {
+              try {
 
                 // Fetch match details
                 const matchUrl = `https://${routing}.api.riotgames.com/lol/match/v5/matches/${matchId}`;
