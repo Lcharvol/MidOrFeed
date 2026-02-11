@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrophyIcon, InfoIcon } from "lucide-react";
+import { TrophyIcon, InfoIcon, UsersIcon } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { DataState } from "@/components/ui/data-state";
 import { Badge } from "@/components/ui/badge";
 import { ColorBadge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { useParams, useSearchParams } from "next/navigation";
 import { useI18n } from "@/lib/i18n-context";
+import { useApiSWR } from "@/lib/hooks/swr";
 
 interface LeagueEntry {
   leagueId: string;
@@ -59,6 +61,66 @@ const RANK_ROMAN: Record<string, string> = {
   II: "II",
   I: "I",
 };
+
+interface DivisionStandingsData {
+  success: boolean;
+  data: {
+    tier: string;
+    division: string;
+    totalPlayers: number;
+    playerRank: number | null;
+    topPlayers: Array<{ leaguePoints: number; wins: number; losses: number }>;
+  };
+}
+
+function DivisionStanding({
+  tier,
+  rank,
+  lp,
+  region,
+  queueType,
+}: {
+  tier: string;
+  rank: string;
+  lp: number;
+  region: string;
+  queueType: string;
+}) {
+  const HIGH_TIERS = ["MASTER", "GRANDMASTER", "CHALLENGER"];
+  const { data, isLoading } = useApiSWR<DivisionStandingsData>(
+    !HIGH_TIERS.includes(tier) && region
+      ? `/api/riot/division-standings?region=${region}&tier=${tier}&division=${rank}&queue=${queueType}&lp=${lp}`
+      : null,
+    { revalidateOnFocus: false }
+  );
+
+  if (isLoading || !data?.data || data.data.totalPlayers === 0) return null;
+
+  const { totalPlayers, playerRank } = data.data;
+  const percentile = playerRank ? Math.round((playerRank / totalPlayers) * 100) : null;
+
+  return (
+    <div className="mt-4 rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
+      <div className="flex items-center gap-2 text-xs font-semibold">
+        <UsersIcon className="size-3.5 text-muted-foreground" />
+        Position dans la division
+      </div>
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">
+          {totalPlayers} joueurs dans cette division
+        </span>
+        {percentile !== null && (
+          <Badge emphasis={percentile <= 25 ? "positive" : percentile <= 50 ? "info" : "neutral"} emphasisVariant="subtle" className="text-[10px]">
+            Top {percentile}%
+          </Badge>
+        )}
+      </div>
+      {percentile !== null && (
+        <Progress value={100 - percentile} className="h-1.5" />
+      )}
+    </div>
+  );
+}
 
 export default function RankingByIdPage() {
   const { t } = useI18n();
@@ -251,6 +313,15 @@ export default function RankingByIdPage() {
                   >
                     🆕 {t("ranking.freshBlood")}
                   </ColorBadge>
+                )}
+                {region && (
+                  <DivisionStanding
+                    tier={league.tier}
+                    rank={league.rank}
+                    lp={league.leaguePoints}
+                    region={region}
+                    queueType={league.queueType}
+                  />
                 )}
               </CardContent>
             </Card>
