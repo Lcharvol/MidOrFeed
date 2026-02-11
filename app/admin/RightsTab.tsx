@@ -266,6 +266,7 @@ export const RightsTab = () => {
                       }}
                       className="flex items-center gap-1.5 text-xs hover:bg-muted px-2 py-1 rounded transition-colors"
                       title={t("admin.rights.clickToEdit")}
+                      aria-label={t("admin.rights.clickToEdit")}
                     >
                       <SparklesIcon className="size-3 text-amber-500" />
                       <span>

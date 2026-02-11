@@ -92,6 +92,7 @@ export const SummonerSpellSelector = ({
               type="button"
               onClick={() => handleOpenDialog(0)}
               className="rounded-md overflow-hidden hover:ring-2 hover:ring-primary transition-all"
+              aria-label={`Changer ${selectedSpellObjects[0].name}`}
             >
               <SummonerSpellIcon
                 spellImage={selectedSpellObjects[0].image}
@@ -102,6 +103,7 @@ export const SummonerSpellSelector = ({
             <button
               type="button"
               onClick={() => handleRemoveSpell(0)}
+              aria-label={`Retirer ${selectedSpellObjects[0].name}`}
               className="absolute -top-1 -right-1 size-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <XIcon className="size-3" />
@@ -121,6 +123,7 @@ export const SummonerSpellSelector = ({
                 variant="outline"
                 className="size-11 p-0"
                 title="Ajouter un sort d'invocateur"
+                aria-label="Ajouter un sort d'invocateur"
               >
                 <PlusIcon className="size-5" />
               </Button>
@@ -142,6 +145,7 @@ export const SummonerSpellSelector = ({
               type="button"
               onClick={() => handleOpenDialog(1)}
               className="rounded-md overflow-hidden hover:ring-2 hover:ring-primary transition-all"
+              aria-label={`Changer ${selectedSpellObjects[1].name}`}
             >
               <SummonerSpellIcon
                 spellImage={selectedSpellObjects[1].image}
@@ -152,6 +156,7 @@ export const SummonerSpellSelector = ({
             <button
               type="button"
               onClick={() => handleRemoveSpell(1)}
+              aria-label={`Retirer ${selectedSpellObjects[1].name}`}
               className="absolute -top-1 -right-1 size-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <XIcon className="size-3" />
@@ -171,6 +176,7 @@ export const SummonerSpellSelector = ({
                 variant="outline"
                 className="size-11 p-0"
                 title="Ajouter un sort d'invocateur"
+                aria-label="Ajouter un sort d'invocateur"
               >
                 <PlusIcon className="size-5" />
               </Button>
@@ -229,6 +235,7 @@ const SpellDialogContent = ({
                   : "hover:bg-muted"
               )}
               title={`${spell.name} - ${spell.description}`}
+              aria-label={spell.name}
             >
               <SummonerSpellIcon
                 spellImage={spell.image}

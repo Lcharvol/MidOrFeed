@@ -247,6 +247,7 @@ export const RuneSelector = ({
                           : "hover:bg-muted"
                       )}
                       title={tree.name}
+                      aria-label={tree.name}
                     >
                       <RuneIcon runeIcon={tree.icon} size={48} />
                     </button>
@@ -273,6 +274,7 @@ export const RuneSelector = ({
                                 : "hover:bg-muted"
                             )}
                             title={keystone.name}
+                            aria-label={keystone.name}
                           >
                             <RuneIcon runeIcon={keystone.icon} size={56} />
                           </button>
@@ -298,6 +300,7 @@ export const RuneSelector = ({
                                   : "hover:bg-muted"
                               )}
                               title={rune.name}
+                              aria-label={rune.name}
                             >
                               <RuneIcon runeIcon={rune.icon} size={40} />
                             </button>
@@ -326,6 +329,7 @@ export const RuneSelector = ({
                             : "hover:bg-muted"
                         )}
                         title={tree.name}
+                        aria-label={tree.name}
                       >
                         <RuneIcon runeIcon={tree.icon} size={48} />
                       </button>
@@ -361,6 +365,7 @@ export const RuneSelector = ({
                                   : "opacity-30 cursor-not-allowed"
                               )}
                               title={rune.name}
+                              aria-label={rune.name}
                             >
                               <RuneIcon runeIcon={rune.icon} size={40} />
                             </button>

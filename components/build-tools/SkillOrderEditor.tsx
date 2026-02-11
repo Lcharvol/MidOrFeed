@@ -159,6 +159,13 @@ export const SkillOrderEditor = ({
                                 ? `Retirer ${skill} au niveau ${level}`
                                 : `Ajouter ${skill} au niveau ${level}`
                           }
+                          aria-label={
+                            isDisabled
+                              ? `${skill} niveau ${level} - indisponible`
+                              : isSelected
+                                ? `Retirer ${skill} au niveau ${level}`
+                                : `Ajouter ${skill} au niveau ${level}`
+                          }
                         />
                       </td>
                     );

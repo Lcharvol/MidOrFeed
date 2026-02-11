@@ -146,6 +146,7 @@ export const ItemSelector = ({
             <button
               type="button"
               onClick={() => handleRemoveItem(item.itemId)}
+              aria-label={`Retirer ${item.name}`}
               className="absolute -top-1 -right-1 size-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <XIcon className="size-3" />
@@ -162,6 +163,7 @@ export const ItemSelector = ({
                 variant="outline"
                 className="size-11 p-0"
                 title={placeholder}
+                aria-label={placeholder}
               >
                 <PlusIcon className="size-5" />
               </Button>
@@ -212,6 +214,7 @@ export const ItemSelector = ({
                               : "hover:bg-muted"
                           )}
                           title={item.name}
+                          aria-label={item.name}
                         >
                           <ItemIcon itemId={item.itemId} size={40} />
                           {isSelected && (

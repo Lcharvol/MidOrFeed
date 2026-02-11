@@ -567,6 +567,7 @@ export function JobsTab() {
                         className="shrink-0 ml-2"
                         onClick={() => triggerJob(queueName)}
                         disabled={triggeringQueue === queueName || hasActive}
+                        aria-label={`Lancer ${config.label}`}
                       >
                         {triggeringQueue === queueName ? (
                           <Loader2Icon className="size-4 animate-spin" />
