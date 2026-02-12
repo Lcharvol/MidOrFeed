@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
-import { getPaginationParams, getSkip, createPaginatedResponse } from "@/lib/pagination";
 
 export async function GET(request: NextRequest) {
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
@@ -12,8 +11,9 @@ export async function GET(request: NextRequest) {
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
   try {
-    const { page, limit } = getPaginationParams(request);
-    const { searchParams } = new URL(request.url);
+    const searchParams = request.nextUrl.searchParams;
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const pageSize = Math.max(1, Math.min(100, parseInt(searchParams.get("pageSize") ?? "20", 10)));
     const search = searchParams.get("search")?.trim().toLowerCase() || "";
 
     // Build where clause for search
@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Get total count for pagination
     const totalCount = await prisma.user.count({ where: whereClause });
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     const users = await prisma.user.findMany({
       where: whereClause,
@@ -44,13 +45,16 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
       },
       orderBy: { createdAt: "desc" },
-      skip: getSkip(page, limit),
-      take: limit,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     });
 
-    const paginated = createPaginatedResponse(users, totalCount, page, limit);
     return NextResponse.json(
-      { success: true, ...paginated },
+      {
+        success: true,
+        users,
+        pagination: { page, pageSize, totalCount, totalPages },
+      },
       { status: 200 }
     );
   } catch (error) {
