@@ -149,9 +149,8 @@ export async function POST(request?: Request | NextRequest) {
   }
 
   try {
+    // Atomic check-and-set: claim the lock before any await
     const state = getSyncState();
-
-    // Vérifier si un processus est déjà en cours
     if (state.isRunning) {
       return NextResponse.json(
         {
@@ -161,6 +160,7 @@ export async function POST(request?: Request | NextRequest) {
         { status: 409 }
       );
     }
+    state.isRunning = true; // Lock immediately (synchronous) to prevent races
 
     // Parser les options
     let options = { maxRiotCallsPerCycle: 50, batchSize: 20, skipRiotApi: false };
