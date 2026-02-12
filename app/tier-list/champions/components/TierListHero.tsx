@@ -8,11 +8,14 @@ import { useI18n } from "@/lib/i18n-context";
 
 type TierListHeroProps = {
   metrics: TierListMetrics;
+  selectedPatch?: string;
 };
 
-export const TierListHero = ({ metrics }: TierListHeroProps) => {
+export const TierListHero = ({ metrics, selectedPatch }: TierListHeroProps) => {
   const { t } = useI18n();
   const { totalMatches, formattedLastUpdated, championsCount } = metrics;
+
+  const displayPatch = selectedPatch ?? PATCH_VERSION;
 
   return (
     <>
@@ -28,7 +31,7 @@ export const TierListHero = ({ metrics }: TierListHeroProps) => {
             variant="outline"
             className="w-fit rounded-full border-border/60 bg-background/70 px-3 py-1 text-xs font-medium uppercase text-primary"
           >
-            Patch {PATCH_VERSION}
+            Patch {displayPatch}
           </Badge>
         }
         metaItems={[

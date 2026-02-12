@@ -505,3 +505,114 @@ export const validateCompositionSuggestionsResponse = (
   }
   return { ok: true, value: parsed.data.data };
 };
+
+// ---- Item Stats ----
+
+const itemStatsSchema = z
+  .object({
+    id: z.string(),
+    itemId: z.string(),
+    totalGames: z.number(),
+    totalWins: z.number(),
+    winRate: z.number(),
+    pickRate: z.number(),
+    avgKDA: z.number(),
+    avgKills: z.number(),
+    avgDeaths: z.number(),
+    avgAssists: z.number(),
+    score: z.number(),
+    lastAnalyzedAt: z.string(),
+  })
+  .passthrough();
+
+const itemStatsSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    data: z.array(itemStatsSchema),
+    count: z.number().int().nonnegative().optional(),
+    totalUniqueMatches: z.number().int().nonnegative().optional(),
+  })
+  .passthrough();
+
+const itemStatsErrorSchema = z
+  .object({ success: z.literal(false), error: z.string() })
+  .passthrough();
+
+const itemStatsResponseSchema = z.union([
+  itemStatsSuccessSchema,
+  itemStatsErrorSchema,
+]);
+
+type ItemStatsSuccess = z.infer<typeof itemStatsSuccessSchema>;
+
+export const validateItemStatsResponse = (
+  input: unknown
+): ValidationResult<{
+  stats: ItemStatsSuccess["data"];
+  count: number | undefined;
+  totalUniqueMatches: number | undefined;
+}> => {
+  const parsed = itemStatsResponseSchema.safeParse(input);
+  if (!parsed.success) {
+    return buildInvalidFormatResult(parsed.error);
+  }
+  if (!parsed.data.success) {
+    return { ok: false, error: parsed.data.error };
+  }
+  return {
+    ok: true,
+    value: {
+      stats: parsed.data.data,
+      count: parsed.data.count,
+      totalUniqueMatches: parsed.data.totalUniqueMatches,
+    },
+  };
+};
+
+// ---- Item List ----
+
+const itemEntitySchema = z
+  .object({
+    id: z.string(),
+    itemId: z.string(),
+    name: z.string(),
+  })
+  .passthrough();
+
+const itemListSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    data: z.array(itemEntitySchema),
+    count: z.number().int().nonnegative().optional(),
+  })
+  .passthrough();
+
+const itemListErrorSchema = z
+  .object({ success: z.literal(false), error: z.string() })
+  .passthrough();
+
+const itemListResponseSchema = z.union([
+  itemListSuccessSchema,
+  itemListErrorSchema,
+]);
+
+type ItemListSuccess = z.infer<typeof itemListSuccessSchema>;
+
+export const validateItemListResponse = (
+  input: unknown
+): ValidationResult<{ items: ItemListSuccess["data"]; count: number | undefined }> => {
+  const parsed = itemListResponseSchema.safeParse(input);
+  if (!parsed.success) {
+    return buildInvalidFormatResult(parsed.error);
+  }
+  if (!parsed.data.success) {
+    return { ok: false, error: parsed.data.error };
+  }
+  return {
+    ok: true,
+    value: {
+      items: parsed.data.data,
+      count: parsed.data.count,
+    },
+  };
+};

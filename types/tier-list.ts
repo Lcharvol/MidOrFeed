@@ -108,4 +108,48 @@ export interface TierListDerivedData {
   error: unknown;
 }
 
+// ---- Item Tier List ----
 
+export interface ItemStatsData {
+  id: string;
+  itemId: string;
+  totalGames: number;
+  totalWins: number;
+  winRate: number;
+  pickRate: number;
+  avgKDA: number;
+  avgKills: number;
+  avgDeaths: number;
+  avgAssists: number;
+  score: number;
+  lastAnalyzedAt: string;
+}
+
+export interface ItemEntity {
+  id: string;
+  itemId: string;
+  name: string;
+  description: string | null;
+  plaintext: string | null;
+  image: string | null;
+  gold: string | null;
+  tags: string | null;
+  depth: number | null;
+  fromItems: string | null;
+  maps: string | null;
+  inStore: boolean | null;
+  requiredChampion: string | null;
+}
+
+export interface ItemWithStats extends ItemEntity {
+  stats?: ItemStatsData;
+}
+
+export type ItemSortColumn =
+  | "name"
+  | "score"
+  | "winRate"
+  | "pickRate"
+  | "avgKDA"
+  | "totalGames"
+  | "gold";

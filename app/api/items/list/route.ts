@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     const tag = searchParams.get("tag"); // Filtrer par tag (Boots, Jungle, etc.)
     const completedOnly = searchParams.get("completed") === "true"; // Items finaux seulement
     const starterOnly = searchParams.get("starter") === "true"; // Items de départ (depth 1)
+    const map = searchParams.get("map"); // Filtrer par map (11 = Summoner's Rift)
 
     // Construire le filtre where
     const where: Record<string, unknown> = {};
@@ -44,8 +45,19 @@ export async function GET(request: NextRequest) {
       where.depth = 1;
     }
 
+    if (map) {
+      // Filtrer les items disponibles sur cette map (JSON contenant "11":true)
+      where.maps = { contains: `"${map}":true` };
+    }
+
+    // Exclure items non achetables en boutique
+    where.inStore = { not: false };
+
+    // Exclure items spécifiques à un champion
+    where.requiredChampion = null;
+
     // Utiliser le cache pour les données statiques (15 minutes)
-    const cacheKey = `items:list:${page}:${limit}:${tag || "all"}:${completedOnly}:${starterOnly}`;
+    const cacheKey = `items:list:${page}:${limit}:${tag || "all"}:${completedOnly}:${starterOnly}:${map || "all"}`;
 
     const paginatedResponse = await measureTiming(
       "api.items.list",

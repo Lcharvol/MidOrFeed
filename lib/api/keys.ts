@@ -25,4 +25,15 @@ export const apiKeys = {
   riotVersionsSync: () => "/api/admin/riot/versions",
   summonerRanked: (puuid: string, region: string) =>
     `/api/summoners/${encodeURIComponent(puuid)}/ranked?region=${encodeURIComponent(region)}`,
+  itemStats: () => "/api/items/stats",
+  itemsList: (params?: { limit?: number; map?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set("limit", params.limit.toString());
+    if (params?.map) searchParams.set("map", params.map);
+    const query = searchParams.toString();
+    return `/api/items/list${query ? `?${query}` : ""}`;
+  },
+  patches: () => "/api/patches",
+  championStatsByPatch: (patch: string) =>
+    `/api/champions/stats/by-patch?patch=${encodeURIComponent(patch)}`,
 };

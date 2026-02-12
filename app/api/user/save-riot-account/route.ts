@@ -60,8 +60,24 @@ export async function POST(request: NextRequest) {
       return errorResponse("PUUID requis pour créer ou trouver un compte", 400);
     }
 
-    // Créer ou mettre à jour le compte League of Legends via ShardedLeagueAccounts
-    const upserted = await ShardedLeagueAccounts.upsert({
+    // Upsert dans la table principale league_accounts (pour la FK User)
+    const mainAccount = await prisma.leagueOfLegendsAccount.upsert({
+      where: { puuid: validatedData.puuid },
+      create: {
+        puuid: validatedData.puuid,
+        riotRegion: validatedData.region,
+        riotGameName: validatedData.gameName,
+        riotTagLine: validatedData.tagLine,
+      },
+      update: {
+        riotRegion: validatedData.region,
+        riotGameName: validatedData.gameName,
+        riotTagLine: validatedData.tagLine,
+      },
+    });
+
+    // Upsert aussi dans la table shardée (pour les lectures optimisées)
+    await ShardedLeagueAccounts.upsert({
       puuid: validatedData.puuid,
       riotRegion: validatedData.region,
       riotGameName: validatedData.gameName,
@@ -69,15 +85,15 @@ export async function POST(request: NextRequest) {
     });
 
     const leagueAccount = {
-      id: upserted.id,
-      puuid: upserted.puuid,
-      riotRegion: upserted.riotRegion,
-      riotGameName: upserted.riotGameName,
-      riotTagLine: upserted.riotTagLine,
-      profileIconId: upserted.profileIconId ?? null,
+      id: mainAccount.id,
+      puuid: mainAccount.puuid,
+      riotRegion: mainAccount.riotRegion,
+      riotGameName: mainAccount.riotGameName,
+      riotTagLine: mainAccount.riotTagLine,
+      profileIconId: mainAccount.profileIconId ?? null,
     };
 
-    // Mettre à jour l'utilisateur avec l'ID du compte, puuid et région
+    // Mettre à jour l'utilisateur avec l'ID du compte (FK vers league_accounts), puuid et région
     const updatedUser = await prisma.user.update({
       where: { id: authUser.id },
       data: {

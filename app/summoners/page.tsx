@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { useRecentSearch } from "@/lib/hooks/use-recent-search";
@@ -10,66 +10,150 @@ import { LinkedAccountCard } from "./components/LinkedAccountCard";
 import { RecentSearches } from "./components/RecentSearches";
 import { FeatureCards } from "./components/FeatureCards";
 import { QuickLinks } from "./components/QuickLinks";
+import { SearchResultsList } from "./components/SearchResultsList";
+
+type PartialResults = {
+  results: Array<{
+    puuid: string;
+    gameName?: string | null;
+    tagLine?: string | null;
+    region: string;
+    profileIconId?: number | null;
+    level?: number | null;
+    stats?: { totalMatches?: number; winRate?: number; avgKDA?: number };
+  }>;
+  query: string;
+  isNoResults: boolean;
+};
 
 export default function SummonersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("euw1");
   const [isSearching, setIsSearching] = useState(false);
   const [formatHint, setFormatHint] = useState<string | null>(null);
+  const [partialResults, setPartialResults] = useState<PartialResults | null>(null);
   const { recentSearches } = useRecentSearch();
 
   const hasLinkedAccount = user?.leagueAccount?.puuid && user?.leagueAccount?.riotRegion;
 
+  // Perform partial search (no #) via local DB
+  const performPartialSearch = useCallback(
+    async (searchQuery: string, searchRegion: string) => {
+      setIsSearching(true);
+      setFormatHint(null);
+
+      try {
+        const response = await fetch("/api/search/summoners", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: searchQuery, region: searchRegion, limit: 20 }),
+        });
+
+        if (!response.ok) {
+          toast.error("Erreur lors de la recherche");
+          return;
+        }
+
+        const data = await response.json();
+        const results = data.results || [];
+
+        if (results.length === 1) {
+          // Single result → navigate directly
+          const r = results[0];
+          router.push(`/summoners/${r.puuid}/overview?region=${r.region}`);
+        } else {
+          setPartialResults({
+            results,
+            query: searchQuery,
+            isNoResults: results.length === 0,
+          });
+        }
+      } catch (error) {
+        console.error("Partial search error:", error);
+        toast.error("Erreur lors de la recherche");
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [router]
+  );
+
+  // Perform Riot API search (has #)
+  const performRiotSearch = useCallback(
+    async (searchQuery: string, searchRegion: string) => {
+      const hashIndex = searchQuery.lastIndexOf("#");
+      const gameName = searchQuery.slice(0, hashIndex).trim();
+      const tagLine = searchQuery.slice(hashIndex + 1).trim();
+
+      if (!gameName || !tagLine) {
+        setFormatHint("Le nom et le tag sont requis");
+        return;
+      }
+
+      setIsSearching(true);
+      setFormatHint(null);
+
+      try {
+        const response = await fetch("/api/riot/search-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gameName, tagLine, region: searchRegion }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.data?.puuid) {
+          if (response.status === 404) {
+            toast.error(
+              `Joueur introuvable : ${gameName}#${tagLine} n'existe pas sur ${searchRegion.toUpperCase()}`
+            );
+          } else if (response.status === 429) {
+            toast.error("Trop de requetes — reessaie dans quelques secondes");
+          } else {
+            toast.error(data.error || "Erreur serveur — reessaie plus tard");
+          }
+          return;
+        }
+
+        router.push(
+          `/summoners/${data.data.puuid}/overview?region=${searchRegion}`
+        );
+      } catch (error) {
+        console.error(error);
+        toast.error("Erreur reseau — verifie ta connexion");
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [router]
+  );
+
   const handleSearch = useCallback(async () => {
-    if (!query.trim()) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       toast.error("Entrez un nom de joueur");
       return;
     }
 
-    // Parse gameName#tagLine format
-    const trimmed = query.trim();
     const hashIndex = trimmed.lastIndexOf("#");
+    const hasValidHash = hashIndex > 0 && hashIndex < trimmed.length - 1;
 
-    if (hashIndex === -1 || hashIndex === 0 || hashIndex === trimmed.length - 1) {
-      setFormatHint("Format invalide. Utilisez Nom#TAG");
-      return;
-    }
-    setFormatHint(null);
-
-    const gameName = trimmed.slice(0, hashIndex).trim();
-    const tagLine = trimmed.slice(hashIndex + 1).trim();
-
-    setIsSearching(true);
-    try {
-      const response = await fetch("/api/riot/search-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameName, tagLine, region }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.data?.puuid) {
-        if (response.status === 404) {
-          toast.error(`Joueur introuvable : ${gameName}#${tagLine} n'existe pas sur ${region.toUpperCase()}`);
-        } else if (response.status === 429) {
-          toast.error("Trop de requêtes — réessaie dans quelques secondes");
-        } else {
-          toast.error(data.error || "Erreur serveur — réessaie plus tard");
-        }
+    if (hasValidHash) {
+      setPartialResults(null);
+      await performRiotSearch(trimmed, region);
+    } else {
+      // No # or trailing # → partial search
+      const cleanQuery = hashIndex > 0 ? trimmed.slice(0, hashIndex).trim() : trimmed;
+      if (cleanQuery.length < 2) {
+        toast.error("Entrez au moins 2 caracteres");
         return;
       }
-
-      router.push(`/summoners/${data.data.puuid}/overview?region=${region}`);
-    } catch (error) {
-      console.error(error);
-      toast.error("Erreur réseau — vérifie ta connexion");
-    } finally {
-      setIsSearching(false);
+      await performPartialSearch(cleanQuery, region);
     }
-  }, [query, region, router]);
+  }, [query, region, performRiotSearch, performPartialSearch]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -77,12 +161,31 @@ export default function SummonersPage() {
     }
   };
 
+  // Read query params on mount (navigation from homepage)
+  useEffect(() => {
+    const q = searchParams.get("q");
+    const r = searchParams.get("region");
+
+    if (q) {
+      setQuery(q);
+      if (r) setRegion(r);
+      // Trigger partial search automatically
+      performPartialSearch(q, r || region);
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
       <HeroSearchSection
         query={query}
-        setQuery={setQuery}
+        setQuery={(v) => {
+          setQuery(v);
+          // Clear partial results when user retypes
+          if (partialResults) setPartialResults(null);
+        }}
         region={region}
         setRegion={setRegion}
         isSearching={isSearching}
@@ -94,6 +197,16 @@ export default function SummonersPage() {
           router.push(`/summoners/${result.puuid}/overview?region=${result.region}`);
         }}
       />
+
+      {/* Partial Search Results */}
+      {partialResults && (
+        <SearchResultsList
+          results={partialResults.results}
+          query={partialResults.query}
+          isNoResults={partialResults.isNoResults}
+          onClear={() => setPartialResults(null)}
+        />
+      )}
 
       {/* Content Section */}
       <div className="container mx-auto px-4 py-12">

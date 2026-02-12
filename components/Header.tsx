@@ -21,6 +21,7 @@ import {
   PackageIcon,
   UsersIcon,
   BarChartIcon,
+  DownloadIcon,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -195,6 +196,28 @@ export function Header() {
             setIsSearchOpen={setIsSearchOpen}
           />
           <NotificationBell />
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="hidden sm:inline-flex gap-1.5 h-9"
+          >
+            <Link href="/download">
+              <DownloadIcon className="size-4" />
+              Overlay
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="sm:hidden h-9 w-9 hover:bg-muted/60"
+          >
+            <Link href="/download">
+              <DownloadIcon className="size-5" />
+              <span className="sr-only">Download Overlay</span>
+            </Link>
+          </Button>
           {mounted && (
             <Button
               variant="ghost"

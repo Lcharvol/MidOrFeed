@@ -1,35 +1,27 @@
 "use client";
 
 import { useMemo } from "react";
-import type { ApiResponse, TierListChampionStats } from "@/types";
+import type { ApiResponse, ItemStatsData } from "@/types";
 import { useApiSWR } from "./swr";
 import { apiKeys } from "@/lib/api/keys";
-import { validateChampionStatsResponse } from "@/lib/api/schemas";
+import { validateItemStatsResponse } from "@/lib/api/schemas";
 
-type ChampionStatsResponse = ApiResponse<TierListChampionStats[]> & {
+type ItemStatsResponse = ApiResponse<ItemStatsData[]> & {
   count?: number;
 };
 
-type UseChampionStatsOptions = {
-  patch?: string;
-};
-
-export const useChampionStats = (options?: UseChampionStatsOptions) => {
-  const key = options?.patch
-    ? apiKeys.championStatsByPatch(options.patch)
-    : apiKeys.championStats();
-
+export const useItemStats = () => {
   const { data, error, isLoading, mutate, isValidating } =
-    useApiSWR<ChampionStatsResponse>(key, {
+    useApiSWR<ItemStatsResponse>(apiKeys.itemStats(), {
       revalidateOnFocus: false,
     });
 
   const validation = useMemo(
-    () => (data ? validateChampionStatsResponse(data) : null),
+    () => (data ? validateItemStatsResponse(data) : null),
     [data]
   );
 
-  const championStats = useMemo(() => {
+  const itemStats = useMemo(() => {
     if (!validation || !validation.ok) return [];
     return validation.value.stats;
   }, [validation]);
@@ -40,11 +32,11 @@ export const useChampionStats = (options?: UseChampionStatsOptions) => {
   }, [validation]);
 
   return {
-    championStats,
+    itemStats,
     count:
       validation && validation.ok && validation.value.count !== undefined
         ? validation.value.count
-        : championStats.length,
+        : itemStats.length,
     totalUniqueMatches,
     error: error ?? (validation && !validation.ok ? validation.error : undefined),
     isLoading,
@@ -52,5 +44,3 @@ export const useChampionStats = (options?: UseChampionStatsOptions) => {
     mutate,
   };
 };
-
-

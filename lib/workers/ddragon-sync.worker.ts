@@ -58,6 +58,12 @@ type ItemData = {
   plaintext: string;
   image: { full: string };
   gold: { total: number; base: number; sell: number };
+  tags?: string[];
+  depth?: number;
+  from?: string[];
+  maps?: Record<string, boolean>;
+  inStore?: boolean;
+  requiredChampion?: string;
 };
 
 /**
@@ -197,23 +203,23 @@ export async function createDDragonSyncWorker() {
             };
 
             for (const [itemId, item] of Object.entries(itemsData.data)) {
+              const shared = {
+                name: item.name,
+                description: item.description,
+                plaintext: item.plaintext,
+                image: item.image.full,
+                gold: JSON.stringify(item.gold),
+                tags: item.tags ? JSON.stringify(item.tags) : null,
+                depth: item.depth ?? null,
+                fromItems: item.from ? JSON.stringify(item.from) : null,
+                maps: item.maps ? JSON.stringify(item.maps) : null,
+                inStore: item.inStore ?? true,
+                requiredChampion: item.requiredChampion ?? null,
+              };
               await prisma.item.upsert({
                 where: { itemId },
-                create: {
-                  itemId,
-                  name: item.name,
-                  description: item.description,
-                  plaintext: item.plaintext,
-                  image: item.image.full,
-                  gold: JSON.stringify(item.gold),
-                },
-                update: {
-                  name: item.name,
-                  description: item.description,
-                  plaintext: item.plaintext,
-                  image: item.image.full,
-                  gold: JSON.stringify(item.gold),
-                },
+                create: { itemId, ...shared },
+                update: shared,
               });
               itemsUpdated++;
             }

@@ -127,6 +127,45 @@ export function JobsTab() {
   const triggerJob = async (queue: string) => {
     setTriggeringQueue(queue);
     try {
+      // Analyze items uses a direct endpoint (no pg-boss worker)
+      if (queue === "analyze-items") {
+        const res = await fetch("/api/admin/analyze-items", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(json.error || "Failed to analyze items");
+        }
+        const d = json.data;
+        toast.success(
+          `Item Stats : ${d.totalItems} items analysés (${d.created} créés, ${d.updated} mis à jour)`
+        );
+        await fetchJobs();
+        return;
+      }
+
+      // Leaderboard sync uses a direct endpoint (bypasses pg-boss for reliability)
+      if (queue === "leaderboard-sync") {
+        const res = await fetch("/api/admin/leaderboard/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(json.error || "Failed to sync leaderboard");
+        }
+        const count = json.entriesSynced ?? 0;
+        const errCount = json.errors?.length ?? 0;
+        toast.success(
+          `Leaderboard sync\u00e9 : ${count} entr\u00e9es${errCount > 0 ? ` (${errCount} erreurs)` : ""}`
+        );
+        await fetchJobs();
+        return;
+      }
+
       const res = await fetch("/api/admin/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

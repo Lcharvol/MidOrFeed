@@ -10,7 +10,6 @@ import {
   UserIcon,
   MenuIcon,
   ShieldCheckIcon,
-  DownloadIcon,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
 import {
@@ -107,18 +106,6 @@ export function HeaderMobileMenu({
                 );
               })}
             </Accordion>
-
-            <Link
-              href="/download"
-              className={cn(
-                mobilePrimaryLinkClasses,
-                pathname === "/download" && "bg-primary/10 text-primary"
-              )}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <DownloadIcon className="size-4" />
-              Telecharger l'Overlay
-            </Link>
 
             {user && (
               <>

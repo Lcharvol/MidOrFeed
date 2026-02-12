@@ -14,21 +14,33 @@ import { Separator } from "@/components/ui/separator";
 import {
   GlobeIcon,
   SparklesIcon,
+  TableIcon,
+  LayoutGridIcon,
 } from "lucide-react";
 import { ROLE_FILTER_OPTIONS } from "../utils";
 import type { TierListActions, TierListState } from "../hooks/useChampionTierList";
 import { useI18n } from "@/lib/i18n-context";
 
+export type ViewMode = "table" | "grid";
+
 type TierListFiltersProps = {
   state: TierListState;
   actions: TierListActions;
   filtersActive: boolean;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  patches: string[];
+  patchesLoading: boolean;
 };
 
 export const TierListFilters = ({
   state,
   actions,
   filtersActive,
+  viewMode,
+  onViewModeChange,
+  patches,
+  patchesLoading,
 }: TierListFiltersProps) => {
   const { t } = useI18n();
   const {
@@ -38,6 +50,7 @@ export const TierListFilters = ({
     queueTypeFilter,
     reliabilityOnly,
     eliteOnly,
+    selectedPatch,
   } = state;
 
   const {
@@ -48,6 +61,7 @@ export const TierListFilters = ({
     setReliabilityOnly,
     toggleEliteOnly,
     resetFilters,
+    setSelectedPatch,
   } = actions;
 
   const TIER_OPTIONS = [
@@ -80,6 +94,32 @@ export const TierListFilters = ({
 
       {/* Row 2: Filters */}
       <div className="flex flex-wrap items-end gap-2 sm:gap-3">
+        {/* Toggle vue */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] sm:text-xs font-medium text-muted-foreground">
+            {t("tierListChampions.viewGrid") === t("tierListChampions.viewGrid") ? "Vue" : "View"}
+          </label>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={viewMode}
+            onValueChange={(value) => {
+              if (value) onViewModeChange(value as ViewMode);
+            }}
+            className="h-7 sm:h-8"
+          >
+            <ToggleGroupItem value="table" className="px-2 sm:px-3" title={t("tierListChampions.viewTable")}>
+              <TableIcon className="size-3.5 sm:size-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="grid" className="px-2 sm:px-3" title={t("tierListChampions.viewGrid")}>
+              <LayoutGridIcon className="size-3.5 sm:size-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+
+        <Separator orientation="vertical" className="h-7 sm:h-10 hidden sm:block" />
+
         {/* Filtre par rôle */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[10px] sm:text-xs font-medium text-muted-foreground">
@@ -129,6 +169,34 @@ export const TierListFilters = ({
               {TIER_OPTIONS.map(({ value, label }) => (
                 <SelectItem key={value} value={value}>
                   {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Filtre par patch */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] sm:text-xs font-medium text-muted-foreground">
+            {t("tierListChampions.patch")}
+          </label>
+          <Select
+            value={selectedPatch ?? "ALL"}
+            onValueChange={(value) =>
+              setSelectedPatch(value === "ALL" ? undefined : value)
+            }
+            disabled={patchesLoading}
+          >
+            <SelectTrigger size="sm" className="w-28 sm:w-[150px] h-7 sm:h-8 text-xs sm:text-sm">
+              <SelectValue placeholder={t("tierListChampions.allPatches")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">
+                {t("tierListChampions.allPatches")}
+              </SelectItem>
+              {patches.map((patch) => (
+                <SelectItem key={patch} value={patch}>
+                  Patch {patch}
                 </SelectItem>
               ))}
             </SelectContent>

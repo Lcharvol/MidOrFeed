@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton, SkeletonAvatar } from "@/components/ui/skeleton";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Badge } from "@/components/ui/badge";
-import { TrophyIcon, GemIcon, LayersIcon } from "lucide-react";
+import { TrophyIcon, GemIcon, LayersIcon, MedalIcon, AwardIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useApiSWR } from "@/lib/hooks/swr";
 import { useChampions } from "@/lib/hooks/use-champions";
@@ -115,74 +115,130 @@ export function ChampionMasterySection({ puuid, region }: ChampionMasterySection
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Top 3 champions */}
-        <div className="grid grid-cols-3 gap-2">
-          {topThree.map((mastery, index) => {
-            const championSlug = championKeyToIdMap.get(String(mastery.championId)) || String(mastery.championId);
-            const championName = resolveName(String(mastery.championId));
-            const badgeStyle = getMasteryBadgeStyle(mastery.level);
+        {/* Podium — top 3 champions */}
+        {topThree.length >= 3 ? (
+          <div className="grid grid-cols-3 items-end gap-2">
+            {[1, 0, 2].map((podiumIndex) => {
+              const mastery = topThree[podiumIndex];
+              const championSlug = championKeyToIdMap.get(String(mastery.championId)) || String(mastery.championId);
+              const championName = resolveName(String(mastery.championId));
+              const badgeStyle = getMasteryBadgeStyle(mastery.level);
+              const isFirst = podiumIndex === 0;
+              const isSecond = podiumIndex === 1;
 
-            return (
-              <div
-                key={mastery.championId}
-                className="relative flex flex-col items-center rounded-lg border border-border/60 bg-muted/20 p-2"
-              >
-                {/* Rank indicator */}
-                {index === 0 && (
-                  <div className="absolute -top-1.5 -left-1.5 flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-warning-foreground shadow-sm">
-                    1
+              const podiumIcon = isFirst
+                ? <TrophyIcon className="size-4" />
+                : isSecond
+                  ? <MedalIcon className="size-3.5" />
+                  : <AwardIcon className="size-3.5" />;
+
+              const podiumIconBg = isFirst
+                ? "bg-warning/15 text-warning"
+                : isSecond
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-amber-500/10 text-amber-700 dark:text-amber-500";
+
+              const ringClass = isFirst
+                ? "ring-2 ring-warning/40"
+                : isSecond
+                  ? "ring-1 ring-muted-foreground/30"
+                  : "ring-1 ring-amber-600/30";
+
+              const iconSize = isFirst ? 56 : 44;
+
+              return (
+                <div
+                  key={mastery.championId}
+                  className={cn(
+                    "relative flex flex-col items-center rounded-xl border border-border/60 bg-muted/20 p-2.5",
+                    isFirst && "pt-3 pb-3 border-warning/30 bg-warning/[0.04]",
+                    isSecond && "mb-2",
+                    !isFirst && !isSecond && "mb-2"
+                  )}
+                >
+                  {/* Rank icon */}
+                  <div className={cn("mb-2 flex size-6 items-center justify-center rounded-full", podiumIconBg)}>
+                    {podiumIcon}
                   </div>
-                )}
 
-                <div className="relative">
-                  <ChampionIcon
-                    championId={championSlug}
-                    size={48}
-                    className="rounded-lg border border-border/40"
-                  />
-                  {mastery.chestGranted && (
-                    <div className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-warning">
-                      <GemIcon className="size-2.5 text-warning-foreground" />
+                  {/* Champion icon */}
+                  <div className="relative">
+                    <ChampionIcon
+                      championId={championSlug}
+                      size={iconSize}
+                      className={cn("rounded-xl border border-border/40", ringClass)}
+                    />
+                    {mastery.chestGranted && (
+                      <div className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-warning">
+                        <GemIcon className="size-2.5 text-warning-foreground" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <span className={cn(
+                    "mt-2 text-center font-medium text-foreground line-clamp-1",
+                    isFirst ? "text-xs" : "text-[11px]"
+                  )}>
+                    {championName}
+                  </span>
+
+                  {/* Mastery badge + points */}
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <Badge
+                      variant="outline"
+                      className={cn("h-4 px-1.5 text-[9px] font-semibold", badgeStyle)}
+                    >
+                      M{mastery.level}
+                    </Badge>
+                    <span className={cn("text-muted-foreground", isFirst ? "text-[11px] font-medium" : "text-[10px]")}>
+                      {formatPoints(mastery.points)}
+                    </span>
+                  </div>
+
+                  {/* Tokens indicator */}
+                  {mastery.tokensEarned > 0 && mastery.level >= 5 && mastery.level < 7 && (
+                    <div className="mt-1 flex gap-0.5">
+                      {Array.from({ length: mastery.level === 5 ? 2 : 3 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "size-1.5 rounded-full",
+                            i < mastery.tokensEarned
+                              ? mastery.level === 5 ? "bg-danger" : "bg-warning"
+                              : "bg-muted-foreground/30"
+                          )}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
-
-                <span className="mt-1.5 text-center text-[11px] font-medium text-foreground line-clamp-1">
-                  {championName}
-                </span>
-
-                <div className="mt-1 flex items-center gap-1.5">
-                  <Badge
-                    variant="outline"
-                    className={cn("h-4 px-1.5 text-[9px] font-semibold", badgeStyle)}
-                  >
-                    M{mastery.level}
-                  </Badge>
-                  <span className="text-[10px] text-muted-foreground">
-                    {formatPoints(mastery.points)}
-                  </span>
-                </div>
-
-                {/* Tokens indicator */}
-                {mastery.tokensEarned > 0 && mastery.level >= 5 && mastery.level < 7 && (
-                  <div className="mt-1 flex gap-0.5">
-                    {Array.from({ length: mastery.level === 5 ? 2 : 3 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "size-1.5 rounded-full",
-                          i < mastery.tokensEarned
-                            ? mastery.level === 5 ? "bg-danger" : "bg-warning"
-                            : "bg-muted-foreground/30"
-                        )}
-                      />
-                    ))}
+              );
+            })}
+          </div>
+        ) : (
+          /* Fallback for < 3 champions */
+          <div className="grid grid-cols-3 gap-2">
+            {topThree.map((mastery) => {
+              const championSlug = championKeyToIdMap.get(String(mastery.championId)) || String(mastery.championId);
+              const championName = resolveName(String(mastery.championId));
+              const badgeStyle = getMasteryBadgeStyle(mastery.level);
+              return (
+                <div
+                  key={mastery.championId}
+                  className="relative flex flex-col items-center rounded-lg border border-border/60 bg-muted/20 p-2"
+                >
+                  <ChampionIcon championId={championSlug} size={48} className="rounded-lg border border-border/40" />
+                  <span className="mt-1.5 text-center text-[11px] font-medium text-foreground line-clamp-1">{championName}</span>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <Badge variant="outline" className={cn("h-4 px-1.5 text-[9px] font-semibold", badgeStyle)}>M{mastery.level}</Badge>
+                    <span className="text-[10px] text-muted-foreground">{formatPoints(mastery.points)}</span>
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Other champions - compact list */}
         {others.length > 0 && (

@@ -105,6 +105,15 @@ export const resolveTier = (stats?: TierListChampionStats) => {
   return "D";
 };
 
+export const TIER_ROW_CONFIG = [
+  { tier: "S+", label: "S+", bgClass: "bg-emerald-500/20",  textClass: "text-emerald-400", borderClass: "border-emerald-500/30" },
+  { tier: "S",  label: "S",  bgClass: "bg-emerald-500/10",  textClass: "text-emerald-300", borderClass: "border-emerald-500/20" },
+  { tier: "A",  label: "A",  bgClass: "bg-blue-500/15",     textClass: "text-blue-400",    borderClass: "border-blue-500/25" },
+  { tier: "B",  label: "B",  bgClass: "bg-muted/50",        textClass: "text-foreground",  borderClass: "border-border/40" },
+  { tier: "C",  label: "C",  bgClass: "bg-amber-500/15",    textClass: "text-amber-400",   borderClass: "border-amber-500/25" },
+  { tier: "D",  label: "D",  bgClass: "bg-red-500/15",      textClass: "text-red-400",     borderClass: "border-red-500/25" },
+] as const;
+
 export const getTierBadgeEmphasis = (tier: string) => {
   if (tier === "S+" || tier === "S") return "positive";
   if (tier === "A") return "info";

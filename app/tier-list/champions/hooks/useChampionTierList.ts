@@ -24,6 +24,7 @@ export type TierListState = {
   queueTypeFilter: QueueTypeFilter;
   reliabilityOnly: boolean;
   eliteOnly: boolean;
+  selectedPatch: string | undefined;
 };
 
 export type TierListActions = {
@@ -36,6 +37,7 @@ export type TierListActions = {
   resetFilters: () => void;
   handleSort: (column: SortColumn) => void;
   toggleWinRateSort: () => void;
+  setSelectedPatch: (value: string | undefined) => void;
 };
 
 export type TierListDerived = {
@@ -66,6 +68,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
   const [queueTypeFilter, setQueueTypeFilter] = useState<QueueTypeFilter>("ALL");
   const [reliabilityOnly, setReliabilityOnly] = useState(false);
   const [eliteOnly, setEliteOnly] = useState(false);
+  const [selectedPatch, setSelectedPatch] = useState<string | undefined>(undefined);
 
   const {
     champions,
@@ -79,7 +82,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     totalUniqueMatches: statsTotalUniqueMatches,
     isLoading: statsLoading,
     error: statsError,
-  } = useChampionStats();
+  } = useChampionStats(selectedPatch ? { patch: selectedPatch } : undefined);
 
   const statsMap = useMemo(() => {
     const map = new Map<string, TierListChampionStats>();
@@ -267,7 +270,8 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     eliteOnly ||
     roleFilter !== "ALL" ||
     tierFilter !== "ALL" ||
-    queueTypeFilter !== "ALL";
+    queueTypeFilter !== "ALL" ||
+    selectedPatch !== undefined;
   const isWinRateSort = sortColumn === "winRate";
 
   const resetFilters = useCallback(() => {
@@ -276,6 +280,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     setTierFilter("ALL");
     setQueueTypeFilter("ALL");
     setEliteOnly(false);
+    setSelectedPatch(undefined);
     setSortColumn("score");
     setSortDirection("desc");
   }, []);
@@ -308,6 +313,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
       queueTypeFilter,
       reliabilityOnly,
       eliteOnly,
+      selectedPatch,
     },
     actions: {
       setSearchTerm,
@@ -319,6 +325,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
       resetFilters,
       handleSort,
       toggleWinRateSort,
+      setSelectedPatch,
     },
     derived: {
       championsWithStats,

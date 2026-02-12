@@ -52,7 +52,7 @@ export const TopChampionsSection = ({
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow className="border-border/50">
-                <TableHead className="w-[50px] text-[11px] uppercase text-muted-foreground">
+                <TableHead className="w-10 text-[11px] uppercase text-muted-foreground">
                   {t("summoners.rank")}
                 </TableHead>
                 <TableHead className="text-[11px] uppercase text-muted-foreground">
@@ -61,7 +61,7 @@ export const TopChampionsSection = ({
                 <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
                   {t("summoners.matches")}
                 </TableHead>
-                <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
+                <TableHead className="hidden sm:table-cell text-right text-[11px] uppercase text-muted-foreground">
                   {t("summoners.victories")}
                 </TableHead>
                 <TableHead className="text-right text-[11px] uppercase text-muted-foreground">
@@ -83,18 +83,18 @@ export const TopChampionsSection = ({
                     <TableCell className="text-xs font-medium text-muted-foreground">
                       #{index + 1}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
+                    <TableCell className="whitespace-normal">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <ChampionIcon
                           championId={resolveSlug(championId)}
                           championKey={championId}
                           championKeyToId={championKeyToId}
-                          size={36}
+                          size={32}
                           shape="rounded"
-                          className="rounded-lg border border-border/60"
+                          className="shrink-0 rounded-lg border border-border/60 sm:w-9 sm:h-9"
                           clickable
                         />
-                        <span className="text-sm font-semibold text-foreground">
+                        <span className="text-sm font-semibold text-foreground truncate max-w-[100px] sm:max-w-none">
                           {championName}
                         </span>
                       </div>
@@ -102,7 +102,7 @@ export const TopChampionsSection = ({
                     <TableCell className="text-right text-sm text-muted-foreground">
                       {stats.played}
                     </TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">
+                    <TableCell className="hidden sm:table-cell text-right text-sm text-muted-foreground">
                       {stats.wins}
                     </TableCell>
                     <TableCell className="text-right text-sm font-medium text-foreground">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -9,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchIcon, Loader2Icon, ClockIcon } from "lucide-react";
+import { toast } from "sonner";
 import { useSummonerSearch } from "@/lib/hooks/use-summoner-search";
 import { useI18n } from "@/lib/i18n-context";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
@@ -24,6 +26,7 @@ export function SummonerSearchBar({
   showRecentSearches = true,
 }: SummonerSearchBarProps) {
   const { t } = useI18n();
+  const router = useRouter();
   const [isFocused, setIsFocused] = useState(false);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +46,16 @@ export function SummonerSearchBar({
     handleRecentClick,
   } = useSummonerSearch({
     onNavigate: () => setIsFocused(false),
+    onPartialResults: (partial) => {
+      if (partial.isNoResults) {
+        toast.info("Aucun joueur trouve. Essayez le format Nom#TAG.");
+      } else if (partial.results.length > 1) {
+        // Multi-results → redirect to /summoners page
+        router.push(
+          `/summoners?q=${encodeURIComponent(partial.query)}&region=${searchRegion}`
+        );
+      }
+    },
   });
 
   // Track debounce state for visual feedback
@@ -131,7 +144,7 @@ export function SummonerSearchBar({
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onKeyDown={handleKeyDown}
-            placeholder={`${t("homeSearch.placeholder") || "Game name"} + #${regionTag}`}
+            placeholder={`${t("homeSearch.placeholder") || "Nom ou Nom#TAG"} (ex: Faker)`}
             className="flex-1 h-full bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60"
             aria-label={t("homeSearch.placeholder") || "Rechercher un joueur"}
             autoComplete="off"

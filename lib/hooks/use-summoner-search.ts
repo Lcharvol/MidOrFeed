@@ -7,17 +7,25 @@ import { useRecentSearch, type RecentSearch } from "./use-recent-search";
 
 type SearchResult = {
   puuid: string;
-  gameName?: string;
-  tagLine?: string;
+  gameName?: string | null;
+  tagLine?: string | null;
   region: string;
-  profileIconId?: number;
-  stats?: { totalMatches?: number };
+  profileIconId?: number | null;
+  level?: number | null;
+  stats?: { totalMatches?: number; winRate?: number; avgKDA?: number };
+};
+
+type PartialSearchResults = {
+  results: SearchResult[];
+  query: string;
+  isNoResults: boolean;
 };
 
 type UseSummonerSearchOptions = {
   onSearchStart?: () => void;
   onSearchEnd?: () => void;
   onNavigate?: () => void;
+  onPartialResults?: (partial: PartialSearchResults) => void;
   defaultRegion?: string;
 };
 
@@ -26,6 +34,7 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
     onSearchStart,
     onSearchEnd,
     onNavigate,
+    onPartialResults,
     defaultRegion = "euw1",
   } = options;
 
@@ -36,6 +45,8 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
   const [searchRegion, setSearchRegion] = useState(defaultRegion);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [partialSearchResults, setPartialSearchResults] =
+    useState<PartialSearchResults | null>(null);
 
   // Local search for autocomplete
   const performLocalSearch = useCallback(
@@ -97,24 +108,67 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
     [addRecentSearch, router, onNavigate]
   );
 
-  // Perform full search via Riot API
-  const performSearch = useCallback(
+  // Perform partial search via local DB (no # in query)
+  const performPartialSearch = useCallback(
     async (query: string, region: string) => {
-      const trimmed = query.trim();
-      if (!trimmed || trimmed.length < 2) {
-        toast.error("Entrez au moins 2 caractères");
-        return;
-      }
+      setIsSearching(true);
+      onSearchStart?.();
 
-      // Parse gameName#tagLine format
-      const hashIndex = trimmed.lastIndexOf("#");
-      if (hashIndex === -1 || hashIndex === 0 || hashIndex === trimmed.length - 1) {
-        toast.error("Format invalide. Utilisez: Nom#Tag");
-        return;
-      }
+      try {
+        const response = await fetch("/api/search/summoners", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, region, limit: 20 }),
+        });
 
-      const gameName = trimmed.slice(0, hashIndex).trim();
-      const tagLine = trimmed.slice(hashIndex + 1).trim();
+        if (!response.ok) {
+          toast.error("Erreur lors de la recherche");
+          return;
+        }
+
+        const data = await response.json();
+        const results: SearchResult[] = data.results || [];
+
+        if (results.length === 1) {
+          // Single result → navigate directly
+          const r = results[0];
+          addRecentSearch(
+            r.gameName || r.puuid,
+            r.tagLine || r.region,
+            r.region,
+            r.puuid
+          );
+          setSearchQuery("");
+          setSearchResults([]);
+          setPartialSearchResults(null);
+          onNavigate?.();
+          router.push(`/summoners/${r.puuid}/overview?region=${r.region}`);
+        } else {
+          const partial: PartialSearchResults = {
+            results,
+            query,
+            isNoResults: results.length === 0,
+          };
+          setPartialSearchResults(partial);
+          onPartialResults?.(partial);
+        }
+      } catch (error) {
+        console.error("Partial search error:", error);
+        toast.error("Erreur lors de la recherche");
+      } finally {
+        setIsSearching(false);
+        onSearchEnd?.();
+      }
+    },
+    [addRecentSearch, router, onSearchStart, onSearchEnd, onNavigate, onPartialResults]
+  );
+
+  // Perform full search via Riot API (has #)
+  const performRiotSearch = useCallback(
+    async (query: string, region: string) => {
+      const hashIndex = query.lastIndexOf("#");
+      const gameName = query.slice(0, hashIndex).trim();
+      const tagLine = query.slice(hashIndex + 1).trim();
 
       if (!gameName || !tagLine) {
         toast.error("Le nom et le tag sont requis");
@@ -128,11 +182,7 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
         const response = await fetch("/api/riot/search-account", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            gameName,
-            tagLine,
-            region,
-          }),
+          body: JSON.stringify({ gameName, tagLine, region }),
         });
 
         const result = await response.json();
@@ -153,6 +203,7 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
 
           setSearchQuery("");
           setSearchResults([]);
+          setPartialSearchResults(null);
           onNavigate?.();
 
           router.push(`/summoners/${data.puuid}/overview?region=${region}`);
@@ -168,6 +219,30 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
       }
     },
     [addRecentSearch, router, onSearchStart, onSearchEnd, onNavigate]
+  );
+
+  // Main search: branch on # presence
+  const performSearch = useCallback(
+    async (query: string, region: string) => {
+      const trimmed = query.trim();
+      if (!trimmed || trimmed.length < 2) {
+        toast.error("Entrez au moins 2 caractères");
+        return;
+      }
+
+      const hashIndex = trimmed.lastIndexOf("#");
+      const hasValidHash =
+        hashIndex > 0 && hashIndex < trimmed.length - 1;
+
+      if (hasValidHash) {
+        await performRiotSearch(trimmed, region);
+      } else {
+        // No # or incomplete # → partial search via local DB
+        const cleanQuery = hashIndex > 0 ? trimmed.slice(0, hashIndex).trim() : trimmed;
+        await performPartialSearch(cleanQuery, region);
+      }
+    },
+    [performRiotSearch, performPartialSearch]
   );
 
   // Search with current state values
@@ -196,10 +271,16 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
     [performSearch, router, onNavigate]
   );
 
+  // Clear partial results
+  const clearPartialResults = useCallback(() => {
+    setPartialSearchResults(null);
+  }, []);
+
   // Clear search state
   const clearSearch = useCallback(() => {
     setSearchQuery("");
     setSearchResults([]);
+    setPartialSearchResults(null);
   }, []);
 
   return {
@@ -211,6 +292,7 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
     isSearching,
     searchResults,
     recentSearches,
+    partialSearchResults,
 
     // Actions
     search,
@@ -218,5 +300,6 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
     navigateToResult,
     handleRecentClick,
     clearSearch,
+    clearPartialResults,
   };
 }

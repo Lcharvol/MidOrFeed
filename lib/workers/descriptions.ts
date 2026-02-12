@@ -39,6 +39,10 @@ export const WORKER_DESCRIPTIONS: Record<string, { name: string; description: st
     name: "Item Builds",
     description: "Analyse les builds d'items les plus efficaces par champion",
   },
+  "analyze-items": {
+    name: "Item Stats",
+    description: "Calcule les statistiques globales des items (winrate, pickrate, score) pour la tier list",
+  },
   "data-cleanup": {
     name: "Data Cleanup",
     description: "Nettoie les données anciennes pour optimiser la base de données",

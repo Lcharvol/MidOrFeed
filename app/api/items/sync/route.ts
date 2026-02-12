@@ -23,6 +23,9 @@ interface RiotItem {
   tags?: string[];
   depth?: number;
   from?: string[];
+  maps?: Record<string, boolean>;
+  inStore?: boolean;
+  requiredChampion?: string;
 }
 
 interface RiotItemData {
@@ -94,6 +97,9 @@ export async function POST(request: NextRequest) {
         tags: item.tags ? JSON.stringify(item.tags) : null,
         depth: item.depth || null,
         fromItems: item.from ? JSON.stringify(item.from) : null,
+        maps: item.maps ? JSON.stringify(item.maps) : null,
+        inStore: item.inStore ?? true,
+        requiredChampion: item.requiredChampion || null,
       }));
 
     const itemsToUpdate = items.filter(([itemId]) => existingItemIds.has(itemId));
@@ -125,6 +131,9 @@ export async function POST(request: NextRequest) {
             tags: item.tags ? JSON.stringify(item.tags) : null,
             depth: item.depth || null,
             fromItems: item.from ? JSON.stringify(item.from) : null,
+            maps: item.maps ? JSON.stringify(item.maps) : null,
+            inStore: item.inStore ?? true,
+            requiredChampion: item.requiredChampion || null,
           },
         });
         updated++;

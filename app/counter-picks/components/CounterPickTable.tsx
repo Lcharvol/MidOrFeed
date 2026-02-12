@@ -15,6 +15,14 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -22,12 +30,16 @@ import {
   MedalIcon,
   AwardIcon,
   ChevronDownIcon,
-  ArrowUpDownIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ChevronsUpDownIcon,
   SwordsIcon,
 } from "lucide-react";
-import { formatDateTime, formatNumber, formatPercent } from "../utils";
+import { formatNumber, formatPercent } from "../utils";
+import { useI18n } from "@/lib/i18n-context";
 import type { CounterPickPair, CounterPickMode } from "@/types";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 type CounterPickTableProps = {
   championName: string;
@@ -36,6 +48,9 @@ type CounterPickTableProps = {
   mode: CounterPickMode;
 };
 
+type SortKey = "winRate" | "games";
+type SortDir = "asc" | "desc" | null;
+
 const getRankIcon = (index: number) => {
   switch (index) {
     case 0:
@@ -43,7 +58,7 @@ const getRankIcon = (index: number) => {
     case 1:
       return <MedalIcon className="size-4 text-muted-foreground" />;
     case 2:
-      return <AwardIcon className="size-4 text-amber-700" />;
+      return <AwardIcon className="size-4 text-amber-700 dark:text-amber-500" />;
     default:
       return null;
   }
@@ -78,6 +93,15 @@ const getProgressColor = (winRate: number) => {
   return "bg-danger";
 };
 
+const SortIcon = ({ column, sortKey, sortDir }: { column: SortKey; sortKey: SortKey; sortDir: SortDir }) => {
+  if (sortKey !== column || sortDir === null) {
+    return <ChevronsUpDownIcon className="ml-1 size-3.5 opacity-50" />;
+  }
+  return sortDir === "asc"
+    ? <ArrowUpIcon className="ml-1 size-3.5" />
+    : <ArrowDownIcon className="ml-1 size-3.5" />;
+};
+
 const INITIAL_SHOW = 10;
 
 export const CounterPickTable = ({
@@ -86,24 +110,26 @@ export const CounterPickTable = ({
   championNameMap,
   mode,
 }: CounterPickTableProps) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [sortKey, setSortKey] = useState<"winRate" | "games">("winRate");
-  const [sortAsc, setSortAsc] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("winRate");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const sortedPairs = useMemo(() => {
+    if (sortDir === null) return pairs;
     const sorted = [...pairs].sort((a, b) => {
       const diff = sortKey === "winRate" ? a.winRate - b.winRate : a.games - b.games;
-      return sortAsc ? diff : -diff;
+      return sortDir === "asc" ? diff : -diff;
     });
     return sorted;
-  }, [pairs, sortKey, sortAsc]);
+  }, [pairs, sortKey, sortDir]);
 
-  const handleSort = (key: "winRate" | "games") => {
+  const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortAsc((prev) => !prev);
+      setSortDir((prev) => (prev === "desc" ? "asc" : "desc"));
     } else {
       setSortKey(key);
-      setSortAsc(false);
+      setSortDir("desc");
     }
   };
 
@@ -112,63 +138,52 @@ export const CounterPickTable = ({
   const hasMore = remainingPairs.length > 0;
 
   const renderRow = (pair: CounterPickPair, index: number) => {
-    const enemyName =
-      championNameMap.get(pair.enemyChampionId) ?? pair.enemyChampionId;
+    const enemyName = championNameMap.get(pair.enemyChampionId) ?? pair.enemyChampionId;
     const isTopThree = index < 3;
 
     return (
-      <div
-        key={pair.enemyChampionId}
-        className={cn(
-          "grid grid-cols-12 items-center gap-2 px-4 py-3 transition-colors hover:bg-muted/30",
-          isTopThree && "bg-muted/10"
-        )}
-      >
+      <TableRow key={pair.enemyChampionId} className={cn(isTopThree && "bg-muted/10")}>
         {/* Rank */}
-        <div className="col-span-1 flex justify-center">
+        <TableCell className="w-12 text-center">
           {isTopThree ? (
             <div
               className={cn(
-                "flex size-7 items-center justify-center rounded-full border",
+                "mx-auto flex size-7 items-center justify-center rounded-full border",
                 getRankBadge(index)
               )}
             >
               {getRankIcon(index)}
             </div>
           ) : (
-            <span className="text-sm text-muted-foreground">
-              {index + 1}
-            </span>
+            <span className="text-sm text-muted-foreground">{index + 1}</span>
           )}
-        </div>
+        </TableCell>
 
         {/* Champion */}
-        <div className="col-span-4">
-          <div className="flex items-center gap-3">
+        <TableCell>
+          <Link
+            href={`/champions/${encodeURIComponent(pair.enemyChampionId)}`}
+            className="flex items-center gap-3 hover:underline"
+          >
             <ChampionIcon
               championId={pair.enemyChampionId}
               size={36}
               shape="circle"
               className={cn(
-                "border-2",
+                "border-2 shrink-0",
                 isTopThree ? "border-primary/30" : "border-border/50"
               )}
             />
-            <span
-              className={cn(
-                "font-medium",
-                isTopThree && "text-foreground"
-              )}
-            >
+            <span className={cn("font-medium", isTopThree && "text-foreground")}>
               {enemyName}
             </span>
-          </div>
-        </div>
+          </Link>
+        </TableCell>
 
-        {/* Win Rate with progress bar */}
-        <div className="col-span-4">
+        {/* Win Rate */}
+        <TableCell>
           <div className="flex items-center gap-3">
-            <div className="flex-1">
+            <div className="hidden sm:block flex-1 max-w-24">
               <Progress
                 value={pair.winRate * 100}
                 className="h-2"
@@ -184,22 +199,24 @@ export const CounterPickTable = ({
               {formatPercent(pair.winRate)}
             </span>
           </div>
-        </div>
+        </TableCell>
 
-        {/* Games */}
-        <div className="col-span-2 text-right">
-          <span className="text-sm text-muted-foreground">
+        {/* Matches */}
+        <TableCell className="text-right">
+          <span className="text-sm text-muted-foreground tabular-nums">
             {formatNumber(pair.games)}
           </span>
-        </div>
+        </TableCell>
 
-        {/* Last played */}
-        <div className="col-span-1 text-right">
-          <span className="text-xs text-muted-foreground">
-            {formatDateTime(Number(pair.lastPlayedAt))}
+        {/* W / L */}
+        <TableCell className="text-right hidden sm:table-cell">
+          <span className="text-sm tabular-nums">
+            <span className="text-success-muted-foreground">{formatNumber(pair.wins)}</span>
+            {" / "}
+            <span className="text-danger-muted-foreground">{formatNumber(pair.losses)}</span>
           </span>
-        </div>
-      </div>
+        </TableCell>
+      </TableRow>
     );
   };
 
@@ -211,64 +228,73 @@ export const CounterPickTable = ({
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <SwordsIcon className="size-5 text-muted-foreground" />
-                Classement des counters
+                {t("counterPicks.counterRanking")}
               </CardTitle>
               <CardDescription>
                 {mode === "same_lane"
-                  ? `Champions en lane face à ${championName}`
-                  : `Tous les champions efficaces contre ${championName}`}
+                  ? t("counterPicks.counterRankingDescSameLane").replace("{championName}", championName)
+                  : t("counterPicks.counterRankingDescGlobal").replace("{championName}", championName)}
               </CardDescription>
             </div>
             <Badge emphasis="info" emphasisVariant="subtle" className="px-3">
-              {pairs.length} matchups
+              {t("counterPicks.matchupsCount").replace("{count}", String(pairs.length))}
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="px-0 pb-0">
-          {/* Header row */}
-          <div className="grid grid-cols-12 gap-2 border-b border-border/50 bg-muted/30 px-4 py-2.5 text-xs font-medium text-muted-foreground">
-            <div className="col-span-1 text-center">#</div>
-            <div className="col-span-4">Champion</div>
-            <button
-              className="col-span-4 flex items-center gap-1 hover:text-foreground transition-colors text-left"
-              onClick={() => handleSort("winRate")}
-            >
-              Win rate counter
-              <ArrowUpDownIcon className={cn("size-3", sortKey === "winRate" && "text-foreground")} />
-            </button>
-            <button
-              className="col-span-2 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
-              onClick={() => handleSort("games")}
-            >
-              Matchs
-              <ArrowUpDownIcon className={cn("size-3", sortKey === "games" && "text-foreground")} />
-            </button>
-            <div className="col-span-1 text-right">Date</div>
-          </div>
-
-          {/* Initial rows (always visible) */}
-          <div className="divide-y divide-border/30">
-            {initialPairs.map((pair, index) => renderRow(pair, index))}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableHead className="w-12 text-center text-xs">
+                  {t("counterPicks.rank")}
+                </TableHead>
+                <TableHead className="text-xs">
+                  {t("counterPicks.champion")}
+                </TableHead>
+                <TableHead className="text-xs">
+                  <button
+                    className="flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort("winRate")}
+                  >
+                    {t("counterPicks.winRate")}
+                    <SortIcon column="winRate" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                </TableHead>
+                <TableHead className="text-right text-xs">
+                  <button
+                    className="ml-auto flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort("games")}
+                  >
+                    {t("counterPicks.matches")}
+                    <SortIcon column="games" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                </TableHead>
+                <TableHead className="text-right text-xs hidden sm:table-cell">
+                  {t("counterPicks.winsLosses")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {initialPairs.map((pair, index) => renderRow(pair, index))}
+            </TableBody>
+          </Table>
 
           {/* Remaining rows (collapsible) */}
           {hasMore && (
             <>
               <CollapsibleContent>
-                <div className="divide-y divide-border/30">
-                  {remainingPairs.map((pair, index) =>
-                    renderRow(pair, index + INITIAL_SHOW)
-                  )}
-                </div>
+                <Table>
+                  <TableBody>
+                    {remainingPairs.map((pair, index) =>
+                      renderRow(pair, index + INITIAL_SHOW)
+                    )}
+                  </TableBody>
+                </Table>
               </CollapsibleContent>
 
               <div className="border-t border-border/50 p-4">
                 <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full"
-                  >
+                  <Button variant="ghost" size="sm" className="w-full">
                     <ChevronDownIcon
                       className={cn(
                         "mr-2 size-4 transition-transform",
@@ -276,8 +302,8 @@ export const CounterPickTable = ({
                       )}
                     />
                     {open
-                      ? "Afficher moins"
-                      : `Afficher ${remainingPairs.length} de plus`}
+                      ? t("counterPicks.showLess")
+                      : t("counterPicks.showMore").replace("{count}", String(remainingPairs.length))}
                   </Button>
                 </CollapsibleTrigger>
               </div>

@@ -1,32 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import useSWR from "swr";
-import Image from "next/image";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  ChevronsUpDownIcon,
-  HomeIcon,
-  SearchIcon,
-} from "lucide-react";
-import { DataState } from "@/components/ui/data-state";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  EmptyDescription,
-} from "@/components/ui/empty";
+import { useState } from "react";
+import Link from "next/link";
+import { HomeIcon } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -35,162 +11,29 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { DDRAGON_VERSION, getItemImageUrl as buildItemImageUrl } from "@/constants/ddragon";
-import { useI18n } from "@/lib/i18n-context";
-
-// Interface basée sur les données Riot
-interface Item {
-  id: string;
-  itemId: string;
-  name: string;
-  description: string | null;
-  plaintext: string | null;
-  image: string | null;
-  gold: string | null; // JSON string avec {base, total, sell}
-}
-
-interface ItemsResponse {
-  success: boolean;
-  data: Item[];
-  count: number;
-}
-
-type SortColumn = "name" | "gold";
-type SortDirection = "asc" | "desc" | null;
-
-const itemsFetcher = async (url: string): Promise<ItemsResponse> => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error("Erreur lors de la récupération des items");
-  }
-  return res.json();
-};
-
-// Composant SortIcon défini en dehors du composant principal
-const SortIcon = ({
-  column,
-  sortColumn,
-  sortDirection,
-}: {
-  column: SortColumn;
-  sortColumn: SortColumn | null;
-  sortDirection: SortDirection;
-}) => {
-  if (sortColumn !== column)
-    return <ChevronsUpDownIcon className="ml-1 size-4 opacity-50" />;
-  if (sortDirection === "asc") return <ArrowUpIcon className="ml-1 size-4" />;
-  if (sortDirection === "desc")
-    return <ArrowDownIcon className="ml-1 size-4" />;
-  return <ChevronsUpDownIcon className="ml-1 size-4 opacity-50" />;
-};
+import { ItemTierListHero } from "./components/ItemTierListHero";
+import {
+  ItemTierListFilters,
+  type ViewMode,
+} from "./components/ItemTierListFilters";
+import { ItemTierListTable } from "./components/ItemTierListTable";
+import { ItemTierListGrid } from "./components/ItemTierListGrid";
+import { useItemTierList } from "./hooks/useItemTierList";
 
 export default function ItemsPage() {
-  const { t } = useI18n();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-
-  const { data, error, isLoading } = useSWR<ItemsResponse>(
-    "/api/items/list",
-    itemsFetcher
-  );
-
-  const handleSort = (column: SortColumn) => {
-    if (sortColumn === column) {
-      if (sortDirection === "asc") {
-        setSortDirection("desc");
-      } else if (sortDirection === "desc") {
-        setSortColumn(null);
-        setSortDirection(null);
-      } else {
-        setSortDirection("asc");
-      }
-    } else {
-      setSortColumn(column);
-      setSortDirection("asc");
-    }
-  };
-
-  const sortedAndFilteredItems = useMemo(() => {
-    if (!data?.data) return [];
-
-    let filtered = data.data.filter((item) => {
-      const matchesSearch = item.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      return matchesSearch;
-    });
-
-    if (sortColumn && sortDirection) {
-      filtered = [...filtered].sort((a, b) => {
-        let aValue: string | number;
-        let bValue: string | number;
-
-        switch (sortColumn) {
-          case "name":
-            aValue = a.name;
-            bValue = b.name;
-            break;
-          case "gold":
-            // Parse gold JSON to get total value
-            const aGold = a.gold ? JSON.parse(a.gold) : { total: 0 };
-            const bGold = b.gold ? JSON.parse(b.gold) : { total: 0 };
-            aValue = aGold.total || 0;
-            bValue = bGold.total || 0;
-            break;
-          default:
-            aValue = 0;
-            bValue = 0;
-        }
-
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
-        } else if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortDirection === "asc"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-        return 0;
-      });
-    }
-
-    return filtered;
-  }, [data, searchTerm, sortColumn, sortDirection]);
-
-  const getGoldValue = (gold: string | null): string => {
-    if (!gold) return "N/A";
-    try {
-      const parsed = JSON.parse(gold);
-      return `${parsed.total} gold`;
-    } catch {
-      return gold;
-    }
-  };
-
-  const getPlaintextPreview = (text: string | null): string => {
-    if (!text) return "-";
-    // Remove HTML tags
-    const plain = text.replace(/<[^>]*>/g, "");
-    return plain.length > 80 ? `${plain.substring(0, 80)}...` : plain;
-  };
-
-  const cleanItemName = (name: string | null): string => {
-    if (!name) return "N/A";
-    // Remove HTML tags from name
-    return name.replace(/<[^>]*>/g, "");
-  };
-
-  const getItemImageUrl = (image: string | null): string =>
-    image ? buildItemImageUrl(image, DDRAGON_VERSION) : "";
+  const { state, actions, derived } = useItemTierList();
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-10">
-      <Breadcrumb className="mb-4">
+    <div className="container mx-auto px-4 py-10 space-y-10">
+      <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink asChild><Link href="/"><HomeIcon className="size-4" /></Link></BreadcrumbLink>
+            <BreadcrumbLink asChild>
+              <Link href="/">
+                <HomeIcon className="size-4" />
+              </Link>
+            </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -198,139 +41,40 @@ export default function ItemsPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="mb-6 sm:mb-8">
-        <h1 className="mb-2 text-2xl sm:text-4xl font-bold">{t("tierList.items.title")}</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          {t("tierList.items.description")}
-        </p>
-      </div>
 
-      <div className="mb-4 sm:mb-6 flex flex-col gap-4 sm:flex-row">
-        <div className="flex-1">
-          <Input
-            placeholder={t("tierList.items.searchItem")}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
+      <ItemTierListHero
+        totalMatches={derived.totalMatches}
+        itemsCount={derived.itemsWithStats.length}
+        formattedLastUpdated={derived.formattedLastUpdated}
+      />
+
+      <section className="space-y-4">
+        <ItemTierListFilters
+          state={state}
+          actions={actions}
+          filtersActive={derived.filtersActive}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+
+        {viewMode === "table" ? (
+          <ItemTierListTable
+            items={derived.sortedItems}
+            sortColumn={state.sortColumn}
+            sortDirection={state.sortDirection}
+            onSort={actions.handleSort}
+            totalMatches={derived.totalMatches}
+            isLoading={derived.isLoading}
+            error={derived.error}
           />
-        </div>
-      </div>
-
-      {isLoading && (
-        <DataState
-          isLoading
-          variant="plain"
-          title={t("tierList.items.loading") || "Chargement..."}
-          containerClassName="py-12"
-        />
-      )}
-
-      {error && (
-        <DataState
-          tone="danger"
-          title={t("tierList.items.loadingError") || "Erreur de chargement"}
-          description="Impossible de charger les données des objets"
-        />
-      )}
-
-      {!isLoading && !error && (
-        <div className="rounded-lg border overflow-x-auto">
-          <Table className="text-xs sm:text-sm">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12 sm:w-16">{t("tierList.items.image")}</TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => handleSort("name")}
-                >
-                  <div className="flex items-center">
-                    {t("tierList.items.name")}
-                    <SortIcon
-                      column="name"
-                      sortColumn={sortColumn}
-                      sortDirection={sortDirection}
-                    />
-                  </div>
-                </TableHead>
-                <TableHead className="hidden sm:table-cell">{t("tierList.items.descriptionCol")}</TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => handleSort("gold")}
-                >
-                  <div className="flex items-center">
-                    {t("tierList.items.price")}
-                    <SortIcon
-                      column="gold"
-                      sortColumn={sortColumn}
-                      sortDirection={sortDirection}
-                    />
-                  </div>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedAndFilteredItems.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    <Empty className="py-8">
-                      <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                          <SearchIcon />
-                        </EmptyMedia>
-                        <EmptyTitle>{t("tierList.items.noItemFound")}</EmptyTitle>
-                      </EmptyHeader>
-                    </Empty>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                sortedAndFilteredItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="py-2 sm:py-4">
-                      {item.image ? (
-                        <Image
-                          src={getItemImageUrl(item.image)}
-                          alt={cleanItemName(item.name)}
-                          width={36}
-                          height={36}
-                          className="rounded sm:w-12 sm:h-12"
-                        />
-                      ) : (
-                        <div className="size-9 sm:size-12 rounded bg-muted" />
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium py-2 sm:py-4">
-                      <span className="line-clamp-1">{cleanItemName(item.name)}</span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-md hidden sm:table-cell py-2 sm:py-4">
-                      {getPlaintextPreview(item.plaintext)}
-                    </TableCell>
-                    <TableCell className="py-2 sm:py-4">
-                      <div className="flex items-center justify-end gap-1 sm:gap-2 text-xs sm:text-sm">
-                        {getGoldValue(item.gold)}
-                        <Image
-                          src="/gold-piece.png"
-                          alt="Gold"
-                          width={16}
-                          height={16}
-                          className="sm:w-5 sm:h-5"
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <div className="mt-4 text-sm text-muted-foreground">
-          {t("tierList.items.displayingItems")
-            .replace("{count}", String(sortedAndFilteredItems.length))
-            .replace("{total}", String(data?.count ?? 0))}
-        </div>
-      )}
+        ) : (
+          <ItemTierListGrid
+            items={derived.sortedItems}
+            isLoading={derived.isLoading}
+            error={derived.error}
+          />
+        )}
+      </section>
     </div>
   );
 }

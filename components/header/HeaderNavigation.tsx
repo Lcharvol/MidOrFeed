@@ -8,7 +8,7 @@ import {
   NavigationMenuLink,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { UserIcon, ShieldCheckIcon, DownloadIcon } from "lucide-react";
+import { UserIcon, ShieldCheckIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@/types/roles";
 import { useI18n } from "@/lib/i18n-context";
@@ -83,19 +83,6 @@ export function HeaderNavigation({
           </NavigationMenuItem>
         );
       })}
-
-      <NavigationMenuItem>
-        <Link
-          href="/download"
-          className={cn(
-            standaloneNavLinkClasses,
-            pathname === "/download" && activeTriggerClass
-          )}
-        >
-          <DownloadIcon className="size-4" />
-          Overlay
-        </Link>
-      </NavigationMenuItem>
 
       {user && (
         <>

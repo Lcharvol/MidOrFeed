@@ -76,7 +76,7 @@ export function HeroSearchSection({
                       if (formatHint) setFormatHint(null);
                     }}
                     region={region}
-                    placeholder="Nom#TAG (ex: Faker#KR1)"
+                    placeholder="Nom ou Nom#TAG (ex: Faker)"
                     onSelect={onSelectResult}
                     autoFocus
                   />

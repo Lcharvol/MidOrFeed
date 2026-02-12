@@ -4,25 +4,22 @@ import { useMemo } from "react";
 import Image from "next/image";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChampionSelect } from "@/components/ChampionSelect";
 import { ChampionIcon } from "@/components/ChampionIcon";
+import { StatTile } from "@/components/ui/stat-tile";
 import {
   Loader2Icon,
   SearchIcon,
   TrendingUpIcon,
-  ShieldIcon,
-  SwordsIcon,
   TargetIcon,
-  SparklesIcon,
-  GlobeIcon,
-  UserIcon,
   HomeIcon,
+  TrophyIcon,
+  SwordsIcon,
+  BarChart3Icon,
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -35,19 +32,18 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCounterPicks } from "@/lib/hooks/use-counter-picks";
-import { CounterPickSummaryCard } from "./components/CounterPickSummaryCard";
-import { CounterPickTips } from "./components/CounterPickTips";
+import { CounterPickFilterBar } from "./components/CounterPickFilterBar";
+import { CounterPickPodium } from "./components/CounterPickPodium";
 import { CounterPickTable } from "./components/CounterPickTable";
 import { getChampionSplashUrl } from "@/constants/ddragon";
-import { cn } from "@/lib/utils";
-import type { CounterPickMode } from "@/types";
+import { formatPercent, formatNumber } from "./utils";
+import { useI18n } from "@/lib/i18n-context";
 
 type CounterPicksPageClientProps = {
   initialChampionId: string;
   initialChampionName?: string | null;
 };
 
-// Popular champions to show when no champion is selected
 const POPULAR_CHAMPIONS = [
   "Yasuo",
   "Zed",
@@ -64,6 +60,7 @@ const CounterPicksPageClient = ({
   initialChampionName = null,
 }: CounterPicksPageClientProps) => {
   const router = useRouter();
+  const { t } = useI18n();
 
   const {
     championSummaries,
@@ -75,7 +72,6 @@ const CounterPicksPageClient = ({
     counterData,
     pairs,
     summary,
-    tips,
     isLoading,
     error,
   } = useCounterPicks(initialChampionId);
@@ -95,6 +91,10 @@ const CounterPicksPageClient = ({
   const resolvedChampionName =
     selectedChampionName || initialChampionName || initialChampionId || "";
 
+  const bestCounterName = summary?.bestCounterId
+    ? championNameMap.get(summary.bestCounterId) ?? summary.bestCounterId
+    : null;
+
   const handleChampionChange = (championId: string) => {
     setSelectedChampion(championId);
     const targetPath = championId
@@ -107,19 +107,28 @@ const CounterPicksPageClient = ({
     handleChampionChange(championId);
   };
 
-  // Empty state with popular champions
+  // Empty state
   const renderEmptyState = () => (
     <div className="space-y-6 sm:space-y-8">
       {/* Hero placeholder */}
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-border/50 bg-gradient-to-br from-primary/5 via-background to-background p-5 sm:p-8 md:p-12">
-        <div className="max-w-2xl">
+        <div className="max-w-2xl mx-auto text-center">
           <h2 className="mb-2 sm:mb-3 text-xl sm:text-2xl font-bold md:text-3xl">
-            Trouvez le counter parfait
+            {t("counterPicks.findPerfectCounter")}
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Sélectionnez un champion ennemi pour découvrir les meilleurs counter
-            picks.
+          <p className="text-sm sm:text-base text-muted-foreground mb-6">
+            {t("counterPicks.selectChampionPrompt")}
           </p>
+          {/* Prominent ChampionSelect */}
+          <div className="max-w-sm mx-auto">
+            <CounterPickFilterBar
+              championOptions={championOptions}
+              selectedChampion={selectedChampion}
+              onChampionChange={handleChampionChange}
+              mode={mode}
+              onModeChange={setMode}
+            />
+          </div>
         </div>
       </div>
 
@@ -127,7 +136,7 @@ const CounterPicksPageClient = ({
       <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
           <TrendingUpIcon className="size-3.5 sm:size-4" />
-          <span>Champions populaires</span>
+          <span>{t("counterPicks.popularChampions")}</span>
         </div>
         <div className="grid grid-cols-4 gap-2 sm:gap-3 sm:grid-cols-8">
           {POPULAR_CHAMPIONS.map((champId) => {
@@ -136,13 +145,13 @@ const CounterPicksPageClient = ({
               <button
                 key={champId}
                 onClick={() => handleQuickSelect(champId)}
-                className="group flex flex-col items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border border-border/50 bg-card/50 p-2 sm:p-3 transition-colors duration-200 hover:bg-accent/50"
+                className="group flex flex-col items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border border-border/50 bg-card/50 p-2 sm:p-3 transition-all duration-200 hover:bg-accent/50 hover:ring-2 hover:ring-primary/20"
               >
                 <ChampionIcon
                   championId={champId}
                   size={36}
                   shape="circle"
-                  className="sm:w-12 sm:h-12 border border-border/50 transition-[transform,opacity] duration-200 group-hover:scale-105"
+                  className="sm:w-12 sm:h-12 border border-border/50 transition-transform duration-200 group-hover:scale-105"
                 />
                 <span className="text-[10px] sm:text-xs font-medium text-muted-foreground group-hover:text-foreground truncate max-w-full">
                   {name}
@@ -151,49 +160,6 @@ const CounterPicksPageClient = ({
             );
           })}
         </div>
-      </div>
-
-      {/* Features */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50 bg-card/50 hover:shadow-glow hover:border-primary/30 transition-[shadow,border-color] duration-200">
-          <CardContent className="flex items-start gap-4 p-4">
-            <div className="rounded-lg bg-success-muted p-2">
-              <ShieldIcon className="size-5 text-success-muted-foreground" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Win rates précis</h3>
-              <p className="text-sm text-muted-foreground">
-                Statistiques basées sur des matchs réels
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-card/50 hover:shadow-glow hover:border-primary/30 transition-[shadow,border-color] duration-200">
-          <CardContent className="flex items-start gap-4 p-4">
-            <div className="rounded-lg bg-info-muted p-2">
-              <SwordsIcon className="size-5 text-info-muted-foreground" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Matchups détaillés</h3>
-              <p className="text-sm text-muted-foreground">
-                Analyse approfondie de chaque affrontement
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-card/50 hover:shadow-glow hover:border-primary/30 transition-[shadow,border-color] duration-200">
-          <CardContent className="flex items-start gap-4 p-4">
-            <div className="rounded-lg bg-warning-muted p-2">
-              <SparklesIcon className="size-5 text-warning-muted-foreground" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Conseils stratégiques</h3>
-              <p className="text-sm text-muted-foreground">
-                Tips pour exploiter chaque matchup
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
@@ -213,9 +179,9 @@ const CounterPicksPageClient = ({
             </div>
           </div>
           <div className="text-center">
-            <p className="font-medium">Analyse en cours...</p>
+            <p className="font-medium">{t("counterPicks.loading")}</p>
             <p className="text-sm text-muted-foreground">
-              Récupération des counter picks pour {resolvedChampionName}
+              {t("counterPicks.loadingDescription").replace("{championName}", resolvedChampionName)}
             </p>
           </div>
         </div>
@@ -226,19 +192,19 @@ const CounterPicksPageClient = ({
       const statusCode = error && typeof error === "object" && "status" in error ? (error as { status: number }).status : null;
       const errorMessage =
         statusCode === 404
-          ? `Champion « ${resolvedChampionName} » introuvable. Vérifie l'orthographe.`
+          ? t("counterPicks.errorNotFound").replace("{championName}", resolvedChampionName)
           : statusCode === 429
-            ? "Trop de requêtes — réessaie dans quelques secondes."
+            ? t("counterPicks.errorRateLimit")
             : typeof error === "string"
               ? error
-              : `Impossible de récupérer les counter picks pour ${resolvedChampionName}. Réessaie dans quelques instants.`;
+              : t("counterPicks.errorGeneric").replace("{championName}", resolvedChampionName);
 
       return (
         <Card className="border-danger/30 bg-danger-muted/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-danger-muted-foreground">
               <TargetIcon className="size-5" />
-              Erreur de chargement
+              {t("counterPicks.errorLoading")}
             </CardTitle>
             <CardDescription>{errorMessage}</CardDescription>
           </CardHeader>
@@ -252,11 +218,10 @@ const CounterPicksPageClient = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-warning-muted-foreground">
               <SearchIcon className="size-5" />
-              Données insuffisantes
+              {t("counterPicks.insufficientData")}
             </CardTitle>
             <CardDescription>
-              Pas assez de matchs analysés pour {resolvedChampionName}. Les données
-              seront disponibles après plus de parties.
+              {t("counterPicks.insufficientDataDescription").replace("{championName}", resolvedChampionName)}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -265,17 +230,56 @@ const CounterPicksPageClient = ({
 
     return (
       <div className="space-y-6">
-        <CounterPickSummaryCard
-          championId={selectedChampion}
-          championName={resolvedChampionName}
+        {/* Stats tiles */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatTile
+            label={t("counterPicks.overallWinRate")}
+            value={formatPercent(summary.overallWinRate)}
+            hint={`${formatNumber(summary.championWins)} V / ${formatNumber(summary.championLosses)} D`}
+            icon={<BarChart3Icon className="size-5" />}
+            emphasis={summary.overallWinRate >= 0.5 ? "positive" : "danger"}
+          />
+          <StatTile
+            label={t("counterPicks.bestCounter")}
+            value={
+              bestCounterName ? (
+                <span className="flex items-center gap-2">
+                  <ChampionIcon
+                    championId={summary.bestCounterId!}
+                    size={28}
+                    shape="circle"
+                    className="border border-success/30"
+                  />
+                  {bestCounterName}
+                </span>
+              ) : (
+                "—"
+              )
+            }
+            hint={
+              bestCounterName
+                ? `${formatPercent(summary.bestCounterWinRate)} · ${formatNumber(summary.bestCounterGames)} ${t("counterPicks.matches").toLowerCase()}`
+                : undefined
+            }
+            icon={<TrophyIcon className="size-5" />}
+            emphasis="positive"
+          />
+          <StatTile
+            label={t("counterPicks.reliableMatchups")}
+            value={summary.reliableMatchups}
+            hint={t("counterPicks.matchesAnalyzed").replace("{count}", formatNumber(summary.gamesAnalysed))}
+            icon={<SwordsIcon className="size-5" />}
+            emphasis="info"
+          />
+        </div>
+
+        {/* Podium */}
+        <CounterPickPodium
+          pairs={pairs}
           championNameMap={championNameMap}
-          summary={summary}
         />
 
-        {tips.length > 0 && (
-          <CounterPickTips championName={resolvedChampionName} tips={tips} />
-        )}
-
+        {/* Table */}
         <CounterPickTable
           championName={resolvedChampionName}
           pairs={pairs}
@@ -295,7 +299,7 @@ const CounterPicksPageClient = ({
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Counter Picks</BreadcrumbPage>
+            <BreadcrumbPage>{t("counterPicks.title")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -322,40 +326,47 @@ const CounterPicksPageClient = ({
               <div className="flex items-center gap-3 sm:gap-5">
                 <ChampionIcon
                   championId={selectedChampion}
-                  size={56}
+                  size={64}
                   shape="rounded"
-                  className="sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl border-2 border-white/20 shadow-2xl"
+                  className="sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl border-2 border-white/20 shadow-2xl"
                 />
                 <div>
-                  <Badge variant="outline" className="mb-1.5 sm:mb-2 border-primary/50 text-primary text-[10px] sm:text-xs">
-                    <TargetIcon className="mr-1 size-2.5 sm:size-3" />
-                    Counter picks
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2">
+                    <Badge variant="outline" className="border-primary/50 text-primary text-[10px] sm:text-xs">
+                      <TargetIcon className="mr-1 size-2.5 sm:size-3" />
+                      {t("counterPicks.title")}
+                    </Badge>
+                    <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground text-[10px] sm:text-xs">
+                      {mode === "same_lane" ? t("counterPicks.sameLane") : t("counterPicks.global")}
+                    </Badge>
+                  </div>
                   <h1 className="text-xl sm:text-3xl font-bold tracking-tight md:text-4xl">
-                    Contrer {resolvedChampionName}
+                    {t("counterPicks.counterTitle").replace("{championName}", resolvedChampionName)}
                   </h1>
                   <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">
-                    Les meilleurs champions pour ce matchup
+                    {t("counterPicks.counterDescription")}
                   </p>
                 </div>
               </div>
 
-              {/* Quick stats */}
+              {/* Quick stats in hero */}
               {summary && (
                 <div className="flex gap-4 sm:gap-6">
                   <div className="text-center">
                     <p className="text-lg sm:text-2xl font-bold">
-                      {(summary.overallWinRate * 100).toFixed(1)}%
+                      {formatPercent(summary.overallWinRate)}
                     </p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">Win rate</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      {t("counterPicks.winRate")}
+                    </p>
                   </div>
                   <div className="text-center">
                     <p className="text-lg sm:text-2xl font-bold">{summary.reliableMatchups}</p>
                     <p className="text-[10px] sm:text-xs text-muted-foreground">Matchups</p>
                   </div>
                   <div className="text-center hidden sm:block">
-                    <p className="text-2xl font-bold">{summary.totalMatches}</p>
-                    <p className="text-xs text-muted-foreground">Matchs</p>
+                    <p className="text-2xl font-bold">{formatNumber(summary.totalMatches)}</p>
+                    <p className="text-xs text-muted-foreground">{t("counterPicks.matches")}</p>
                   </div>
                 </div>
               )}
@@ -367,105 +378,30 @@ const CounterPicksPageClient = ({
       {/* Page header when no champion selected */}
       {!selectedChampion && (
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Counter picks</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            {t("counterPicks.title")}
+          </h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
-            Trouvez les meilleurs champions pour contrer vos adversaires.
+            {t("counterPicks.description")}
           </p>
         </div>
       )}
 
-      {/* Main layout */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-[280px_1fr]">
-        {/* Sidebar */}
-        <div className="space-y-4 order-first lg:order-none">
-          <Card className="lg:sticky lg:top-4 border-border/50">
-            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <SearchIcon className="size-3.5 sm:size-4 text-muted-foreground" />
-                Champion à contrer
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
-              <ChampionSelect
-                options={championOptions}
-                value={selectedChampion || null}
-                onChange={handleChampionChange}
-                placeholder="Rechercher..."
-              />
-
-              {/* Mode toggle */}
-              <div className="space-y-2">
-                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">
-                  Type de matchup
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setMode("same_lane")}
-                    className={cn(
-                      "flex flex-col items-center gap-1 sm:gap-1.5 rounded-lg border p-2 sm:p-3 text-[10px] sm:text-xs transition-colors duration-200",
-                      mode === "same_lane"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border/50 hover:border-border hover:bg-muted/50"
-                    )}
-                  >
-                    <UserIcon className="size-3.5 sm:size-4" />
-                    <span className="font-medium">Même lane</span>
-                  </button>
-                  <button
-                    onClick={() => setMode("global")}
-                    className={cn(
-                      "flex flex-col items-center gap-1 sm:gap-1.5 rounded-lg border p-2 sm:p-3 text-[10px] sm:text-xs transition-colors duration-200",
-                      mode === "global"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border/50 hover:border-border hover:bg-muted/50"
-                    )}
-                  >
-                    <GlobeIcon className="size-3.5 sm:size-4" />
-                    <span className="font-medium">Global</span>
-                  </button>
-                </div>
-                <p className="text-[9px] sm:text-[10px] text-muted-foreground">
-                  {mode === "same_lane"
-                    ? "Face à face en lane"
-                    : "Toutes lanes"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick access to popular champions */}
-          {selectedChampion && (
-            <Card className="border-border/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-muted-foreground">
-                  Autres populaires
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-4 gap-2">
-                {POPULAR_CHAMPIONS.filter((c) => c !== selectedChampion)
-                  .slice(0, 4)
-                  .map((champId) => (
-                    <button
-                      key={champId}
-                      onClick={() => handleQuickSelect(champId)}
-                      className="flex flex-col items-center gap-1 rounded-lg p-2 transition-colors hover:bg-muted"
-                    >
-                      <ChampionIcon
-                        championId={champId}
-                        size={32}
-                        shape="circle"
-                        className="border border-border/50"
-                      />
-                    </button>
-                  ))}
-              </CardContent>
-            </Card>
-          )}
+      {/* Filter bar (only when champion is selected) */}
+      {selectedChampion && (
+        <div className="mb-6">
+          <CounterPickFilterBar
+            championOptions={championOptions}
+            selectedChampion={selectedChampion}
+            onChampionChange={handleChampionChange}
+            mode={mode}
+            onModeChange={setMode}
+          />
         </div>
+      )}
 
-        {/* Main content */}
-        <div>{renderContent()}</div>
-      </div>
+      {/* Main content — full width */}
+      <div>{renderContent()}</div>
     </main>
   );
 };
