@@ -243,56 +243,54 @@ export async function POST(request: Request) {
           const blueTeamWon = team100?.win || false;
           const redTeamWon = team200?.win || false;
 
-          // Créer ou mettre à jour le match (upsert pour éviter les doublons)
-          const match = await prisma.match.upsert({
-            where: {
-              matchId: metadata.matchId,
-            },
-            update: {
-              gameCreation: BigInt(info.gameCreation),
-              gameDuration: info.gameDuration,
-              gameMode: info.gameMode,
-              gameType: info.gameType,
-              gameVersion: info.gameVersion,
-              mapId: info.mapId,
-              platformId:
-                info.platformId ||
-                metadata.platformId ||
-                normalizedRegion.toUpperCase(),
-              queueId: info.queueId,
-              region: normalizedRegion,
-              blueTeamWon,
-              redTeamWon,
-            },
-            create: {
-              matchId: metadata.matchId,
-              gameCreation: BigInt(info.gameCreation),
-              gameDuration: info.gameDuration,
-              gameMode: info.gameMode,
-              gameType: info.gameType,
-              gameVersion: info.gameVersion,
-              mapId: info.mapId,
-              platformId:
-                info.platformId ||
-                metadata.platformId ||
-                normalizedRegion.toUpperCase(),
-              queueId: info.queueId,
-              region: normalizedRegion,
-              blueTeamWon,
-              redTeamWon,
-            },
-          });
+          // Atomic transaction: match + all participants
+          const result = await prisma.$transaction(async (tx) => {
+            const match = await tx.match.upsert({
+              where: {
+                matchId: metadata.matchId,
+              },
+              update: {
+                gameCreation: BigInt(info.gameCreation),
+                gameDuration: info.gameDuration,
+                gameMode: info.gameMode,
+                gameType: info.gameType,
+                gameVersion: info.gameVersion,
+                mapId: info.mapId,
+                platformId:
+                  info.platformId ||
+                  metadata.platformId ||
+                  normalizedRegion.toUpperCase(),
+                queueId: info.queueId,
+                region: normalizedRegion,
+                blueTeamWon,
+                redTeamWon,
+              },
+              create: {
+                matchId: metadata.matchId,
+                gameCreation: BigInt(info.gameCreation),
+                gameDuration: info.gameDuration,
+                gameMode: info.gameMode,
+                gameType: info.gameType,
+                gameVersion: info.gameVersion,
+                mapId: info.mapId,
+                platformId:
+                  info.platformId ||
+                  metadata.platformId ||
+                  normalizedRegion.toUpperCase(),
+                queueId: info.queueId,
+                region: normalizedRegion,
+                blueTeamWon,
+                redTeamWon,
+              },
+            });
 
-          matchesCollected++;
-
-          // Créer ou mettre à jour les participants (upsert pour éviter les doublons)
-          for (const participant of info.participants) {
-            try {
+            let pCount = 0;
+            for (const participant of info.participants) {
               const championId =
                 championKeyToId.get(participant.championId) ||
                 String(participant.championId);
 
-              await prisma.matchParticipant.upsert({
+              await tx.matchParticipant.upsert({
                 where: {
                   matchId_participantId: {
                     matchId: match.id,
@@ -358,14 +356,14 @@ export async function POST(request: Request) {
                   riotIdTagline: participant.riotIdTagline || null,
                 },
               });
-              participantsCreated++;
-            } catch (participantError) {
-              console.error(
-                `Erreur lors de la création/ mise à jour du participant ${participant.participantId} pour le match ${matchId}:`,
-                participantError
-              );
+              pCount++;
             }
-          }
+
+            return pCount;
+          });
+
+          matchesCollected++;
+          participantsCreated += result;
         } catch (error) {
           console.error(
             `Erreur lors de la sauvegarde du match ${matchId}:`,
