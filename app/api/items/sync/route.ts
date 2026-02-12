@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: "Erreur lors de la synchronisation des items",
-        details: error instanceof Error ? error.message : "Erreur inconnue",
+        details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },
       { status: 500 }
     );

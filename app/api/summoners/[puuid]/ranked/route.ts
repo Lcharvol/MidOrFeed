@@ -274,7 +274,7 @@ export async function GET(
     return NextResponse.json(
       {
         error: "Erreur lors de la récupération du classement",
-        details: error instanceof Error ? error.message : "Erreur inconnue",
+        details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },
       { status: 500 }
     );

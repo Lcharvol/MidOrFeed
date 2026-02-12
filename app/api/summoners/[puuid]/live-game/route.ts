@@ -223,7 +223,7 @@ export async function GET(
     return NextResponse.json(
       {
         error: "Erreur lors de la recuperation de la partie en cours",
-        details: error instanceof Error ? error.message : "Erreur inconnue",
+        details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },
       { status: 500 }
     );
