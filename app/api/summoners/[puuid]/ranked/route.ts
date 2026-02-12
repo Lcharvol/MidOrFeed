@@ -74,6 +74,9 @@ const transformLeagueData = (
       wins: entry.wins,
       losses: entry.losses,
       winRate: Math.round(winRate * 10) / 10,
+      hotStreak: entry.hotStreak,
+      freshBlood: entry.freshBlood,
+      veteran: entry.veteran,
     },
     // Pour l'instant, on utilise les mêmes données pour "best"
     // On pourrait améliorer ça en cherchant dans l'historique

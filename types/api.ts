@@ -124,49 +124,34 @@ export interface ItemListItem {
 /**
  * Types pour les endpoints de summoners
  */
+export interface RankedQueueData {
+  current: {
+    tier: string;
+    rank: string;
+    lp: number;
+    wins: number;
+    losses: number;
+    winRate: number;
+    hotStreak?: boolean;
+    freshBlood?: boolean;
+    veteran?: boolean;
+  };
+  best: {
+    tier: string;
+    rank: string;
+    lp: number;
+  };
+  seasonHistory: Array<{
+    season: string;
+    tier: string;
+    rank: string;
+    lp: number;
+  }>;
+}
+
 export interface RankedData {
-  solo: {
-    current: {
-      tier: string;
-      rank: string;
-      lp: number;
-      wins: number;
-      losses: number;
-      winRate: number;
-    };
-    best: {
-      tier: string;
-      rank: string;
-      lp: number;
-    };
-    seasonHistory: Array<{
-      season: string;
-      tier: string;
-      rank: string;
-      lp: number;
-    }>;
-  } | null;
-  flex: {
-    current: {
-      tier: string;
-      rank: string;
-      lp: number;
-      wins: number;
-      losses: number;
-      winRate: number;
-    };
-    best: {
-      tier: string;
-      rank: string;
-      lp: number;
-    };
-    seasonHistory: Array<{
-      season: string;
-      tier: string;
-      rank: string;
-      lp: number;
-    }>;
-  } | null;
+  solo: RankedQueueData | null;
+  flex: RankedQueueData | null;
 }
 
 export interface RankedResponse {
