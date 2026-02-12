@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import DOMPurify from 'dompurify';
 import { ChampionAbility } from '@/lib/champions/get-champion-abilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ColorBadge } from '@/components/ui/badge';
@@ -25,19 +24,6 @@ const badgeEmphasisBySlot: Record<string, 'neutral' | 'info' | 'positive' | 'war
 type ChampionAbilitiesSectionProps = {
   abilities: ChampionAbility[];
   championName: string;
-};
-
-const formatRichText = (raw: string): string => {
-  const formatted = raw
-    .replace(/<br\s*\/?>(\s)*/gi, '<br />')
-    .replace(/\n+/g, '<br />')
-    .replace(/ style="[^"]*"/gi, '');
-
-  // Sanitize HTML to prevent XSS attacks
-  return DOMPurify.sanitize(formatted, {
-    ALLOWED_TAGS: ['br', 'b', 'i', 'strong', 'em', 'span'],
-    ALLOWED_ATTR: ['class'],
-  });
 };
 
 export const ChampionAbilitiesSection = ({
@@ -84,7 +70,7 @@ export const ChampionAbilitiesSection = ({
                   </div>
                   <div
                     className="text-sm leading-relaxed text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: formatRichText(ability.description) }}
+                    dangerouslySetInnerHTML={{ __html: ability.description }}
                   />
                   <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                     {ability.cooldown ? (

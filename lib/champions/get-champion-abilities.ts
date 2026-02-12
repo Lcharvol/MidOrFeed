@@ -76,8 +76,31 @@ const fetchChampionPayload = async (
   }
 };
 
-const normalizeDescription = (raw: string | null | undefined) =>
-  raw?.trim() ?? "";
+const ALLOWED_TAGS = new Set(["br", "b", "i", "strong", "em", "span"]);
+
+/** Sanitize HTML: keep only allowed tags, strip attributes except class */
+const sanitizeHtml = (html: string): string => {
+  return html.replace(/<\/?([a-z][a-z0-9]*)\b([^>]*)>/gi, (match, tag: string, attrs: string) => {
+    const lower = tag.toLowerCase();
+    if (!ALLOWED_TAGS.has(lower)) return "";
+    // Self-closing <br />
+    if (lower === "br") return "<br />";
+    // Strip all attributes except class
+    const classMatch = attrs.match(/class="([^"]*)"/i);
+    const classAttr = classMatch ? ` class="${classMatch[1]}"` : "";
+    return match.startsWith("</") ? `</${lower}>` : `<${lower}${classAttr}>`;
+  });
+};
+
+const normalizeDescription = (raw: string | null | undefined): string => {
+  const text = raw?.trim() ?? "";
+  if (!text) return text;
+  const formatted = text
+    .replace(/<br\s*\/?>(\s)*/gi, "<br />")
+    .replace(/\n+/g, "<br />")
+    .replace(/ style="[^"]*"/gi, "");
+  return sanitizeHtml(formatted);
+};
 
 const mapPassive = (championData: DDragonChampionData): ChampionAbility | null => {
   const passive = championData?.passive;
