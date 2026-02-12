@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     const validQueues = Object.values(QUEUE_NAMES);
     if (!validQueues.includes(queueName as typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES])) {
       return NextResponse.json(
-        { error: `Invalid queue: ${queueName}` },
+        { success: false, error: `Invalid queue: ${queueName}` },
         { status: 400 }
       );
     }
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     if (!job) {
       return NextResponse.json(
-        { error: `Job ${jobId} not found` },
+        { success: false, error: `Job ${jobId} not found` },
         { status: 404 }
       );
     }
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   } catch (error) {
     console.error("[Job API] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
@@ -77,7 +77,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const validQueues = Object.values(QUEUE_NAMES);
     if (!validQueues.includes(queueName as typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES])) {
       return NextResponse.json(
-        { error: `Invalid queue: ${queueName}` },
+        { success: false, error: `Invalid queue: ${queueName}` },
         { status: 400 }
       );
     }
@@ -94,7 +94,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   } catch (error) {
     console.error("[Job API] Error cancelling job:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

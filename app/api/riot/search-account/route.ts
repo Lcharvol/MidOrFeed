@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
-        { error: "Clé API Riot Games non configurée" },
+        { success: false, error: "Clé API Riot Games non configurée" },
         { status: 500 }
       );
     }
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     // Vérifier que la région est valide
     const routing = REGION_TO_ROUTING[validatedData.region];
     if (!routing) {
-      return NextResponse.json({ error: "Région invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région invalide" }, { status: 400 });
     }
 
     // Encoder le nom de jeu et le tag pour l'URL
@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       if (accountResponse.status === 404) {
         return NextResponse.json(
           {
+            success: false,
             error: "Compte non trouvé. Vérifiez le nom de jeu et le tag.",
           },
           { status: 404 }
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
       if (accountResponse.status === 401) {
         return NextResponse.json(
           {
+            success: false,
             error:
               "Clé API Riot invalide ou expirée. Veuillez la mettre à jour.",
           },
@@ -73,6 +75,7 @@ export async function POST(request: Request) {
       if (accountResponse.status === 403) {
         return NextResponse.json(
           {
+            success: false,
             error:
               "Accès refusé. Vérifiez que votre clé API a les bonnes permissions.",
             details: errorBody,
@@ -82,6 +85,7 @@ export async function POST(request: Request) {
       }
       return NextResponse.json(
         {
+          success: false,
           error: `Erreur API Riot: ${accountResponse.status}`,
           details: errorBody,
         },
@@ -106,14 +110,14 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { success: false, error: "Données invalides", details: error.errors },
         { status: 400 }
       );
     }
 
     logger.error("Erreur lors de la recherche du compte", error as Error);
     return NextResponse.json(
-      { error: "Erreur lors de la recherche du compte" },
+      { success: false, error: "Erreur lors de la recherche du compte" },
       { status: 500 }
     );
   }

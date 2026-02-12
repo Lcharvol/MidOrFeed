@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
-        { error: "Clé API Riot Games non configurée" },
+        { success: false, error: "Clé API Riot Games non configurée" },
         { status: 500 }
       );
     }
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     const platformId = REGION_TO_PLATFORM[validatedData.region];
 
     if (!routing || !platformId) {
-      return NextResponse.json({ error: "Région invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région invalide" }, { status: 400 });
     }
 
     // Étape 1: Obtenir les PUUID depuis les matchs récents
@@ -156,12 +156,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { success: false, error: "Données invalides", details: error.errors },
         { status: 400 }
       );
     }
 
     console.error("[CRAWL/SEED] Erreur:", error);
-    return NextResponse.json({ error: "Erreur lors du seed" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Erreur lors du seed" }, { status: 500 });
   }
 }

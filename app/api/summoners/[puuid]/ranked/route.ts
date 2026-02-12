@@ -114,7 +114,7 @@ export async function GET(
     puuid = resolvedParams.puuid || "";
 
     if (!puuid) {
-      return NextResponse.json({ error: "PUUID requis" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "PUUID requis" }, { status: 400 });
     }
 
     // Récupérer la région depuis les query params
@@ -122,7 +122,7 @@ export async function GET(
     const region = searchParams.get("region");
 
     if (!region) {
-      return NextResponse.json({ error: "Région requise" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région requise" }, { status: 400 });
     }
 
     // Normaliser la région
@@ -130,7 +130,7 @@ export async function GET(
     const baseUrl = REGION_TO_BASE_URL[normalizedRegion];
 
     if (!baseUrl) {
-      return NextResponse.json({ error: "Région invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région invalide" }, { status: 400 });
     }
 
     // Vérifier si on a une clé API Riot
@@ -273,6 +273,7 @@ export async function GET(
     });
     return NextResponse.json(
       {
+        success: false,
         error: "Erreur lors de la récupération du classement",
         details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },

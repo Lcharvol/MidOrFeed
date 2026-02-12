@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[CRAWL/RETRY_FAILED] Erreur:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la réinitialisation des joueurs failed" },
+      { success: false, error: "Erreur lors de la réinitialisation des joueurs failed" },
       { status: 500 }
     );
   }

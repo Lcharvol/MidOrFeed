@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     const validQueues = Object.values(QUEUE_NAMES);
     if (!validQueues.includes(queueName as QueueName)) {
       return NextResponse.json(
-        { error: `Invalid queue: ${queueName}` },
+        { success: false, error: `Invalid queue: ${queueName}` },
         { status: 400 }
       );
     }
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   } catch (error) {
     console.error("[Queue API] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
@@ -70,7 +70,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const validQueues = Object.values(QUEUE_NAMES);
     if (!validQueues.includes(queueName as QueueName)) {
       return NextResponse.json(
-        { error: `Invalid queue: ${queueName}` },
+        { success: false, error: `Invalid queue: ${queueName}` },
         { status: 400 }
       );
     }
@@ -85,7 +85,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   } catch (error) {
     console.error("[Queue API] Error cleaning:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

@@ -26,7 +26,7 @@ export async function DELETE(
   try {
     const authUser = await getAuthenticatedUser(request);
     if (!authUser) {
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Non authentifié" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -37,11 +37,11 @@ export async function DELETE(
     });
 
     if (!composition) {
-      return NextResponse.json({ error: "Composition non trouvée" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Composition non trouvée" }, { status: 404 });
     }
 
     if (composition.userId !== authUser.id) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+      return NextResponse.json({ success: false, error: "Non autorisé" }, { status: 403 });
     }
 
     await prisma.composition.delete({
@@ -58,7 +58,7 @@ export async function DELETE(
   } catch (error) {
     compositionsLogger.error("Erreur lors de la suppression de la composition", error as Error);
     return NextResponse.json(
-      { error: "Erreur lors de la suppression de la composition" },
+      { success: false, error: "Erreur lors de la suppression de la composition" },
       { status: 500 }
     );
   }

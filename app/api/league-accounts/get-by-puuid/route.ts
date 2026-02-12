@@ -155,7 +155,7 @@ export async function POST(request: Request) {
     // 2. Account not found - try to auto-fetch from Riot API if enabled
     if (!autoFetch) {
       return NextResponse.json(
-        { error: "Compte introuvable", needsRegion: !region },
+        { success: false, error: "Compte introuvable", needsRegion: !region },
         { status: 404 }
       );
     }
@@ -170,6 +170,7 @@ export async function POST(request: Request) {
     if (!targetRegion) {
       return NextResponse.json(
         {
+          success: false,
           error: "Compte introuvable",
           needsRegion: true,
           message: "Region required to fetch new account",
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
 
     if (!result.success || !result.data) {
       return NextResponse.json(
-        { error: result.error || "Failed to fetch account" },
+        { success: false, error: result.error || "Failed to fetch account" },
         { status: 404 }
       );
     }
@@ -199,11 +200,11 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { success: false, error: "Données invalides", details: error.errors },
         { status: 400 }
       );
     }
     logger.error("Error", error as Error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -25,13 +25,13 @@ export async function POST(req: Request) {
     const { region, tier } = schema.parse(body);
     const base = REGION_TO_BASE_URL[region.toLowerCase()];
     if (!base)
-      return NextResponse.json({ error: "Région invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région invalide" }, { status: 400 });
 
     const endpoint = `${base}/lol/league/v4/${TIER_ENDPOINT[tier]}/by-queue/RANKED_SOLO_5x5`;
     const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
-        { error: "Clé API Riot Games non configurée" },
+        { success: false, error: "Clé API Riot Games non configurée" },
         { status: 500 }
       );
     }
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     if (!res.ok) {
       const err = await res.text().catch(() => "");
       return NextResponse.json(
-        { error: `Erreur Riot ${res.status}`, details: err },
+        { success: false, error: `Erreur Riot ${res.status}`, details: err },
         { status: res.status }
       );
     }
@@ -208,11 +208,11 @@ export async function POST(req: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { success: false, error: "Données invalides", details: error.errors },
         { status: 400 }
       );
     }
     logger.error("Error", error as Error);
-    return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Erreur interne" }, { status: 500 });
   }
 }

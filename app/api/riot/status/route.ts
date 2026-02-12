@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
     const baseUrl = REGION_TO_BASE_URL[normalizedRegion];
 
     if (!baseUrl) {
-      return NextResponse.json({ error: "Region invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Region invalide" }, { status: 400 });
     }
 
     // Fetch platform status - Note: these requests don't count against rate limits
@@ -166,6 +166,7 @@ export async function GET(request: NextRequest) {
     statusLogger.error("Erreur lors de la recuperation du statut Riot", error as Error);
     return NextResponse.json(
       {
+        success: false,
         error: "Erreur lors de la recuperation du statut",
         details: error instanceof Error ? error.message : "Erreur inconnue",
       },

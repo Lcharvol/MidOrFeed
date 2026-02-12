@@ -79,7 +79,7 @@ export async function GET(
 
     const { matchId } = await params;
     if (!matchId) {
-      return NextResponse.json({ error: "matchId requis" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "matchId requis" }, { status: 400 });
     }
 
     // Extract routing region from match ID prefix (e.g. "EUW1_12345" → "europe")
@@ -90,7 +90,7 @@ export async function GET(
 
     if (!routing) {
       return NextResponse.json(
-        { error: "Impossible de determiner la region depuis le matchId" },
+        { success: false, error: "Impossible de determiner la region depuis le matchId" },
         { status: 400 }
       );
     }
@@ -139,6 +139,7 @@ export async function GET(
     logger.error("Erreur gold-timeline", error as Error);
     return NextResponse.json(
       {
+        success: false,
         error: "Erreur lors de la récupération de la timeline",
         details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },

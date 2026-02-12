@@ -23,14 +23,14 @@ export async function POST(req: Request) {
     const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
-        { error: "Clé API Riot Games non configurée" },
+        { success: false, error: "Clé API Riot Games non configurée" },
         { status: 500 }
       );
     }
 
     const base = REGION_TO_BASE_URL[regionLower];
     if (!base) {
-      return NextResponse.json({ error: "Région invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région invalide" }, { status: 400 });
     }
 
     const candidates = await prisma.leaderboardEntry.findMany({

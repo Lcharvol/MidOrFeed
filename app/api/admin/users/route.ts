@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    return NextResponse.json({ error: "Erreur list users" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Erreur list users" }, { status: 500 });
   }
 }
 
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json(
-        { error: "ID utilisateur manquant" },
+        { success: false, error: "ID utilisateur manquant" },
         { status: 400 }
       );
     }
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     if (role !== undefined) {
       if (role !== "user" && role !== "admin") {
         return NextResponse.json(
-          { error: "Rôle invalide" },
+          { success: false, error: "Rôle invalide" },
           { status: 400 }
         );
       }
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       const limit = parseInt(String(dailyAnalysisLimit), 10);
       if (isNaN(limit) || limit < 0 || limit > 1000) {
         return NextResponse.json(
-          { error: "Limite d'analyses invalide (0-1000)" },
+          { success: false, error: "Limite d'analyses invalide (0-1000)" },
           { status: 400 }
         );
       }
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     // Check if there's anything to update
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        { error: "Aucune modification fournie" },
+        { success: false, error: "Aucune modification fournie" },
         { status: 400 }
       );
     }
@@ -143,6 +143,6 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    return NextResponse.json({ error: "Erreur mise à jour utilisateur" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Erreur mise à jour utilisateur" }, { status: 500 });
   }
 }

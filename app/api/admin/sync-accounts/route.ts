@@ -146,6 +146,7 @@ export async function POST(request?: Request | NextRequest) {
     if (state.isRunning) {
       return NextResponse.json(
         {
+          success: false,
           error: "Une synchronisation est déjà en cours",
           data: state,
         },
@@ -217,7 +218,7 @@ export async function POST(request?: Request | NextRequest) {
     console.error("[SYNC-ACCOUNTS] Erreur:", error);
     resetSyncState();
     return NextResponse.json(
-      { error: "Erreur lors du démarrage de la synchronisation" },
+      { success: false, error: "Erreur lors du démarrage de la synchronisation" },
       { status: 500 }
     );
   }

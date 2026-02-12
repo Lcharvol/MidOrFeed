@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
-        { error: "Clé API Riot Games non configurée" },
+        { success: false, error: "Clé API Riot Games non configurée" },
         { status: 500 }
       );
     }
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const baseUrl = REGION_TO_BASE_URL[normalizedRegion];
 
     if (!routing || !baseUrl) {
-      return NextResponse.json({ error: "Région invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région invalide" }, { status: 400 });
     }
 
     // 1) Si pas force: tenter de retourner le cache DB
@@ -129,30 +129,31 @@ export async function POST(request: Request) {
 
       if (accountResponse.status === 400) {
         return NextResponse.json(
-          { error: "Requête invalide — le PUUID est peut-être corrompu." },
+          { success: false, error: "Requête invalide — le PUUID est peut-être corrompu." },
           { status: 400 }
         );
       }
       if (accountResponse.status === 404) {
         return NextResponse.json(
-          { error: "Compte non trouvé." },
+          { success: false, error: "Compte non trouvé." },
           { status: 404 }
         );
       }
       if (accountResponse.status === 401) {
         return NextResponse.json(
-          { error: "Clé API Riot invalide ou expirée. Veuillez la mettre à jour." },
+          { success: false, error: "Clé API Riot invalide ou expirée. Veuillez la mettre à jour." },
           { status: 401 }
         );
       }
       if (accountResponse.status === 403) {
         return NextResponse.json(
-          { error: "Accès refusé. Vérifiez que votre clé API a les bonnes permissions." },
+          { success: false, error: "Accès refusé. Vérifiez que votre clé API a les bonnes permissions." },
           { status: 403 }
         );
       }
       return NextResponse.json(
         {
+          success: false,
           error: `Erreur API Riot: ${accountResponse.status}`,
           details: errorBody,
         },
@@ -219,14 +220,14 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { success: false, error: "Données invalides", details: error.errors },
         { status: 400 }
       );
     }
 
     logger.error("Erreur lors de la récupération des détails", error as Error);
     return NextResponse.json(
-      { error: "Erreur lors de la récupération des détails" },
+      { success: false, error: "Erreur lors de la récupération des détails" },
       { status: 500 }
     );
   }

@@ -142,21 +142,21 @@ export async function GET(
     puuid = resolvedParams.puuid || "";
 
     if (!puuid) {
-      return NextResponse.json({ error: "PUUID requis" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "PUUID requis" }, { status: 400 });
     }
 
     const searchParams = request.nextUrl.searchParams;
     const region = searchParams.get("region");
 
     if (!region) {
-      return NextResponse.json({ error: "Region requise" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Region requise" }, { status: 400 });
     }
 
     const normalizedRegion = region.toLowerCase();
     const baseUrl = REGION_TO_BASE_URL[normalizedRegion];
 
     if (!baseUrl) {
-      return NextResponse.json({ error: "Region invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Region invalide" }, { status: 400 });
     }
 
     // Fetch current game info (spectator-v5)
@@ -222,6 +222,7 @@ export async function GET(
     });
     return NextResponse.json(
       {
+        success: false,
         error: "Erreur lors de la recuperation de la partie en cours",
         details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },

@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
-        { error: "Clé API Riot Games non configurée" },
+        { success: false, error: "Clé API Riot Games non configurée" },
         { status: 500 }
       );
     }
@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
     if (state.isRunning) {
       return NextResponse.json(
         {
+          success: false,
           error: "Un processus de crawl est déjà en cours",
           data: state,
         },
@@ -182,7 +183,7 @@ export async function POST(request: NextRequest) {
     console.error("[CRAWL/PROCESS] Erreur:", error);
     resetState();
     return NextResponse.json(
-      { error: "Erreur lors du démarrage du crawl" },
+      { success: false, error: "Erreur lors du démarrage du crawl" },
       { status: 500 }
     );
   }

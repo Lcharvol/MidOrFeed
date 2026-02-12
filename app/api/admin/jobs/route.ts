@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     logger.error("Jobs API error", error as Error);
     return NextResponse.json(
       {
+        success: false,
         error: error instanceof Error ? error.message : "Unknown error",
         connected: false,
         queues: {},
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     const validQueues = Object.values(QUEUE_NAMES);
     if (!validQueues.includes(queue as QueueName)) {
       return NextResponse.json(
-        { error: `Invalid queue: ${queue}. Valid queues: ${validQueues.join(", ")}` },
+        { success: false, error: `Invalid queue: ${queue}. Valid queues: ${validQueues.join(", ")}` },
         { status: 400 }
       );
     }
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error("Jobs API error creating job", error as Error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

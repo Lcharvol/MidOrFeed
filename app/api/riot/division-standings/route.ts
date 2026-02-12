@@ -68,12 +68,12 @@ export async function GET(request: NextRequest) {
     const validDivisions = ["I", "II", "III", "IV"];
 
     if (!validTiers.includes(tier) || !validDivisions.includes(division)) {
-      return NextResponse.json({ error: "Tier ou division invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Tier ou division invalide" }, { status: 400 });
     }
 
     const baseUrl = REGION_TO_BASE_URL[region];
     if (!baseUrl) {
-      return NextResponse.json({ error: "Région invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région invalide" }, { status: 400 });
     }
 
     // Fetch first page of division entries (200 max per page)
@@ -122,6 +122,7 @@ export async function GET(request: NextRequest) {
     logger.error("Erreur division standings", error as Error);
     return NextResponse.json(
       {
+        success: false,
         error: "Erreur lors de la récupération du classement de la division",
         details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },

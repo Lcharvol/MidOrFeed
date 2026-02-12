@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     const baseUrl = REGION_TO_BASE_URL[region];
     if (!baseUrl) {
-      return NextResponse.json({ error: "Région invalide" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Région invalide" }, { status: 400 });
     }
 
     const response = await riotApiRequest<FeaturedGamesDto>(
@@ -111,6 +111,7 @@ export async function GET(request: NextRequest) {
     logger.error("Erreur featured games", error as Error);
     return NextResponse.json(
       {
+        success: false,
         error: "Erreur lors de la récupération des parties en vedette",
         details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },
