@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         lane: true,
       },
       where: matchIds ? { matchId: { in: matchIds } } : undefined,
+      take: matchIds ? undefined : 50000,
     });
 
     if (participants.length === 0) {

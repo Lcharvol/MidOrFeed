@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
   try {
     const { puuid } = await params;
     const { searchParams } = new URL(request.url);
-    const days = parseInt(searchParams.get("days") || "30", 10);
+    const days = Math.min(parseInt(searchParams.get("days") || "30", 10), 90);
 
     if (!puuid) {
       return NextResponse.json(
@@ -46,6 +46,7 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
           gameCreation: "asc",
         },
       },
+      take: 1000,
     });
 
     // Aggregate by day

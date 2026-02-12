@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     const favorites = await prisma.favoritePlayer.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
+      take: 200,
     });
 
     const puuids = favorites.map((f) => f.puuid);
