@@ -125,7 +125,7 @@ const FavoriteCard = ({
 
   return (
     <>
-      <Card className="group hover:bg-accent/50 transition-colors">
+      <Card variant="interactive" className="group">
         <CardContent className="p-3 sm:pt-4 sm:p-4">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="relative shrink-0">
@@ -332,7 +332,7 @@ export default function FavoritesPage() {
     : favorites;
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 px-4 max-w-6xl">
+    <div className="container mx-auto py-8 sm:py-10 px-4 max-w-6xl">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>

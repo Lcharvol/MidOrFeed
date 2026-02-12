@@ -237,7 +237,7 @@ export default function CreateCompositionPage() {
   }, [user, filledCount, compositionName, composition, router, t]);
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-5xl">
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -311,7 +311,7 @@ export default function CreateCompositionPage() {
               key={role.key}
               onClick={() => handleRoleClick(role.key)}
               className={cn(
-                "relative flex flex-col items-center p-2 md:p-3 rounded-xl border-2 cursor-pointer transition-all",
+                "relative flex flex-col items-center p-2 md:p-3 rounded-xl border-2 cursor-pointer transition-[shadow,border-color] duration-200",
                 isSelected && "border-primary bg-primary/10 ring-2 ring-primary/30",
                 isSwapSource && "border-yellow-500 bg-yellow-500/10 ring-2 ring-yellow-500/30",
                 isSwapTarget && "border-dashed border-yellow-500/50 hover:border-yellow-500",
@@ -416,7 +416,7 @@ export default function CreateCompositionPage() {
                 onClick={() => !isSelected && handleChampionClick(champion)}
                 disabled={isSelected}
                 className={cn(
-                  "relative group rounded-lg overflow-hidden border transition-all",
+                  "relative group rounded-lg overflow-hidden border transition-[transform,opacity] duration-200",
                   isSelected
                     ? "opacity-40 cursor-not-allowed border-transparent"
                     : "hover:border-primary hover:scale-105 cursor-pointer border-transparent hover:shadow-lg"

@@ -241,7 +241,7 @@ export const RuneSelector = ({
                       type="button"
                       onClick={() => handleSelectPrimaryTree(tree.key)}
                       className={cn(
-                        "p-2 rounded-lg transition-all",
+                        "p-2 rounded-lg transition-[background-color,box-shadow] duration-200",
                         value?.primary?.tree === tree.key
                           ? "bg-primary/20 ring-2 ring-primary"
                           : "hover:bg-muted"
@@ -268,7 +268,7 @@ export const RuneSelector = ({
                             type="button"
                             onClick={() => handleSelectKeystone(keystone.key)}
                             className={cn(
-                              "p-2 rounded-lg transition-all",
+                              "p-2 rounded-lg transition-[background-color,box-shadow] duration-200",
                               value?.primary?.keystone === keystone.key
                                 ? "bg-primary/20 ring-2 ring-primary"
                                 : "hover:bg-muted"
@@ -294,7 +294,7 @@ export const RuneSelector = ({
                                 handleSelectPrimaryRune(slotIndex, rune.key)
                               }
                               className={cn(
-                                "p-2 rounded-lg transition-all",
+                                "p-2 rounded-lg transition-[background-color,box-shadow] duration-200",
                                 value?.primary?.slots?.[slotIndex] === rune.key
                                   ? "bg-primary/20 ring-2 ring-primary"
                                   : "hover:bg-muted"
@@ -323,7 +323,7 @@ export const RuneSelector = ({
                         type="button"
                         onClick={() => handleSelectSecondaryTree(tree.key)}
                         className={cn(
-                          "p-2 rounded-lg transition-all",
+                          "p-2 rounded-lg transition-[background-color,box-shadow] duration-200",
                           value?.secondary?.tree === tree.key
                             ? "bg-primary/20 ring-2 ring-primary"
                             : "hover:bg-muted"
@@ -357,7 +357,7 @@ export const RuneSelector = ({
                               onClick={() => handleSelectSecondaryRune(rune.key)}
                               disabled={!canSelect}
                               className={cn(
-                                "p-2 rounded-lg transition-all",
+                                "p-2 rounded-lg transition-[background-color,box-shadow] duration-200",
                                 isSelected
                                   ? "bg-primary/20 ring-2 ring-primary"
                                   : canSelect

@@ -43,7 +43,7 @@ export const FreeRotationSection = ({
   const { t } = useI18n();
 
   return (
-    <section className="py-12 md:py-16 bg-gradient-to-b from-muted/30 to-background border-y">
+    <section className="py-14 md:py-20 bg-gradient-to-b from-muted/30 to-background border-y">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>

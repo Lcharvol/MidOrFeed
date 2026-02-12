@@ -36,7 +36,7 @@ export const PageHero = ({
 }: PageHeroProps) => (
   <section
     className={cn(
-      "rounded-2xl border bg-background/60 p-6 shadow-sm",
+      "rounded-2xl border border-border/40 bg-background/60 p-8 shadow-sm backdrop-blur-sm",
       className
     )}
   >

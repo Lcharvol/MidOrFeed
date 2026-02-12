@@ -103,7 +103,7 @@ export default function LeaderboardPage() {
   const rows = allRows.slice(page * LB_PAGE_SIZE, (page + 1) * LB_PAGE_SIZE);
 
   return (
-    <div className="container mx-auto px-4 py-6 sm:py-10 space-y-4 sm:space-y-6">
+    <div className="container mx-auto px-4 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>

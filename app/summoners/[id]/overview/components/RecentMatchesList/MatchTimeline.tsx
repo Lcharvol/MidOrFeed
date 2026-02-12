@@ -482,7 +482,7 @@ function StatCompareBar({
       <div className="relative h-2.5 rounded-full overflow-hidden bg-muted/50">
         <div
           className={cn(
-            "absolute left-0 top-0 h-full rounded-l-full transition-all duration-500",
+            "absolute left-0 top-0 h-full rounded-l-full transition-[width] duration-500",
             blueWins
               ? TEAM_STYLES.blue.accent
               : TEAM_STYLES.blue.bgSubtle
@@ -491,7 +491,7 @@ function StatCompareBar({
         />
         <div
           className={cn(
-            "absolute right-0 top-0 h-full rounded-r-full transition-all duration-500",
+            "absolute right-0 top-0 h-full rounded-r-full transition-[width] duration-500",
             redWins
               ? TEAM_STYLES.red.accent
               : TEAM_STYLES.red.bgSubtle

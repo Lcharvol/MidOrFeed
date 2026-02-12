@@ -35,7 +35,7 @@ export const TopChampionsSection = ({
   const { t } = useI18n();
 
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-14 md:py-20">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -78,7 +78,7 @@ export const TopChampionsSection = ({
                       href={`/champions/${champion.championId}`}
                       className="block"
                     >
-                      <Card className="overflow-hidden hover:bg-accent/50 transition-colors group">
+                      <Card variant="interactive" className="overflow-hidden group">
                         <CardContent className="p-4">
                           <div className="flex flex-col items-center gap-3">
                             <div className="relative">

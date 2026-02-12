@@ -95,7 +95,7 @@ export function SummonerSearchBar({
       {/* Main search bar */}
       <div
         className={cn(
-          "flex items-center h-12 rounded-lg border bg-background/95 backdrop-blur transition-all overflow-hidden",
+          "flex items-center h-12 rounded-lg border bg-background/95 backdrop-blur transition-[border-color,box-shadow] duration-200 overflow-hidden",
           isFocused ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-border/80"
         )}
       >

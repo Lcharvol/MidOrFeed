@@ -48,7 +48,7 @@ const ProgressBar = ({
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/40">
         <div
-          className={cn('h-full rounded-full transition-all duration-300', {
+          className={cn('h-full rounded-full transition-[width] duration-300', {
             'bg-emerald-500/70': color === 'emerald',
             'bg-sky-500/70': color === 'sky',
           })}

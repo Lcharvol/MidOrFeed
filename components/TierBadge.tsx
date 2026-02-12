@@ -70,7 +70,7 @@ const getTierStyles = (
   variant: "solid" | "subtle" | "outline"
 ) => {
   const baseStyles =
-    "relative inline-flex items-center justify-center font-bold uppercase tracking-wider transition-all duration-200 overflow-hidden border-2";
+    "relative inline-flex items-center justify-center font-bold uppercase tracking-wider transition-[transform,box-shadow] duration-200 overflow-hidden border-2";
 
   const config = tierColors[tier] || tierColors.default;
   const isPremium = tier === "S+" || tier === "S";

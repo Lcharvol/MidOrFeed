@@ -91,7 +91,7 @@ export const SummonerSpellSelector = ({
             <button
               type="button"
               onClick={() => handleOpenDialog(0)}
-              className="rounded-md overflow-hidden hover:ring-2 hover:ring-primary transition-all"
+              className="rounded-md overflow-hidden hover:ring-2 hover:ring-primary transition-shadow duration-200"
               aria-label={`Changer ${selectedSpellObjects[0].name}`}
             >
               <SummonerSpellIcon
@@ -144,7 +144,7 @@ export const SummonerSpellSelector = ({
             <button
               type="button"
               onClick={() => handleOpenDialog(1)}
-              className="rounded-md overflow-hidden hover:ring-2 hover:ring-primary transition-all"
+              className="rounded-md overflow-hidden hover:ring-2 hover:ring-primary transition-shadow duration-200"
               aria-label={`Changer ${selectedSpellObjects[1].name}`}
             >
               <SummonerSpellIcon

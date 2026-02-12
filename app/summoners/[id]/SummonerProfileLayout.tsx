@@ -109,8 +109,8 @@ export default function SummonerProfileLayout({
   );
 
   return (
-    <div className="container mx-auto py-6 sm:py-10 px-4">
-      <Breadcrumb className="mb-4">
+    <div className="container mx-auto py-8 sm:py-12 px-4">
+      <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
@@ -129,7 +129,7 @@ export default function SummonerProfileLayout({
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="mb-8 space-y-4">
+      <div className="mb-10 space-y-4">
         <SummonerHeader
           loading={loading}
           details={details}

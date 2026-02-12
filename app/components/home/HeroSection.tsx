@@ -27,7 +27,7 @@ export const HeroSection = ({ stats, statsLoading }: HeroSectionProps) => {
   const { t } = useI18n();
 
   return (
-    <section className="relative -mx-4 sm:-mx-6 px-4 sm:px-6 overflow-hidden border-b py-16 md:py-24">
+    <section className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 overflow-hidden border-b py-20 md:py-28">
       <div className="absolute inset-0 -z-10">
         <Image
           src="/home_background.png"
@@ -64,7 +64,7 @@ export const HeroSection = ({ stats, statsLoading }: HeroSectionProps) => {
           </div>
 
           {/* Live Stats with Tooltips */}
-          <div className="grid grid-cols-3 gap-4 md:gap-8 max-w-2xl mx-auto">
+          <div className="grid grid-cols-3 gap-6 md:gap-10 max-w-2xl mx-auto">
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="text-center cursor-default">

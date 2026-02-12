@@ -10,11 +10,11 @@ export const CTASection = () => {
   const { t } = useI18n();
 
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-14 md:py-20">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl">
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
-            <CardContent className="p-8 text-center">
+            <CardContent className="p-10 text-center">
               <h2 className="mb-3 text-2xl font-bold md:text-3xl">
                 {t("home.readyToImprove")}
               </h2>

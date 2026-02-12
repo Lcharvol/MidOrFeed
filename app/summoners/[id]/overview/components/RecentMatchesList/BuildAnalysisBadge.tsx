@@ -83,7 +83,7 @@ export const BuildAnalysisBadge = ({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all cursor-pointer hover:brightness-110",
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-[filter] duration-200 cursor-pointer hover:brightness-110",
             getColorClasses(),
             className
           )}

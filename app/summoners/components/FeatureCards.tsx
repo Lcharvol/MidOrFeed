@@ -15,7 +15,7 @@ import Link from "next/link";
 export function FeatureCards() {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
+      <Card variant="interactive" className="group">
         <CardContent className="p-6 space-y-3">
           <div className="size-12 rounded-lg bg-info-muted flex items-center justify-center">
             <BarChart3Icon className="size-6 text-info" />
@@ -27,7 +27,7 @@ export function FeatureCards() {
         </CardContent>
       </Card>
 
-      <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
+      <Card variant="interactive" className="group">
         <CardContent className="p-6 space-y-3">
           <div className="size-12 rounded-lg bg-danger-muted flex items-center justify-center">
             <SwordsIcon className="size-6 text-danger" />
@@ -39,7 +39,7 @@ export function FeatureCards() {
         </CardContent>
       </Card>
 
-      <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
+      <Card variant="interactive" className="group">
         <CardContent className="p-6 space-y-3">
           <div className="size-12 rounded-lg bg-warning-muted flex items-center justify-center">
             <TrophyIcon className="size-6 text-warning" />
@@ -51,7 +51,7 @@ export function FeatureCards() {
         </CardContent>
       </Card>
 
-      <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
+      <Card variant="interactive" className="group">
         <CardContent className="p-6 space-y-3">
           <div className="size-12 rounded-lg bg-success-muted flex items-center justify-center">
             <TargetIcon className="size-6 text-success" />
@@ -63,7 +63,7 @@ export function FeatureCards() {
         </CardContent>
       </Card>
 
-      <Card className="group hover:bg-accent/50 transition-colors sm:col-span-2 lg:col-span-2">
+      <Card variant="interactive" className="group sm:col-span-2 lg:col-span-2">
         <CardContent className="p-6 flex items-center gap-6">
           <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <UserIcon className="size-6 text-primary" />

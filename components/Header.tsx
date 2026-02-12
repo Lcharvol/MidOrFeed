@@ -155,8 +155,8 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/75">
-      <div className="flex h-16 items-center justify-between px-2 sm:px-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border/30 bg-background/90 backdrop-blur-md supports-backdrop-filter:bg-background/75">
+      <div className="flex h-14 items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2 sm:gap-6">
           <Link href="/" className="flex items-center justify-center">
             <Image

@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SummonerProfileLoading() {
   return (
-    <div className="container mx-auto py-6 sm:py-10 px-4">
+    <div className="container mx-auto py-8 sm:py-12 px-4">
       <Skeleton className="h-5 w-48 mb-4" />
       <div className="mb-8 space-y-4">
         <div className="flex items-center gap-4">

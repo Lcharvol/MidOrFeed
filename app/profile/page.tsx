@@ -24,7 +24,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6 sm:py-10 px-4">
+      <div className="container mx-auto py-8 sm:py-12 px-4">
         <div className="flex items-center justify-center py-20">
           <Loader2Icon className="size-8 animate-spin text-primary" />
         </div>
@@ -34,7 +34,7 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto py-6 sm:py-10 px-4">
+      <div className="container mx-auto py-8 sm:py-12 px-4">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="mb-4 text-3xl font-bold">Connexion requise</h1>
           <p className="text-muted-foreground">
@@ -46,7 +46,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto py-6 sm:py-10 px-4">
+    <div className="container mx-auto py-8 sm:py-12 px-4">
       <div className="mx-auto max-w-4xl space-y-6">
         <Breadcrumb>
           <BreadcrumbList>

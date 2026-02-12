@@ -57,7 +57,7 @@ export function StatusBreakdownCard({
               {Object.entries(byStatus).map(([status, count]) => (
                 <div
                   key={status}
-                  className={`flex flex-col items-start gap-3 rounded-lg border-2 p-4 transition-all hover:scale-105 hover:shadow-lg ${
+                  className={`flex flex-col items-start gap-3 rounded-lg border-2 p-4 transition-[transform,box-shadow] duration-200 hover:scale-105 hover:shadow-lg ${
                     statusColors[status as keyof typeof statusColors] ||
                     "bg-muted border-border"
                   }`}

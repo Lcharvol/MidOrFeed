@@ -84,7 +84,7 @@ const CompositionCard = ({
   ).length;
 
   return (
-    <Card className="group hover:bg-accent/50 hover:shadow-md transition-all">
+    <Card variant="interactive" className="group">
       <CardContent className="pt-4">
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="min-w-0">

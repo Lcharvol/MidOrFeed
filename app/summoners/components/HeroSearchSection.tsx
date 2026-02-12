@@ -40,7 +40,7 @@ export function HeroSearchSection({
 }: HeroSearchSectionProps) {
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
-      <div className="container relative mx-auto px-4 py-16 sm:py-24">
+      <div className="container relative mx-auto px-4 py-20 sm:py-28">
         <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-up">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
             Rechercher un{" "}
@@ -52,7 +52,7 @@ export function HeroSearchSection({
           </p>
 
           {/* Search Box */}
-          <Card className="mt-8 border-border/60 shadow-md bg-card/80 backdrop-blur-sm">
+          <Card className="mt-8 border-border/60 shadow-lg bg-card/80 backdrop-blur-sm">
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row gap-3" onKeyDown={onKeyDown}>
                 <Select value={region} onValueChange={setRegion}>

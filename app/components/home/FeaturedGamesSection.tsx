@@ -33,7 +33,7 @@ export const FeaturedGamesSection = ({
   }
 
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-14 md:py-20">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -69,7 +69,7 @@ export const FeaturedGamesSection = ({
                 const queueLabel = game.queueId === 420 ? "Solo/Duo" : "Flex";
                 return (
                   <CarouselItem key={game.gameId} className="md:basis-1/2 lg:basis-1/3">
-                    <Card className="hover:bg-accent/50 transition-all hover:shadow-md">
+                    <Card variant="interactive">
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <Badge emphasis="info" emphasisVariant="subtle" className="text-xs">

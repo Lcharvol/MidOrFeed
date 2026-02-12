@@ -37,7 +37,7 @@ export const LeaderboardSection = ({
   const { t } = useI18n();
 
   return (
-    <section className="py-12 md:py-16 bg-gradient-to-b from-muted/30 to-background border-y">
+    <section className="py-14 md:py-20 bg-gradient-to-b from-muted/30 to-background border-y">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -62,7 +62,7 @@ export const LeaderboardSection = ({
             {leaderboardLoading ? (
               <div className="divide-y">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4">
+                  <div key={i} className="flex items-center gap-5 p-5">
                     <Skeleton className="size-8 rounded-full" />
                     <div className="flex-1 space-y-1.5">
                       <Skeleton className="h-4 w-32" />
@@ -93,7 +93,7 @@ export const LeaderboardSection = ({
                   return (
                     <Tooltip key={player.id}>
                       <TooltipTrigger asChild>
-                        <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors cursor-default">
+                        <div className="flex items-center gap-5 p-5 hover:bg-muted/30 transition-colors cursor-default">
                           <div className="flex items-center justify-center size-8">
                             {index === 0 ? (
                               <TrophyIcon className="size-5 text-yellow-500" />

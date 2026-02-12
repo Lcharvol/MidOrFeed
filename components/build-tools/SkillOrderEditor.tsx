@@ -145,7 +145,7 @@ export const SkillOrderEditor = ({
                           onClick={() => handleCellClick(level, skill)}
                           disabled={isDisabled || (!isSelected && !canSelect)}
                           className={cn(
-                            "size-5 sm:size-6 rounded transition-all mx-auto block",
+                            "size-5 sm:size-6 rounded transition-colors duration-200 mx-auto block",
                             isSelected
                               ? SKILL_COLORS[skill]
                               : "bg-muted hover:bg-muted-foreground/20",

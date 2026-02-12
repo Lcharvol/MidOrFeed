@@ -30,7 +30,7 @@ export const PreferredRoleChart = ({ roleData }: PreferredRoleChartProps) => {
               <div className="flex flex-col items-center justify-end gap-1 flex-1 h-[120px] cursor-pointer">
                 <div
                   className={cn(
-                    "w-full rounded-t transition-all",
+                    "w-full rounded-t transition-[height] duration-300",
                     role.games > 0 ? "bg-primary" : "bg-muted"
                   )}
                   style={{

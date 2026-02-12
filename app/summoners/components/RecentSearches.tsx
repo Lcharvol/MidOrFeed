@@ -23,7 +23,7 @@ export function RecentSearches({ recentSearches }: RecentSearchesProps) {
       </h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {recentSearches.map((s) => (
-          <Card key={`${s.puuid}-${s.region}`} className="group hover:bg-accent/50 transition-colors">
+          <Card key={`${s.puuid}-${s.region}`} variant="interactive" className="group">
             <CardContent className="p-3">
               <Link
                 href={`/summoners/${s.puuid}/overview?region=${s.region}`}

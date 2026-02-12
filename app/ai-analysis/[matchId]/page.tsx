@@ -71,7 +71,7 @@ const ScoreCircle = ({ score, size = 120 }: { score: number; size?: number }) =>
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
-          className={cn("transition-all duration-1000 ease-out", colors.strokeClass)}
+          className={cn("transition-[stroke-dashoffset] duration-1000 ease-out", colors.strokeClass)}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -106,7 +106,7 @@ const InsightCard = ({
   return (
     <div
       className={cn(
-        "p-4 rounded-xl border transition-all duration-200",
+        "p-4 rounded-xl border transition-[shadow,border-color] duration-200",
         style.bg,
         style.border,
         style.hoverBorder

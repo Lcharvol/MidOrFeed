@@ -136,13 +136,13 @@ const CounterPicksPageClient = ({
               <button
                 key={champId}
                 onClick={() => handleQuickSelect(champId)}
-                className="group flex flex-col items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border border-border/50 bg-card/50 p-2 sm:p-3 transition-all hover:bg-accent/50"
+                className="group flex flex-col items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border border-border/50 bg-card/50 p-2 sm:p-3 transition-colors duration-200 hover:bg-accent/50"
               >
                 <ChampionIcon
                   championId={champId}
                   size={36}
                   shape="circle"
-                  className="sm:w-12 sm:h-12 border border-border/50 transition-all group-hover:scale-105"
+                  className="sm:w-12 sm:h-12 border border-border/50 transition-[transform,opacity] duration-200 group-hover:scale-105"
                 />
                 <span className="text-[10px] sm:text-xs font-medium text-muted-foreground group-hover:text-foreground truncate max-w-full">
                   {name}
@@ -155,7 +155,7 @@ const CounterPicksPageClient = ({
 
       {/* Features */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50 bg-card/50 hover:bg-accent/50 hover:shadow-md transition-all">
+        <Card className="border-border/50 bg-card/50 hover:shadow-glow hover:border-primary/30 transition-[shadow,border-color] duration-200">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-success-muted p-2">
               <ShieldIcon className="size-5 text-success-muted-foreground" />
@@ -168,7 +168,7 @@ const CounterPicksPageClient = ({
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/50 bg-card/50 hover:bg-accent/50 hover:shadow-md transition-all">
+        <Card className="border-border/50 bg-card/50 hover:shadow-glow hover:border-primary/30 transition-[shadow,border-color] duration-200">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-info-muted p-2">
               <SwordsIcon className="size-5 text-info-muted-foreground" />
@@ -181,7 +181,7 @@ const CounterPicksPageClient = ({
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/50 bg-card/50 hover:bg-accent/50 hover:shadow-md transition-all">
+        <Card className="border-border/50 bg-card/50 hover:shadow-glow hover:border-primary/30 transition-[shadow,border-color] duration-200">
           <CardContent className="flex items-start gap-4 p-4">
             <div className="rounded-lg bg-warning-muted p-2">
               <SparklesIcon className="size-5 text-warning-muted-foreground" />
@@ -287,7 +287,7 @@ const CounterPicksPageClient = ({
   };
 
   return (
-    <main className="container mx-auto px-4 py-6 sm:py-8">
+    <main className="container mx-auto px-4 py-8 sm:py-10">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -402,7 +402,7 @@ const CounterPicksPageClient = ({
                   <button
                     onClick={() => setMode("same_lane")}
                     className={cn(
-                      "flex flex-col items-center gap-1 sm:gap-1.5 rounded-lg border p-2 sm:p-3 text-[10px] sm:text-xs transition-all",
+                      "flex flex-col items-center gap-1 sm:gap-1.5 rounded-lg border p-2 sm:p-3 text-[10px] sm:text-xs transition-colors duration-200",
                       mode === "same_lane"
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border/50 hover:border-border hover:bg-muted/50"
@@ -414,7 +414,7 @@ const CounterPicksPageClient = ({
                   <button
                     onClick={() => setMode("global")}
                     className={cn(
-                      "flex flex-col items-center gap-1 sm:gap-1.5 rounded-lg border p-2 sm:p-3 text-[10px] sm:text-xs transition-all",
+                      "flex flex-col items-center gap-1 sm:gap-1.5 rounded-lg border p-2 sm:p-3 text-[10px] sm:text-xs transition-colors duration-200",
                       mode === "global"
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border/50 hover:border-border hover:bg-muted/50"

@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm transition-all duration-200",
+  "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border border-border/60 py-6 shadow-sm transition-[shadow,border-color] duration-200",
   {
     variants: {
       variant: {
@@ -12,7 +12,7 @@ const cardVariants = cva(
         gradient:
           "border-2 border-blue-500/20 bg-linear-to-br from-background to-blue-500/5",
         interactive:
-          "hover:shadow-md hover:bg-accent/50 cursor-pointer",
+          "hover:shadow-glow hover:border-primary/30 cursor-pointer",
       },
     },
     defaultVariants: {
@@ -49,7 +49,7 @@ function CardHeader({
     <div
       data-slot="card-header"
       className={cn(
-        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-3 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
         withGlow && "relative",
         className
       )}

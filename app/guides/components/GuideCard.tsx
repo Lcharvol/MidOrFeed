@@ -17,7 +17,7 @@ export const GuideCard = ({ guide }: { guide: GuideSummary }) => {
 
   return (
     <Link href={`/guides/${guide.id}`}>
-      <Card className="h-full hover:bg-accent/50 hover:shadow-md transition-all cursor-pointer">
+      <Card variant="interactive" className="h-full">
         <CardContent className="p-3 sm:p-4">
           <div className="flex gap-3 sm:gap-4">
             {/* Champion icon */}

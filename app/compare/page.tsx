@@ -106,7 +106,7 @@ export default function ComparePage() {
   const hasData = player1 && player2 && comparison;
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 px-4 max-w-6xl">
+    <div className="container mx-auto py-8 sm:py-10 px-4 max-w-6xl">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>

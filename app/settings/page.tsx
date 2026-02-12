@@ -98,7 +98,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 sm:py-10 px-4">
+    <div className="container mx-auto py-8 sm:py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <Breadcrumb className="mb-4">
           <BreadcrumbList>
