@@ -58,6 +58,20 @@ export type LeagueAccountData = {
   winRate: number;
   avgKDA: number;
   mostPlayedChampion: string | null;
+  // Ranked Solo/Duo
+  soloTier: string | null;
+  soloRank: string | null;
+  soloLP: number | null;
+  soloWins: number | null;
+  soloLosses: number | null;
+  // Ranked Flex
+  flexTier: string | null;
+  flexRank: string | null;
+  flexLP: number | null;
+  flexWins: number | null;
+  flexLosses: number | null;
+  // Timestamp du dernier fetch ranked
+  rankedUpdatedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -214,6 +228,17 @@ export class ShardedLeagueAccounts {
     winRate?: number;
     avgKDA?: number;
     mostPlayedChampion?: string | null;
+    soloTier?: string | null;
+    soloRank?: string | null;
+    soloLP?: number | null;
+    soloWins?: number | null;
+    soloLosses?: number | null;
+    flexTier?: string | null;
+    flexRank?: string | null;
+    flexLP?: number | null;
+    flexWins?: number | null;
+    flexLosses?: number | null;
+    rankedUpdatedAt?: Date | null;
   }): Promise<LeagueAccountData> {
     const tableName = getLeagueAccountsTableName(data.riotRegion);
     const region = data.riotRegion;
@@ -284,6 +309,50 @@ export class ShardedLeagueAccounts {
         updates.push(`"mostPlayedChampion" = $${paramIndex++}`);
         values.push(data.mostPlayedChampion);
       }
+      if (data.soloTier !== undefined) {
+        updates.push(`"soloTier" = $${paramIndex++}`);
+        values.push(data.soloTier);
+      }
+      if (data.soloRank !== undefined) {
+        updates.push(`"soloRank" = $${paramIndex++}`);
+        values.push(data.soloRank);
+      }
+      if (data.soloLP !== undefined) {
+        updates.push(`"soloLP" = $${paramIndex++}`);
+        values.push(data.soloLP);
+      }
+      if (data.soloWins !== undefined) {
+        updates.push(`"soloWins" = $${paramIndex++}`);
+        values.push(data.soloWins);
+      }
+      if (data.soloLosses !== undefined) {
+        updates.push(`"soloLosses" = $${paramIndex++}`);
+        values.push(data.soloLosses);
+      }
+      if (data.flexTier !== undefined) {
+        updates.push(`"flexTier" = $${paramIndex++}`);
+        values.push(data.flexTier);
+      }
+      if (data.flexRank !== undefined) {
+        updates.push(`"flexRank" = $${paramIndex++}`);
+        values.push(data.flexRank);
+      }
+      if (data.flexLP !== undefined) {
+        updates.push(`"flexLP" = $${paramIndex++}`);
+        values.push(data.flexLP);
+      }
+      if (data.flexWins !== undefined) {
+        updates.push(`"flexWins" = $${paramIndex++}`);
+        values.push(data.flexWins);
+      }
+      if (data.flexLosses !== undefined) {
+        updates.push(`"flexLosses" = $${paramIndex++}`);
+        values.push(data.flexLosses);
+      }
+      if (data.rankedUpdatedAt !== undefined) {
+        updates.push(`"rankedUpdatedAt" = $${paramIndex++}`);
+        values.push(data.rankedUpdatedAt);
+      }
 
       if (updates.length > 0) {
         updates.push(`"updatedAt" = NOW()`);
@@ -307,12 +376,16 @@ export class ShardedLeagueAccounts {
 
       await prisma.$executeRawUnsafe(
         `INSERT INTO "${tableName}" (
-          "id", "puuid", "riotRegion", "riotGameName", "riotTagLine", 
-          "riotSummonerId", "riotAccountId", "summonerLevel", "profileIconId", 
-          "revisionDate", "totalMatches", "totalWins", "totalLosses", 
-          "winRate", "avgKDA", "mostPlayedChampion", "createdAt", "updatedAt"
+          "id", "puuid", "riotRegion", "riotGameName", "riotTagLine",
+          "riotSummonerId", "riotAccountId", "summonerLevel", "profileIconId",
+          "revisionDate", "totalMatches", "totalWins", "totalLosses",
+          "winRate", "avgKDA", "mostPlayedChampion",
+          "soloTier", "soloRank", "soloLP", "soloWins", "soloLosses",
+          "flexTier", "flexRank", "flexLP", "flexWins", "flexLosses",
+          "rankedUpdatedAt", "createdAt", "updatedAt"
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+          $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, NOW(), NOW()
         )`,
         id,
         data.puuid,
@@ -329,7 +402,18 @@ export class ShardedLeagueAccounts {
         data.totalLosses ?? 0,
         data.winRate ?? 0,
         data.avgKDA ?? 0,
-        data.mostPlayedChampion ?? null
+        data.mostPlayedChampion ?? null,
+        data.soloTier ?? null,
+        data.soloRank ?? null,
+        data.soloLP ?? null,
+        data.soloWins ?? null,
+        data.soloLosses ?? null,
+        data.flexTier ?? null,
+        data.flexRank ?? null,
+        data.flexLP ?? null,
+        data.flexWins ?? null,
+        data.flexLosses ?? null,
+        data.rankedUpdatedAt ?? null
       );
 
       const created = await this.findUniqueByPuuid(data.puuid, region);

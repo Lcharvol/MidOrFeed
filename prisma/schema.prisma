@@ -103,9 +103,12 @@ model Item {
   gold        String?
   tags        String?  // JSON array of tags (Boots, Jungle, etc.)
   depth       Int?     // Item depth (1=component, 2=tier2, 3=completed)
-  fromItems   String?  // JSON array of item IDs this builds from
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  fromItems          String?  // JSON array of item IDs this builds from
+  maps               String?  // JSON object {"11": true, "12": true, ...}
+  inStore            Boolean? @default(true)
+  requiredChampion   String?  // Champion-specific items (e.g. Viktor)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@map("items")
 }
@@ -275,6 +278,20 @@ model LeagueOfLegendsAccount {
   winRate            Float                     @default(0)
   avgKDA             Float                     @default(0)
   mostPlayedChampion String?
+  // Ranked Solo/Duo
+  soloTier           String?
+  soloRank           String?
+  soloLP             Int?
+  soloWins           Int?
+  soloLosses         Int?
+  // Ranked Flex
+  flexTier           String?
+  flexRank           String?
+  flexLP             Int?
+  flexWins           Int?
+  flexLosses         Int?
+  // Timestamp du dernier fetch ranked
+  rankedUpdatedAt    DateTime?
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
   playerChallenges   PlayerChallenge[]
@@ -337,6 +354,28 @@ model ChampionStats {
   @@index([totalGames])
   @@index([score])
   @@map("champion_stats")
+}
+
+model ItemStats {
+  id             String   @id @default(cuid())
+  itemId         String   @unique
+  totalGames     Int      @default(0)
+  totalWins      Int      @default(0)
+  winRate        Float    @default(0)
+  pickRate       Float    @default(0)
+  avgKDA         Float    @default(0)
+  avgKills       Float    @default(0)
+  avgDeaths      Float    @default(0)
+  avgAssists     Float    @default(0)
+  score          Float    @default(0)
+  lastAnalyzedAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([itemId])
+  @@index([score])
+  @@index([winRate])
+  @@map("item_stats")
 }
 
 model SummonerOverviewHistory {

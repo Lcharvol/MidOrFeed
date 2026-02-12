@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { REGION_TO_ROUTING, REGION_TO_BASE_URL } from "@/constants/regions";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { getEnv } from "@/lib/env";
@@ -128,8 +129,16 @@ export async function POST(request: Request) {
       });
 
       if (accountResponse.status === 400) {
+        const riotMessage = (errorBody as { status?: { message?: string } })?.status?.message ?? "";
+        const isDecryptionError = riotMessage.toLowerCase().includes("decrypting");
         return NextResponse.json(
-          { success: false, error: "Requête invalide — le PUUID est peut-être corrompu." },
+          {
+            success: false,
+            error: isDecryptionError
+              ? "Ce PUUID n'est plus valide côté Riot (clé expirée). Veuillez re-chercher le joueur par son pseudo."
+              : "Requête invalide — le PUUID est peut-être corrompu.",
+            code: isDecryptionError ? "PUUID_EXPIRED" : "BAD_REQUEST",
+          },
           { status: 400 }
         );
       }
@@ -184,6 +193,98 @@ export async function POST(request: Request) {
       });
     }
 
+    // Fetch League v4 pour obtenir le ranked (non-bloquant)
+    interface RiotLeagueEntry {
+      queueType: string;
+      tier: string;
+      rank: string;
+      leaguePoints: number;
+      wins: number;
+      losses: number;
+    }
+
+    const QUEUE_TYPE_MAP: Record<string, "solo" | "flex"> = {
+      RANKED_SOLO_5x5: "solo",
+      RANKED_FLEX_SR: "flex",
+    };
+
+    let rankedFields: {
+      soloTier?: string | null;
+      soloRank?: string | null;
+      soloLP?: number | null;
+      soloWins?: number | null;
+      soloLosses?: number | null;
+      flexTier?: string | null;
+      flexRank?: string | null;
+      flexLP?: number | null;
+      flexWins?: number | null;
+      flexLosses?: number | null;
+      rankedUpdatedAt?: Date | null;
+    } = {};
+
+    try {
+      const leagueResponse = await fetchWithRetry(
+        `${baseUrl}/lol/league/v4/entries/by-puuid/${encodedPuuid}`
+      );
+
+      if (leagueResponse.ok) {
+        const leagueEntries: RiotLeagueEntry[] = await leagueResponse.json();
+
+        for (const entry of leagueEntries) {
+          const queue = QUEUE_TYPE_MAP[entry.queueType];
+          if (!queue) continue;
+
+          if (queue === "solo") {
+            rankedFields.soloTier = entry.tier;
+            rankedFields.soloRank = entry.rank;
+            rankedFields.soloLP = entry.leaguePoints;
+            rankedFields.soloWins = entry.wins;
+            rankedFields.soloLosses = entry.losses;
+          } else {
+            rankedFields.flexTier = entry.tier;
+            rankedFields.flexRank = entry.rank;
+            rankedFields.flexLP = entry.leaguePoints;
+            rankedFields.flexWins = entry.wins;
+            rankedFields.flexLosses = entry.losses;
+          }
+
+          // Créer un snapshot RankHistory
+          try {
+            await prisma.rankHistory.create({
+              data: {
+                puuid: validatedData.puuid,
+                region: normalizedRegion,
+                queueType: entry.queueType,
+                tier: entry.tier,
+                rank: entry.rank,
+                leaguePoints: entry.leaguePoints,
+                wins: entry.wins,
+                losses: entry.losses,
+              },
+            });
+          } catch (historyError) {
+            logger.warn("Failed to create RankHistory snapshot", {
+              puuid: validatedData.puuid,
+              queueType: entry.queueType,
+              error: historyError instanceof Error ? historyError.message : "Unknown error",
+            });
+          }
+        }
+
+        rankedFields.rankedUpdatedAt = new Date();
+      } else {
+        logger.warn("League v4 API error (non-blocking)", {
+          status: leagueResponse.status,
+          puuid: validatedData.puuid,
+        });
+      }
+    } catch (leagueError) {
+      logger.warn("Failed to fetch League v4 data (non-blocking)", {
+        puuid: validatedData.puuid,
+        error: leagueError instanceof Error ? leagueError.message : "Unknown error",
+      });
+    }
+
     // Upsert en base pour persister les infos dans la table shardée
     await ShardedLeagueAccounts.upsert({
       puuid: validatedData.puuid,
@@ -197,6 +298,7 @@ export async function POST(request: Request) {
       revisionDate: summonerData?.revisionDate
         ? BigInt(summonerData.revisionDate)
         : null,
+      ...rankedFields,
     });
 
     // Retourner les données complètes du compte

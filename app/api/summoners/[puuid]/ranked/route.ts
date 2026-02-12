@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { REGION_TO_BASE_URL } from "@/constants/regions";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
+import { prisma } from "@/lib/prisma";
 import { getEnv } from "@/lib/env";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prismaWithTimeout } from "@/lib/timeout";
@@ -151,6 +152,43 @@ export async function GET(
       { puuid, region: normalizedRegion }
     );
 
+    // Si le compte a des données ranked en DB, les servir directement
+    if (account && (account.soloTier || account.flexTier)) {
+      const buildRankedFromDb = (
+        tier: string | null,
+        rank: string | null,
+        lp: number | null,
+        wins: number | null,
+        losses: number | null
+      ) => {
+        if (!tier) return null;
+        const totalGames = (wins ?? 0) + (losses ?? 0);
+        const winRate = totalGames === 0 ? 0 : ((wins ?? 0) / totalGames) * 100;
+        return {
+          current: {
+            tier,
+            rank: rank ?? "",
+            lp: lp ?? 0,
+            wins: wins ?? 0,
+            losses: losses ?? 0,
+            winRate: Math.round(winRate * 10) / 10,
+          },
+          best: { tier, rank: rank ?? "", lp: lp ?? 0 },
+          seasonHistory: [] as Array<{ season: string; tier: string; rank: string; lp: number }>,
+        };
+      };
+
+      const response: RankedResponse = {
+        success: true,
+        data: {
+          solo: buildRankedFromDb(account.soloTier, account.soloRank, account.soloLP, account.soloWins, account.soloLosses),
+          flex: buildRankedFromDb(account.flexTier, account.flexRank, account.flexLP, account.flexWins, account.flexLosses),
+        },
+      };
+
+      return NextResponse.json({ ...response, source: "db" }, { status: 200 });
+    }
+
     // Si pas de clé API Riot, utiliser OP.GG comme fallback
     if (!RIOT_API_KEY) {
       rankedLogger.info("Pas de RIOT_API_KEY, utilisation de OP.GG", { puuid });
@@ -257,6 +295,73 @@ export async function GET(
     // Transformer les données pour chaque queue type
     const soloData = transformLeagueData(leagueEntries, "solo");
     const flexData = transformLeagueData(leagueEntries, "flex");
+
+    // Persister les données ranked en DB pour les prochains chargements
+    try {
+      const rankedFields: Record<string, unknown> = { rankedUpdatedAt: new Date() };
+
+      for (const entry of leagueEntries) {
+        const queue = QUEUE_TYPE_MAP[entry.queueType];
+        if (!queue) continue;
+
+        if (queue === "solo") {
+          rankedFields.soloTier = entry.tier;
+          rankedFields.soloRank = entry.rank;
+          rankedFields.soloLP = entry.leaguePoints;
+          rankedFields.soloWins = entry.wins;
+          rankedFields.soloLosses = entry.losses;
+        } else {
+          rankedFields.flexTier = entry.tier;
+          rankedFields.flexRank = entry.rank;
+          rankedFields.flexLP = entry.leaguePoints;
+          rankedFields.flexWins = entry.wins;
+          rankedFields.flexLosses = entry.losses;
+        }
+
+        // Créer un snapshot RankHistory
+        try {
+          await prisma.rankHistory.create({
+            data: {
+              puuid,
+              region: normalizedRegion,
+              queueType: entry.queueType,
+              tier: entry.tier,
+              rank: entry.rank,
+              leaguePoints: entry.leaguePoints,
+              wins: entry.wins,
+              losses: entry.losses,
+            },
+          });
+        } catch {
+          // Non-bloquant
+        }
+      }
+
+      if (account) {
+        await ShardedLeagueAccounts.upsert({
+          puuid,
+          riotRegion: normalizedRegion,
+          ...(rankedFields as {
+            soloTier?: string | null;
+            soloRank?: string | null;
+            soloLP?: number | null;
+            soloWins?: number | null;
+            soloLosses?: number | null;
+            flexTier?: string | null;
+            flexRank?: string | null;
+            flexLP?: number | null;
+            flexWins?: number | null;
+            flexLosses?: number | null;
+            rankedUpdatedAt?: Date | null;
+          }),
+        });
+      }
+    } catch (persistError) {
+      rankedLogger.warn("Failed to persist ranked data to DB", {
+        puuid,
+        error: persistError instanceof Error ? persistError.message : "Unknown error",
+      });
+    }
 
     const response: RankedResponse = {
       success: true,

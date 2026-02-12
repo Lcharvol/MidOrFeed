@@ -170,6 +170,11 @@ export function useAccount(puuid?: string | null, region?: string | null) {
           await globalMutate(apiKeys.matches({ puuid }));
         }
 
+        // Revalidate ranked cache to show fresh ranked data
+        if (puuid && region) {
+          await globalMutate(apiKeys.summonerRanked(puuid, region));
+        }
+
         return {
           success: true as const,
           matchesCollected: matchResponse.matchesCollected ?? 0,
