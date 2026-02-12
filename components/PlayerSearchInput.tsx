@@ -42,6 +42,7 @@ type PlayerSearchInputProps = {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  autoFocus?: boolean;
 };
 
 const RECENT_SEARCHES_KEY = "compareRecentSearches";
@@ -108,6 +109,7 @@ export const PlayerSearchInput = ({
   placeholder = "Nom#TAG",
   className,
   disabled,
+  autoFocus,
 }: PlayerSearchInputProps) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -229,6 +231,7 @@ export const PlayerSearchInput = ({
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
+            autoFocus={autoFocus}
             className="pr-8"
             aria-busy={isLoading}
             aria-autocomplete="list"

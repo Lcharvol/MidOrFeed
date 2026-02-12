@@ -78,6 +78,7 @@ export function HeroSearchSection({
                     region={region}
                     placeholder="Nom#TAG (ex: Faker#KR1)"
                     onSelect={onSelectResult}
+                    autoFocus
                   />
                   {formatHint && (
                     <p className="text-xs text-destructive px-1">{formatHint}</p>
