@@ -1,7 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { getAuthenticatedUser } from "@/lib/auth-utils";
 
 const logger = createLogger("suggest-composition");
 
@@ -17,7 +19,18 @@ const suggestCompositionSchema = z.object({
  * POST /api/matches/suggest-composition
  * Body: { teamChampions: string[], enemyChampions?: string[], role: string, gameMode?: string }
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
+  const user = await getAuthenticatedUser(request);
+  if (!user) {
+    return NextResponse.json(
+      { success: false, error: "Non autorisé" },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await request.json();
 

@@ -1,8 +1,9 @@
 import { broadcastNotification } from "@/lib/server/notification-hub";
 import type { NotificationPayload, NotificationVariant } from "@/types";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
+import { requireAdmin } from "@/lib/auth-utils";
 
 const logger = createLogger("notifications-send");
 
@@ -19,7 +20,9 @@ const notificationSchema = z.object({
     .optional(),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const authError = await requireAdmin(request, { skipCsrf: true });
+  if (authError) return authError;
   try {
     const body = await request.json();
     const parsed = notificationSchema.parse(body);
