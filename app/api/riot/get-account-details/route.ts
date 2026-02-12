@@ -3,6 +3,7 @@ import { REGION_TO_ROUTING, REGION_TO_BASE_URL } from "@/constants/regions";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
+import { getEnv } from "@/lib/env";
 import { cache } from "@/lib/cache";
 
 const logger = createLogger("riot-account-details");
@@ -18,14 +19,12 @@ const getAccountDetailsSchema = z.object({
   force: z.boolean().optional(),
 });
 
-// Clé API Riot Games depuis les variables d'environnement
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
-
 // Base URLs importés depuis constants/regions
 
 export async function POST(request: Request) {
   try {
     // Vérifier que la clé API est configurée
+    const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
         { error: "Clé API Riot Games non configurée" },

@@ -3,14 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 import { requireAdmin } from "@/lib/auth-utils";
 import { z } from "zod";
+import { getEnv } from "@/lib/env";
 
 type CollectResult = {
   matchesCollected?: number;
   [key: string]: unknown;
 };
-
-// Clé API Riot Games depuis les variables d'environnement
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
 // État global du processus de crawl (en mémoire)
 declare global {
@@ -109,6 +107,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
+    const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
         { error: "Clé API Riot Games non configurée" },

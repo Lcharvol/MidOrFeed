@@ -3,14 +3,12 @@ import { REGION_TO_ROUTING } from "@/constants/regions";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { z } from "zod";
+import { getEnv } from "@/lib/env";
 
 const seedSchema = z.object({
   region: z.string().min(1, "Région requise"),
   count: z.number().min(1).default(20), // Nombre de joueurs à découvrir
 });
-
-// Clé API Riot Games depuis les variables d'environnement
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
 // Mapping des régions
 // Routing mapping centralisé dans constants/regions
@@ -44,6 +42,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
+    const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
         { error: "Clé API Riot Games non configurée" },

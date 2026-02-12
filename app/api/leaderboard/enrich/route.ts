@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { REGION_TO_BASE_URL } from "@/constants/regions";
 import { createLogger } from "@/lib/logger";
+import { getEnv } from "@/lib/env";
 
 const logger = createLogger("leaderboard-enrich");
 
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
     const regionLower = region.toLowerCase();
     const tierUpper = tier.toUpperCase();
 
-    const RIOT_API_KEY = process.env.RIOT_API_KEY;
+    const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
         { error: "Clé API Riot Games non configurée" },

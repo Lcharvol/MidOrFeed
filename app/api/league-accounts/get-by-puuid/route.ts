@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { REGION_TO_ROUTING, REGION_TO_BASE_URL, PLATFORM_TO_REGION } from "@/constants/regions";
 import { createLogger } from "@/lib/logger";
+import { getEnv } from "@/lib/env";
 
 const logger = createLogger("league-accounts-get-by-puuid");
 
@@ -12,8 +13,6 @@ const schema = z.object({
   region: z.string().optional(),
   autoFetch: z.boolean().optional().default(true),
 });
-
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
 // Try to find a region for a puuid from existing match data
 async function findRegionFromMatches(puuid: string): Promise<string | null> {
@@ -53,6 +52,7 @@ async function fetchFromRiotAndSave(
   };
   error?: string;
 }> {
+  const RIOT_API_KEY = getEnv().RIOT_API_KEY;
   if (!RIOT_API_KEY) {
     return { success: false, error: "API key not configured" };
   }

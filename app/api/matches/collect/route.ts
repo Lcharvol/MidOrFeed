@@ -3,15 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
+import { getEnv } from "@/lib/env";
 
 const collectSchema = z.object({
   puuid: z.string().min(1, "PUUID est requis"),
   region: z.string().min(1, "Région est requise"),
   count: z.number().optional().default(MATCHES_FETCH_LIMIT),
 });
-
-// Clé API Riot Games depuis les variables d'environnement
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
 // Mapping des régions centralisé dans constants/regions
 
@@ -46,6 +44,7 @@ async function awaitPermit(key: string, minSpacingMs = 300) {
 export async function POST(request: Request) {
   try {
     // Vérifier que la clé API est configurée
+    const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
         { error: "Clé API Riot Games non configurée" },

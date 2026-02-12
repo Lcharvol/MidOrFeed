@@ -8,9 +8,9 @@ import {
 import { broadcastNotification } from "@/lib/server/notification-hub";
 import { logger } from "@/lib/logger";
 import { errorResponse, handleApiError } from "@/lib/api-helpers";
+import { getEnv } from "@/lib/env";
 import type { NotificationPayload } from "@/types";
 
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
 const DEFAULT_REGION = process.env.DEFAULT_RIOT_REGION ?? "euw1";
 const MAX_ACCOUNTS_PER_SYNC = 40;
 
@@ -40,6 +40,7 @@ const toDate = (value: unknown): Date | null => {
 
 export async function POST(request: Request) {
   try {
+    const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return errorResponse("Clé API Riot non configurée", 500);
     }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
+import { getEnv } from "@/lib/env";
 
 const logger = createLogger("riot-search-account");
 
@@ -11,14 +12,12 @@ const searchSchema = z.object({
   region: z.string().min(1, "La région est requise"),
 });
 
-// Clé API Riot Games depuis les variables d'environnement
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
-
 // Routing mapping centralisé dans constants/regions
 
 export async function POST(request: Request) {
   try {
     // Vérifier que la clé API est configurée
+    const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
         { error: "Clé API Riot Games non configurée" },

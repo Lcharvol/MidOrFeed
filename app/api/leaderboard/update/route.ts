@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { REGION_TO_BASE_URL } from "@/constants/regions";
 import { createLogger } from "@/lib/logger";
+import { getEnv } from "@/lib/env";
 
 const logger = createLogger("leaderboard-update");
 
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Région invalide" }, { status: 400 });
 
     const endpoint = `${base}/lol/league/v4/${TIER_ENDPOINT[tier]}/by-queue/RANKED_SOLO_5x5`;
-    const RIOT_API_KEY = process.env.RIOT_API_KEY;
+    const RIOT_API_KEY = getEnv().RIOT_API_KEY;
     if (!RIOT_API_KEY) {
       return NextResponse.json(
         { error: "Clé API Riot Games non configurée" },
