@@ -60,6 +60,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+
+    // Sync auth state across tabs
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== "user") return;
+      if (e.newValue) {
+        try {
+          setUser(JSON.parse(e.newValue));
+        } catch {
+          // ignore malformed data
+        }
+      } else {
+        setUser(null);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   // Login now only stores user data - token is in HTTP-only cookie set by server
