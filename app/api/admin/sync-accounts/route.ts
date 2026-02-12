@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth-utils";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { z } from "zod";
@@ -299,6 +300,45 @@ async function syncAccountsInBackground(options: {
       // Mémoriser le dernier PUUID pour la pagination
       lastPuuid = batch[batch.length - 1].participantPUuid;
 
+      // --- Batch queries: 4 queries for ALL puuids instead of 4 per puuid ---
+      const puuids = batch.map(p => p.participantPUuid).filter(Boolean);
+
+      const batchStats = await prisma.matchParticipant.groupBy({
+        by: ["participantPUuid"],
+        where: { participantPUuid: { in: puuids } },
+        _count: { id: true },
+        _sum: { kills: true, deaths: true, assists: true },
+      });
+
+      const batchWins = await prisma.matchParticipant.groupBy({
+        by: ["participantPUuid"],
+        where: { participantPUuid: { in: puuids }, win: true },
+        _count: { id: true },
+      });
+
+      const batchMostPlayed = await prisma.$queryRaw<{ participantPUuid: string; championId: number }[]>`
+        SELECT "participantPUuid", "championId"
+        FROM (
+          SELECT "participantPUuid", "championId",
+                 ROW_NUMBER() OVER (PARTITION BY "participantPUuid" ORDER BY COUNT(*) DESC) as rn
+          FROM "match_participants"
+          WHERE "participantPUuid" IN (${Prisma.join(puuids)})
+          GROUP BY "participantPUuid", "championId"
+        ) sub
+        WHERE rn = 1
+      `;
+
+      const batchSampleMatches = await prisma.matchParticipant.findMany({
+        where: { participantPUuid: { in: puuids } },
+        select: { participantPUuid: true, match: { select: { platformId: true } } },
+        distinct: ["participantPUuid"],
+      });
+
+      const statsMap = new Map(batchStats.map(s => [s.participantPUuid, s]));
+      const winsMap = new Map(batchWins.map(w => [w.participantPUuid, w._count.id]));
+      const mostPlayedMap = new Map(batchMostPlayed.map(m => [m.participantPUuid, m.championId]));
+      const regionMap = new Map(batchSampleMatches.map(s => [s.participantPUuid!, s.match.platformId]));
+
       for (const participant of batch) {
         // Vérifier si le processus a été arrêté
         if (!getSyncState().isRunning) {
@@ -318,13 +358,8 @@ async function syncAccountsInBackground(options: {
           },
         });
 
-        // Récupérer les statistiques de ce joueur
-        const playerStats = await prisma.matchParticipant.aggregate({
-          where: { participantPUuid: participant.participantPUuid },
-          _count: { id: true },
-          _sum: { kills: true, deaths: true, assists: true },
-        });
-
+        // Look up pre-fetched stats from batch queries
+        const playerStats = statsMap.get(participant.participantPUuid);
         const totalMatches = playerStats?._count.id || 0;
 
         if (totalMatches === 0) {
@@ -336,15 +371,10 @@ async function syncAccountsInBackground(options: {
           continue;
         }
 
-        // Compter les victoires
-        const wins = await prisma.matchParticipant.count({
-          where: { participantPUuid: participant.participantPUuid, win: true },
-        });
-
+        const wins = winsMap.get(participant.participantPUuid) || 0;
         const losses = totalMatches - wins;
         const winRate = totalMatches > 0 ? (wins / totalMatches) * 100 : 0;
 
-        // Calculer le KDA moyen
         const totalKills = playerStats?._sum.kills || 0;
         const totalDeaths = playerStats?._sum.deaths || 0;
         const totalAssists = playerStats?._sum.assists || 0;
@@ -353,24 +383,10 @@ async function syncAccountsInBackground(options: {
             ? (totalKills + totalAssists) / totalDeaths
             : totalKills + totalAssists;
 
-        // Trouver le champion le plus joué
-        const championStats = await prisma.matchParticipant.groupBy({
-          by: ["championId"],
-          where: { participantPUuid: participant.participantPUuid },
-          _count: { championId: true },
-          orderBy: { _count: { championId: "desc" } },
-          take: 1,
-        });
+        const mostPlayedRaw = mostPlayedMap.get(participant.participantPUuid);
+        const mostPlayedChampion = mostPlayedRaw != null ? String(mostPlayedRaw) : null;
 
-        const mostPlayedChampion = championStats[0]?.championId || null;
-
-        // Déterminer la région depuis un match
-        const sampleMatch = await prisma.matchParticipant.findFirst({
-          where: { participantPUuid: participant.participantPUuid },
-          include: { match: true },
-        });
-
-        const platformId = sampleMatch?.match.platformId || "UNKNOWN";
+        const platformId = regionMap.get(participant.participantPUuid) || "UNKNOWN";
         const region = PLATFORM_TO_REGION[platformId] || null;
 
         // Mettre à jour l'état avec la région
