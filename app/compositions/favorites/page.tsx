@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -161,8 +161,11 @@ export default function CompositionsFavoritesPage() {
     { revalidateOnFocus: false }
   );
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const handleDelete = useCallback(
     async (id: string) => {
+      setDeletingId(id);
       try {
         const res = await authenticatedFetch(`/api/compositions/${id}`, {
           method: "DELETE",
@@ -176,6 +179,8 @@ export default function CompositionsFavoritesPage() {
         mutate();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Erreur réseau — vérifie ta connexion");
+      } finally {
+        setDeletingId(null);
       }
     },
     [mutate]
@@ -295,7 +300,7 @@ export default function CompositionsFavoritesPage() {
               resolveSlug={resolveSlug}
               resolveName={resolveName}
               onDelete={handleDelete}
-              isDeleting={false}
+              isDeleting={deletingId === composition.id}
             />
           ))}
         </div>
