@@ -38,7 +38,7 @@ export const SummonerHeader = ({
           <>
             {profileIconUrl ? (
               <Avatar className="size-28 border-4 border-primary/20">
-                <AvatarImage src={profileIconUrl} alt="Profile" />
+                <AvatarImage src={profileIconUrl} alt={details?.gameName ? `${details.gameName} profile icon` : "Profile icon"} />
                 <AvatarFallback>?</AvatarFallback>
               </Avatar>
             ) : (
