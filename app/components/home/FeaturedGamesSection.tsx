@@ -15,6 +15,8 @@ import { ChampionIcon } from "@/components/ChampionIcon";
 import { EyeIcon } from "lucide-react";
 import { FeaturedGame } from "./types";
 
+const CAROUSEL_OPTS = { align: "start" as const, slidesToScroll: 1 };
+
 type FeaturedGamesSectionProps = {
   featuredGames: FeaturedGame[];
   featuredLoading: boolean;
@@ -60,7 +62,7 @@ export const FeaturedGamesSection = ({
             ))}
           </div>
         ) : (
-          <Carousel opts={{ align: "start", slidesToScroll: 1 }} className="mx-12">
+          <Carousel opts={CAROUSEL_OPTS} className="mx-12">
             <CarouselContent>
               {featuredGames.map((game) => {
                 const minutes = Math.floor(game.gameLength / 60);

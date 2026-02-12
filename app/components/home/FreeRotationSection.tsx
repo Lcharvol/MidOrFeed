@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
 
+const CAROUSEL_OPTS = { align: "start" as const, slidesToScroll: 5 };
+
 type FreeRotationSectionProps = {
   freeChampionIds: number[];
   rotationLoading: boolean;
@@ -71,7 +73,7 @@ export const FreeRotationSection = ({
             ))}
           </div>
         ) : (
-          <Carousel opts={{ align: "start", slidesToScroll: 5 }} className="mx-12">
+          <Carousel opts={CAROUSEL_OPTS} className="mx-12">
             <CarouselContent>
               {freeChampionIds.map((key) => {
                 const champId = championKeyToIdMap.get(String(key)) ?? String(key);
