@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getEnv } from "@/lib/env";
 
 /**
  * Rate limiting en mémoire - simple et efficace pour une seule instance
@@ -90,18 +91,18 @@ export const rateLimit = async (
  */
 export const rateLimitPresets = {
   auth: {
-    limit: parseInt(process.env.RATE_LIMIT_AUTH_LIMIT || "5", 10),
-    windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || String(15 * 60 * 1000), 10),
+    get limit() { return getEnv().RATE_LIMIT_AUTH_LIMIT; },
+    get windowMs() { return getEnv().RATE_LIMIT_AUTH_WINDOW_MS; },
     message: "Trop de tentatives de connexion, veuillez réessayer dans quelques minutes",
   },
   api: {
-    limit: parseInt(process.env.RATE_LIMIT_API_LIMIT || "100", 10),
-    windowMs: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || String(60 * 1000), 10),
+    get limit() { return getEnv().RATE_LIMIT_API_LIMIT; },
+    get windowMs() { return getEnv().RATE_LIMIT_API_WINDOW_MS; },
     message: "Trop de requêtes, veuillez ralentir",
   },
   admin: {
-    limit: parseInt(process.env.RATE_LIMIT_ADMIN_LIMIT || "50", 10),
-    windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || String(60 * 1000), 10),
+    get limit() { return getEnv().RATE_LIMIT_ADMIN_LIMIT; },
+    get windowMs() { return getEnv().RATE_LIMIT_ADMIN_WINDOW_MS; },
     message: "Trop de requêtes, veuillez ralentir",
   },
   strict: {

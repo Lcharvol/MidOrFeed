@@ -98,6 +98,28 @@ const envSchema = z.object({
   // Region par defaut pour Riot API
   DEFAULT_RIOT_REGION: z.string().optional().default("euw1"),
 
+  // Encryption (pour le chiffrement des données sensibles)
+  ENCRYPTION_KEY: z.string().optional(),
+  ENCRYPTION_SALT: z.string().optional(),
+
+  // Sharding config
+  SHARDING_BATCH_SIZE: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 10)),
+  SHARDING_COUNT_BATCH_SIZE: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 100)),
+  SHARDING_REGION_CACHE_SIZE: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 1000)),
+  SHARDING_REGION_CACHE_TTL_MS: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 5 * 60 * 1000)),
+
   // Taille maximale des requêtes (en bytes)
   MAX_REQUEST_SIZE: z
     .string()

@@ -6,6 +6,7 @@ import {
   type WorkOptions,
 } from "pg-boss";
 import { createLogger } from "./logger";
+import { getEnv } from "@/lib/env";
 
 const logger = createLogger("job-queue");
 
@@ -41,7 +42,7 @@ export async function getJobQueue(): Promise<PgBoss> {
 }
 
 async function initJobQueue(): Promise<PgBoss> {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = getEnv().DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is required for job queue");
   }

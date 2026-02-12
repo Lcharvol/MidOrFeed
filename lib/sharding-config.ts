@@ -1,4 +1,5 @@
 import { logger } from "./logger";
+import { getEnv } from "@/lib/env";
 
 /**
  * Configuration pour l'optimisation du sharding
@@ -10,9 +11,7 @@ import { logger } from "./logger";
  * Défaut: 4 (équilibré entre performance et charge)
  */
 export const getShardingBatchSize = (): number => {
-  const batchSize = process.env.SHARDING_BATCH_SIZE
-    ? parseInt(process.env.SHARDING_BATCH_SIZE, 10)
-    : 4;
+  const batchSize = getEnv().SHARDING_BATCH_SIZE;
 
   // Valider que la taille est raisonnable (entre 1 et 16)
   if (batchSize < 1 || batchSize > 16) {
@@ -32,9 +31,7 @@ export const getShardingBatchSize = (): number => {
  * Défaut: 8 (pour les requêtes de comptage, on peut être plus agressif)
  */
 export const getShardingCountBatchSize = (): number => {
-  const batchSize = process.env.SHARDING_COUNT_BATCH_SIZE
-    ? parseInt(process.env.SHARDING_COUNT_BATCH_SIZE, 10)
-    : 8;
+  const batchSize = getEnv().SHARDING_COUNT_BATCH_SIZE;
 
   // Valider que la taille est raisonnable (entre 1 et 16)
   if (batchSize < 1 || batchSize > 16) {
@@ -54,9 +51,7 @@ export const getShardingCountBatchSize = (): number => {
  * Défaut: 10000 (10k entrées)
  */
 export const getShardingRegionCacheSize = (): number => {
-  const cacheSize = process.env.SHARDING_REGION_CACHE_SIZE
-    ? parseInt(process.env.SHARDING_REGION_CACHE_SIZE, 10)
-    : 10000;
+  const cacheSize = getEnv().SHARDING_REGION_CACHE_SIZE;
 
   // Valider que la taille est raisonnable (entre 100 et 1000000)
   if (cacheSize < 100 || cacheSize > 1000000) {
@@ -76,9 +71,7 @@ export const getShardingRegionCacheSize = (): number => {
  * Défaut: 24 heures (86400000 ms)
  */
 export const getShardingRegionCacheTTL = (): number => {
-  const ttl = process.env.SHARDING_REGION_CACHE_TTL_MS
-    ? parseInt(process.env.SHARDING_REGION_CACHE_TTL_MS, 10)
-    : 24 * 60 * 60 * 1000; // 24 heures
+  const ttl = getEnv().SHARDING_REGION_CACHE_TTL_MS;
 
   // Valider que le TTL est raisonnable (entre 1 heure et 7 jours)
   if (ttl < 3600000 || ttl > 7 * 24 * 60 * 60 * 1000) {

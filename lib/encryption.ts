@@ -1,8 +1,9 @@
 import crypto from "crypto";
+import { getEnv } from "@/lib/env";
 
 /**
  * Utilitaires pour le chiffrement des données sensibles au repos
- * 
+ *
  * Note: Pour une sécurité maximale, utilisez un service de gestion de clés (KMS)
  * comme AWS KMS, Google Cloud KMS, ou HashiCorp Vault
  */
@@ -12,7 +13,8 @@ import crypto from "crypto";
  * En production, utiliser un service KMS pour gérer les clés
  */
 const getEncryptionKey = (): Buffer => {
-  const key = process.env.ENCRYPTION_KEY;
+  const env = getEnv();
+  const key = env.ENCRYPTION_KEY;
   if (!key) {
     throw new Error("ENCRYPTION_KEY environment variable is not set");
   }
@@ -24,8 +26,7 @@ const getEncryptionKey = (): Buffer => {
   }
 
   // Sinon, dériver une clé avec PBKDF2
-  // Use ENCRYPTION_SALT env var or derive salt from key hash for consistency
-  const salt = process.env.ENCRYPTION_SALT ||
+  const salt = env.ENCRYPTION_SALT ||
     crypto.createHash("sha256").update(key + "midorfeed-salt").digest("hex").slice(0, 32);
   return crypto.pbkdf2Sync(key, salt, 100000, 32, "sha256");
 };
