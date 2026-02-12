@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth-utils";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // Mapping des platformId vers les regions
 const PLATFORM_TO_REGION: Record<string, string> = {
@@ -166,7 +167,7 @@ export async function POST(request?: Request | NextRequest) {
       }
     }
 
-    console.log("[SYNC-ACCOUNTS] Démarrage de la synchronisation...");
+    logger.info("Démarrage de la synchronisation des comptes");
 
     // Compter le nombre total de PUUIDs uniques avec une requête optimisée
     // Utiliser une sous-requête COUNT DISTINCT au lieu de charger tous les enregistrements
@@ -215,7 +216,7 @@ export async function POST(request?: Request | NextRequest) {
       data: getSyncState(),
     });
   } catch (error) {
-    console.error("[SYNC-ACCOUNTS] Erreur:", error);
+    logger.error("Erreur lors du démarrage de la synchronisation", error instanceof Error ? error : new Error(String(error)));
     resetSyncState();
     return NextResponse.json(
       { success: false, error: "Erreur lors du démarrage de la synchronisation" },
@@ -461,7 +462,7 @@ async function syncAccountsInBackground(options: {
                 updateSyncState({ riotApiErrors: currentState.riotApiErrors + 1 });
               }
             } catch (error) {
-              console.error(`[SYNC-ACCOUNTS] Erreur Riot API:`, error);
+              logger.error("Erreur Riot API lors de la synchronisation", error instanceof Error ? error : new Error(String(error)));
               const currentState = getSyncState();
               updateSyncState({ riotApiErrors: currentState.riotApiErrors + 1 });
             }
@@ -494,10 +495,7 @@ async function syncAccountsInBackground(options: {
           accountsCreated: currentState.accountsCreated + 1,
         });
       } catch (error) {
-        console.error(
-          `[SYNC-ACCOUNTS] Erreur pour ${participant.participantPUuid}:`,
-          error
-        );
+        logger.error("Erreur de synchronisation pour un compte", error instanceof Error ? error : new Error(String(error)), { puuid: participant.participantPUuid });
         updateSyncState({
           lastError: error instanceof Error ? error.message : "Erreur inconnue",
         });
@@ -524,9 +522,9 @@ async function syncAccountsInBackground(options: {
       }
     }
 
-    console.log(`[SYNC-ACCOUNTS] Synchronisation terminée:`, getSyncState());
+    logger.info("Synchronisation terminée", getSyncState() as unknown as Record<string, unknown>);
   } catch (error) {
-    console.error("[SYNC-ACCOUNTS] Erreur globale:", error);
+    logger.error("Erreur globale de synchronisation", error instanceof Error ? error : new Error(String(error)));
     updateSyncState({
       lastError: error instanceof Error ? error.message : "Erreur globale",
     });

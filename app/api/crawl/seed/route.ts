@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { z } from "zod";
 import { getEnv } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 const seedSchema = z.object({
   region: z.string().min(1, "Région requise"),
@@ -134,10 +135,7 @@ export async function POST(request: NextRequest) {
         });
         newPlayersCount++;
       } catch (error) {
-        console.error(
-          `[CRAWL/SEED] Erreur enregistrement PUUID ${puuid}:`,
-          error
-        );
+        logger.error("Erreur enregistrement PUUID", error instanceof Error ? error : new Error(String(error)), { puuid });
       }
     }
 
@@ -161,7 +159,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("[CRAWL/SEED] Erreur:", error);
+    logger.error("Erreur lors du seed", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ success: false, error: "Erreur lors du seed" }, { status: 500 });
   }
 }

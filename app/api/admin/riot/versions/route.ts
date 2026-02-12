@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getVersionsUrl } from "@/constants/ddragon";
+import { logger } from "@/lib/logger";
 
 const VERSIONS_ENDPOINT = getVersionsUrl();
 
@@ -103,10 +104,7 @@ export const POST = async (request: NextRequest) => {
       { status: 200 }
     );
   } catch (error) {
-    console.error(
-      "[RIOT-VERSIONS] Erreur lors de la synchronisation des versions:",
-      error
-    );
+    logger.error("Erreur lors de la synchronisation des versions Riot", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       {
         success: false,

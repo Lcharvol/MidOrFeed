@@ -7,6 +7,7 @@ import {
   normalizeLane,
   resolveChampionRole,
 } from "@/lib/compositions/roles";
+import { logger } from "@/lib/logger";
 
 const clampMatchLimit = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -27,9 +28,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => null);
     const matchLimit = clampMatchLimit(body?.matchLimit);
 
-    console.log("[ANALYZE-CHAMPIONS] Début de l'analyse...", {
-      matchLimit,
-    });
+    logger.info("Début de l'analyse des champions", { matchLimit });
 
     let matchIds: string[] | null = null;
     if (matchLimit) {
@@ -194,7 +193,7 @@ export async function POST(request: NextRequest) {
       }>
     >();
 
-    console.log("[ANALYZE-CHAMPIONS] Calcul des contre-picks...");
+    logger.info("Calcul des contre-picks");
 
     // Pour chaque champion, calculer les contre-picks
     for (const { championId } of allStats) {
@@ -288,9 +287,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(
-      `[ANALYZE-CHAMPIONS] Contre-picks calculés pour ${weakAgainstByChampion.size} champions`
-    );
+    logger.info("Contre-picks calculés", { championsCount: weakAgainstByChampion.size });
 
     // Calculer les moyennes et upsert dans la base
     let created = 0;
@@ -430,9 +427,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log(
-      `[ANALYZE-CHAMPIONS] Analyse terminée: ${created} créés, ${updated} mis à jour`
-    );
+    logger.info("Analyse des champions terminée", { created, updated });
 
     return NextResponse.json(
       {
@@ -449,7 +444,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("[ANALYZE-CHAMPIONS] Erreur:", error);
+    logger.error("Erreur lors de l'analyse des champions", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       {
         success: false,

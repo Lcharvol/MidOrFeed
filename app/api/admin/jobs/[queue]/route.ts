@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getJobQueue, getQueueJobs, purgeQueue, QUEUE_NAMES, type QueueName } from "@/lib/job-queue";
 import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 type Params = { params: Promise<{ queue: string }> };
 
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       jobs,
     });
   } catch (error) {
-    console.error("[Queue API] Error:", error);
+    logger.error("Error fetching queue", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
@@ -83,7 +84,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       cleaned: "all",
     });
   } catch (error) {
-    console.error("[Queue API] Error cleaning:", error);
+    logger.error("Error cleaning queue", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

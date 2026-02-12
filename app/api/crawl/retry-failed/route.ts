@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/crawl/retry-failed
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("[CRAWL/RETRY_FAILED] Erreur:", error);
+    logger.error("Erreur lors du retry des joueurs failed", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la réinitialisation des joueurs failed" },
       { status: 500 }

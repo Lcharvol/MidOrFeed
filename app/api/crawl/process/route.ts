@@ -4,6 +4,7 @@ import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 import { requireAdmin } from "@/lib/auth-utils";
 import { z } from "zod";
 import { getEnv } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 type CollectResult = {
   matchesCollected?: number;
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
       data: getState(),
     });
   } catch (error) {
-    console.error("[CRAWL/PROCESS] Erreur:", error);
+    logger.error("Erreur lors du démarrage du crawl", error instanceof Error ? error : new Error(String(error)));
     resetState();
     return NextResponse.json(
       { success: false, error: "Erreur lors du démarrage du crawl" },
@@ -311,7 +312,7 @@ async function processPlayersInBackground(batchSize: number, delayBetweenPlayers
             });
           }
         } catch (error) {
-          console.error(`[CRAWL/PROCESS] Erreur pour ${player.puuid}:`, error);
+          logger.error("Erreur de crawl pour un joueur", error instanceof Error ? error : new Error(String(error)), { puuid: player.puuid });
 
           // Marquer le joueur comme "failed"
           await prisma.discoveredPlayer.update({
@@ -353,7 +354,7 @@ async function processPlayersInBackground(batchSize: number, delayBetweenPlayers
       }
     }
   } catch (error) {
-    console.error("[CRAWL/PROCESS] Erreur globale:", error);
+    logger.error("Erreur globale du processus de crawl", error instanceof Error ? error : new Error(String(error)));
     updateState({
       lastError: error instanceof Error ? error.message : "Erreur globale",
     });
