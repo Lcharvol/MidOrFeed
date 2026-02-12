@@ -217,6 +217,7 @@ model CompositionSuggestion {
   @@index([userId])
   @@index([confidence])
   @@index([suggestedChampion])
+  @@index([userId, confidence])
   @@map("composition_suggestions")
 }
 
@@ -548,6 +549,7 @@ model ChampionGuide {
   @@index([championId, role])
   @@index([status, championId])
   @@index([status, createdAt])
+  @@index([status, authorId])
   @@index([viewCount, createdAt])
   @@index([patchVersion])
   @@map("champion_guides")
@@ -596,6 +598,7 @@ model ChampionGuideComment {
   @@index([authorId])
   @@index([parentId])
   @@index([score])
+  @@index([guideId, score])
   @@map("champion_guide_comments")
 }
 
