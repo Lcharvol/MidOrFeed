@@ -4,6 +4,7 @@ import { z } from "zod";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 import { getEnv } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 const collectSchema = z.object({
   puuid: z.string().min(1, "PUUID est requis"),
@@ -219,10 +220,7 @@ export async function POST(request: Request) {
         }
 
         if (!matchDetailsResponse.ok) {
-          console.error(
-            `Erreur lors de la récupération du match ${matchId}:`,
-            matchDetailsResponse.status
-          );
+          logger.error(`Erreur lors de la récupération du match ${matchId}`, new Error(`HTTP ${matchDetailsResponse.status}`), { matchId });
           continue;
         }
 
@@ -365,10 +363,7 @@ export async function POST(request: Request) {
           matchesCollected++;
           participantsCreated += result;
         } catch (error) {
-          console.error(
-            `Erreur lors de la sauvegarde du match ${matchId}:`,
-            error
-          );
+          logger.error(`Erreur lors de la sauvegarde du match ${matchId}`, error as Error, { matchId });
           continue;
         }
       }
@@ -381,7 +376,7 @@ export async function POST(request: Request) {
     try {
       await recordSummonerHistory(validatedData.puuid, normalizedRegion);
     } catch (historyErr) {
-      console.error("Failed to record summoner history:", historyErr);
+      logger.error("Failed to record summoner history", historyErr as Error);
     }
 
     return NextResponse.json(
@@ -401,7 +396,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Erreur lors de la collecte des matchs:", error);
+    logger.error("Erreur lors de la collecte des matchs", error as Error);
     return NextResponse.json(
       { error: "Erreur lors de la collecte des matchs" },
       { status: 500 }
