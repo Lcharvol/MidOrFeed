@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { getItemImageUrl } from "@/constants/ddragon";
@@ -19,7 +20,7 @@ export type ItemIconProps = {
   className?: string;
 };
 
-export const ItemIcon = ({
+export const ItemIcon = memo(function ItemIcon({
   itemId,
   alt,
   size = 48,
@@ -28,7 +29,7 @@ export const ItemIcon = ({
   fluid = false,
   version,
   className,
-}: ItemIconProps) => {
+}: ItemIconProps) {
   const radiusClass = shape === "circle" ? "rounded-full" : "rounded-md";
   const borderClass = showBorder ? "border border-border/40" : "";
 
@@ -84,4 +85,4 @@ export const ItemIcon = ({
       )}
     </div>
   );
-};
+});

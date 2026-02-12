@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -24,7 +25,7 @@ export type ChampionIconProps = {
   clickable?: boolean;
 };
 
-export const ChampionIcon = ({
+export const ChampionIcon = memo(function ChampionIcon({
   championId,
   championKey,
   championKeyToId,
@@ -36,7 +37,7 @@ export const ChampionIcon = ({
   version,
   className,
   clickable = false,
-}: ChampionIconProps) => {
+}: ChampionIconProps) {
   const radiusClass = shape === "circle" ? "rounded-full" : "rounded-xl";
   const borderClass = showBorder ? "border border-border/40" : "";
 
@@ -107,4 +108,4 @@ export const ChampionIcon = ({
   }
 
   return iconContent;
-};
+});
