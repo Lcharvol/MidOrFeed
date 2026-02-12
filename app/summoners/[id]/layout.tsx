@@ -1,205 +1,55 @@
-"use client";
+import type { Metadata } from "next";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
+import { buildSiteUrl } from "@/constants/site";
+import SummonerProfileLayout from "./SummonerProfileLayout";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSummonerRanked } from "@/lib/hooks/use-summoner-ranked";
-import { useSummonerDetails } from "./hooks/useSummonerDetails";
-import { useLadderRank } from "./hooks/useLadderRank";
-import { SummonerHeader } from "./components/SummonerHeader";
-import { RiotConnectionBanner } from "./components/RiotConnectionBanner";
-import { SummonerActions } from "./components/SummonerActions";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  HomeIcon,
-  LayoutDashboardIcon,
-  SwordsIcon,
-  TrophyIcon,
-  TargetIcon,
-} from "lucide-react";
-import Link from "next/link";
-import {
-  usePathname,
-  useParams,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
-import { toast } from "sonner";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-
-export default function SummonerByIdLayout({
-  children,
-}: {
+type LayoutProps = {
   children: React.ReactNode;
-}) {
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
+  params: Promise<{ id: string }>;
+};
 
-  const puuid = typeof params?.id === "string" ? params.id : undefined;
-  const region = searchParams.get("region") || undefined;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id: puuid } = await params;
 
-  const [isUpdating, setIsUpdating] = useState(false);
+  const account = await ShardedLeagueAccounts.findUniqueByPuuidGlobal(puuid).catch(() => null);
 
-  const {
-    details,
-    loading,
-    account,
-    profileIconUrl,
-    refreshAccountAndMatches,
-  } = useSummonerDetails(puuid, region);
-  const { solo } = useSummonerRanked(puuid, region);
-  const { ladderRank, topPercentage } = useLadderRank(solo);
+  if (!account?.riotGameName) {
+    return {
+      title: "Profil Invocateur",
+      description:
+        "Consultez les statistiques, l'historique de matchs et les performances d'un joueur League of Legends.",
+    };
+  }
 
-  // If region missing in URL but present in DB, propagate it once
-  useEffect(() => {
-    if (!puuid) return;
-    if (region) return;
-    const accRegion: string | undefined = account?.riotRegion;
-    if (!accRegion) return;
-    const sub = pathname.endsWith("overview")
-      ? "/overview"
-      : pathname.endsWith("ranking")
-      ? "/ranking"
-      : pathname.endsWith("champions")
-      ? "/champions"
-      : pathname.endsWith("challenges")
-      ? "/challenges"
-      : "";
-    router.replace(`/summoners/${puuid}${sub}?region=${accRegion}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puuid, region, account]);
+  const name = `${account.riotGameName}#${account.riotTagLine}`;
+  const description = `Statistiques de ${name} sur League of Legends : historique de matchs, champions joués, classement et performances détaillées.`;
+  const canonicalUrl = buildSiteUrl(`/summoners/${puuid}/overview`);
 
-  const currentTab = useMemo(() => {
-    if (pathname?.endsWith("/challenges")) return "challenges";
-    if (pathname?.endsWith("/champions")) return "champions";
-    if (pathname?.endsWith("/ranking")) return "ranking";
-    return "overview";
-  }, [pathname]);
-
-  const handleUpdateProfile = async () => {
-    if (!puuid || !region) return;
-    setIsUpdating(true);
-    try {
-      const result = await refreshAccountAndMatches(region);
-      if (!result.success) {
-        toast.error(result.error ?? "Erreur lors de la mise à jour");
-        return;
-      }
-      toast.success(
-        `Profil mis à jour — ${result.matchesCollected} matchs collectés`
-      );
-    } catch (e) {
-      console.error(e);
-      toast.error("Une erreur est survenue");
-    } finally {
-      setIsUpdating(false);
-    }
+  return {
+    title: `${account.riotGameName} - Profil LoL`,
+    description,
+    openGraph: {
+      title: `${name} - Statistiques LoL`,
+      description,
+      url: canonicalUrl,
+      siteName: "Mid or Feed",
+      type: "profile",
+    },
+    twitter: {
+      card: "summary",
+      title: `${name} - Statistiques LoL`,
+      description,
+    },
+    alternates: {
+      canonical: canonicalUrl,
+    },
   };
+}
 
-  const hasConnectedAccount = Boolean(
-    account?.riotGameName && account?.riotTagLine
-  );
-
-  return (
-    <div className="container mx-auto py-6 sm:py-10 px-4">
-      <Breadcrumb className="mb-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/"><HomeIcon className="size-4" /></Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/summoners">Invocateurs</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{details?.gameName || "Profil"}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="mb-8 space-y-4">
-        <SummonerHeader
-          loading={loading}
-          details={details}
-          profileIconUrl={profileIconUrl}
-          region={region}
-          ladderRank={ladderRank}
-          topPercentage={topPercentage}
-        />
-
-        <RiotConnectionBanner hasConnectedAccount={hasConnectedAccount} />
-
-        <SummonerActions
-          isUpdating={isUpdating}
-          puuid={puuid}
-          region={region}
-          onUpdate={handleUpdateProfile}
-        />
-      </div>
-
-      {loading ? (
-        <div className="mb-6">
-          <div className="flex gap-2">
-            <Skeleton className="h-9 w-10 sm:w-32 rounded-md" />
-            <Skeleton className="h-9 w-10 sm:w-28 rounded-md" />
-            <Skeleton className="h-9 w-10 sm:w-28 rounded-md" />
-            <Skeleton className="h-9 w-10 sm:w-20 rounded-md" />
-          </div>
-        </div>
-      ) : (
-        <Tabs
-          value={currentTab}
-          onValueChange={(value) => {
-            const basePath = `/summoners/${puuid}/${value}`;
-            const query = region ? `?region=${region}` : "";
-            router.push(`${basePath}${query}`);
-          }}
-          className="mb-6"
-        >
-          <TabsList>
-            <TabsTrigger value="overview">
-              <LayoutDashboardIcon className="size-4" />
-              <span className="hidden sm:inline">Vue d&apos;ensemble</span>
-            </TabsTrigger>
-            <TabsTrigger value="ranking">
-              <TrophyIcon className="size-4" />
-              <span className="hidden sm:inline">Classement</span>
-            </TabsTrigger>
-            <TabsTrigger value="champions">
-              <SwordsIcon className="size-4" />
-              <span className="hidden sm:inline">Champions</span>
-            </TabsTrigger>
-            <TabsTrigger value="challenges">
-              <TargetIcon className="size-4" />
-              <span className="hidden sm:inline">Défis</span>
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview" className="mt-6">
-            {children}
-          </TabsContent>
-          <TabsContent value="ranking" className="mt-6">
-            {children}
-          </TabsContent>
-          <TabsContent value="champions" className="mt-6">
-            {children}
-          </TabsContent>
-          <TabsContent value="challenges" className="mt-6">
-            {children}
-          </TabsContent>
-        </Tabs>
-      )}
-    </div>
-  );
+export default function Layout({ children }: LayoutProps) {
+  return <SummonerProfileLayout>{children}</SummonerProfileLayout>;
 }
