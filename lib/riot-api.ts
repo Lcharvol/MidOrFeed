@@ -8,6 +8,13 @@ import { alerting } from "./alerting";
  * Client API Riot Games avec gestion des rate limits, cache et retry
  */
 
+/** Riot rate limiter defaults */
+const RIOT_RATE_LIMIT_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+const RIOT_RATE_LIMIT_REQUESTS = 100;
+const DEFAULT_INITIAL_BACKOFF_MS = 1000;
+const DEFAULT_BACKOFF_MULTIPLIER = 2;
+const DEFAULT_MAX_BACKOFF_MS = 60 * 1000; // 1 minute
+
 /**
  * Codes d'erreur HTTP spécifiques à l'API Riot
  */
@@ -102,8 +109,8 @@ const getRateLimiter = (routing: string): RateLimiterState => {
     rateLimiters.set(key, {
       requests: 0,
       windowStart: Date.now(),
-      windowDuration: 120000, // 2 minutes
-      limit: 100, // 100 requêtes par 2 minutes par défaut
+      windowDuration: RIOT_RATE_LIMIT_WINDOW_MS,
+      limit: RIOT_RATE_LIMIT_REQUESTS,
     });
   }
 
@@ -170,9 +177,9 @@ export const riotApiRequest = async <T = unknown>(
     cacheTTL = CacheTTL.MEDIUM, // 5 minutes par défaut
     cacheKey,
     maxRetries = 3,
-    initialBackoffMs = 1000,
-    backoffMultiplier = 2,
-    maxBackoffMs = 60000,
+    initialBackoffMs = DEFAULT_INITIAL_BACKOFF_MS,
+    backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER,
+    maxBackoffMs = DEFAULT_MAX_BACKOFF_MS,
   } = options;
 
   // Construire la clé de cache

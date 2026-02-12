@@ -3,6 +3,10 @@ import { recordMetric, recordTiming } from "./metrics";
 import { alerting, AlertSeverity } from "./alerting";
 import { logger } from "./logger";
 
+/** Monitoring thresholds */
+const ALERT_AVG_DURATION_MS = 5000;
+const ALERT_MIN_REQUEST_COUNT = 10;
+
 /**
  * Statistiques de performance par endpoint
  */
@@ -86,7 +90,7 @@ class EndpointStatsStore {
     }
 
     // Alerter si le temps de réponse est trop élevé
-    if (current.avgDuration > 5000 && current.count >= 10) {
+    if (current.avgDuration > ALERT_AVG_DURATION_MS && current.count >= ALERT_MIN_REQUEST_COUNT) {
       // Plus de 5 secondes en moyenne avec au moins 10 requêtes
       alerting.medium(
         `Temps de réponse élevé sur ${endpoint}`,

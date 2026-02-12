@@ -10,6 +10,24 @@ import type {
 
 const logger = createLogger("champion-stats-worker");
 
+/** Normalization ceilings for composite score calculation */
+const NORMALIZATION = {
+  MAX_KDA: 5,
+  MAX_DAMAGE: 30_000,
+  MAX_VISION: 50,
+} as const;
+
+/** Composite score weights (must sum to 100) */
+const SCORE_WEIGHTS = {
+  WIN_RATE: 40,
+  KDA: 30,
+  DAMAGE: 20,
+  VISION: 10,
+} as const;
+
+/** Minimum games required for a champion to receive a composite score */
+const MIN_GAMES_FOR_SCORING = 10;
+
 /**
  * Champion Stats Worker
  * Computes statistics for each champion from match data
@@ -155,9 +173,9 @@ async function computeChampionStats(championId: string): Promise<void> {
 
   // 6. Calculate composite score (0-100)
   // 40% win rate + 30% KDA + 20% damage + 10% vision
-  const maxKDA = 5; // Normalize KDA to max of 5
-  const maxDamage = 30000; // Normalize damage
-  const maxVision = 50; // Normalize vision score
+  const maxKDA = NORMALIZATION.MAX_KDA;
+  const maxDamage = NORMALIZATION.MAX_DAMAGE;
+  const maxVision = NORMALIZATION.MAX_VISION;
 
   const normalizedKDA = Math.min(avgKDA / maxKDA, 1);
   const normalizedDamage = Math.min(
@@ -173,8 +191,8 @@ async function computeChampionStats(championId: string): Promise<void> {
   // Note: winRate is 0-100, so normalize to 0-1 for the score calculation
   const normalizedWinRate = winRate / 100;
   const score =
-    totalGames >= 10
-      ? (normalizedWinRate * 40 + normalizedKDA * 30 + normalizedDamage * 20 + normalizedVision * 10)
+    totalGames >= MIN_GAMES_FOR_SCORING
+      ? (normalizedWinRate * SCORE_WEIGHTS.WIN_RATE + normalizedKDA * SCORE_WEIGHTS.KDA + normalizedDamage * SCORE_WEIGHTS.DAMAGE + normalizedVision * SCORE_WEIGHTS.VISION)
       : 0;
 
   // 7. Upsert champion stats

@@ -10,6 +10,11 @@ import type {
 
 const logger = createLogger("data-cleanup-worker");
 
+/** Default cleanup thresholds */
+const DEFAULT_MATCHES_OLDER_THAN_DAYS = 180;
+const DEFAULT_INACTIVE_ACCOUNTS_DAYS = 90;
+const CLEANUP_BATCH_SIZE = 1000;
+
 /**
  * Data Cleanup Worker
  * Cleans old/stale data to optimize database size
@@ -28,8 +33,8 @@ export async function createDataCleanupWorker() {
         logger.info(`Starting job ${job.id}`);
 
         const {
-          matchesOlderThanDays = 180,
-          inactiveAccountsDays = 90,
+          matchesOlderThanDays = DEFAULT_MATCHES_OLDER_THAN_DAYS,
+          inactiveAccountsDays = DEFAULT_INACTIVE_ACCOUNTS_DAYS,
           dryRun = false,
         } = job.data;
 
@@ -56,7 +61,7 @@ export async function createDataCleanupWorker() {
 
           if (!dryRun && oldMatchesCount > 0) {
             // Delete in batches to avoid timeout
-            const batchSize = 1000;
+            const batchSize = CLEANUP_BATCH_SIZE;
             let deleted = 0;
 
             while (deleted < oldMatchesCount) {
