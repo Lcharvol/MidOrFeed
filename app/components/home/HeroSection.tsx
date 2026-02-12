@@ -33,6 +33,7 @@ export const HeroSection = ({ stats, statsLoading }: HeroSectionProps) => {
           src="/home_background.png"
           alt="League of Legends Background"
           fill
+          sizes="100vw"
           className="object-cover object-center"
           priority
         />

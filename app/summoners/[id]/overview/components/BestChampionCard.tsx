@@ -51,7 +51,7 @@ export const BestChampionCard = ({
           src={getChampionSplashUrl(resolveSlug(bestChampionId))}
           alt=""
           fill
-          priority
+          sizes="(max-width: 1024px) 100vw, 50vw"
           className="object-cover object-center opacity-45"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-background/75 via-background/60 to-background/30" />
