@@ -67,10 +67,17 @@ export async function GET(request: NextRequest) {
       where: {
         championId: { in: championIds },
       },
+      select: {
+        championId: true,
+        winRate: true,
+        recordedAt: true,
+      },
       orderBy: [
         { championId: "asc" },
         { recordedAt: "desc" },
       ],
+      // Only need the 2 most recent records per champion for trend calculation
+      take: championIds.length * 2,
     });
 
     // Pour chaque champion, prendre le deuxième enregistrement le plus récent

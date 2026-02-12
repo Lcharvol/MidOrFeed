@@ -64,8 +64,17 @@ export async function GET(request: NextRequest) {
 
     const matches = await prisma.match.findMany({
       where: matchFilter,
-      include: {
-        participants: true,
+      select: {
+        gameCreation: true,
+        participants: {
+          select: {
+            championId: true,
+            teamId: true,
+            win: true,
+            role: true,
+            lane: true,
+          },
+        },
       },
       orderBy: {
         gameCreation: "desc",
