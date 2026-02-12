@@ -121,7 +121,7 @@ async function runOneCycle(
     state.currentStep = "sync";
     pushLog(`Sync (quota ${maxRiotCallsPerCycle})`);
     const { POST: SYNC } = await import("@/app/api/admin/sync-accounts/route");
-    const req = new NextRequest("http://internal/api/admin/sync-accounts", {
+    const req = new Request("http://localhost/api/admin/sync-accounts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ maxRiotCallsPerCycle }),

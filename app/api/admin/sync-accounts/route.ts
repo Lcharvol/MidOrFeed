@@ -134,18 +134,10 @@ export async function GET() {
  * et calcule leurs statistiques
  */
 export async function POST(request?: Request | NextRequest) {
-  // Vérifier les permissions admin (sauf si appelé en interne)
-  if (
-    request &&
-    request instanceof Request &&
-    request.url?.includes("internal")
-  ) {
-    // Appel interne, pas de vérification d'auth
-  } else if (request && request instanceof NextRequest) {
-    const authError = await requireAdmin(request as NextRequest);
-    if (authError) {
-      return authError;
-    }
+  // Internal calls pass no request (or plain Request); external calls are NextRequest
+  if (request && request instanceof NextRequest) {
+    const authError = await requireAdmin(request);
+    if (authError) return authError;
   }
 
   try {
