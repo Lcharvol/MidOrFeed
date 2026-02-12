@@ -128,7 +128,24 @@ type SummonerChallenge = {
   updatedAt: string;
 };
 
-const mapApiChallenge = (entry: any): SummonerChallenge => {
+interface ApiChallengeEntry {
+  id: string;
+  challengeId: number;
+  name: string;
+  description?: string;
+  category?: string;
+  level?: string;
+  highestLevel?: string;
+  percentile?: number;
+  currentValue?: number;
+  nextLevelValue?: number;
+  pointsEarned?: number;
+  thresholds?: Record<string, number>;
+  tags?: string;
+  updatedAt: string;
+}
+
+const mapApiChallenge = (entry: ApiChallengeEntry): SummonerChallenge => {
   const thresholds = entry.thresholds as Record<string, number> | undefined;
   const level = (entry.level as string | undefined) ?? "NONE";
   const progress = computeChallengeProgress(
@@ -175,7 +192,7 @@ export default function SummonerChallengesPage() {
 
   const challenges: SummonerChallenge[] = useMemo(() => {
     if (!data?.data?.challenges) return [];
-    return data.data.challenges.map(mapApiChallenge);
+    return (data.data.challenges as unknown as ApiChallengeEntry[]).map(mapApiChallenge);
   }, [data]);
 
   const totals = useMemo(() => {

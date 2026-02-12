@@ -214,8 +214,8 @@ export default function ChampionsByIdPage() {
               aValue = as;
               bValue = bs;
             } else {
-              aValue = (a as any)[sortColumn] ?? -Infinity;
-              bValue = (b as any)[sortColumn] ?? -Infinity;
+              aValue = a[sortColumn as keyof typeof a] as number ?? -Infinity;
+              bValue = b[sortColumn as keyof typeof b] as number ?? -Infinity;
             }
             break;
           case "winRate":

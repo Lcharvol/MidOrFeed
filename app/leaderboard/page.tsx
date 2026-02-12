@@ -85,6 +85,7 @@ export default function LeaderboardPage() {
 
   const allRows = useMemo(() => {
     const list: Array<{
+      summonerId?: string;
       summonerName: string;
       leaguePoints: number;
       wins: number;
@@ -232,7 +233,7 @@ export default function LeaderboardPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  rows.map((e: any, idx: number) => {
+                  rows.map((e, idx) => {
                     const total = e.wins + e.losses;
                     const wr =
                       total > 0 ? ((e.wins / total) * 100).toFixed(1) : "0.0";
