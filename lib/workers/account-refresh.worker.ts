@@ -75,7 +75,7 @@ export async function createAccountRefreshWorker() {
             const routing = REGION_TO_ROUTING[account.riotRegion] || "europe";
 
             // Fetch account info (game name, tag line)
-            const accountUrl = `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${account.puuid}`;
+            const accountUrl = `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${encodeURIComponent(account.puuid)}`;
 
             let gameName = account.riotGameName;
             let tagLine = account.riotTagLine;
@@ -92,7 +92,7 @@ export async function createAccountRefreshWorker() {
             }
 
             // Fetch summoner info (level, icon)
-            const summonerUrl = `https://${account.riotRegion}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${account.puuid}`;
+            const summonerUrl = `https://${account.riotRegion}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(account.puuid)}`;
 
             try {
               const { data: summonerData } = await riotApiRequest<SummonerResponse>(summonerUrl, {

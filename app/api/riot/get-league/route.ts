@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 
     // Appeler l'API League par PUUID pour obtenir les rangs
     const leagueResponse = await fetch(
-      `${baseUrl}/lol/league/v4/entries/by-puuid/${validatedData.puuid}`,
+      `${baseUrl}/lol/league/v4/entries/by-puuid/${encodeURIComponent(validatedData.puuid)}`,
       { headers: { "X-Riot-Token": RIOT_API_KEY! } }
     );
 

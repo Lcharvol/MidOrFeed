@@ -65,9 +65,10 @@ export async function GET(
     }
 
     // Fetch champion masteries — full list or top N
+    const encodedPuuid = encodeURIComponent(puuid);
     const masteryUrl = fetchAll
-      ? `${baseUrl}/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}`
-      : `${baseUrl}/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=${count}`;
+      ? `${baseUrl}/lol/champion-mastery/v4/champion-masteries/by-puuid/${encodedPuuid}`
+      : `${baseUrl}/lol/champion-mastery/v4/champion-masteries/by-puuid/${encodedPuuid}/top?count=${count}`;
     const masteryCacheKey = fetchAll
       ? `riot:mastery:all:${puuid}:${normalizedRegion}`
       : `riot:mastery:top:${puuid}:${normalizedRegion}:${count}`;
@@ -96,7 +97,7 @@ export async function GET(
       "api.riot.mastery.score",
       () =>
         riotApiRequest<number>(
-          `${baseUrl}/lol/champion-mastery/v4/scores/by-puuid/${puuid}`,
+          `${baseUrl}/lol/champion-mastery/v4/scores/by-puuid/${encodedPuuid}`,
           {
             region: normalizedRegion,
             cacheKey: `riot:mastery:score:${puuid}:${normalizedRegion}`,

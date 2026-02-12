@@ -68,7 +68,7 @@ export async function createDataCrawlWorker() {
             const routing = REGION_TO_ROUTING[player.riotRegion] || "europe";
 
             // Fetch match history
-            const matchListUrl = `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${player.puuid}/ids?start=0&count=${matchesPerPlayer}`;
+            const matchListUrl = `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(player.puuid)}/ids?start=0&count=${matchesPerPlayer}`;
 
             const { data: matchIds } = await riotApiRequest<string[]>(matchListUrl, {
               useCache: false,

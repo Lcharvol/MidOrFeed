@@ -234,7 +234,7 @@ export async function GET(
       "api.riot.league.byPuuid",
       () =>
         riotApiRequest<RiotLeagueEntry[]>(
-          `${baseUrl}/lol/league/v4/entries/by-puuid/${puuid}`,
+          `${baseUrl}/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid)}`,
           {
             region: normalizedRegion,
             cacheKey: `riot:league:puuid:${puuid}:${normalizedRegion}`,

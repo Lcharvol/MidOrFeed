@@ -114,38 +114,44 @@ export async function POST(request: Request) {
     };
 
     // Appeler l'API Account pour obtenir le Riot ID
+    const encodedPuuid = encodeURIComponent(validatedData.puuid);
     const accountResponse = await fetchWithRetry(
-      `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${validatedData.puuid}`
+      `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${encodedPuuid}`
     );
 
     if (!accountResponse.ok) {
+      const errorBody = await accountResponse.json().catch(() => ({}));
+      logger.warn("Riot Account API error", {
+        status: accountResponse.status,
+        puuid: validatedData.puuid,
+        routing,
+        errorBody,
+      });
+
+      if (accountResponse.status === 400) {
+        return NextResponse.json(
+          { error: "Requête invalide — le PUUID est peut-être corrompu." },
+          { status: 400 }
+        );
+      }
       if (accountResponse.status === 404) {
         return NextResponse.json(
-          {
-            error: "Compte non trouvé.",
-          },
+          { error: "Compte non trouvé." },
           { status: 404 }
         );
       }
       if (accountResponse.status === 401) {
         return NextResponse.json(
-          {
-            error:
-              "Clé API Riot invalide ou expirée. Veuillez la mettre à jour.",
-          },
+          { error: "Clé API Riot invalide ou expirée. Veuillez la mettre à jour." },
           { status: 401 }
         );
       }
       if (accountResponse.status === 403) {
         return NextResponse.json(
-          {
-            error:
-              "Accès refusé. Vérifiez que votre clé API a les bonnes permissions.",
-          },
+          { error: "Accès refusé. Vérifiez que votre clé API a les bonnes permissions." },
           { status: 403 }
         );
       }
-      const errorBody = await accountResponse.json().catch(() => ({}));
       return NextResponse.json(
         {
           error: `Erreur API Riot: ${accountResponse.status}`,
@@ -159,7 +165,7 @@ export async function POST(request: Request) {
 
     // Appeler l'API Summoner pour obtenir plus de détails
     const summonerResponse = await fetch(
-      `${baseUrl}/lol/summoner/v4/summoners/by-puuid/${validatedData.puuid}`,
+      `${baseUrl}/lol/summoner/v4/summoners/by-puuid/${encodedPuuid}`,
       {
         headers: {
           "X-Riot-Token": RIOT_API_KEY,

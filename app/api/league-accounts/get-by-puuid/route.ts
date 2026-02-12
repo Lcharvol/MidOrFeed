@@ -67,8 +67,9 @@ async function fetchFromRiotAndSave(
 
   try {
     // Fetch account data from Riot API
+    const encodedPuuid = encodeURIComponent(puuid);
     const accountResponse = await fetch(
-      `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${puuid}`,
+      `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${encodedPuuid}`,
       { headers: { "X-Riot-Token": RIOT_API_KEY } }
     );
 
@@ -83,7 +84,7 @@ async function fetchFromRiotAndSave(
 
     // Fetch summoner data for additional details
     const summonerResponse = await fetch(
-      `${baseUrl}/lol/summoner/v4/summoners/by-puuid/${puuid}`,
+      `${baseUrl}/lol/summoner/v4/summoners/by-puuid/${encodedPuuid}`,
       { headers: { "X-Riot-Token": RIOT_API_KEY } }
     );
 

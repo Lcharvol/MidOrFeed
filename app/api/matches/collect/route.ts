@@ -75,6 +75,7 @@ export async function POST(request: Request) {
     );
 
     // Pagination: itérer sur plusieurs pages tant qu'on peut collecter
+    const encodedPuuid = encodeURIComponent(validatedData.puuid);
     const pageSize = Math.min(requestedCount, 30);
     const maxPages = Math.ceil(requestedCount / pageSize) || 1;
     let matchesCollected = 0;
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
       const start = page * pageSize;
       await awaitPermit(routing, 350);
       let matchListResponse = await fetch(
-        `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${validatedData.puuid}/ids?start=${start}&count=${pageSize}`,
+        `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodedPuuid}/ids?start=${start}&count=${pageSize}`,
         { headers: { "X-Riot-Token": RIOT_API_KEY } }
       );
       if (matchListResponse.status === 429) {
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
         await new Promise((r) => setTimeout(r, backoff));
         await awaitPermit(routing, 500);
         matchListResponse = await fetch(
-          `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${validatedData.puuid}/ids?start=${start}&count=${pageSize}`,
+          `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodedPuuid}/ids?start=${start}&count=${pageSize}`,
           { headers: { "X-Riot-Token": RIOT_API_KEY } }
         );
       }
