@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
+import { requireAdmin } from "@/lib/auth-utils";
 import { z } from "zod";
 
 type CollectResult = {
@@ -104,6 +105,9 @@ export async function GET() {
  * Crawle les prochains joueurs en attente dans la file par lots
  */
 export async function POST(request: NextRequest) {
+  const authError = await requireAdmin(request, { skipCsrf: true });
+  if (authError) return authError;
+
   try {
     if (!RIOT_API_KEY) {
       return NextResponse.json(

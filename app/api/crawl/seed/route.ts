@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-utils";
 import { z } from "zod";
 
 const seedSchema = z.object({
@@ -39,6 +40,9 @@ const REGION_TO_PLATFORM: Record<string, string> = {
  * via Riot API (Challenger/Master/GrandMaster)
  */
 export async function POST(request: NextRequest) {
+  const authError = await requireAdmin(request, { skipCsrf: true });
+  if (authError) return authError;
+
   try {
     if (!RIOT_API_KEY) {
       return NextResponse.json(

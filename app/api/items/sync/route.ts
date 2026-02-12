@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getItemDataUrl, getVersionsUrl } from "@/constants/ddragon";
 import { logger } from "@/lib/logger";
 import { invalidateCachePrefix } from "@/lib/cache";
 import { fetchWithTimeout } from "@/lib/timeout";
 import { getEnv } from "@/lib/env";
+import { requireAdmin } from "@/lib/auth-utils";
 
 interface RiotItem {
   id: string;
@@ -28,9 +29,12 @@ interface RiotItemData {
   [key: string]: RiotItem;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const authError = await requireAdmin(request, { skipCsrf: true });
+  if (authError) return authError;
+
   const syncLogger = logger; // ou createLogger("items-sync")
-  
+
   try {
     const env = getEnv();
     
