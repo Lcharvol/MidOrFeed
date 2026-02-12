@@ -73,8 +73,8 @@ export const getShardingRegionCacheSize = (): number => {
 export const getShardingRegionCacheTTL = (): number => {
   const ttl = getEnv().SHARDING_REGION_CACHE_TTL_MS;
 
-  // Valider que le TTL est raisonnable (entre 1 heure et 7 jours)
-  if (ttl < 3600000 || ttl > 7 * 24 * 60 * 60 * 1000) {
+  // Valider que le TTL est raisonnable (entre 1 minute et 7 jours)
+  if (ttl < 60000 || ttl > 7 * 24 * 60 * 60 * 1000) {
     logger.warn(`SHARDING_REGION_CACHE_TTL_MS invalide (${ttl}), utilisation de la valeur par défaut (24h)`, {
       ttl,
       default: "24h",

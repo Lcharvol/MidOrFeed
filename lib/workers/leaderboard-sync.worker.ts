@@ -13,8 +13,9 @@ import type {
 const logger = createLogger("leaderboard-sync-worker");
 
 type LeagueEntry = {
-  summonerId: string;
-  summonerName: string;
+  summonerId?: string;
+  puuid?: string;
+  summonerName?: string;
   leaguePoints: number;
   wins: number;
   losses: number;
@@ -23,6 +24,12 @@ type LeagueEntry = {
 
 type LeagueListResponse = {
   entries: LeagueEntry[];
+};
+
+const TIER_ENDPOINT: Record<string, string> = {
+  challenger: "challengerleagues",
+  grandmaster: "grandmasterleagues",
+  master: "masterleagues",
 };
 
 /**
@@ -61,52 +68,67 @@ export async function createLeaderboardSyncWorker() {
 
               try {
                 // Build API URL
-                const url = `https://${region}.api.riotgames.com/lol/league/v4/${tier}leagues/by-queue/${queueType}`;
+                const endpoint = TIER_ENDPOINT[tier];
+                if (!endpoint) {
+                  errors.push(`Unknown tier: ${tier}`);
+                  continue;
+                }
+                const url = `https://${region}.api.riotgames.com/lol/league/v4/${endpoint}/by-queue/${queueType}`;
 
+                logger.info(`Fetching ${url}`);
                 const { data } = await riotApiRequest<LeagueListResponse>(url, {
                   useCache: false,
                 });
 
                 if (!data.entries || data.entries.length === 0) {
+                  logger.info(`No entries for ${tier} ${queueType} ${region}`);
                   continue;
                 }
 
-                // Upsert entries in batch
-                for (const entry of data.entries) {
-                  await prisma.leaderboardEntry.upsert({
-                    where: {
-                      region_queueType_tier_summonerId: {
-                        region,
-                        queueType,
-                        tier,
-                        summonerId: entry.summonerId,
-                      },
-                    },
-                    create: {
-                      region,
-                      queueType,
-                      tier,
-                      rank: entry.rank || null,
-                      summonerId: entry.summonerId,
-                      summonerName: entry.summonerName,
-                      leaguePoints: entry.leaguePoints,
-                      wins: entry.wins,
-                      losses: entry.losses,
-                    },
-                    update: {
-                      rank: entry.rank || null,
-                      summonerName: entry.summonerName,
-                      leaguePoints: entry.leaguePoints,
-                      wins: entry.wins,
-                      losses: entry.losses,
-                      updatedAt: new Date(),
-                    },
+                // Normalize tier to uppercase for consistent storage
+                const tierUpper = tier.toUpperCase();
+
+                // Deduplicate by summonerId or puuid
+                const seen = new Set<string>();
+                const unique = data.entries
+                  .filter((entry) => {
+                    const id = entry.summonerId?.trim() || entry.puuid?.trim();
+                    if (!id || seen.has(id)) return false;
+                    seen.add(id);
+                    return true;
+                  })
+                  .map((entry) => ({
+                    region,
+                    queueType,
+                    tier: tierUpper,
+                    rank: entry.rank || null,
+                    summonerId: (entry.summonerId?.trim() || entry.puuid || "unknown").trim(),
+                    summonerName: entry.summonerName || "",
+                    leaguePoints: entry.leaguePoints,
+                    wins: entry.wins,
+                    losses: entry.losses,
+                  }));
+
+                // Safety: don't delete existing data if new batch is empty
+                if (unique.length === 0) {
+                  logger.warn(`Filter removed all ${data.entries.length} entries for ${tierUpper} ${queueType} ${region}, skipping delete+insert`, {
+                    sampleEntry: JSON.stringify(data.entries[0]),
                   });
-                  entriesSynced++;
+                  continue;
                 }
 
+                // Delete existing entries for this region/tier/queueType then bulk insert
+                await prisma.leaderboardEntry.deleteMany({
+                  where: { region, queueType, tier: tierUpper },
+                });
+
+                const result = await prisma.leaderboardEntry.createMany({
+                  data: unique,
+                });
+                entriesSynced += result.count;
+
                 logger.info(
-                  `Synced ${data.entries.length} entries for ${tier} ${queueType} ${region}`
+                  `Synced ${result.count} entries for ${tierUpper} ${queueType} ${region}`
                 );
               } catch (err) {
                 const errorMsg = `Failed to sync ${tier} ${queueType} for ${region}: ${
