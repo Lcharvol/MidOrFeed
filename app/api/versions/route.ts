@@ -47,7 +47,10 @@ export async function GET(request: NextRequest) {
         success: true,
         data: versions,
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" },
+      }
     );
 
     return applySecurityHeaders(response);

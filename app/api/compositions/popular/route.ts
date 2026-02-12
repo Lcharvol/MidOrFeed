@@ -83,6 +83,8 @@ export async function GET(request: NextRequest) {
         total: suggestions.length,
         generatedAt: latestUpdate ? latestUpdate.toISOString() : null,
       },
+    }, {
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (error) {
     logger.error("Error:", error as Error);

@@ -203,6 +203,8 @@ export const GET = async (request: NextRequest) => {
         total,
         hasMore: offset + guides.length < total,
       },
+    }, {
+      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
     });
   } catch (error) {
     logger.error("GET error:", error as Error);

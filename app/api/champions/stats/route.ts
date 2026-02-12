@@ -52,7 +52,10 @@ export async function GET(request: NextRequest) {
           count: 0,
           totalUniqueMatches,
         },
-        { status: 200 }
+        {
+          status: 200,
+          headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
+        }
       );
     }
 
@@ -118,7 +121,10 @@ export async function GET(request: NextRequest) {
         count: stats.length,
         totalUniqueMatches,
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
+      }
     );
   } catch (error) {
     logger.error("Erreur lors de la récupération des stats", error as Error);

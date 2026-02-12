@@ -50,7 +50,10 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    return NextResponse.json({ success: true, data: entries }, { status: 200 });
+    return NextResponse.json({ success: true, data: entries }, {
+      status: 200,
+      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
+    });
   } catch (e) {
     logger.error("Leaderboard list error", e as Error);
     return NextResponse.json(

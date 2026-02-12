@@ -91,6 +91,8 @@ export async function GET(request: NextRequest) {
           pairs: [],
           totalMatches: 0,
         },
+      }, {
+        headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
       });
     }
 
@@ -176,6 +178,8 @@ export async function GET(request: NextRequest) {
         totalMatches: matches.length,
         pairs,
       },
+    }, {
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (error) {
     logger.error("Error:", error as Error);
