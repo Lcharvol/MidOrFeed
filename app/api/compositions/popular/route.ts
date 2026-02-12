@@ -3,6 +3,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { normalizeRole } from "@/lib/compositions/roles";
 import { createLogger } from "@/lib/logger";
+import { getPaginationParams, getSkip } from "@/lib/pagination";
 
 const logger = createLogger("popular-compositions");
 
@@ -20,14 +21,10 @@ export async function GET(request: NextRequest) {
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
   if (rateLimitResponse) return rateLimitResponse;
 
-  const url = new URL(request.url);
-  const perPageParam = Number(url.searchParams.get("limit"));
-  const limit =
-    Number.isFinite(perPageParam) && perPageParam > 0
-      ? Math.min(Math.floor(perPageParam), 50)
-      : 20;
+  const { page, limit } = getPaginationParams(request);
   try {
     // Select only columns that exist in production (exclude new columns not yet migrated)
+    const skip = getSkip(page, limit);
     const suggestions = await prisma.compositionSuggestion.findMany({
       where: { userId: null },
       select: {
@@ -52,9 +49,11 @@ export async function GET(request: NextRequest) {
         { updatedAt: "desc" },
         { createdAt: "desc" },
       ],
+      take: limit,
+      skip,
     });
 
-    const compositions = suggestions.slice(0, limit).map((suggestion, index) => {
+    const compositions = suggestions.map((suggestion, index) => {
       const normalizedRole = normalizeRole(suggestion.role) ?? "UTILITY";
       return {
         id: suggestion.id,

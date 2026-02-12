@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
-
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 100;
+import { getPaginationParams, getSkip, createPaginatedResponse } from "@/lib/pagination";
 
 export async function GET(request: NextRequest) {
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
@@ -14,12 +12,8 @@ export async function GET(request: NextRequest) {
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
   try {
+    const { page, limit } = getPaginationParams(request);
     const { searchParams } = new URL(request.url);
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const pageSize = Math.min(
-      MAX_PAGE_SIZE,
-      Math.max(1, parseInt(searchParams.get("pageSize") || String(DEFAULT_PAGE_SIZE), 10))
-    );
     const search = searchParams.get("search")?.trim().toLowerCase() || "";
 
     // Build where clause for search
@@ -34,7 +28,6 @@ export async function GET(request: NextRequest) {
 
     // Get total count for pagination
     const totalCount = await prisma.user.count({ where: whereClause });
-    const totalPages = Math.ceil(totalCount / pageSize);
 
     const users = await prisma.user.findMany({
       where: whereClause,
@@ -51,21 +44,13 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
       },
       orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+      skip: getSkip(page, limit),
+      take: limit,
     });
 
+    const paginated = createPaginatedResponse(users, totalCount, page, limit);
     return NextResponse.json(
-      {
-        success: true,
-        users,
-        pagination: {
-          page,
-          pageSize,
-          totalCount,
-          totalPages,
-        },
-      },
+      { success: true, ...paginated },
       { status: 200 }
     );
   } catch (error) {
