@@ -200,7 +200,7 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center text-sm">
                   <div className="flex items-center gap-2">
                     <Checkbox id="remember-me" />
                     <label
@@ -210,9 +210,6 @@ export default function LoginPage() {
                       {t("login.rememberMe")}
                     </label>
                   </div>
-                  <a href="#" className="text-primary hover:underline">
-                    {t("login.forgotPassword")}
-                  </a>
                 </div>
               </form>
             </Form>
