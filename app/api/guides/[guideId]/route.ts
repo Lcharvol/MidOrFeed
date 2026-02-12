@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
@@ -67,6 +68,9 @@ const logger = createLogger("guides");
 
 // GET /api/guides/[guideId] - Get single guide
 export const GET = async (request: NextRequest, context: RouteContext) => {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { guideId } = await context.params;
 
@@ -168,6 +172,9 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
 
 // PUT /api/guides/[guideId] - Update guide
 export const PUT = async (request: NextRequest, context: RouteContext) => {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // CSRF validation
   const csrfError = await requireCsrf(request);
   if (csrfError) return csrfError;
@@ -272,6 +279,9 @@ export const PUT = async (request: NextRequest, context: RouteContext) => {
 
 // DELETE /api/guides/[guideId] - Delete guide
 export const DELETE = async (request: NextRequest, context: RouteContext) => {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // CSRF validation
   const csrfError = await requireCsrf(request);
   if (csrfError) return csrfError;

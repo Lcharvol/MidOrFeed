@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
@@ -16,7 +17,10 @@ type PublicStats = {
  * Retourne les statistiques publiques pour la page d'accueil
  * Endpoint cache pour eviter de surcharger la base de donnees
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const stats = await getOrSetCache<PublicStats>(
       "public:stats",

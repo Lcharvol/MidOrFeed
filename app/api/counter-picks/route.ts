@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { MATCHES_PAGE_LIMIT } from "@/constants/matches";
 import { resolveChampionRole } from "@/lib/compositions/roles";
@@ -31,7 +32,10 @@ const parseFilters = (request: Request): CounterPickFilters => {
 const normalizeChampionId = (championId: string | null | undefined) =>
   championId?.trim() ?? null;
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { searchParams } = new URL(request.url);
   const championId = normalizeChampionId(searchParams.get("championId"));
 

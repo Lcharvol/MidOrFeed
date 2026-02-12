@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getLeagueAccountsTableName } from "@/lib/prisma-sharded-accounts";
 import { validateRegion, validateTableName, escapeSqlIdentifier, escapeLikePattern } from "@/lib/sql-sanitization";
@@ -17,7 +18,10 @@ const searchSchema = z.object({
  * POST /api/search/summoners
  * Recherche des invocateurs dans la base de données locale
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
     const validatedData = searchSchema.parse(body);

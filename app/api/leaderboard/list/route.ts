@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
@@ -10,7 +11,10 @@ const VALID_TIERS = [
   "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"
 ] as const;
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const rateLimitResponse = await rateLimit(req, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { searchParams } = new URL(req.url);
     const region = (searchParams.get("region") || "euw1").toLowerCase();

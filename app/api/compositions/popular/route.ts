@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { normalizeRole } from "@/lib/compositions/roles";
 import { createLogger } from "@/lib/logger";
@@ -16,6 +17,9 @@ const parseChampionArray = (value?: string | null): string[] => {
 };
 
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const url = new URL(request.url);
   const perPageParam = Number(url.searchParams.get("limit"));
   const limit =

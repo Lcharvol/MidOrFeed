@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { getSummonerSpellDataUrl, getVersionsUrl } from "@/constants/ddragon";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { applySecurityHeaders } from "@/lib/security-headers";
@@ -44,7 +45,10 @@ const EXCLUDED_SPELLS = [
   "Summoner_UltBookSmitePlaceholder",
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const env = getEnv();
 

@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { getItemImageUrl } from "@/constants/ddragon";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
@@ -80,7 +81,10 @@ const sortByPickRate = <T extends ItemAggregate | BuildAggregate>(
     })
     .map(([key, value]) => ({ key, value }));
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { searchParams } = new URL(request.url);
   const championId = searchParams.get("championId")?.trim();
 

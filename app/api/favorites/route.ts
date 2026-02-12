@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
@@ -8,6 +9,9 @@ const logger = createLogger("favorites");
 
 // GET /api/favorites - List all favorites for the current user
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) {
@@ -50,6 +54,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/favorites - Add a player to favorites
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // CSRF validation
   const csrfError = await requireCsrf(request);
   if (csrfError) return csrfError;
@@ -113,6 +120,9 @@ export async function POST(request: NextRequest) {
 
 // DELETE /api/favorites - Remove a player from favorites
 export async function DELETE(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // CSRF validation
   const csrfError = await requireCsrf(request);
   if (csrfError) return csrfError;

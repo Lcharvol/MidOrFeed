@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
 import { MATCHES_PAGE_LIMIT } from "@/constants/matches";
@@ -9,7 +10,10 @@ const logger = createLogger("matches");
  * Route API pour obtenir la liste des matchs avec leurs statistiques
  * GET /api/matches/list?puuid={puuid}
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { searchParams } = new URL(request.url);
     const puuid = searchParams.get("puuid");
