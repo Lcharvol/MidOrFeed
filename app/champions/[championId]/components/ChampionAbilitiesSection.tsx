@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import DOMPurify from 'dompurify';
 import { ChampionAbility } from '@/lib/champions/get-champion-abilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ColorBadge } from '@/components/ui/badge';
@@ -70,7 +71,7 @@ export const ChampionAbilitiesSection = ({
                   </div>
                   <div
                     className="text-sm leading-relaxed text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: ability.description }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ability.description) }}
                   />
                   <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                     {ability.cooldown ? (
