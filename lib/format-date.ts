@@ -1,5 +1,6 @@
-import { formatDistanceToNow } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { fr } from "date-fns/locale/fr";
+import { enUS } from "date-fns/locale/en-US";
 
 const LOCALES = { fr, en: enUS } as const;
 
