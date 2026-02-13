@@ -182,6 +182,7 @@ export function LiveGameBanner({ puuid, region }: LiveGameBannerProps) {
                 size="sm"
                 onClick={() => mutate()}
                 className="h-8 px-2"
+                aria-label="Rafraîchir la partie en cours"
               >
                 <RefreshCwIcon className="size-4" />
               </Button>
@@ -190,6 +191,7 @@ export function LiveGameBanner({ puuid, region }: LiveGameBannerProps) {
                   variant="ghost"
                   size="sm"
                   className="h-8 px-2"
+                  aria-label={open ? "Réduire les détails" : "Voir les détails"}
                 >
                   {open ? (
                     <ChevronUpIcon className="size-4" />

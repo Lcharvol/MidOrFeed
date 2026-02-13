@@ -20,6 +20,7 @@ import {
 import { ROLE_FILTER_OPTIONS } from "../utils";
 import type { TierListActions, TierListState } from "../hooks/useChampionTierList";
 import { useI18n } from "@/lib/i18n-context";
+import { RANK_BRACKETS } from "@/constants/ranks";
 
 export type ViewMode = "table" | "grid";
 
@@ -51,6 +52,7 @@ export const TierListFilters = ({
     reliabilityOnly,
     eliteOnly,
     selectedPatch,
+    rankFilter,
   } = state;
 
   const {
@@ -62,6 +64,7 @@ export const TierListFilters = ({
     toggleEliteOnly,
     resetFilters,
     setSelectedPatch,
+    setRankFilter,
   } = actions;
 
   const TIER_OPTIONS = [
@@ -109,10 +112,10 @@ export const TierListFilters = ({
             }}
             className="h-7 sm:h-8"
           >
-            <ToggleGroupItem value="table" className="px-2 sm:px-3" title={t("tierListChampions.viewTable")}>
+            <ToggleGroupItem value="table" className="px-2 sm:px-3" title={t("tierListChampions.viewTable")} aria-label={t("tierListChampions.viewTable")}>
               <TableIcon className="size-3.5 sm:size-4" />
             </ToggleGroupItem>
-            <ToggleGroupItem value="grid" className="px-2 sm:px-3" title={t("tierListChampions.viewGrid")}>
+            <ToggleGroupItem value="grid" className="px-2 sm:px-3" title={t("tierListChampions.viewGrid")} aria-label={t("tierListChampions.viewGrid")}>
               <LayoutGridIcon className="size-3.5 sm:size-4" />
             </ToggleGroupItem>
           </ToggleGroup>
@@ -149,6 +152,7 @@ export const TierListFilters = ({
                 value={key}
                 className="px-2 sm:px-3"
                 title={label}
+                aria-label={label}
               >
                 <Icon className="size-3.5 sm:size-4" />
               </ToggleGroupItem>
@@ -169,6 +173,25 @@ export const TierListFilters = ({
               {TIER_OPTIONS.map(({ value, label }) => (
                 <SelectItem key={value} value={value}>
                   {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Filtre par rang */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] sm:text-xs font-medium text-muted-foreground">
+            {t("tierListChampions.rankBracket")}
+          </label>
+          <Select value={rankFilter} onValueChange={setRankFilter}>
+            <SelectTrigger size="sm" className="w-28 sm:w-[150px] h-7 sm:h-8 text-xs sm:text-sm">
+              <SelectValue placeholder={t("tierListChampions.allRanks")} />
+            </SelectTrigger>
+            <SelectContent>
+              {RANK_BRACKETS.map(({ key }) => (
+                <SelectItem key={key} value={key}>
+                  {key === "ALL" ? t("tierListChampions.allRanks") : key}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -265,9 +288,11 @@ export const TierListFilters = ({
         {/* Bouton Reset */}
         {filtersActive && (
           <button
+            type="button"
             onClick={resetFilters}
             className="flex items-center gap-1 sm:gap-1.5 rounded-md border border-border/60 bg-background/70 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium transition-colors hover:bg-background h-7 sm:h-8"
             title={t("tierListChampions.reset")}
+            aria-label={t("tierListChampions.reset")}
           >
             <GlobeIcon className="size-3 sm:size-4" />
             <span className="hidden sm:inline">{t("tierListChampions.reset")}</span>
