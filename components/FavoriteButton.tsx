@@ -48,8 +48,22 @@ export function FavoriteButton({
     }
 
     setIsLoading(true);
+    const willBeFavorite = !isFavorite;
+
+    // Optimistic update: immediately reflect the new state
+    mutate(
+      (current) => {
+        if (!current?.data) return current;
+        if (willBeFavorite) {
+          return { ...current, data: [...current.data, { puuid }] };
+        }
+        return { ...current, data: current.data.filter((f) => f.puuid !== puuid) };
+      },
+      { revalidate: false }
+    );
+
     try {
-      if (isFavorite) {
+      if (!willBeFavorite) {
         const res = await authenticatedFetch(`/api/favorites?puuid=${puuid}`, {
           method: "DELETE",
         });
@@ -64,8 +78,11 @@ export function FavoriteButton({
         if (!res.ok) throw new Error("Erreur");
         toast.success("Ajouté aux favoris");
       }
+      // Revalidate to sync with server
       mutate();
     } catch {
+      // Rollback optimistic update on error
+      mutate();
       toast.error("Erreur lors de la mise à jour");
     } finally {
       setIsLoading(false);
