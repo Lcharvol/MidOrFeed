@@ -55,7 +55,9 @@ export async function POST(request: NextRequest) {
     );
 
     if (!accountResponse.ok) {
+      // Log internal error details server-side only
       const errorBody = await accountResponse.json().catch(() => ({}));
+      logger.warn("Riot API error", { status: accountResponse.status, errorBody });
 
       if (accountResponse.status === 404) {
         return NextResponse.json(
@@ -82,7 +84,6 @@ export async function POST(request: NextRequest) {
             success: false,
             error:
               "Accès refusé. Vérifiez que votre clé API a les bonnes permissions.",
-            details: errorBody,
           },
           { status: 403 }
         );
@@ -91,7 +92,6 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: `Erreur API Riot: ${accountResponse.status}`,
-          details: errorBody,
         },
         { status: accountResponse.status }
       );
