@@ -103,7 +103,7 @@ export function SyncAccountsCard({ onSyncComplete }: SyncAccountsCardProps) {
     if (syncState && !syncState.isRunning && syncState.processedAccounts > 0) {
       onSyncComplete();
     }
-  }, [syncState?.isRunning, syncState?.processedAccounts, onSyncComplete]);
+  }, [syncState, onSyncComplete]);
 
   const handleStart = async () => {
     setIsStarting(true);
