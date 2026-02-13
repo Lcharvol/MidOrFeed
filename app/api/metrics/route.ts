@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
     const metrics = getMetrics(metricName || undefined, since);
 
     // Récupérer les statistiques de timing pour les endpoints populaires
-    const endpointStats = [
+    const endpointStats: Record<string, NonNullable<ReturnType<typeof getTimingStats>>> = {};
+    for (const name of [
       "api.champions.list",
       "api.items.list",
       "api.auth.login",
@@ -33,13 +34,12 @@ export async function GET(request: NextRequest) {
       "db.query",
       "db.findMany",
       "db.findUnique",
-    ].reduce((acc, name) => {
+    ]) {
       const stats = getTimingStats(name, since);
       if (stats) {
-        acc[name] = stats;
+        endpointStats[name] = stats;
       }
-      return acc;
-    }, {} as Record<string, ReturnType<typeof getTimingStats>>);
+    }
 
     const response = NextResponse.json(
       {
