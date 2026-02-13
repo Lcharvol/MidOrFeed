@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,7 @@ export default function DownloadPage() {
   const [platform, setPlatform] = useState<Platform>("unknown");
   const [isLoading, setIsLoading] = useState(false);
   const [isAppleSilicon, setIsAppleSilicon] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Detect user's platform
@@ -63,10 +64,17 @@ export default function DownloadPage() {
     return "#";
   };
 
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   const handleDownload = (targetPlatform: Platform) => {
     setIsLoading(true);
     window.location.href = getDownloadUrl(targetPlatform);
-    setTimeout(() => setIsLoading(false), 2000);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setIsLoading(false), 2000);
   };
 
   const features = [
