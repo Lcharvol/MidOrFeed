@@ -31,6 +31,9 @@ export const useNotificationChannel = (
   options: NotificationChannelOptions = {}
 ) => {
   const { onNotification } = options;
+  const onNotificationRef = useRef(onNotification);
+  onNotificationRef.current = onNotification;
+
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const [state, setState] = useState<NotificationChannelState>("connecting");
@@ -72,7 +75,7 @@ export const useNotificationChannel = (
           try {
             const data = JSON.parse(event.data) as unknown;
             if (isNotificationMessage(data)) {
-              onNotification?.(data.payload);
+              onNotificationRef.current?.(data.payload);
             }
           } catch (error) {
             console.error("Invalid notification message", error);
@@ -99,7 +102,8 @@ export const useNotificationChannel = (
       clearReconnect();
       eventSourceRef.current?.close();
     };
-  }, [onNotification]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- onNotification is stabilized via ref
+  }, []);
 
   return { state };
 };
