@@ -1012,6 +1012,17 @@
     "damage": "Degats",
     "vision": "Vision"
   },
+  "header": {
+    "nav": {
+      "compare": "Comparer",
+      "compareDescription": "Compare les stats de deux joueurs.",
+      "counterPicks": "Counter Picks",
+      "counterPicksDescription": "Trouve les meilleurs contres pour chaque champion.",
+      "leaderboard": "Leaderboard",
+      "leaderboardDescription": "Consulte les joueurs les mieux classés par région.",
+      "metaStats": "Meta & Stats"
+    }
+  },
   "pricing": {
     "premiumUnavailable": "Premium temporairement indisponible."
   }

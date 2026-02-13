@@ -84,16 +84,16 @@ export function Header() {
         key: "meta-compare",
         href: "/compare",
         icon: UsersIcon,
-        title: "Comparer",
-        description: "Compare les stats de deux joueurs.",
+        title: t("header.nav.compare"),
+        description: t("header.nav.compareDescription"),
         isActive: pathEquals("/compare"),
       },
       {
         key: "meta-counter-picks",
         href: "/counter-picks",
         icon: SwordIcon,
-        title: "Counter Picks",
-        description: "Trouve les meilleurs contres pour chaque champion.",
+        title: t("header.nav.counterPicks"),
+        description: t("header.nav.counterPicksDescription"),
         isActive: pathEquals("/counter-picks"),
       },
       {
@@ -116,8 +116,8 @@ export function Header() {
         key: "meta-leaderboard",
         href: "/leaderboard",
         icon: BarChartIcon,
-        title: "Leaderboard",
-        description: "Consulte les joueurs les mieux classés par région.",
+        title: t("header.nav.leaderboard"),
+        description: t("header.nav.leaderboardDescription"),
         isActive: pathEquals("/leaderboard"),
       },
     ];
@@ -132,7 +132,7 @@ export function Header() {
       },
       {
         key: "meta",
-        label: "Meta & Stats",
+        label: t("header.nav.metaStats"),
         icon: TrophyIcon,
         entries: meta,
         isActive: (path) =>
