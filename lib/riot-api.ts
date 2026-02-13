@@ -104,17 +104,19 @@ const rateLimiters: Map<string, RateLimiterState> = new Map();
  */
 const getRateLimiter = (routing: string): RateLimiterState => {
   const key = routing.toLowerCase();
+  let limiter = rateLimiters.get(key);
 
-  if (!rateLimiters.has(key)) {
-    rateLimiters.set(key, {
+  if (!limiter) {
+    limiter = {
       requests: 0,
       windowStart: Date.now(),
       windowDuration: RIOT_RATE_LIMIT_WINDOW_MS,
       limit: RIOT_RATE_LIMIT_REQUESTS,
-    });
+    };
+    rateLimiters.set(key, limiter);
   }
 
-  return rateLimiters.get(key)!;
+  return limiter;
 };
 
 /**
