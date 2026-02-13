@@ -135,6 +135,7 @@ export default function SummonersPage() {
   );
 
   const handleSearch = useCallback(async () => {
+    if (isSearching) return;
     const trimmed = query.trim();
     if (!trimmed) {
       toast.error("Entrez un nom de joueur");
@@ -156,7 +157,7 @@ export default function SummonersPage() {
       }
       await performPartialSearch(cleanQuery, region);
     }
-  }, [query, region, performRiotSearch, performPartialSearch]);
+  }, [query, region, isSearching, performRiotSearch, performPartialSearch]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {

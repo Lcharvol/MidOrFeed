@@ -42,6 +42,7 @@ export default function ComparePage() {
   });
 
   const handleCompare = useCallback(async () => {
+    if (isSearching) return;
     const parsed1 = parsePlayerQuery(player1Query);
     const parsed2 = parsePlayerQuery(player2Query);
 
@@ -101,7 +102,7 @@ export default function ComparePage() {
     } finally {
       setIsSearching(false);
     }
-  }, [player1Query, player2Query, region1, region2]);
+  }, [player1Query, player2Query, region1, region2, isSearching]);
 
   const player1 = data?.data?.player1 || null;
   const player2 = data?.data?.player2 || null;
