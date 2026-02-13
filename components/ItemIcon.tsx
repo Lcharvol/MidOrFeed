@@ -58,7 +58,7 @@ export const ItemIcon = memo(function ItemIcon({
             src={src}
             alt={alt ?? (itemId ? `Item ${itemId}` : "Item")}
             fill
-            sizes="100vw"
+            sizes="64px"
             className="block h-full w-full object-cover object-center scale-[1.08]"
             unoptimized
             onError={(e) => {

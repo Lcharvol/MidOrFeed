@@ -50,7 +50,7 @@ export const SummonerSpellIcon = ({
             src={src}
             alt={alt ?? "Summoner Spell"}
             fill
-            sizes="100vw"
+            sizes="64px"
             className="block h-full w-full object-cover object-center"
             unoptimized
             onError={(e) => {

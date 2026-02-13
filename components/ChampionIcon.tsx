@@ -75,7 +75,7 @@ export const ChampionIcon = memo(function ChampionIcon({
             src={src}
             alt={alt ?? slug ?? "Champion"}
             fill
-            sizes="100vw"
+            sizes="64px"
             className="block h-full w-full object-cover object-center scale-[1.08]"
           />
         ) : (
