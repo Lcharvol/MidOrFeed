@@ -1,5 +1,3 @@
-type VoteValue = -1 | 0 | 1;
-
 export type VoteDeltas = {
   scoreDelta: number;
   upvotesDelta: number;
@@ -41,21 +39,6 @@ export function calculateVoteDeltas(
   }
 
   return { scoreDelta, upvotesDelta, downvotesDelta };
-}
-
-/**
- * Determine the final vote value, handling toggle behavior
- * When clicking the same value as existing, toggle off (set to 0)
- * @param requestedValue - The value the user clicked
- * @param existingValue - The current vote value (0 if no vote)
- * @returns The final vote value to apply
- */
-export function resolveVoteValue(
-  requestedValue: VoteValue,
-  existingValue: number
-): VoteValue {
-  // If clicking same value, toggle off
-  return requestedValue === existingValue ? 0 : requestedValue;
 }
 
 /**
