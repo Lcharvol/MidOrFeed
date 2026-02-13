@@ -1,14 +1,12 @@
-export * from "./api";
-export * from "./champions";
-export * from "./compositions";
-export * from "./counter-picks";
-export * from "./guides";
-export * from "./matches";
-export * from "./notifications";
+export type * from "./api";
+export type * from "./champions";
+export type * from "./compositions";
+export type * from "./counter-picks";
+export type * from "./guides";
+export type * from "./matches";
+export type * from "./notifications";
 export * from "./roles";
-export * from "./summoners";
-export * from "./tier-list";
-export * from "./user";
-export * from "./versions";
-
-
+export type * from "./summoners";
+export type * from "./tier-list";
+export type * from "./user";
+export type * from "./versions";
