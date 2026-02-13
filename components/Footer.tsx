@@ -15,7 +15,7 @@ const LEGAL = [
 
 export const Footer = () => {
   return (
-    <footer className="border-t bg-[oklch(0.13_0.035_290)] text-[oklch(0.55_0.02_280)]">
+    <footer className="border-t bg-[oklch(0.13_0.035_290)] text-[oklch(0.62_0.02_280)]">
       <div className="container mx-auto px-4 py-10 md:py-14">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
