@@ -30,6 +30,16 @@ export const RecentMatchesList = ({
   // Fetch ML predictions for all matches
   const { predictions } = useMatchPredictions(matchIds, puuid);
 
+  // Pre-compute stagger animation styles to avoid creating new objects each render
+  const animationStyles = useMemo(
+    () =>
+      matches.map((_, i) => ({
+        animationDelay: `${i * 50}ms`,
+        animationFillMode: "both" as const,
+      })),
+    [matches]
+  );
+
   if (matches.length === 0) {
     return null;
   }
@@ -51,7 +61,7 @@ export const RecentMatchesList = ({
           <div
             key={match.id}
             className="animate-in fade-in-0 slide-in-from-bottom-2"
-            style={{ animationDelay: `${index * 50}ms`, animationFillMode: "both" }}
+            style={animationStyles[index]}
           >
             <MatchEntry
               match={match}
