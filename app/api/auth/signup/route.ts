@@ -17,11 +17,12 @@ import type { SignupRequest, SignupResponse } from "@/types/api";
 const createSignupSchema = (t: (key: string) => string) =>
   z
     .object({
-      name: z.string().min(2, t("signup.nameMinCharacters")),
-      email: z.string().email(t("signup.invalidEmail")),
+      name: z.string().min(2, t("signup.nameMinCharacters")).max(100),
+      email: z.string().max(255).email(t("signup.invalidEmail")),
       password: z
         .string()
         .min(8, t("signup.passwordMinCharacters"))
+        .max(128)
         .regex(/[A-Z]/, t("signup.passwordNeedsUppercase"))
         .regex(/[a-z]/, t("signup.passwordNeedsLowercase"))
         .regex(/[0-9]/, t("signup.passwordNeedsNumber")),
