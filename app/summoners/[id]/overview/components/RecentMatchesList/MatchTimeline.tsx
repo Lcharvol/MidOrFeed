@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { useApiSWR } from "@/lib/hooks/swr";
 import { useChampions } from "@/lib/hooks/use-champions";
@@ -32,7 +33,11 @@ import {
   KDA_STYLES,
   getKdaLevel,
 } from "@/lib/styles/game-colors";
-import { GoldDifferenceChart } from "./GoldDifferenceChart";
+
+const GoldDifferenceChart = dynamic(
+  () => import("./GoldDifferenceChart").then((m) => ({ default: m.GoldDifferenceChart })),
+  { loading: () => <div className="h-[200px]" />, ssr: false }
+);
 
 interface MatchTimelineProps {
   matchId: string;
