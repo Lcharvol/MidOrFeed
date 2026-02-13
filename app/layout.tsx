@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConditionalHeader } from "@/components/ConditionalHeader";
 import { NotificationProvider } from "@/components/NotificationProvider";
@@ -65,6 +65,17 @@ export const metadata: Metadata = {
     creator: "@MidOrFeed",
   },
   metadataBase: new URL("https://midorfeed.gg"),
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 // Global JSON-LD schemas for SEO
