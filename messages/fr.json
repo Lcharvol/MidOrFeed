@@ -1033,6 +1033,29 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "favorites": {
+    "title": "Favoris",
+    "myFavorites": "Mes Favoris",
+    "playersTracked": "joueurs suivis",
+    "searchPlaceholder": "Rechercher par nom ou région...",
+    "loginPrompt": "Connectez-vous pour voir et gérer vos joueurs favoris",
+    "removeFromFavorites": "Supprimer des favoris",
+    "viewProfile": "Voir le profil",
+    "victory": "Victoire",
+    "defeat": "Défaite",
+    "removeConfirmTitle": "Retirer des favoris ?",
+    "removeConfirmDescription": "Voulez-vous vraiment retirer",
+    "remove": "Retirer",
+    "removedSuccess": "Joueur retiré des favoris",
+    "removeError": "Impossible de retirer le joueur",
+    "removeErrorDescription": "Veuillez réessayer ou vérifier votre connexion.",
+    "noFavorites": "Aucun favori",
+    "noFavoritesDescription": "Ajoutez des joueurs à vos favoris depuis leur profil pour les suivre ici",
+    "browseLeaderboard": "Parcourir le classement",
+    "noResults": "Aucun résultat",
+    "noResultsFor": "Aucun joueur ne correspond à",
+    "clearSearch": "Effacer la recherche"
+  },
   "abilities": {
     "title": "Compétences",
     "passive": "Passif",

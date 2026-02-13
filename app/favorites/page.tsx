@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { useI18n } from "@/lib/i18n-context";
 import { useApiSWR } from "@/lib/hooks/swr";
 import { getProfileIconUrl } from "@/constants/ddragon";
 
@@ -106,6 +107,7 @@ const FavoriteCard = ({
   favorite: FavoritePlayer;
   onRemove: (puuid: string) => void;
 }) => {
+  const { t } = useI18n();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { data: matchesData } = useApiSWR<MatchesResponse>(
     `/api/summoners/${favorite.puuid}/matches?limit=5`,
@@ -166,14 +168,14 @@ const FavoriteCard = ({
                     size="icon"
                     className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                     onClick={() => setShowDeleteDialog(true)}
-                    aria-label="Supprimer des favoris"
+                    aria-label={t("favorites.removeFromFavorites")}
                   >
                     <Trash2Icon className="size-3.5 sm:size-4 text-destructive" />
                   </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" asChild>
                     <Link
                       href={`/summoners/${favorite.puuid}/overview?region=${favorite.region}`}
-                      aria-label="Voir le profil"
+                      aria-label={t("favorites.viewProfile")}
                     >
                       <ExternalLinkIcon className="size-3.5 sm:size-4" />
                     </Link>
@@ -201,7 +203,7 @@ const FavoriteCard = ({
                           />
                         </TooltipTrigger>
                         <TooltipContent sideOffset={4}>
-                          {match.win ? "Victoire" : "Défaite"} — {match.kills}/{match.deaths}/{match.assists}
+                          {match.win ? t("favorites.victory") : t("favorites.defeat")} — {match.kills}/{match.deaths}/{match.assists}
                         </TooltipContent>
                       </Tooltip>
                     ))}
@@ -237,22 +239,22 @@ const FavoriteCard = ({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Retirer des favoris ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("favorites.removeConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Voulez-vous vraiment retirer{" "}
+              {t("favorites.removeConfirmDescription")}{" "}
               <span className="font-semibold text-foreground">
                 {favorite.gameName || favorite.puuid.slice(0, 8)}
-              </span>{" "}
-              de vos favoris ?
+              </span>
+              {" ?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Retirer
+              {t("favorites.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -263,6 +265,7 @@ const FavoriteCard = ({
 
 export default function FavoritesPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [search, setSearch] = useState("");
 
   const { data, isLoading, mutate } = useApiSWR<FavoritesResponse>(
@@ -291,14 +294,14 @@ export default function FavoritesPage() {
         });
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.error || `Erreur ${res.status}`);
+          throw new Error(errorData.error || `${t("common.error")} ${res.status}`);
         }
-        toast.success("Joueur retire des favoris");
+        toast.success(t("favorites.removedSuccess"));
       } catch (error) {
         mutate(previousData, { revalidate: false });
-        const message = error instanceof Error ? error.message : "Erreur inconnue";
-        toast.error(`Impossible de retirer le joueur : ${message}`, {
-          description: "Veuillez réessayer ou vérifier votre connexion.",
+        const message = error instanceof Error ? error.message : t("common.error");
+        toast.error(`${t("favorites.removeError")}: ${message}`, {
+          description: t("favorites.removeErrorDescription"),
         });
       }
     },
@@ -309,12 +312,12 @@ export default function FavoritesPage() {
     return (
       <div className="container mx-auto py-16 px-4 text-center">
         <HeartIcon className="size-16 mx-auto text-muted-foreground mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Favoris</h1>
+        <h1 className="text-2xl font-bold mb-2">{t("favorites.title")}</h1>
         <p className="text-muted-foreground mb-6">
-          Connectez-vous pour voir et gerer vos joueurs favoris
+          {t("favorites.loginPrompt")}
         </p>
         <Button asChild>
-          <Link href="/login">Se connecter</Link>
+          <Link href="/login">{t("header.login")}</Link>
         </Button>
       </div>
     );
@@ -344,7 +347,7 @@ export default function FavoritesPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Favoris</BreadcrumbPage>
+            <BreadcrumbPage>{t("favorites.title")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -353,18 +356,18 @@ export default function FavoritesPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3">
             <HeartIcon className="size-6 sm:size-8 text-red-500" />
-            Mes Favoris
+            {t("favorites.myFavorites")}
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {isLoading
-              ? "Chargement..."
-              : `${favorites.length} joueur${favorites.length !== 1 ? "s" : ""} suivi${favorites.length !== 1 ? "s" : ""}`}
+              ? t("common.loading")
+              : `${favorites.length} ${t("favorites.playersTracked")}`}
           </p>
         </div>
         <Button variant="outline" size="sm" asChild className="w-fit">
           <Link href="/compare">
             <UsersIcon className="size-4 mr-2" />
-            Comparer
+            {t("header.nav.compare")}
           </Link>
         </Button>
       </div>
@@ -373,7 +376,7 @@ export default function FavoritesPage() {
         <div className="relative mb-6">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher par nom ou region..."
+            placeholder={t("favorites.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -408,14 +411,14 @@ export default function FavoritesPage() {
             <EmptyMedia variant="icon">
               <HeartIcon />
             </EmptyMedia>
-            <EmptyTitle>Aucun favori</EmptyTitle>
+            <EmptyTitle>{t("favorites.noFavorites")}</EmptyTitle>
             <EmptyDescription>
-              Ajoutez des joueurs a vos favoris depuis leur profil pour les suivre ici
+              {t("favorites.noFavoritesDescription")}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
-              <Link href="/leaderboard">Parcourir le classement</Link>
+              <Link href="/leaderboard">{t("favorites.browseLeaderboard")}</Link>
             </Button>
           </EmptyContent>
         </Empty>
@@ -425,14 +428,14 @@ export default function FavoritesPage() {
             <EmptyMedia variant="icon">
               <SearchIcon />
             </EmptyMedia>
-            <EmptyTitle>Aucun resultat</EmptyTitle>
+            <EmptyTitle>{t("favorites.noResults")}</EmptyTitle>
             <EmptyDescription>
-              Aucun joueur ne correspond a &quot;{search}&quot;
+              {t("favorites.noResultsFor")} &quot;{search}&quot;
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button variant="outline" onClick={() => setSearch("")}>
-              Effacer la recherche
+              {t("favorites.clearSearch")}
             </Button>
           </EmptyContent>
         </Empty>
