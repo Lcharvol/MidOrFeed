@@ -338,7 +338,7 @@ export const RuneSelector = ({
 
                 {secondaryTree && (
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-center text-muted-foreground">
+                    <div id="secondary-rune-limit" className="text-sm font-medium text-center text-muted-foreground">
                       Sélectionnez 2 runes de slots différents
                     </div>
                     {secondaryTree.slots.map((slot, slotIndex) => (
@@ -356,6 +356,7 @@ export const RuneSelector = ({
                               type="button"
                               onClick={() => handleSelectSecondaryRune(rune.key)}
                               disabled={!canSelect}
+                              aria-describedby={!canSelect ? "secondary-rune-limit" : undefined}
                               className={cn(
                                 "p-2 rounded-lg transition-[background-color,box-shadow] duration-200",
                                 isSelected
