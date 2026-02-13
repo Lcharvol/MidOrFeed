@@ -36,6 +36,9 @@ export const useAdminNotificationChannel = (
   options: AdminNotificationChannelOptions = {}
 ) => {
   const { enabled = false, onNotification } = options;
+  const onNotificationRef = useRef(onNotification);
+  onNotificationRef.current = onNotification;
+
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const [state, setState] = useState<AdminNotificationChannelState>(
@@ -85,7 +88,7 @@ export const useAdminNotificationChannel = (
           try {
             const data = JSON.parse(event.data) as unknown;
             if (isNotificationMessage(data)) {
-              onNotification?.(data.payload);
+              onNotificationRef.current?.(data.payload);
             }
           } catch (error) {
             console.error("Invalid admin notification message", error);
@@ -112,7 +115,8 @@ export const useAdminNotificationChannel = (
       clearReconnect();
       eventSourceRef.current?.close();
     };
-  }, [enabled, onNotification]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- onNotification is stabilized via ref
+  }, [enabled]);
 
   return { state };
 };
