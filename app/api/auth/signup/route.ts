@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
       () =>
         prisma.user.findUnique({
           where: { email: validatedData.email },
+          select: { id: true },
         }),
       10000 // 10 secondes
     );
