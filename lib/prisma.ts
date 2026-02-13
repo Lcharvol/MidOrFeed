@@ -32,7 +32,7 @@ const buildDatabaseUrl = (baseUrl: string): string => {
     url.searchParams.set("connection_limit", "5"); // Moins de connexions pour éviter OOM
     url.searchParams.set("pool_timeout", "20"); // 20 secondes pour obtenir une connexion
     url.searchParams.set("connect_timeout", "10"); // 10 secondes pour se connecter
-    url.searchParams.set("statement_cache_size", "0"); // Désactiver le cache
+    url.searchParams.set("statement_cache_size", "20"); // Cache prepared statements for performance
 
     // Paramètres de keepalive pour détecter les connexions mortes
     // Ces paramètres aident à éviter "Server has closed the connection"
