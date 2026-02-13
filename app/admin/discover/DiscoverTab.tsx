@@ -88,7 +88,7 @@ export const DiscoverTab = () => {
       fetchStats();
     }, 3000);
     return () => clearInterval(interval);
-  }, [stats.byStatus.pending, stats.byStatus.crawling, fetchStats]);
+  }, [stats.byStatus, fetchStats]);
 
   const pending = stats.byStatus.pending || 0;
   const crawling = stats.byStatus.crawling || 0;
