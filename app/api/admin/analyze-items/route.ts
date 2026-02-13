@@ -160,13 +160,17 @@ export async function POST(request: NextRequest) {
         lastAnalyzedAt: now,
       };
 
-      const existing = await prisma.itemStats.findUnique({ where: { itemId } });
-      if (existing) {
-        await prisma.itemStats.update({ where: { itemId }, data });
-        updated++;
-      } else {
-        await prisma.itemStats.create({ data: { itemId, ...data } });
+      const result = await prisma.itemStats.upsert({
+        where: { itemId },
+        update: data,
+        create: { itemId, ...data },
+        select: { createdAt: true, updatedAt: true },
+      });
+
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
         created++;
+      } else {
+        updated++;
       }
     }
 
