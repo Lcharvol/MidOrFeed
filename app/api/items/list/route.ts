@@ -99,6 +99,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
 
+    response.headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
     return applySecurityHeaders(response);
   } catch (error) {
     logger.error("Erreur lors de la récupération des items", error as Error);

@@ -53,7 +53,10 @@ export async function GET(request: NextRequest) {
           maxNewPlayerLevel: response.data.maxNewPlayerLevel,
         },
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" },
+      }
     );
   } catch (error) {
     const logger = createLogger("riot-rotation");

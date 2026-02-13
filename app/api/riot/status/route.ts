@@ -160,7 +160,10 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    return NextResponse.json(response, { status: 200 });
+    return NextResponse.json(response, {
+      status: 200,
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+    });
   } catch (error) {
     const statusLogger = createLogger("riot-status");
     statusLogger.error("Erreur lors de la recuperation du statut Riot", error as Error);
