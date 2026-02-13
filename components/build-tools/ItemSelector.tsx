@@ -196,7 +196,7 @@ export const ItemSelector = ({
                     Aucun item trouvé
                   </div>
                 ) : (
-                  <div className="grid grid-cols-8 gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {filteredItems.map((item) => {
                       const isSelected = selectedItems.includes(item.itemId);
                       return (

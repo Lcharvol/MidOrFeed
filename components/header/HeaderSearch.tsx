@@ -60,7 +60,7 @@ export function HeaderSearch({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[360px] p-0"
+        className="w-[min(360px,calc(100vw-2rem))] p-0"
         align="end"
         sideOffset={12}
       >
