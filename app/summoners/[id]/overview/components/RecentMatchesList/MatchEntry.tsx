@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { ItemIcon } from "@/components/ItemIcon";
@@ -58,7 +59,7 @@ const formatDate = (timestamp: string | number, t: (key: string) => string) => {
   return t("summoners.daysAgo").replace("{count}", diffDays.toString());
 };
 
-export const MatchEntry = ({
+export const MatchEntry = memo(function MatchEntry({
   match,
   championName,
   queueLabel,
@@ -67,7 +68,7 @@ export const MatchEntry = ({
   resolveSlug,
   puuid,
   winPrediction,
-}: MatchEntryProps) => {
+}: MatchEntryProps) {
   const { t } = useI18n();
   const kdaLabel = `${match.kills}/${match.deaths}/${match.assists}`;
   const kdaRatio =
@@ -311,4 +312,4 @@ export const MatchEntry = ({
         )}
     </div>
   );
-};
+});
