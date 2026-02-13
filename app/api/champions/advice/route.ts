@@ -195,7 +195,7 @@ export const POST = async (request: NextRequest) => {
         canDelete: true,
       },
     },
-    });
+    }, { status: 201 });
   } catch (error) {
     logger.error("POST error", error as Error);
     return NextResponse.json(
