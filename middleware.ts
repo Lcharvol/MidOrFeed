@@ -20,6 +20,13 @@ export function middleware(request: NextRequest) {
     process.env.NODE_ENV === "production"
   );
 
+  // Prevent caching of auth and user-specific API responses
+  if (request.nextUrl.pathname.startsWith("/api/auth") ||
+      request.nextUrl.pathname.startsWith("/api/admin")) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+  }
+
   // Generate CSRF token if not present (using sync version for Edge compatibility)
   const existingToken = request.cookies.get(CSRF_CONSTANTS.COOKIE_NAME);
   if (!existingToken) {
