@@ -1033,6 +1033,14 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "abilities": {
+    "title": "Compétences",
+    "passive": "Passif",
+    "noData": "Les informations sur les compétences ne sont pas disponibles pour le moment.",
+    "cooldown": "Temps de recharge",
+    "cost": "Coût",
+    "resource": "Ressource"
+  },
   "searchResults": {
     "resultsFor": "Résultats pour",
     "clear": "Effacer",

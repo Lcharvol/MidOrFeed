@@ -1031,6 +1031,14 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "abilities": {
+    "title": "Abilities",
+    "passive": "Passive",
+    "noData": "Ability information is not available at this time.",
+    "cooldown": "Cooldown",
+    "cost": "Cost",
+    "resource": "Resource"
+  },
   "searchResults": {
     "resultsFor": "Results for",
     "clear": "Clear",
