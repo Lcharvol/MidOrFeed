@@ -1010,6 +1010,16 @@
     "damage": "Damage",
     "vision": "Vision"
   },
+  "errors": {
+    "leaderboardTitle": "Error loading leaderboard",
+    "leaderboardDescription": "Leaderboard data is temporarily unavailable.",
+    "tierListTitle": "Unable to load tier list",
+    "tierListDescription": "Data is temporarily unavailable.",
+    "loadingTitle": "Loading error",
+    "loadingDescription": "Error loading data",
+    "retry": "Retry",
+    "home": "Home"
+  },
   "header": {
     "nav": {
       "compare": "Compare",

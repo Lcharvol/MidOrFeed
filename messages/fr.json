@@ -1012,6 +1012,16 @@
     "damage": "Degats",
     "vision": "Vision"
   },
+  "errors": {
+    "leaderboardTitle": "Erreur lors du chargement du classement",
+    "leaderboardDescription": "Les données du classement sont temporairement indisponibles.",
+    "tierListTitle": "Impossible de charger la tier list",
+    "tierListDescription": "Les données sont temporairement indisponibles.",
+    "loadingTitle": "Erreur de chargement",
+    "loadingDescription": "Erreur lors du chargement des données",
+    "retry": "Réessayer",
+    "home": "Accueil"
+  },
   "header": {
     "nav": {
       "compare": "Comparer",
