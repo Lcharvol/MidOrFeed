@@ -3,13 +3,6 @@
  */
 
 /**
- * Crée une promesse qui se résout après le délai spécifié
- */
-export const sleep = (ms: number): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
-
-/**
  * Crée une promesse avec timeout
  * @param promise La promesse à exécuter
  * @param ms Timeout en millisecondes
