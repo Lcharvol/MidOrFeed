@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   description:
     "Créez, partagez et découvrez les meilleures compositions d'équipe pour League of Legends. Synergies, contre-compositions et méta actuelle.",
   keywords: ["lol team comp", "league of legends composition", "lol synergies", "team builder lol"],
+  openGraph: {
+    title: "Compositions LoL - Meilleures Team Comps",
+    description:
+      "Créez et découvrez les meilleures compositions d'équipe pour League of Legends.",
+  },
 };
 
 export default function CompositionsLayout({ children }: { children: React.ReactNode }) {
