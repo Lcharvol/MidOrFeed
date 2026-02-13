@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 import { calculateVoteDeltas, hasVoteChanges } from "@/lib/vote-utils";
 
@@ -15,6 +16,9 @@ const voteSchema = z.object({
 
 // POST /api/guides/comments/vote - Vote on a comment
 export const POST = async (request: NextRequest) => {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.vote);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // CSRF validation
   const csrfError = await requireCsrf(request);
   if (csrfError) return csrfError;
