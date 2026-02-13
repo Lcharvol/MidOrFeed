@@ -5,6 +5,7 @@ import { REGION_TO_ROUTING } from "@/constants/regions";
 import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 import { getEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 
 const collectSchema = z.object({
   puuid: z.string().min(1, "PUUID est requis"),
@@ -139,18 +140,26 @@ export async function POST(request: Request) {
         break;
       }
 
+      // Batch-fetch all existing matches for this page to avoid N+1 queries
+      const existingMatchesArr = await prisma.match.findMany({
+        where: { matchId: { in: matchIds } },
+        include: {
+          participants: {
+            select: { id: true, participantId: true, participantPUuid: true },
+          },
+        },
+      });
+      const existingMatchesMap = new Map(
+        existingMatchesArr.map((m) => [m.matchId, m])
+      );
+
       for (const matchId of matchIds) {
         // Vérifier si le match existe déjà
-        const existingMatch = await prisma.match.findUnique({
-          where: { matchId },
-        });
+        const existingMatch = existingMatchesMap.get(matchId);
 
         if (existingMatch) {
           // Backfill participantPUuid if missing (older records)
-          const existingParticipants = await prisma.matchParticipant.findMany({
-            where: { matchId: existingMatch.id },
-            select: { id: true, participantId: true, participantPUuid: true },
-          });
+          const existingParticipants = existingMatch.participants;
           const hasMissing = existingParticipants.some(
             (p) => p.participantPUuid == null
           );
@@ -359,11 +368,43 @@ export async function POST(request: Request) {
               pCount++;
             }
 
-            return pCount;
+            return { pCount, matchInternalId: match.id };
           });
 
           matchesCollected++;
-          participantsCreated += result;
+          participantsCreated += result.pCount;
+
+          // Best-effort: enrich participantTier from known league accounts
+          try {
+            const puuids = info.participants
+              .map((p: { puuid?: string }) => p.puuid)
+              .filter((p: string | undefined): p is string => !!p);
+            if (puuids.length > 0) {
+              const accountsMap = await ShardedLeagueAccounts.findManyByPuuidsGlobal(puuids);
+              if (accountsMap.size > 0) {
+                const updates = [];
+                for (const [puuid, account] of accountsMap) {
+                  if (account.soloTier) {
+                    updates.push(
+                      prisma.matchParticipant.updateMany({
+                        where: {
+                          matchId: result.matchInternalId,
+                          participantPUuid: puuid,
+                          participantTier: null,
+                        },
+                        data: { participantTier: account.soloTier },
+                      })
+                    );
+                  }
+                }
+                if (updates.length > 0) {
+                  await Promise.all(updates);
+                }
+              }
+            }
+          } catch (tierError) {
+            logger.error(`Failed to enrich participant tiers for match ${matchId}`, tierError as Error);
+          }
         } catch (error) {
           logger.error(`Erreur lors de la sauvegarde du match ${matchId}`, error as Error, { matchId });
           continue;
