@@ -108,6 +108,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:text-sm focus:font-medium"
+        >
+          Aller au contenu principal
+        </a>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <I18nProvider>
             <AuthProvider>
@@ -116,7 +122,7 @@ export default function RootLayout({
                   <ConditionalHeader />
                   <ConstructionBanner />
                   <ServerStatusBanner />
-                  <main className="relative px-4 sm:px-6 lg:px-8">
+                  <main id="main-content" className="relative px-4 sm:px-6 lg:px-8">
                     <div className="pointer-events-none absolute inset-0 -z-10 select-none">
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--color-primary),transparent_70%)]/[8]" />
                     </div>
