@@ -5,7 +5,8 @@ import {
   incrementDailyAnalysisCount,
   canUserAnalyze,
 } from "@/lib/ai/match-analysis";
-import { verifyToken } from "@/lib/jwt";
+import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
 import { handleApiError, errorResponse } from "@/lib/api-helpers";
 
@@ -19,20 +20,17 @@ const analyzeMatchSchema = z.object({
 // POST /api/ai/analyze-match
 export async function POST(request: NextRequest) {
   try {
+    // Validate CSRF token
+    const csrfError = await requireCsrf(request);
+    if (csrfError) return csrfError;
+
     // Vérifier l'authentification
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
       return errorResponse("Non authentifié", 401);
     }
 
-    const token = authHeader.substring(7);
-    const payload = await verifyToken(token);
-
-    if (!payload?.userId) {
-      return errorResponse("Token invalide", 401);
-    }
-
-    const userId = payload.userId;
+    const userId = user.id;
 
     // Vérifier si l'utilisateur peut analyser
     const { canAnalyze, remaining, isPremium } = await canUserAnalyze(userId);
@@ -107,20 +105,13 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Vérifier l'authentification
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
       return errorResponse("Non authentifié", 401);
     }
 
-    const token = authHeader.substring(7);
-    const payload = await verifyToken(token);
-
-    if (!payload?.userId) {
-      return errorResponse("Token invalide", 401);
-    }
-
     const { canAnalyze, remaining, isPremium } = await canUserAnalyze(
-      payload.userId
+      user.id
     );
 
     return NextResponse.json({
