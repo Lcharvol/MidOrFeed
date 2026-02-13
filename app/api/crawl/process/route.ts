@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
  * Crawle les prochains joueurs en attente dans la file par lots
  */
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request, { skipCsrf: true });
+  const authError = await requireAdmin(request);
   if (authError) return authError;
 
   try {

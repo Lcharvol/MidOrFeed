@@ -21,7 +21,7 @@ const notificationSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request, { skipCsrf: true });
+  const authError = await requireAdmin(request);
   if (authError) return authError;
   try {
     const body = await request.json();

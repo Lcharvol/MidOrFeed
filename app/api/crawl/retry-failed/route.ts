@@ -8,7 +8,7 @@ import { logger } from "@/lib/logger";
  * Remet tous les discoveredPlayer en statut failed -> pending
  */
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request, { skipCsrf: true });
+  const authError = await requireAdmin(request);
   if (authError) return authError;
   try {
     const { count } = await prisma.discoveredPlayer.updateMany({

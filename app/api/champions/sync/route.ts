@@ -48,7 +48,7 @@ interface RiotChampionData {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request, { skipCsrf: true });
+  const authError = await requireAdmin(request);
   if (authError) return authError;
 
   const syncLogger = logger; // ou createLogger("champions-sync")

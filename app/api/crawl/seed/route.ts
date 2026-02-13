@@ -39,7 +39,7 @@ const REGION_TO_PLATFORM: Record<string, string> = {
  * via Riot API (Challenger/Master/GrandMaster)
  */
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request, { skipCsrf: true });
+  const authError = await requireAdmin(request);
   if (authError) return authError;
 
   try {

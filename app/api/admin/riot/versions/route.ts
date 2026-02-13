@@ -22,7 +22,7 @@ export const POST = async (request: NextRequest) => {
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
   if (rateLimitResponse) return rateLimitResponse;
 
-  const authError = await requireAdmin(request, { skipCsrf: true });
+  const authError = await requireAdmin(request);
   if (authError) {
     return authError;
   }

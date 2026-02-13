@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
   if (rateLimitResponse) return rateLimitResponse;
 
-  // Verify admin access (skip CSRF - admin routes are protected by auth)
-  const authError = await requireAdmin(request, { skipCsrf: true });
+  // Verify admin access with CSRF validation
+  const authError = await requireAdmin(request);
   if (authError) return authError;
 
   try {
