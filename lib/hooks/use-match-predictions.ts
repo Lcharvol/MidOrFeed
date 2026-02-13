@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useApiSWR } from "./swr";
 
 interface MatchPrediction {
@@ -34,24 +35,25 @@ export function useMatchPredictions(matchIds: string[], puuid?: string) {
 
   const { data, error, isLoading } = useApiSWR<PredictionsResponse>(url);
 
-  // Create a map for easy access: matchId -> prediction for this player
-  const predictionsMap = new Map<string, number>();
+  // Memoize the map to avoid recreating it on every render
+  const predictionsMap = useMemo(() => {
+    const map = new Map<string, number>();
 
-  if (data?.success && data.data?.predictions) {
-    for (const [matchId, preds] of Object.entries(data.data.predictions)) {
-      // If puuid is provided, find the specific prediction
-      // Otherwise take the first prediction (or average)
-      if (puuid) {
-        const playerPred = preds.find((p) => p.participantPUuid === puuid);
-        if (playerPred) {
-          predictionsMap.set(matchId, playerPred.winProbability);
+    if (data?.success && data.data?.predictions) {
+      for (const [matchId, preds] of Object.entries(data.data.predictions)) {
+        if (puuid) {
+          const playerPred = preds.find((p) => p.participantPUuid === puuid);
+          if (playerPred) {
+            map.set(matchId, playerPred.winProbability);
+          }
+        } else if (preds.length > 0) {
+          map.set(matchId, preds[0].winProbability);
         }
-      } else if (preds.length > 0) {
-        // Take the first prediction if no puuid filter
-        predictionsMap.set(matchId, preds[0].winProbability);
       }
     }
-  }
+
+    return map;
+  }, [data, puuid]);
 
   return {
     predictions: predictionsMap,
