@@ -104,25 +104,30 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       );
     }
 
-    // Get top-level comments with replies (capped to prevent unbounded fetch)
-    const comments = await prisma.championGuideComment.findMany({
-      where: {
-        guideId,
-        parentId: null,
-      },
-      take: 50,
-      include: {
-        author: { select: { id: true, name: true } },
-        replies: {
-          take: 20,
-          include: {
-            author: { select: { id: true, name: true } },
-          },
-          orderBy: { createdAt: "asc" },
+    // Fetch comments and total count in parallel
+    const [comments, total] = await Promise.all([
+      prisma.championGuideComment.findMany({
+        where: {
+          guideId,
+          parentId: null,
         },
-      },
-      orderBy: { score: "desc" },
-    });
+        take: 50,
+        include: {
+          author: { select: { id: true, name: true } },
+          replies: {
+            take: 20,
+            include: {
+              author: { select: { id: true, name: true } },
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+        orderBy: { score: "desc" },
+      }),
+      prisma.championGuideComment.count({
+        where: { guideId },
+      }),
+    ]);
 
     // Get viewer's votes on comments
     const viewerVotes = new Map<string, number>();
@@ -147,10 +152,6 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
     const formattedComments = comments.map((c) =>
       formatComment(c, viewer?.id ?? null, viewerVotes, isAdmin)
     );
-
-    const total = await prisma.championGuideComment.count({
-      where: { guideId },
-    });
 
     return NextResponse.json({
       success: true,
