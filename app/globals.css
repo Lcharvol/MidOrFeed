@@ -343,6 +343,19 @@
     animation: pulse-glow 2s ease-in-out infinite;
   }
 
+  /* Respect user motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer,
+    .animate-border-glow,
+    .animate-pulse-glow,
+    .animate-fade-up,
+    .animate-fade-up-delay-1,
+    .animate-fade-up-delay-2,
+    .animate-fade-up-delay-3 {
+      animation: none !important;
+    }
+  }
+
   /* Light mode: soften all shadows */
   :root .shadow-sm {
     --tw-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
