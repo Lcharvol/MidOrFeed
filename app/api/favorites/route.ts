@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
@@ -6,6 +7,14 @@ import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("favorites");
+
+const addFavoriteSchema = z.object({
+  puuid: z.string().min(1).max(78),
+  region: z.string().min(1).max(10),
+  gameName: z.string().max(100).nullish(),
+  tagLine: z.string().max(10).nullish(),
+  note: z.string().max(500).nullish(),
+});
 
 // GET /api/favorites - List all favorites for the current user
 export async function GET(request: NextRequest) {
@@ -72,14 +81,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { puuid, region, gameName, tagLine, note } = body;
+    const validation = addFavoriteSchema.safeParse(body);
 
-    if (!puuid || !region) {
+    if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: "puuid et region requis" },
+        { success: false, error: "Données invalides", details: validation.error.errors },
         { status: 400 }
       );
     }
+
+    const { puuid, region, gameName, tagLine, note } = validation.data;
 
     // Check if already favorited
     const existing = await prisma.favoritePlayer.findUnique({
