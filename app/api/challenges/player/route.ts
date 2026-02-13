@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
   const url = new URL(request.url);
   const puuid = url.searchParams.get("puuid");
   const leagueAccountId = url.searchParams.get("leagueAccountId");
