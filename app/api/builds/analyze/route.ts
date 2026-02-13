@@ -118,8 +118,8 @@ export async function GET(request: NextRequest) {
 
       // Track build patterns (sorted items as key)
       const buildKey = items.join(",");
-      if (buildPatterns.has(buildKey)) {
-        const existing = buildPatterns.get(buildKey)!;
+      const existing = buildPatterns.get(buildKey);
+      if (existing) {
         existing.wins++;
         existing.games++;
       } else {
