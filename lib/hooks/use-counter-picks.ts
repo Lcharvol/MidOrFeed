@@ -68,8 +68,8 @@ export const useCounterPicks = (initialChampionId: string) => {
     const aggregates = pairs.reduce(
       (acc, pair) => ({
         games: acc.games + pair.games,
-        championWins: acc.championWins + pair.losses,
-        championLosses: acc.championLosses + pair.wins,
+        championWins: acc.championWins + pair.wins,
+        championLosses: acc.championLosses + pair.losses,
         lastPlayed: Math.max(acc.lastPlayed, Number(pair.lastPlayedAt)),
       }),
       { games: 0, championWins: 0, championLosses: 0, lastPlayed: 0 }
