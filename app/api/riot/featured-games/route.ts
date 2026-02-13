@@ -5,6 +5,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { riotApiRequest } from "@/lib/riot-api";
 import { CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 interface FeaturedGameParticipant {
   puuid: string;
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     const logger = createLogger("riot-featured-games");
-    logger.error("Erreur featured games", error as Error);
+    logger.error("Erreur featured games", toError(error));
     return NextResponse.json(
       {
         success: false,

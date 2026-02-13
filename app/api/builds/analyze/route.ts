@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("builds-analyze");
 
@@ -207,7 +208,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error("Error analyzing build", error as Error);
+    logger.error("Error analyzing build", toError(error));
     return NextResponse.json(
       { success: false, error: "Failed to analyze build" },
       { status: 500 }

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("suggest-composition");
 
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.error("Erreur lors de la génération de suggestions", error as Error);
+    logger.error("Erreur lors de la génération de suggestions", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la génération de suggestions" },
       { status: 500 }

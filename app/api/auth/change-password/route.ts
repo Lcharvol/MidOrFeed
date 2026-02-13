@@ -9,6 +9,7 @@ import { logger } from "@/lib/logger";
 import { verifyToken, AUTH_COOKIE_NAME } from "@/lib/jwt";
 import { errorResponse } from "@/lib/api-helpers";
 import { requireCsrf } from "@/lib/csrf";
+import { toError } from "@/lib/errors";
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Mot de passe actuel requis"),
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
           return errorResponse(error.errors[0].message, 400);
         }
 
-        logger.error("Erreur lors du changement de mot de passe", error as Error);
+        logger.error("Erreur lors du changement de mot de passe", toError(error));
         return errorResponse("Erreur lors du changement de mot de passe", 500);
       }
     },

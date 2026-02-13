@@ -6,6 +6,7 @@ import { applySecurityHeaders } from "@/lib/security-headers";
 import { logger } from "@/lib/logger";
 import { fetchWithTimeout } from "@/lib/timeout";
 import { getEnv } from "@/lib/env";
+import { toError } from "@/lib/errors";
 
 // GET pour récupérer les versions disponibles de LoL
 export async function GET(request: NextRequest) {
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     return applySecurityHeaders(response);
   } catch (error) {
-    logger.error("Erreur lors de la récupération des versions", error as Error);
+    logger.error("Erreur lors de la récupération des versions", toError(error));
     const errorResponse = NextResponse.json(
       {
         success: false,

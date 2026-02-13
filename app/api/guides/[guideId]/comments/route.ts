@@ -6,6 +6,7 @@ import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import type { GuideComment } from "@/types/guides";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("guide-comments");
 
@@ -161,7 +162,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       },
     });
   } catch (error) {
-    logger.error("GET comments error:", error as Error);
+    logger.error("GET comments error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la récupération des commentaires" },
       { status: 500 }
@@ -294,7 +295,7 @@ export const POST = async (request: NextRequest, context: RouteContext) => {
       data: { comment: formatted },
     });
   } catch (error) {
-    logger.error("POST comment error:", error as Error);
+    logger.error("POST comment error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de l'ajout du commentaire" },
       { status: 500 }

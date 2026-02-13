@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { getEnv } from "@/lib/env";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("riot-search-account");
 
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.error("Erreur lors de la recherche du compte", error as Error);
+    logger.error("Erreur lors de la recherche du compte", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la recherche du compte" },
       { status: 500 }

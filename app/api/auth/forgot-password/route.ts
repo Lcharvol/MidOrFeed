@@ -6,6 +6,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { requireCsrf } from "@/lib/csrf";
 import { logger } from "@/lib/logger";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { toError } from "@/lib/errors";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       message: "Si un compte existe, un email de réinitialisation a été envoyé.",
     });
   } catch (error) {
-    logger.error("Forgot password error", error as Error);
+    logger.error("Forgot password error", toError(error));
     return NextResponse.json(
       { success: true, message: "Si un compte existe, un email de réinitialisation a été envoyé." }
     );

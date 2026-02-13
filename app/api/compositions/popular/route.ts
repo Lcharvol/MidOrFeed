@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizeRole } from "@/lib/compositions/roles";
 import { createLogger } from "@/lib/logger";
 import { getPaginationParams, getSkip } from "@/lib/pagination";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("popular-compositions");
 
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (error) {
-    logger.error("Error:", error as Error);
+    logger.error("Error:", toError(error));
     return NextResponse.json(
       {
         success: false,

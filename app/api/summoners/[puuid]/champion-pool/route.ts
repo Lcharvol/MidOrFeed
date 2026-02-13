@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("champion-pool");
 
@@ -170,7 +171,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    logger.error("Error analyzing champion pool", error as Error);
+    logger.error("Error analyzing champion pool", toError(error));
     return NextResponse.json(
       { success: false, error: "Failed to analyze champion pool" },
       { status: 500 }

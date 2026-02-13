@@ -7,6 +7,7 @@ import {
   resolveChampionRole,
 } from "@/lib/compositions/roles";
 import { getTiersForBracket, RANK_BRACKETS } from "@/constants/ranks";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("champion-stats");
 
@@ -145,7 +146,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    logger.error("Erreur lors de la récupération des stats", error as Error);
+    logger.error("Erreur lors de la récupération des stats", toError(error));
     return NextResponse.json(
       {
         success: false,

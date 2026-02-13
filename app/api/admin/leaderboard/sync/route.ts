@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { riotApiRequest } from "@/lib/riot-api";
 import { MAIN_REGIONS } from "@/constants/riot-regions";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("admin-leaderboard-sync");
 
@@ -132,7 +133,7 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    logger.error("Leaderboard sync failed", error as Error);
+    logger.error("Leaderboard sync failed", toError(error));
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

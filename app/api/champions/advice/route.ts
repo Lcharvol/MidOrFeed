@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("champion-advice");
 
@@ -197,7 +198,7 @@ export const POST = async (request: NextRequest) => {
     },
     }, { status: 201 });
   } catch (error) {
-    logger.error("POST error", error as Error);
+    logger.error("POST error", toError(error));
     return NextResponse.json(
       {
         success: false,

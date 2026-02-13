@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getEnv } from "@/lib/env";
 import { prismaWithTimeout } from "@/lib/timeout";
 import { logger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 /**
  * GET /api/health
@@ -68,7 +69,7 @@ export async function GET() {
       error: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur de connexion") : "error",
     };
     health.status = "unhealthy";
-    logger.error("Health check: Database connection failed", error as Error);
+    logger.error("Health check: Database connection failed", toError(error));
   }
 
   const responseTime = Date.now() - startTime;

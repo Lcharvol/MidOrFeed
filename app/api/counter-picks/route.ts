@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { MATCHES_PAGE_LIMIT } from "@/constants/matches";
 import { resolveChampionRole } from "@/lib/compositions/roles";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("counter-picks");
 
@@ -182,7 +183,7 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (error) {
-    logger.error("Error:", error as Error);
+    logger.error("Error:", toError(error));
     return NextResponse.json(
       {
         success: false,

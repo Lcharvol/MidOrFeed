@@ -6,6 +6,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { requireCsrf } from "@/lib/csrf";
 import { logger } from "@/lib/logger";
 import { errorResponse } from "@/lib/api-helpers";
+import { toError } from "@/lib/errors";
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token requis"),
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
       message: "Mot de passe réinitialisé avec succès",
     });
   } catch (error) {
-    logger.error("Reset password error", error as Error);
+    logger.error("Reset password error", toError(error));
     return errorResponse("Erreur lors de la réinitialisation", 500);
   }
 }

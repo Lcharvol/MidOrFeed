@@ -5,6 +5,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { riotApiRequest } from "@/lib/riot-api";
 import { CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 interface RiotLeagueEntry {
   summonerId: string;
@@ -119,7 +120,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     const logger = createLogger("division-standings");
-    logger.error("Erreur division standings", error as Error);
+    logger.error("Erreur division standings", toError(error));
     return NextResponse.json(
       {
         success: false,

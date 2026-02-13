@@ -8,6 +8,7 @@ import {
   resolveChampionRole,
   type CompositionRole,
 } from "@/lib/compositions/roles";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("admin-compositions");
 
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error("Generate compositions error", error as Error);
+    logger.error("Generate compositions error", toError(error));
     return NextResponse.json(
       {
         success: false,

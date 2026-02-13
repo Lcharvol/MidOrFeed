@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createLogger } from "@/lib/logger";
+import { toError } from "../errors";
 
 const logger = createLogger("composition-analysis");
 
@@ -94,7 +95,7 @@ Réponds uniquement avec le raisonnement, sans introduction ni conclusion. Utili
 
     return responseText.trim();
   } catch (error) {
-    logger.error("Error generating AI reasoning", error as Error);
+    logger.error("Error generating AI reasoning", toError(error));
     return generateBasicReasoning(input);
   }
 }

@@ -5,6 +5,7 @@ import {
   getSpellImageUrl,
 } from "@/constants/ddragon";
 import { logger } from "@/lib/logger";
+import { toError } from "../errors";
 
 export type ChampionAbilitySlot = "P" | "Q" | "W" | "E" | "R";
 
@@ -71,7 +72,7 @@ const fetchChampionPayload = async (
     const json = await response.json();
     return extractChampionPayload(json?.data ?? {}, championId);
   } catch (error) {
-    logger.error("Unable to parse champion ability payload", error as Error);
+    logger.error("Unable to parse champion ability payload", toError(error));
     return null;
   }
 };

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 type PipelineState = {
   running: boolean;
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     const pipelineLogger = createLogger("pipeline");
-    pipelineLogger.error("Pipeline command error", error as Error);
+    pipelineLogger.error("Pipeline command error", toError(error));
     return NextResponse.json(
       { error: "Erreur lors de la commande pipeline" },
       { status: 500 }

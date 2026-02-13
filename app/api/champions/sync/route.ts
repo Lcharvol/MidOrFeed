@@ -6,6 +6,7 @@ import { invalidateCachePrefix } from "@/lib/cache";
 import { fetchWithTimeout } from "@/lib/timeout";
 import { getEnv } from "@/lib/env";
 import { requireAdmin } from "@/lib/auth-utils";
+import { toError } from "@/lib/errors";
 
 interface RiotChampion {
   id: string;
@@ -207,7 +208,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    logger.error("Erreur lors de la synchronisation des champions", error as Error);
+    logger.error("Erreur lors de la synchronisation des champions", toError(error));
     return NextResponse.json(
       {
         success: false,

@@ -5,6 +5,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { riotApiRequest } from "@/lib/riot-api";
 import { CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("gold-timeline");
 
@@ -136,7 +137,7 @@ export async function GET(
       { status: 200 }
     );
   } catch (error) {
-    logger.error("Erreur gold-timeline", error as Error);
+    logger.error("Erreur gold-timeline", toError(error));
     return NextResponse.json(
       {
         success: false,

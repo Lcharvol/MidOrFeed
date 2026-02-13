@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { getOrSetCache, CacheTTL, invalidateCachePrefix } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("riot-versions");
 
@@ -41,7 +42,7 @@ export const GET = async () => {
       }
     );
   } catch (error) {
-    logger.error("GET error", error as Error);
+    logger.error("GET error", toError(error));
     return NextResponse.json(
       {
         success: false,
@@ -109,7 +110,7 @@ export const PATCH = async (request: NextRequest) => {
       { status: 200 }
     );
   } catch (error) {
-    logger.error("PATCH error", error as Error);
+    logger.error("PATCH error", toError(error));
     return NextResponse.json(
       {
         success: false,

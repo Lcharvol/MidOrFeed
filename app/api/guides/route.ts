@@ -10,6 +10,7 @@ import type {
   GuideRole,
   GuideStatus,
 } from "@/types/guides";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("guides");
 
@@ -207,7 +208,7 @@ export const GET = async (request: NextRequest) => {
       headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
     });
   } catch (error) {
-    logger.error("GET error:", error as Error);
+    logger.error("GET error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la récupération des guides" },
       { status: 500 }
@@ -290,7 +291,7 @@ export const POST = async (request: NextRequest) => {
       },
     });
   } catch (error) {
-    logger.error("POST error:", error as Error);
+    logger.error("POST error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Impossible de créer le guide" },
       { status: 500 }

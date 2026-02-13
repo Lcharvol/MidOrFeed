@@ -10,6 +10,7 @@ import { logger } from "@/lib/logger";
 import { errorResponse, handleApiError } from "@/lib/api-helpers";
 import { getEnv } from "@/lib/env";
 import type { NotificationPayload } from "@/types";
+import { toError } from "@/lib/errors";
 
 const DEFAULT_REGION = process.env.DEFAULT_RIOT_REGION ?? "euw1";
 const MAX_ACCOUNTS_PER_SYNC = 40;
@@ -258,7 +259,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logger.error("Erreur lors de la synchronisation des challenges", error as Error);
+    logger.error("Erreur lors de la synchronisation des challenges", toError(error));
     return handleApiError(error, "Synchronisation des challenges", "external");
   }
 }

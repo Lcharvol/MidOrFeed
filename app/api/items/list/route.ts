@@ -7,6 +7,7 @@ import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { applySecurityHeaders } from "@/lib/security-headers";
 import { logger } from "@/lib/logger";
 import { measureTiming } from "@/lib/metrics";
+import { toError } from "@/lib/errors";
 
 // Route GET pour obtenir la liste des items avec pagination et filtrage
 export async function GET(request: NextRequest) {
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
     response.headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
     return applySecurityHeaders(response);
   } catch (error) {
-    logger.error("Erreur lors de la récupération des items", error as Error);
+    logger.error("Erreur lors de la récupération des items", toError(error));
     const errorResponse = NextResponse.json(
       {
         success: false,

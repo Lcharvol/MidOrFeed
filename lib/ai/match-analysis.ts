@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
+import { toError } from "../errors";
 
 const logger = createLogger("ai-analysis");
 
@@ -334,7 +335,7 @@ Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`;
 
     return analysis;
   } catch (error) {
-    logger.error("Erreur lors de l'analyse Claude", error as Error);
+    logger.error("Erreur lors de l'analyse Claude", toError(error));
     // Fallback sur l'analyse basique
     return generateBasicAnalysis(matchData);
   }

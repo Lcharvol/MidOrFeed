@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("matches");
 
@@ -171,7 +172,7 @@ export async function GET(
       data: timelineData,
     });
   } catch (error) {
-    logger.error("Error fetching match timeline", error as Error);
+    logger.error("Error fetching match timeline", toError(error));
     return NextResponse.json(
       { success: false, error: "Failed to fetch match timeline" },
       { status: 500 }

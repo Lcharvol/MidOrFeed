@@ -6,6 +6,7 @@ import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 import { getEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
+import { toError } from "@/lib/errors";
 
 const collectSchema = z.object({
   puuid: z.string().min(1, "PUUID est requis"),
@@ -403,7 +404,7 @@ export async function POST(request: Request) {
               }
             }
           } catch (tierError) {
-            logger.error(`Failed to enrich participant tiers for match ${matchId}`, tierError as Error);
+            logger.error(`Failed to enrich participant tiers for match ${matchId}`, toError(tierError));
           }
         } catch (error) {
           logger.error(`Erreur lors de la sauvegarde du match ${matchId}`, error as Error, { matchId });
@@ -419,7 +420,7 @@ export async function POST(request: Request) {
     try {
       await recordSummonerHistory(validatedData.puuid, normalizedRegion);
     } catch (historyErr) {
-      logger.error("Failed to record summoner history", historyErr as Error);
+      logger.error("Failed to record summoner history", toError(historyErr));
     }
 
     return NextResponse.json(
@@ -440,7 +441,7 @@ export async function POST(request: Request) {
       );
     }
 
-    logger.error("Erreur lors de la collecte des matchs", error as Error);
+    logger.error("Erreur lors de la collecte des matchs", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la collecte des matchs" },
       { status: 500 }

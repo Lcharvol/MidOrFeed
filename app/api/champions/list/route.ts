@@ -7,6 +7,7 @@ import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { applySecurityHeaders } from "@/lib/security-headers";
 import { logger } from "@/lib/logger";
 import { measureTiming } from "@/lib/metrics";
+import { toError } from "@/lib/errors";
 
 // Route GET pour obtenir la liste des champions avec pagination
 export async function GET(request: NextRequest) {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
     response.headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
     return applySecurityHeaders(response);
   } catch (error) {
-    logger.error("Erreur lors de la récupération des champions", error as Error);
+    logger.error("Erreur lors de la récupération des champions", toError(error));
     const errorResponse = NextResponse.json(
       {
         success: false,

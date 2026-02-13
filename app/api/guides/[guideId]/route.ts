@@ -14,6 +14,7 @@ import type {
   GuideRole,
   GuideStatus,
 } from "@/types/guides";
+import { toError } from "@/lib/errors";
 
 // Validation schema for updates
 const updateGuideSchema = z.object({
@@ -164,7 +165,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       data: { guide: payload },
     });
   } catch (error) {
-    logger.error("GET [guideId] error:", error as Error);
+    logger.error("GET [guideId] error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la récupération du guide" },
       { status: 500 }
@@ -271,7 +272,7 @@ export const PUT = async (request: NextRequest, context: RouteContext) => {
       },
     });
   } catch (error) {
-    logger.error("PUT [guideId] error:", error as Error);
+    logger.error("PUT [guideId] error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la mise à jour du guide" },
       { status: 500 }
@@ -334,7 +335,7 @@ export const DELETE = async (request: NextRequest, context: RouteContext) => {
       data: { deleted: true },
     });
   } catch (error) {
-    logger.error("DELETE [guideId] error:", error as Error);
+    logger.error("DELETE [guideId] error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la suppression du guide" },
       { status: 500 }

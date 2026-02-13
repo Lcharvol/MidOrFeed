@@ -3,6 +3,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("leaderboard");
 
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
       headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
     });
   } catch (e) {
-    logger.error("Leaderboard list error", e as Error);
+    logger.error("Leaderboard list error", toError(e));
     return NextResponse.json(
       { success: false, error: "Erreur interne" },
       { status: 500 }

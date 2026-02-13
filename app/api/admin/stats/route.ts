@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("admin-stats");
 
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    logger.error("Admin stats error", error as Error);
+    logger.error("Admin stats error", toError(error));
     return NextResponse.json(
       { error: "Erreur lors de la récupération des statistiques" },
       { status: 500 }

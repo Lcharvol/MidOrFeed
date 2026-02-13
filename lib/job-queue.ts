@@ -223,7 +223,7 @@ export async function getRecentJobs(limit = 30) {
       output: row.output as Record<string, unknown> | null,
     }));
   } catch (err) {
-    logger.error("Failed to fetch recent jobs via SQL", err as Error);
+    logger.error("Failed to fetch recent jobs via SQL", toError(err));
     return [];
   }
 }
@@ -257,7 +257,7 @@ export async function getQueueJobs(queueName: QueueName, limit = 20) {
       output: row.output as Record<string, unknown> | null,
     }));
   } catch (err) {
-    logger.error(`Failed to fetch jobs for queue ${queueName}`, err as Error);
+    logger.error(`Failed to fetch jobs for queue ${queueName}`, toError(err));
     return [];
   }
 }

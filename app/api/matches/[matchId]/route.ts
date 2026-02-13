@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("matches");
 
@@ -77,7 +78,7 @@ export async function GET(
       { status: 200 }
     );
   } catch (error) {
-    logger.error("Erreur lors de la récupération du match", error as Error);
+    logger.error("Erreur lors de la récupération du match", toError(error));
     return NextResponse.json(
       {
         success: false,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("champion-runes");
 
@@ -130,7 +131,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    logger.error("Erreur lors de la récupération des runes", error as Error);
+    logger.error("Erreur lors de la récupération des runes", toError(error));
     return NextResponse.json(
       {
         success: false,

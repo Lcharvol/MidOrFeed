@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("item-stats");
 
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    logger.error("Erreur lors de la récupération des stats items", error as Error);
+    logger.error("Erreur lors de la récupération des stats items", toError(error));
     return NextResponse.json(
       {
         success: false,

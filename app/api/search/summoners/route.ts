@@ -5,6 +5,7 @@ import { getLeagueAccountsTableName } from "@/lib/prisma-sharded-accounts";
 import { validateRegion, validateTableName, escapeSqlIdentifier, escapeLikePattern } from "@/lib/sql-sanitization";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("search-summoners");
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
           limit
         );
       } catch (error) {
-        logger.error(`Erreur recherche dans ${tableName}`, error as Error);
+        logger.error(`Erreur recherche dans ${tableName}`, toError(error));
       }
     }
     
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
           );
           rows.push(...results);
         } catch (error) {
-          logger.error(`Erreur recherche dans ${tableName}`, error as Error);
+          logger.error(`Erreur recherche dans ${tableName}`, toError(error));
         }
       }
     }
@@ -173,7 +174,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.error("Erreur", error as Error);
+    logger.error("Erreur", toError(error));
     return NextResponse.json(
       { error: "Erreur lors de la recherche" },
       { status: 500 }

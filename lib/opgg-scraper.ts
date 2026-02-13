@@ -5,6 +5,7 @@
 
 import { cache, CacheTTL } from "./cache";
 import { createLogger } from "./logger";
+import { toError } from "./errors";
 
 const logger = createLogger("opgg-scraper");
 
@@ -210,7 +211,7 @@ const parseOpggHtml = (html: string): OpggPlayerData => {
       }
     }
   } catch (error) {
-    logger.error("Erreur parsing HTML OP.GG", error as Error);
+    logger.error("Erreur parsing HTML OP.GG", toError(error));
   }
 
   return result;
@@ -272,7 +273,7 @@ export const fetchOpggRank = async (
 
     return data;
   } catch (error) {
-    logger.error(`Erreur scraping OP.GG pour ${gameName}#${tagLine}`, error as Error);
+    logger.error(`Erreur scraping OP.GG pour ${gameName}#${tagLine}`, toError(error));
     return null;
   }
 };

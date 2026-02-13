@@ -4,6 +4,7 @@ import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { createLogger } from "@/lib/logger";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { requireCsrf } from "@/lib/csrf";
+import { toError } from "@/lib/errors";
 
 const compositionsLogger = createLogger("compositions");
 
@@ -56,7 +57,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    compositionsLogger.error("Erreur lors de la suppression de la composition", error as Error);
+    compositionsLogger.error("Erreur lors de la suppression de la composition", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la suppression de la composition" },
       { status: 500 }

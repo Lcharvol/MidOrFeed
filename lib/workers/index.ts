@@ -11,6 +11,7 @@ import { createAccountRefreshWorker } from "./account-refresh.worker";
 import { createDailyResetWorker } from "./daily-reset.worker";
 import { closeJobQueue, scheduleJob, QUEUE_NAMES } from "../job-queue";
 import { createLogger } from "../logger";
+import { toError } from "../errors";
 
 const logger = createLogger("workers");
 
@@ -109,7 +110,7 @@ export async function scheduleAllJobs() {
     try {
       await scheduleJob(queue, cron, data);
     } catch (err) {
-      logger.error(`Failed to schedule ${queue}`, err as Error);
+      logger.error(`Failed to schedule ${queue}`, toError(err));
     }
   }
 

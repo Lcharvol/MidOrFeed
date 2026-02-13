@@ -5,6 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { REGION_TO_BASE_URL } from "@/constants/regions";
 import { createLogger } from "@/lib/logger";
 import { getEnv } from "@/lib/env";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("leaderboard-update");
 
@@ -212,7 +213,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    logger.error("Error", error as Error);
+    logger.error("Error", toError(error));
     return NextResponse.json({ success: false, error: "Erreur interne" }, { status: 500 });
   }
 }

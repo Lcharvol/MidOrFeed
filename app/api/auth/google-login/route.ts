@@ -11,6 +11,7 @@ import {
   handleApiError,
   type UserForSerialization,
 } from "@/lib/api-helpers";
+import { toError } from "@/lib/errors";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
       jwtToken
     );
   } catch (error) {
-    logger.error("Erreur lors de l'authentification Google", error as Error);
+    logger.error("Erreur lors de l'authentification Google", toError(error));
     return handleApiError(error, "Authentification Google", "auth");
   }
 }

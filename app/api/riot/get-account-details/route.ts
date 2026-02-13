@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { getEnv } from "@/lib/env";
 import { cache } from "@/lib/cache";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("riot-account-details");
 
@@ -327,7 +328,7 @@ export async function POST(request: Request) {
       );
     }
 
-    logger.error("Erreur lors de la récupération des détails", error as Error);
+    logger.error("Erreur lors de la récupération des détails", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la récupération des détails" },
       { status: 500 }

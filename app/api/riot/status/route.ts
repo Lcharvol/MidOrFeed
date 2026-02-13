@@ -5,6 +5,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { riotApiRequest } from "@/lib/riot-api";
 import { CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 interface ContentDto {
   locale: string;
@@ -166,7 +167,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     const statusLogger = createLogger("riot-status");
-    statusLogger.error("Erreur lors de la recuperation du statut Riot", error as Error);
+    statusLogger.error("Erreur lors de la recuperation du statut Riot", toError(error));
     return NextResponse.json(
       {
         success: false,

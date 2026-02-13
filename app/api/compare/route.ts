@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("compare");
 
@@ -438,7 +439,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error("Error:", error as Error);
+    logger.error("Error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }

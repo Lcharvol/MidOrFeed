@@ -9,6 +9,7 @@ import {
 import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("admin-jobs");
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now(),
     });
   } catch (error) {
-    logger.error("Jobs API error", error as Error);
+    logger.error("Jobs API error", toError(error));
     return NextResponse.json(
       {
         success: false,
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
       timestamp: Date.now(),
     });
   } catch (error) {
-    logger.error("Jobs API error creating job", error as Error);
+    logger.error("Jobs API error creating job", toError(error));
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

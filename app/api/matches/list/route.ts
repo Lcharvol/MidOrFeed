@@ -3,6 +3,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
 import { MATCHES_PAGE_LIMIT } from "@/constants/matches";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("matches");
 
@@ -218,7 +219,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    logger.error("Erreur lors de la récupération des matchs", error as Error);
+    logger.error("Erreur lors de la récupération des matchs", toError(error));
     return NextResponse.json(
       {
         success: false,

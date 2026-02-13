@@ -6,6 +6,7 @@ import { requireCsrf } from "@/lib/csrf";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 import { calculateVoteDeltas, hasVoteChanges } from "@/lib/vote-utils";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("guide-comment-vote");
 
@@ -121,7 +122,7 @@ export const POST = async (request: NextRequest) => {
       },
     });
   } catch (error) {
-    logger.error("POST comment vote error:", error as Error);
+    logger.error("POST comment vote error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors du vote" },
       { status: 500 }

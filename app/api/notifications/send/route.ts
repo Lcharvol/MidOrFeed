@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { requireAdmin } from "@/lib/auth-utils";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("notifications-send");
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: payload });
   } catch (error) {
-    logger.error("Notification broadcast failure", error as Error);
+    logger.error("Notification broadcast failure", toError(error));
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid notification payload" },

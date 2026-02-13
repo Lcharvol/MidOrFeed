@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("patches");
 
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    logger.error("Erreur lors de la récupération des patches", error as Error);
+    logger.error("Erreur lors de la récupération des patches", toError(error));
     return NextResponse.json(
       {
         success: false,

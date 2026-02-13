@@ -5,6 +5,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { riotApiRequest } from "@/lib/riot-api";
 import { CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 interface ChampionRotationDto {
   freeChampionIds: number[];
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     const logger = createLogger("riot-rotation");
-    logger.error("Erreur lors de la récupération de la rotation", error as Error);
+    logger.error("Erreur lors de la récupération de la rotation", toError(error));
     return NextResponse.json(
       {
         success: false,

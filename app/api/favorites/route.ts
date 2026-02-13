@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("favorites");
 
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: enriched });
   } catch (error) {
-    logger.error("Error:", error as Error);
+    logger.error("Error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: favorite }, { status: 201 });
   } catch (error) {
-    logger.error("Error:", error as Error);
+    logger.error("Error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }
@@ -169,7 +170,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error("Error:", error as Error);
+    logger.error("Error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur serveur" },
       { status: 500 }

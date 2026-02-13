@@ -6,6 +6,7 @@ import { applySecurityHeaders } from "@/lib/security-headers";
 import { logger } from "@/lib/logger";
 import { fetchWithTimeout } from "@/lib/timeout";
 import { getEnv } from "@/lib/env";
+import { toError } from "@/lib/errors";
 
 interface RiotRune {
   id: number;
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest) {
 
     return applySecurityHeaders(response);
   } catch (error) {
-    logger.error("Erreur lors de la récupération des runes", error as Error);
+    logger.error("Erreur lors de la récupération des runes", toError(error));
     const errorResponse = NextResponse.json(
       {
         success: false,

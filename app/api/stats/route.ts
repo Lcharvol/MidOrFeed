@@ -3,6 +3,7 @@ import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("stats");
 
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    logger.error("Erreur:", error as Error);
+    logger.error("Erreur:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la recuperation des statistiques" },
       { status: 500 }

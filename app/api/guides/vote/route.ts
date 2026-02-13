@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("guides-vote");
 
@@ -128,7 +129,7 @@ export const POST = async (request: NextRequest) => {
       },
     });
   } catch (error) {
-    logger.error("Vote error:", error as Error);
+    logger.error("Vote error:", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors du vote" },
       { status: 500 }
