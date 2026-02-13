@@ -139,8 +139,10 @@ export async function POST(request: NextRequest) {
     try {
       const body = await request.json();
       options = processSchema.parse(body);
-    } catch {
-      // Utiliser les valeurs par défaut si le body est vide ou invalide
+    } catch (error) {
+      logger.debug("Invalid body, using default options", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     // Récupérer le nombre total de joueurs en attente
