@@ -126,12 +126,12 @@ export const RightsTab = () => {
     return () => clearTimeout(timer);
   }, [filter]);
 
-  const fetchUsers = useCallback(async (page: number, search: string) => {
+  const fetchUsers = useCallback(async (page: number, search: string, pageSize: number) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
         page: String(page),
-        pageSize: String(pagination.pageSize),
+        pageSize: String(pageSize),
       });
       if (search) params.set("search", search);
 
@@ -156,11 +156,11 @@ export const RightsTab = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.pageSize, t]);
+  }, [t]);
 
   useEffect(() => {
-    fetchUsers(pagination.page, debouncedFilter);
-  }, [pagination.page, debouncedFilter, fetchUsers]);
+    fetchUsers(pagination.page, debouncedFilter, pagination.pageSize);
+  }, [pagination.page, pagination.pageSize, debouncedFilter, fetchUsers]);
 
   const updateRole = async (userId: string, role: string) => {
     setUpdatingId(userId);
@@ -241,7 +241,7 @@ export const RightsTab = () => {
         />
         <Button
           variant="outline"
-          onClick={() => fetchUsers(pagination.page, debouncedFilter)}
+          onClick={() => fetchUsers(pagination.page, debouncedFilter, pagination.pageSize)}
           disabled={loading}
         >
           <RefreshCwIcon className={`size-4 mr-2 ${loading ? "animate-spin" : ""}`} />
