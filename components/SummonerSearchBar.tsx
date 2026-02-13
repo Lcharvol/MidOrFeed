@@ -46,7 +46,7 @@ export function SummonerSearchBar({
     onNavigate: () => setIsFocused(false),
     onPartialResults: (partial) => {
       if (partial.isNoResults) {
-        toast.info("Aucun joueur trouve. Essayez le format Nom#TAG.");
+        toast.info(t("summonerSearch.noResultsTryFormat"));
       } else if (partial.results.length > 1) {
         // Multi-results → redirect to /summoners page
         router.push(
@@ -108,7 +108,7 @@ export function SummonerSearchBar({
         <div className="flex-1 flex items-center h-full px-3 gap-2">
           <div className="relative size-4 shrink-0">
             {isSearching ? (
-              <div className="absolute inset-0 flex items-center justify-center" role="status" aria-label="Recherche en cours">
+              <div className="absolute inset-0 flex items-center justify-center" role="status" aria-label={t("summonerSearch.searching")}>
                 <div className="size-3 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
               </div>
             ) : (

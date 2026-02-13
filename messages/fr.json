@@ -1033,6 +1033,10 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "summonerSearch": {
+    "noResultsTryFormat": "Aucun joueur trouvé. Essayez le format Nom#TAG.",
+    "searching": "Recherche en cours"
+  },
   "headerSearch": {
     "region": "Région",
     "noSummonerFound": "Aucun invocateur trouvé.",

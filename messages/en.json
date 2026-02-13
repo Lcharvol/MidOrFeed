@@ -1031,6 +1031,10 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "summonerSearch": {
+    "noResultsTryFormat": "No player found. Try the Name#TAG format.",
+    "searching": "Searching"
+  },
   "headerSearch": {
     "region": "Region",
     "noSummonerFound": "No summoner found.",
