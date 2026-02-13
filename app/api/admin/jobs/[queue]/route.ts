@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   } catch (error) {
     logger.error("Error fetching queue", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -86,7 +86,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   } catch (error) {
     logger.error("Error cleaning queue", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }

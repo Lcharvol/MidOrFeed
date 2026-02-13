@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: "Erreur lors de la récupération des métriques",
-        details: error instanceof Error ? error.message : "Erreur inconnue",
+        details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
       },
       { status: 500 }
     );

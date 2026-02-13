@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error("Leaderboard sync failed", error as Error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }

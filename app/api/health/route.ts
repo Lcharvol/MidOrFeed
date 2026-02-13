@@ -43,7 +43,7 @@ export async function GET() {
   } catch (error) {
     health.services.environment = {
       status: "error",
-      error: error instanceof Error ? error.message : "Erreur inconnue",
+      error: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : "error",
     };
     health.status = "unhealthy";
   }
@@ -65,7 +65,7 @@ export async function GET() {
   } catch (error) {
     health.services.database = {
       status: "error",
-      error: error instanceof Error ? error.message : "Erreur de connexion",
+      error: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur de connexion") : "error",
     };
     health.status = "unhealthy";
     logger.error("Health check: Database connection failed", error as Error);

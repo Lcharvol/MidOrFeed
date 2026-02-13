@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: "Internal server error",
         connected: false,
         queues: {},
         recentJobs: [],
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error("Jobs API error creating job", error as Error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
