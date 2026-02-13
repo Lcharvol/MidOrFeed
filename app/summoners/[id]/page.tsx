@@ -1,31 +1,31 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+type Params = {
+  id: string;
+};
+
+type SearchParams = {
+  [key: string]: string | string[] | undefined;
+};
 
 /**
  * Redirect /summoners/[id] to /summoners/[id]/overview
- * Preserves query parameters like region
+ * Server-side redirect for better SEO and performance.
  */
-export default function SummonerRedirectPage() {
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const router = useRouter();
+export default async function SummonerRedirectPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<SearchParams>;
+}) {
+  const { id } = await params;
+  const resolvedSearchParams = await searchParams;
+  const query = new URLSearchParams(
+    Object.entries(resolvedSearchParams)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => [k, Array.isArray(v) ? v[0] : v] as [string, string])
+  ).toString();
 
-  useEffect(() => {
-    const id = params?.id;
-    if (id) {
-      const query = searchParams.toString();
-      const url = `/summoners/${id}/overview${query ? `?${query}` : ""}`;
-      router.replace(url);
-    }
-  }, [params, searchParams, router]);
-
-  return (
-    <div className="flex items-center justify-center py-20">
-      <div className="animate-pulse text-muted-foreground">
-        Chargement du profil...
-      </div>
-    </div>
-  );
+  redirect(`/summoners/${id}/overview${query ? `?${query}` : ""}`);
 }
