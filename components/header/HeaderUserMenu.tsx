@@ -50,7 +50,7 @@ export function HeaderUserMenu() {
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="focus:outline-none" aria-label="Menu utilisateur">
+            <button className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background outline-none" aria-label="Menu utilisateur">
               <Avatar className="h-9 w-9 cursor-pointer">
                 {isLoadingIcon ? (
                   <AvatarFallback className="bg-muted">
