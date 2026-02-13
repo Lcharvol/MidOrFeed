@@ -1033,6 +1033,14 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "playerSearch": {
+    "searchPlayer": "Rechercher un joueur",
+    "recentSearches": "Recherches récentes",
+    "suggestions": "Suggestions",
+    "noResults": "Aucun joueur trouvé dans la base de données.",
+    "pressEnterToSearch": "Appuyez sur Entrée pour rechercher via Riot API.",
+    "minCharacters": "Tapez au moins 2 caractères pour rechercher"
+  },
   "pricing": {
     "premiumUnavailable": "Premium temporairement indisponible."
   }

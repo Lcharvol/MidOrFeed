@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2Icon, UserIcon, ClockIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getProfileIconUrl } from "@/constants/ddragon";
+import { useI18n } from "@/lib/i18n-context";
 
 type SearchResult = {
   puuid: string;
@@ -111,6 +112,7 @@ export const PlayerSearchInput = ({
   disabled,
   autoFocus,
 }: PlayerSearchInputProps) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -233,12 +235,12 @@ export const PlayerSearchInput = ({
             disabled={disabled}
             autoFocus={autoFocus}
             className="pr-8"
-            aria-label="Rechercher un joueur"
+            aria-label={t("playerSearch.searchPlayer")}
             aria-busy={isLoading}
             aria-autocomplete="list"
           />
           {isLoading && (
-            <Loader2Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" aria-label="Chargement" />
+            <Loader2Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" aria-label={t("common.loading")} />
           )}
         </div>
       </PopoverTrigger>
@@ -250,7 +252,7 @@ export const PlayerSearchInput = ({
         <Command>
           <CommandList>
             {showRecent && (
-              <CommandGroup heading="Recherches recentes">
+              <CommandGroup heading={t("playerSearch.recentSearches")}>
                 {recentSearches.map((recent) => (
                   <CommandItem
                     key={recent.puuid}
@@ -285,7 +287,7 @@ export const PlayerSearchInput = ({
             )}
 
             {showResults && (
-              <CommandGroup heading="Suggestions">
+              <CommandGroup heading={t("playerSearch.suggestions")}>
                 {results.map((result) => (
                   <CommandItem
                     key={result.puuid}
@@ -313,7 +315,7 @@ export const PlayerSearchInput = ({
                       </div>
                       {result.stats?.totalMatches ? (
                         <div className="text-xs text-muted-foreground">
-                          {result.stats.totalMatches} parties
+                          {result.stats.totalMatches} {t("common.games")}
                           {result.stats.winRate !== undefined && (
                             <span className="ml-2">
                               {result.stats.winRate.toFixed(0)}% WR
@@ -332,17 +334,17 @@ export const PlayerSearchInput = ({
 
             {showEmpty && (
               <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                Aucun joueur trouve dans la base de donnees.
+                {t("playerSearch.noResults")}
                 <br />
                 <span className="text-xs">
-                  Appuyez sur Entree pour rechercher via Riot API.
+                  {t("playerSearch.pressEnterToSearch")}
                 </span>
               </CommandEmpty>
             )}
 
             {!showRecent && !showResults && !showEmpty && (
               <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                Tapez au moins 2 caracteres pour rechercher
+                {t("playerSearch.minCharacters")}
               </CommandEmpty>
             )}
           </CommandList>

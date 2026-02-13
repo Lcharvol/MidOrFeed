@@ -1031,6 +1031,14 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "playerSearch": {
+    "searchPlayer": "Search for a player",
+    "recentSearches": "Recent searches",
+    "suggestions": "Suggestions",
+    "noResults": "No player found in the database.",
+    "pressEnterToSearch": "Press Enter to search via Riot API.",
+    "minCharacters": "Type at least 2 characters to search"
+  },
   "pricing": {
     "premiumUnavailable": "Premium is temporarily unavailable."
   }
