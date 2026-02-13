@@ -1031,6 +1031,13 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "searchResults": {
+    "resultsFor": "Results for",
+    "clear": "Clear",
+    "noPlayerFound": "No player found for",
+    "tryFormat": "Try the Name#TAG format to search via Riot API",
+    "result": "result"
+  },
   "summonerPage": {
     "searchError": "Error during search",
     "nameAndTagRequired": "Name and tag are required",

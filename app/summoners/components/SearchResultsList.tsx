@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SearchIcon, XIcon, UserIcon } from "lucide-react";
 import { getProfileIconUrl } from "@/constants/ddragon";
+import { useI18n } from "@/lib/i18n-context";
 import Link from "next/link";
 
 type SearchResult = {
@@ -31,6 +32,8 @@ export function SearchResultsList({
   isNoResults,
   onClear,
 }: SearchResultsListProps) {
+  const { t } = useI18n();
+
   if (isNoResults) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -38,21 +41,21 @@ export function SearchResultsList({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <SearchIcon className="size-5 text-muted-foreground" />
-              Resultats pour &quot;{query}&quot;
+              {t("searchResults.resultsFor")} &quot;{query}&quot;
             </h2>
             <Button variant="ghost" size="sm" onClick={onClear}>
               <XIcon className="size-4 mr-1" />
-              Effacer
+              {t("searchResults.clear")}
             </Button>
           </div>
           <Card>
             <CardContent className="py-12 text-center">
               <UserIcon className="size-10 mx-auto text-muted-foreground/50 mb-3" />
               <p className="text-muted-foreground">
-                Aucun joueur trouve pour &quot;{query}&quot;
+                {t("searchResults.noPlayerFound")} &quot;{query}&quot;
               </p>
               <p className="text-sm text-muted-foreground/70 mt-1">
-                Essayez avec le format <span className="font-medium">Nom#TAG</span> pour rechercher via Riot API
+                {t("searchResults.tryFormat")}
               </p>
             </CardContent>
           </Card>
@@ -69,7 +72,7 @@ export function SearchResultsList({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <SearchIcon className="size-5 text-muted-foreground" />
-            {results.length} resultat{results.length > 1 ? "s" : ""} pour &quot;{query}&quot;
+            {results.length} {t("searchResults.result")}{results.length > 1 ? "s" : ""} — &quot;{query}&quot;
           </h2>
           <Button variant="ghost" size="sm" onClick={onClear}>
             <XIcon className="size-4 mr-1" />
@@ -111,7 +114,7 @@ export function SearchResultsList({
                       {typeof result.stats?.totalMatches === "number" &&
                         result.stats.totalMatches > 0 && (
                           <span className="text-[10px] text-muted-foreground">
-                            {result.stats.totalMatches} parties
+                            {result.stats.totalMatches} {t("common.games")}
                           </span>
                         )}
                       {typeof result.stats?.winRate === "number" &&

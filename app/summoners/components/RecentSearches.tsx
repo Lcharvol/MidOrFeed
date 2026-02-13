@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { SearchIcon, ChevronRightIcon } from "lucide-react";
 import { formatRelativeDate } from "@/lib/format-date";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n-context";
 import type { RecentSearch } from "@/lib/hooks/use-recent-search";
 
 interface RecentSearchesProps {
@@ -13,13 +14,15 @@ interface RecentSearchesProps {
 }
 
 export function RecentSearches({ recentSearches }: RecentSearchesProps) {
+  const { t } = useI18n();
+
   if (recentSearches.length === 0) return null;
 
   return (
     <div>
       <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
         <SearchIcon className="size-5 text-muted-foreground" />
-        Recherches recentes
+        {t("homeSearch.recentSearches")}
       </h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {recentSearches.map((s) => (
