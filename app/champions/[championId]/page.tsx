@@ -105,7 +105,7 @@ const ChampionPage = async ({ params }: { params: Promise<PageParams> }) => {
       name: SITE_NAME,
       logo: {
         "@type": "ImageObject",
-        url: buildUrl("/logo.png"),
+        url: buildUrl("/logo.webp"),
       },
     },
     image: splashUrl,

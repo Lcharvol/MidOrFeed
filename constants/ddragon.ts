@@ -104,7 +104,7 @@ export const getTierIconUrl = (
 
   const tierName = tierMap[tier] || tier;
   
-  // Toutes les images sont dans /public/ranks avec le format "Rank=*.png"
-  // Format: /ranks/Rank=Emerald.png
-  return `/ranks/Rank=${tierName}.png`;
+  // Toutes les images sont dans /public/ranks avec le format "Rank=*.webp"
+  // Format: /ranks/Rank=Emerald.webp
+  return `/ranks/Rank=${tierName}.webp`;
 };

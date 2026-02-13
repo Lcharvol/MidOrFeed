@@ -287,7 +287,7 @@ export const ItemTierListTable = ({
                     <div className="flex items-center gap-1 text-xs sm:text-sm">
                       {formatNumber(goldTotal)}
                       <Image
-                        src="/gold-piece.png"
+                        src="/gold-piece.webp"
                         alt="Gold"
                         width={14}
                         height={14}

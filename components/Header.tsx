@@ -161,7 +161,7 @@ export function Header() {
         <div className="flex items-center gap-2 sm:gap-6">
           <Link href="/" className="flex items-center justify-center">
             <Image
-              src="/logo.png"
+              src="/logo.webp"
               alt="MidOrFeed"
               width={45}
               height={80}

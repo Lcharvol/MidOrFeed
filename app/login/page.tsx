@@ -152,7 +152,7 @@ export default function LoginPage() {
         <Card>
           <CardHeader className="text-center">
             <Image
-              src="/logo.png"
+              src="/logo.webp"
               alt="MidOrFeed"
               width={200}
               height={50}

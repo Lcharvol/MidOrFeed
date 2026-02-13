@@ -10,6 +10,7 @@ import { GameVersionProvider } from "@/components/GameVersionProvider";
 import { ServerStatusBanner } from "@/components/ServerStatusBanner";
 import { ConstructionBanner } from "@/components/ConstructionBanner";
 import { JsonLd } from "@/components/JsonLd";
+import { Footer } from "@/components/Footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -101,7 +102,7 @@ const organizationSchema = {
   "@type": "Organization",
   name: "Mid or Feed",
   url: "https://midorfeed.gg",
-  logo: "https://midorfeed.gg/logo.png",
+  logo: "https://midorfeed.gg/logo.webp",
   sameAs: ["https://twitter.com/MidOrFeed"],
 };
 
@@ -139,6 +140,7 @@ export default function RootLayout({
                     </div>
                     <div className="relative">{children}</div>
                   </main>
+                  <Footer />
                   <Toaster />
                 </NotificationProvider>
               </GameVersionProvider>

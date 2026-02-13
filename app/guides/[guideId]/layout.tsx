@@ -126,7 +126,7 @@ export default async function GuideLayout({ children, params }: LayoutProps) {
       name: SITE_NAME,
       logo: {
         "@type": "ImageObject",
-        url: buildSiteUrl("/logo.png"),
+        url: buildSiteUrl("/logo.webp"),
       },
     },
     image: imageUrl,

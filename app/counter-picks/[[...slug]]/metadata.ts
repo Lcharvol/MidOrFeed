@@ -87,7 +87,7 @@ export const generateMetadata = async ({
   const canonicalUrl = buildUrl(canonicalPath);
   const ogImage = champion
     ? getChampionSplashUrl(champion.championId)
-    : buildUrl("/logo.png");
+    : buildUrl("/logo.webp");
 
   const title = `Counter ${championName} LoL - Meilleurs counters | ${SITE_NAME}`;
   const description = `Counter ${championName} : découvrez les meilleurs counters et comment battre ${championName} sur LoL. Statistiques et conseils basés sur des milliers de matchs. Best ${championName} counters in League of Legends.`;

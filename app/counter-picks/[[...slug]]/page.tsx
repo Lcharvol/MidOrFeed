@@ -87,7 +87,7 @@ const CounterPicksPage = async ({
   const canonicalUrl = buildUrl(canonicalPath);
   const championSplashUrl = initialChampionId
     ? getChampionSplashUrl(initialChampionId)
-    : buildUrl("/logo.png");
+    : buildUrl("/logo.webp");
 
   const structuredData = initialChampionId
     ? {
@@ -112,11 +112,11 @@ const CounterPicksPage = async ({
           name: SITE_NAME,
           logo: {
             "@type": "ImageObject",
-            url: buildUrl("/logo.png"),
+            url: buildUrl("/logo.webp"),
           },
           image: initialChampionName
             ? championSplashUrl
-            : buildUrl("/logo.png"),
+            : buildUrl("/logo.webp"),
         },
         keywords: [
           `counter ${initialChampionName ?? initialChampionId}`,
@@ -130,7 +130,7 @@ const CounterPicksPage = async ({
           SITE_NAME,
         ],
         articleSection: "League of Legends Counter Picks",
-        image: championRecord ? championSplashUrl : buildUrl("/logo.png"),
+        image: championRecord ? championSplashUrl : buildUrl("/logo.webp"),
       }
     : {
         "@context": "https://schema.org",
@@ -152,7 +152,7 @@ const CounterPicksPage = async ({
           name: SITE_NAME,
           logo: {
             "@type": "ImageObject",
-            url: buildUrl("/logo.png"),
+            url: buildUrl("/logo.webp"),
           },
         },
         keywords: [

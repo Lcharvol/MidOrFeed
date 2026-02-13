@@ -30,7 +30,7 @@ export const HeroSection = ({ stats, statsLoading }: HeroSectionProps) => {
     <section className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 overflow-hidden border-b py-20 md:py-28">
       <div className="absolute inset-0 -z-10">
         <Image
-          src="/home_background.png"
+          src="/home_background.webp"
           alt="League of Legends Background"
           fill
           sizes="100vw"
