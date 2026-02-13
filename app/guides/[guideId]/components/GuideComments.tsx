@@ -193,6 +193,7 @@ const CommentForm = ({
         placeholder={parentId ? "Écrire une réponse..." : "Écrire un commentaire..."}
         rows={3}
         maxLength={2000}
+        required
       />
       <div className="flex justify-end gap-2">
         {onCancel && (

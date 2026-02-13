@@ -95,6 +95,7 @@ export const GuideMetadataForm = ({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Ex: Guide Yasuo Mid S14 - Dominez votre lane"
           maxLength={100}
+          required
         />
       </div>
 

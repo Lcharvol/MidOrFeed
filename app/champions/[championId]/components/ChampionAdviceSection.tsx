@@ -536,6 +536,7 @@ export const ChampionAdviceSection = ({
               maxLength={1000}
               rows={4}
               className="resize-none"
+              required
             />
             {formError ? (
               <p className="text-sm font-medium text-rose-500" role="alert">
