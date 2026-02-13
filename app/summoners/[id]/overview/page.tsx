@@ -115,7 +115,7 @@ const SummonerOverviewByIdPage = () => {
   }, [overview, puuid, resolveSlug, matchLimit]);
 
   if (isLoading) return <LoadingState />;
-  if (error) return <ErrorState />;
+  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
   if (!overview || overview.stats.totalGames === 0) return <EmptyStateCard />;
 
   return (
