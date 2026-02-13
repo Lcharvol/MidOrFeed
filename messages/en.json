@@ -14,6 +14,11 @@
     "games": "games",
     "noData": "No data available"
   },
+  "news": {
+    "latestNews": "Latest News",
+    "viewAllNews": "View All News",
+    "readMore": "Read More"
+  },
   "homeStats": {
     "champions": "Champions",
     "topChampions": "Top Champions",
@@ -396,7 +401,10 @@
     "victories": "Victories",
     "defeats": "Defeats",
     "loading": "Loading...",
-    "noResults": "No results"
+    "noResults": "No results",
+    "previous": "Previous",
+    "next": "Next",
+    "showingRange": "{start}-{end} of {total} players"
   },
   "notFound": {
     "championNotFound": "Champion not found!",
@@ -535,7 +543,30 @@
       "sync": "Data Synchronization",
       "rights": "Rights Management",
       "ml": "Machine Learning",
-      "api": "Riot API Test"
+      "api": "Riot API Test",
+      "news": "News"
+    },
+    "news": {
+      "title": "Title",
+      "addArticle": "Add article",
+      "editArticle": "Edit article",
+      "deleteArticle": "Delete article",
+      "confirmDelete": "Are you sure you want to delete this article?",
+      "status": "Status",
+      "published": "Published",
+      "draft": "Draft",
+      "noArticles": "No articles",
+      "articleCreated": "Article created",
+      "articleUpdated": "Article updated",
+      "articleDeleted": "Article deleted",
+      "imageUrl": "Image URL",
+      "excerpt": "Excerpt",
+      "publishDate": "Publish date",
+      "searchPlaceholder": "Search by title...",
+      "errorLoading": "Error loading articles",
+      "networkError": "Network error",
+      "saveFailed": "Failed to save article",
+      "deleteFailed": "Failed to delete article"
     },
     "dataSync": {
       "filterScripts": "Filter scripts",
@@ -806,7 +837,9 @@
     "viewGrid": "Grid",
     "viewTable": "Table",
     "patch": "Patch",
-    "allPatches": "All patches"
+    "allPatches": "All patches",
+    "rankBracket": "Rank",
+    "allRanks": "All Ranks"
   },
   "tierListItems": {
     "heroTitle": "LoL Item Tier List",
@@ -976,5 +1009,8 @@
     "gold": "Gold",
     "damage": "Damage",
     "vision": "Vision"
+  },
+  "pricing": {
+    "premiumUnavailable": "Premium is temporarily unavailable."
   }
 }

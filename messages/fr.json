@@ -14,6 +14,11 @@
     "games": "parties",
     "noData": "Aucune donnée disponible"
   },
+  "news": {
+    "latestNews": "Dernières Actualités",
+    "viewAllNews": "Voir toutes les actualités",
+    "readMore": "Lire la suite"
+  },
   "homeStats": {
     "champions": "Champions",
     "topChampions": "Top Champions",
@@ -398,7 +403,10 @@
     "victories": "Victoires",
     "defeats": "Défaites",
     "loading": "Chargement...",
-    "noResults": "Aucun résultat"
+    "noResults": "Aucun résultat",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "showingRange": "{start}-{end} sur {total} joueurs"
   },
   "notFound": {
     "championNotFound": "Champion introuvable !",
@@ -537,7 +545,30 @@
       "sync": "Synchronisation de données",
       "rights": "Gestion des droits",
       "ml": "Machine Learning",
-      "api": "Test API Riot"
+      "api": "Test API Riot",
+      "news": "Actualités"
+    },
+    "news": {
+      "title": "Titre",
+      "addArticle": "Ajouter un article",
+      "editArticle": "Modifier l'article",
+      "deleteArticle": "Supprimer l'article",
+      "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet article ?",
+      "status": "Statut",
+      "published": "Publié",
+      "draft": "Brouillon",
+      "noArticles": "Aucun article",
+      "articleCreated": "Article créé",
+      "articleUpdated": "Article mis à jour",
+      "articleDeleted": "Article supprimé",
+      "imageUrl": "URL de l'image",
+      "excerpt": "Extrait",
+      "publishDate": "Date de publication",
+      "searchPlaceholder": "Rechercher par titre...",
+      "errorLoading": "Erreur lors du chargement des articles",
+      "networkError": "Erreur réseau",
+      "saveFailed": "Échec de l'enregistrement",
+      "deleteFailed": "Échec de la suppression"
     },
     "dataSync": {
       "filterScripts": "Filtrer les scripts",
@@ -808,7 +839,9 @@
     "viewGrid": "Grille",
     "viewTable": "Tableau",
     "patch": "Patch",
-    "allPatches": "Tous les patchs"
+    "allPatches": "Tous les patchs",
+    "rankBracket": "Rang",
+    "allRanks": "Tous les rangs"
   },
   "tierListItems": {
     "heroTitle": "Tier List Items LoL",
@@ -978,5 +1011,8 @@
     "gold": "Or",
     "damage": "Degats",
     "vision": "Vision"
+  },
+  "pricing": {
+    "premiumUnavailable": "Premium temporairement indisponible."
   }
 }

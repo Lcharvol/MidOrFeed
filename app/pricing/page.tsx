@@ -30,6 +30,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function PricingPage() {
   const { user } = useAuth();
@@ -42,7 +43,7 @@ export default function PricingPage() {
       router.push("/login");
       return;
     }
-    alert("Premium temporairement indisponible.");
+    toast.info(t("pricing.premiumUnavailable"));
   };
 
   const isPremium = false;
