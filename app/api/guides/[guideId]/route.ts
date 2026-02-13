@@ -107,11 +107,13 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       );
     }
 
-    // Increment view count (fire and forget)
+    // Increment view count (fire and forget, log on failure)
     prisma.championGuide.update({
       where: { id: guideId },
       data: { viewCount: { increment: 1 } },
-    }).catch(() => { /* ignore errors */ });
+    }).catch((err) => {
+      logger.warn("Failed to increment guide view count", { guideId, error: String(err) });
+    });
 
     // Get viewer's vote
     let viewerVote: number | null = null;
