@@ -229,7 +229,10 @@ export async function POST(request?: Request | NextRequest) {
  * DELETE /api/admin/sync-accounts
  * Arrête le processus de synchronisation en cours
  */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   const state = getSyncState();
 
   if (!state.isRunning) {
