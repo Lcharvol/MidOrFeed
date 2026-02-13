@@ -196,24 +196,42 @@ export async function POST(request: NextRequest) {
 
     logger.info("Calcul des contre-picks");
 
-    // Pour chaque champion, calculer les contre-picks
-    for (const { championId } of allStats) {
-      const championMatches = await prisma.match.findMany({
-        where: {
-          participants: {
-            some: {
-              championId,
-            },
+    // Batch-load all matches with participants once instead of N+1 per champion
+    const allMatches = await prisma.match.findMany({
+      where: matchIds ? { id: { in: matchIds } } : undefined,
+      select: {
+        id: true,
+        gameCreation: true,
+        participants: {
+          select: {
+            championId: true,
+            teamId: true,
+            win: true,
+            role: true,
+            lane: true,
           },
-          ...(matchIds ? { id: { in: matchIds } } : {}),
         },
-        include: {
-          participants: true,
-        },
-        take: 500, // Limiter pour performance
-      });
+      },
+      take: matchIds ? undefined : 5000,
+      orderBy: { gameCreation: "desc" },
+    });
 
-      if (championMatches.length === 0) continue;
+    // Index matches by champion for O(1) lookup
+    const matchesByChampion = new Map<string, typeof allMatches>();
+    for (const match of allMatches) {
+      for (const p of match.participants) {
+        const existing = matchesByChampion.get(p.championId);
+        if (existing) {
+          existing.push(match);
+        } else {
+          matchesByChampion.set(p.championId, [match]);
+        }
+      }
+    }
+
+    for (const { championId } of allStats) {
+      const championMatches = matchesByChampion.get(championId);
+      if (!championMatches || championMatches.length === 0) continue;
 
       const counterStats = new Map<
         string,
@@ -353,66 +371,41 @@ export async function POST(request: NextRequest) {
 
       const weakAgainst = weakAgainstByChampion.get(championId) ?? null;
 
-      const existing = await prisma.championStats.findUnique({
+      const now = new Date();
+      const statsData = {
+        totalGames: stats.games,
+        totalWins: stats.wins,
+        totalLosses: stats.games - stats.wins,
+        winRate,
+        avgKills: stats.kills / stats.games,
+        avgDeaths: stats.deaths / stats.games,
+        avgAssists: stats.assists / stats.games,
+        avgKDA,
+        avgGoldEarned: stats.goldEarned / stats.games,
+        avgGoldSpent: stats.goldSpent / stats.games,
+        avgDamageDealt: stats.damageDealt / stats.games,
+        avgDamageTaken: stats.damageTaken / stats.games,
+        avgVisionScore: stats.visionScore / stats.games,
+        topRole: normalizedRole,
+        topLane: normalizedLane,
+        weakAgainst: weakAgainst
+          ? (weakAgainst as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        score,
+        lastAnalyzedAt: now,
+      };
+
+      const result = await prisma.championStats.upsert({
         where: { championId },
+        update: statsData,
+        create: { championId, ...statsData },
+        select: { createdAt: true, updatedAt: true },
       });
 
-      const now = new Date();
-
-      if (existing) {
-        await prisma.championStats.update({
-          where: { championId },
-          data: {
-            totalGames: stats.games,
-            totalWins: stats.wins,
-            totalLosses: stats.games - stats.wins,
-            winRate,
-            avgKills: stats.kills / stats.games,
-            avgDeaths: stats.deaths / stats.games,
-            avgAssists: stats.assists / stats.games,
-            avgKDA,
-            avgGoldEarned: stats.goldEarned / stats.games,
-            avgGoldSpent: stats.goldSpent / stats.games,
-            avgDamageDealt: stats.damageDealt / stats.games,
-            avgDamageTaken: stats.damageTaken / stats.games,
-            avgVisionScore: stats.visionScore / stats.games,
-            topRole: normalizedRole,
-            topLane: normalizedLane,
-            weakAgainst: weakAgainst
-              ? (weakAgainst as Prisma.InputJsonValue)
-              : Prisma.JsonNull,
-            score,
-            lastAnalyzedAt: now,
-          },
-        });
-        updated++;
-      } else {
-        await prisma.championStats.create({
-          data: {
-            championId,
-            totalGames: stats.games,
-            totalWins: stats.wins,
-            totalLosses: stats.games - stats.wins,
-            winRate,
-            avgKills: stats.kills / stats.games,
-            avgDeaths: stats.deaths / stats.games,
-            avgAssists: stats.assists / stats.games,
-            avgKDA,
-            avgGoldEarned: stats.goldEarned / stats.games,
-            avgGoldSpent: stats.goldSpent / stats.games,
-            avgDamageDealt: stats.damageDealt / stats.games,
-            avgDamageTaken: stats.damageTaken / stats.games,
-            avgVisionScore: stats.visionScore / stats.games,
-            topRole: normalizedRole,
-            topLane: normalizedLane,
-            weakAgainst: weakAgainst
-              ? (weakAgainst as Prisma.InputJsonValue)
-              : Prisma.JsonNull,
-            score,
-            lastAnalyzedAt: now,
-          },
-        });
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
         created++;
+      } else {
+        updated++;
       }
 
       // Sauvegarder l'historique du win rate
