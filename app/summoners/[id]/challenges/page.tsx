@@ -339,7 +339,7 @@ export default function SummonerChallengesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatValue(data?.data?.totalPoints?.challengePoints as number)}
+              {formatValue(data?.data?.totalPoints?.challengePoints ?? undefined)}
             </div>
             <p className="text-xs text-muted-foreground">
               Points Riot cumulés (source Riot API)
