@@ -11,7 +11,8 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
   try {
     const { puuid } = await params;
     const { searchParams } = new URL(request.url);
-    const days = Math.min(parseInt(searchParams.get("days") || "30", 10), 90);
+    const rawDays = parseInt(searchParams.get("days") || "30", 10);
+    const days = Number.isFinite(rawDays) && rawDays > 0 ? Math.min(rawDays, 90) : 30;
 
     if (!puuid) {
       return NextResponse.json(
