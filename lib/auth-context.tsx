@@ -10,7 +10,7 @@ import {
   ReactNode,
 } from "react";
 
-interface User {
+export interface User {
   id: string;
   email: string;
   name: string | null;
@@ -36,7 +36,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (user: unknown) => void | Promise<void>;
+  login: (user: User) => void;
   logout: () => Promise<void>;
 }
 
@@ -79,10 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Login now only stores user data - token is in HTTP-only cookie set by server
-  const login = useCallback((userData: unknown) => {
-    const castUser = userData as User;
-    setUser(castUser);
-    localStorage.setItem("user", JSON.stringify(castUser));
+  const login = useCallback((userData: User) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
     setIsLoading(false);
   }, []);
 

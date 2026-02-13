@@ -5,6 +5,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n-context";
 import { authenticatedFetch } from "@/lib/api-client";
+import type { User } from "@/lib/auth-context";
 
 // Note: Ce schéma est utilisé côté client, donc on utilise useI18n
 // Le schéma sera créé dynamiquement dans le hook
@@ -15,26 +16,9 @@ export type RiotAccountFormValues = {
   region: string;
 };
 
-interface User {
-  id: string;
-  name?: string | null;
-  email?: string;
-  riotGameName?: string | null;
-  riotTagLine?: string | null;
-  riotRegion?: string | null;
-  riotPuuid?: string | null;
-  riotSummonerId?: string | null;
-  leagueAccount?: {
-    puuid?: string;
-    riotGameName?: string | null;
-    riotTagLine?: string | null;
-    riotRegion?: string | null;
-  } | null;
-}
-
 interface UseRiotAccountFormProps {
   user: User | null;
-  login: (user: unknown) => void | Promise<void>;
+  login: (user: User) => void;
 }
 
 export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
@@ -117,7 +101,7 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
 
       // Mettre à jour l'utilisateur dans le contexte
       if (user && result.user) {
-        login(result.user as unknown);
+        login(result.user);
       }
 
       toast.success("Compte Riot sauvegardé avec succès!");
@@ -221,7 +205,7 @@ export function useRiotAccountForm({ user, login }: UseRiotAccountFormProps) {
 
       // Mettre à jour l'utilisateur dans le contexte
       if (result.user) {
-        login(result.user as unknown);
+        login(result.user);
       }
 
       toast.success(t("profile.deleteAccountSuccess"));
