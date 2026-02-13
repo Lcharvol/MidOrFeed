@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -28,10 +28,8 @@ export function SummonerSearchBar({
   const { t } = useI18n();
   const router = useRouter();
   const [isFocused, setIsFocused] = useState(false);
-  const [isDebouncing, setIsDebouncing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     searchQuery,
@@ -58,41 +56,21 @@ export function SummonerSearchBar({
     },
   });
 
-  // Track debounce state for visual feedback
-  useEffect(() => {
-    if (searchQuery.length >= 2) {
-      setIsDebouncing(true);
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = setTimeout(() => {
-        setIsDebouncing(false);
-      }, 300);
-    } else {
-      setIsDebouncing(false);
-    }
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [searchQuery]);
-
   // Get region label for placeholder
   const currentRegion = RIOT_REGIONS.find((r) => r.value === searchRegion);
   const regionTag = currentRegion?.value.toUpperCase().replace(/\d/g, "") || "EUW";
 
   // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsFocused(false);
-      }
-    };
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      setIsFocused(false);
+    }
+  }, []);
 
+  useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [handleClickOutside]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -129,7 +107,7 @@ export function SummonerSearchBar({
         {/* Search input */}
         <div className="flex-1 flex items-center h-full px-3 gap-2">
           <div className="relative size-4 shrink-0">
-            {isDebouncing ? (
+            {isSearching ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="size-3 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
               </div>
