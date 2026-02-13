@@ -204,6 +204,7 @@ export default function SignupPage() {
                       <FormControl>
                         <Input
                           placeholder={t("signup.namePlaceholder")}
+                          autoComplete="name"
                           {...field}
                         />
                       </FormControl>
@@ -221,6 +222,7 @@ export default function SignupPage() {
                         <Input
                           placeholder={t("signup.emailPlaceholder")}
                           type="email"
+                          autoComplete="email"
                           {...field}
                         />
                       </FormControl>
@@ -266,6 +268,7 @@ export default function SignupPage() {
                           <Input
                             placeholder={t("signup.passwordPlaceholder")}
                             type="password"
+                            autoComplete="new-password"
                             {...field}
                           />
                         </FormControl>
@@ -304,6 +307,7 @@ export default function SignupPage() {
                         <Input
                           placeholder={t("signup.passwordPlaceholder")}
                           type="password"
+                          autoComplete="new-password"
                           {...field}
                         />
                       </FormControl>

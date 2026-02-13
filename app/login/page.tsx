@@ -179,6 +179,7 @@ export default function LoginPage() {
                         <Input
                           placeholder={t("login.emailPlaceholder")}
                           type="email"
+                          autoComplete="email"
                           {...field}
                         />
                       </FormControl>
@@ -196,6 +197,7 @@ export default function LoginPage() {
                         <Input
                           placeholder={t("login.passwordPlaceholder")}
                           type="password"
+                          autoComplete="current-password"
                           {...field}
                         />
                       </FormControl>

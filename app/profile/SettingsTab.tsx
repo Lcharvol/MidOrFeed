@@ -188,6 +188,7 @@ export function SettingsTab() {
                 <Input
                   id="currentPassword"
                   type="password"
+                  autoComplete="current-password"
                   value={passwordForm.currentPassword}
                   onChange={(e) =>
                     setPasswordForm((prev) => ({
@@ -203,6 +204,7 @@ export function SettingsTab() {
                 <Input
                   id="newPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={passwordForm.newPassword}
                   onChange={(e) =>
                     setPasswordForm((prev) => ({
@@ -219,6 +221,7 @@ export function SettingsTab() {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={passwordForm.confirmPassword}
                   onChange={(e) =>
                     setPasswordForm((prev) => ({
