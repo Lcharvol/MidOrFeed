@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -20,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
 
 interface User {
   id: string;
@@ -199,41 +198,20 @@ function RankCard({
 }
 
 export function StatsTab({ user }: StatsTabProps) {
-  const [rankedData, setRankedData] = useState<RankedData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const hasRiotAccount = user.riotPuuid && user.riotRegion;
 
-  useEffect(() => {
-    const fetchRankedData = async () => {
-      if (!hasRiotAccount) return;
+  const { data: response, isLoading, error } = useApiSWR<{
+    success: boolean;
+    data: RankedData;
+    error?: string;
+  }>(
+    hasRiotAccount
+      ? `/api/summoners/${user.riotPuuid}/ranked?region=${user.riotRegion}`
+      : null,
+    SEMI_DYNAMIC_CONFIG
+  );
 
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/summoners/${user.riotPuuid}/ranked?region=${user.riotRegion}`
-        );
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          setRankedData(result.data);
-        } else {
-          setError(result.error || "Erreur lors de la récupération du rang");
-        }
-      } catch (err) {
-        setError("Erreur de connexion");
-        console.error("Erreur:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRankedData();
-  }, [user.riotPuuid, user.riotRegion, hasRiotAccount]);
+  const rankedData = response?.data ?? null;
 
   if (!hasRiotAccount) {
     return (
@@ -260,7 +238,9 @@ export function StatsTab({ user }: StatsTabProps) {
       <Card className="border-destructive/50">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
           <AlertCircleIcon className="size-10 text-destructive mb-3" />
-          <p className="text-sm text-destructive">{error}</p>
+          <p className="text-sm text-destructive">
+            {error instanceof Error ? error.message : "Erreur de connexion"}
+          </p>
         </CardContent>
       </Card>
     );
