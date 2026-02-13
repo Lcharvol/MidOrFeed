@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
 import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { z } from "zod";
 import { getEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -74,7 +75,10 @@ const processSchema = z.object({
  * GET /api/crawl/process
  * Retourne l'état actuel du processus de crawl
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const state = getState();
 
   // Récupérer les counts actuels depuis la base de données

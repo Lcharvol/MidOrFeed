@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { requireCsrf } from "@/lib/csrf";
 
 type Params = {
   adviceId: string;
@@ -10,6 +12,12 @@ export const DELETE = async (
   request: NextRequest,
   context: { params: Promise<Params> }
 ) => {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.strict);
+  if (rateLimitResponse) return rateLimitResponse;
+
+  const csrfError = await requireCsrf(request);
+  if (csrfError) return csrfError;
+
   const { adviceId } = await context.params;
   const user = await getAuthenticatedUser(request);
 

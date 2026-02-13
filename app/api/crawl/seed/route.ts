@@ -82,12 +82,14 @@ export async function POST(request: NextRequest) {
 
     if (recentMatches.length === 0) {
       // Si pas de matchs, utiliser les utilisateurs enregistrés comme seed
-      const { ShardedLeagueAccounts } = await import(
+      const { getLeagueAccountsTableName } = await import(
         "@/lib/prisma-sharded-accounts"
       );
-      const tableName = `league_accounts_${validatedData.region.toLowerCase().replace(/[^a-z0-9]/g, "_")}`;
+      const { escapeSqlIdentifier } = await import("@/lib/sql-sanitization");
+      const tableName = getLeagueAccountsTableName(validatedData.region);
+      const safeTable = escapeSqlIdentifier(tableName);
       const accounts = await prisma.$queryRawUnsafe<Array<{ puuid: string }>>(
-        `SELECT "puuid" FROM "${tableName}" LIMIT 50`
+        `SELECT "puuid" FROM ${safeTable} LIMIT 50`
       );
       for (const acc of accounts) {
         if (acc.puuid) discoveredPUUIDs.add(acc.puuid);

@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { getEnv } from "@/lib/env";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 
 const logger = createLogger("riot-search-account");
 
@@ -14,7 +15,10 @@ const searchSchema = z.object({
 
 // Routing mapping centralisé dans constants/regions
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     // Vérifier que la clé API est configurée
     const RIOT_API_KEY = getEnv().RIOT_API_KEY;
