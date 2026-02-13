@@ -175,6 +175,10 @@ export async function GET(
         leaderboard: sortedLeaderboard,
         totalPlayers: leaderboard.length,
       },
+    }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
     });
   } catch (error) {
     return NextResponse.json(

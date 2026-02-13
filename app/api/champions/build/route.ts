@@ -275,6 +275,10 @@ export async function GET(request: NextRequest) {
         bootOptions,
         popularBuilds,
       },
+    }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
     });
   } catch (error) {
     logger.error("Error", error as Error);
