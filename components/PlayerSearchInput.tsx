@@ -233,6 +233,7 @@ export const PlayerSearchInput = ({
             disabled={disabled}
             autoFocus={autoFocus}
             className="pr-8"
+            aria-label="Rechercher un joueur"
             aria-busy={isLoading}
             aria-autocomplete="list"
           />
