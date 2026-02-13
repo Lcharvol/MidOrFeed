@@ -50,14 +50,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { success: false, error: "Données invalides", details: error.errors },
         { status: 400 }
       );
     }
 
     logger.error("Erreur lors de la génération de suggestions", error as Error);
     return NextResponse.json(
-      { error: "Erreur lors de la génération de suggestions" },
+      { success: false, error: "Erreur lors de la génération de suggestions" },
       { status: 500 }
     );
   }
