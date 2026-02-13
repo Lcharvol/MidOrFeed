@@ -51,26 +51,31 @@ interface RankProgression {
 }
 
 async function getPlayerStats(puuid: string, region: string) {
-  // Get account info
-  const account = await prisma.leagueOfLegendsAccount.findUnique({
-    where: { puuid },
-  });
-
-  // Get match stats with match data for duration
-  const participants = await prisma.matchParticipant.findMany({
-    where: { participantPUuid: puuid },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    include: {
-      match: {
-        select: {
-          gameDuration: true,
-          gameCreation: true,
-          queueId: true,
+  // Run all 3 independent queries in parallel
+  const [account, participants, rankedHistory] = await Promise.all([
+    prisma.leagueOfLegendsAccount.findUnique({
+      where: { puuid },
+    }),
+    prisma.matchParticipant.findMany({
+      where: { participantPUuid: puuid },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: {
+        match: {
+          select: {
+            gameDuration: true,
+            gameCreation: true,
+            queueId: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.rankHistory.findMany({
+      where: { puuid },
+      orderBy: { recordedAt: "desc" },
+      take: 30,
+    }),
+  ]);
 
   if (participants.length === 0) {
     return null;
@@ -157,13 +162,6 @@ async function getPlayerStats(puuid: string, region: string) {
       winRate: (stats.wins / stats.games) * 100,
     }))
     .sort((a, b) => b.games - a.games);
-
-  // Get ranked info from RankHistory
-  const rankedHistory = await prisma.rankHistory.findMany({
-    where: { puuid },
-    orderBy: { recordedAt: "desc" },
-    take: 30, // Last 30 entries for progression
-  });
 
   let rankedInfo: RankedInfo | null = null;
   let rankProgression: RankProgression[] = [];
