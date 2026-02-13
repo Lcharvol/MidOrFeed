@@ -46,6 +46,11 @@ export const securityHeaders = {
    */
   "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
 
+  /**
+   * Empêche Adobe Flash/PDF de charger des données cross-domain
+   */
+  "X-Permitted-Cross-Domain-Policies": "none",
+
   // Note: Cross-Origin-Embedder-Policy (COEP) et Cross-Origin-Resource-Policy (CORP) sont retirés
   // car trop restrictifs et bloquent les images depuis Data Dragon CDN qui ne renvoie pas
   // les headers CORS appropriés. Ces headers sont principalement nécessaires pour SharedArrayBuffer
