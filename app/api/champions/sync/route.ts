@@ -140,47 +140,47 @@ export async function POST(request: NextRequest) {
       created += batch.length;
     }
 
-    // Mettre à jour les champions existants en batch
+    // Mettre à jour les champions existants en batch via $transaction
+    const updateOps = championsToUpdate.map((champion) =>
+      prisma.champion.update({
+        where: { championId: champion.id },
+        data: {
+          championKey: parseInt(champion.key, 10),
+          name: champion.name,
+          title: champion.title,
+          blurb: champion.blurb,
+          attack: champion.info.attack,
+          defense: champion.info.defense,
+          magic: champion.info.magic,
+          difficulty: champion.info.difficulty,
+          hp: champion.stats.hp,
+          hpPerLevel: champion.stats.hpperlevel,
+          mp: champion.stats.mp,
+          mpPerLevel: champion.stats.mpperlevel,
+          moveSpeed: champion.stats.movespeed,
+          armor: champion.stats.armor,
+          armorPerLevel: champion.stats.armorperlevel,
+          spellBlock: champion.stats.spellblock,
+          spellBlockPerLevel: champion.stats.spellblockperlevel,
+          attackRange: champion.stats.attackrange,
+          hpRegen: champion.stats.hpregen,
+          hpRegenPerLevel: champion.stats.hpregenperlevel,
+          mpRegen: champion.stats.mpregen,
+          mpRegenPerLevel: champion.stats.mpregenperlevel,
+          crit: champion.stats.crit,
+          critPerLevel: champion.stats.critperlevel,
+          attackDamage: champion.stats.attackdamage,
+          attackDamagePerLevel: champion.stats.attackdamageperlevel,
+          attackSpeed: champion.stats.attackspeed,
+          attackSpeedPerLevel: champion.stats.attackspeedperlevel,
+        },
+      })
+    );
     let updated = 0;
-    for (const champion of championsToUpdate) {
-      try {
-        await prisma.champion.update({
-          where: { championId: champion.id },
-          data: {
-            championKey: parseInt(champion.key, 10),
-            name: champion.name,
-            title: champion.title,
-            blurb: champion.blurb,
-            attack: champion.info.attack,
-            defense: champion.info.defense,
-            magic: champion.info.magic,
-            difficulty: champion.info.difficulty,
-            hp: champion.stats.hp,
-            hpPerLevel: champion.stats.hpperlevel,
-            mp: champion.stats.mp,
-            mpPerLevel: champion.stats.mpperlevel,
-            moveSpeed: champion.stats.movespeed,
-            armor: champion.stats.armor,
-            armorPerLevel: champion.stats.armorperlevel,
-            spellBlock: champion.stats.spellblock,
-            spellBlockPerLevel: champion.stats.spellblockperlevel,
-            attackRange: champion.stats.attackrange,
-            hpRegen: champion.stats.hpregen,
-            hpRegenPerLevel: champion.stats.hpregenperlevel,
-            mpRegen: champion.stats.mpregen,
-            mpRegenPerLevel: champion.stats.mpregenperlevel,
-            crit: champion.stats.crit,
-            critPerLevel: champion.stats.critperlevel,
-            attackDamage: champion.stats.attackdamage,
-            attackDamagePerLevel: champion.stats.attackdamageperlevel,
-            attackSpeed: champion.stats.attackspeed,
-            attackSpeedPerLevel: champion.stats.attackspeedperlevel,
-          },
-        });
-        updated++;
-      } catch (error) {
-        syncLogger.error(`Erreur lors de la mise à jour de ${champion.name}`, error as Error, { championId: champion.id });
-      }
+    for (let i = 0; i < updateOps.length; i += batchSize) {
+      const batch = updateOps.slice(i, i + batchSize);
+      await prisma.$transaction(batch);
+      updated += batch.length;
     }
 
     // Invalider le cache des champions

@@ -116,30 +116,30 @@ export async function POST(request: NextRequest) {
       created += batch.length;
     }
 
-    // Mettre à jour les items existants en batch
+    // Mettre à jour les items existants en batch via $transaction
+    const updateOps = itemsToUpdate.map(([itemId, item]) =>
+      prisma.item.update({
+        where: { itemId },
+        data: {
+          name: item.name,
+          description: item.description || null,
+          plaintext: item.plaintext || null,
+          image: item.image?.full || null,
+          gold: item.gold ? JSON.stringify(item.gold) : null,
+          tags: item.tags ? JSON.stringify(item.tags) : null,
+          depth: item.depth || null,
+          fromItems: item.from ? JSON.stringify(item.from) : null,
+          maps: item.maps ? JSON.stringify(item.maps) : null,
+          inStore: item.inStore ?? true,
+          requiredChampion: item.requiredChampion || null,
+        },
+      })
+    );
     let updated = 0;
-    for (const [itemId, item] of itemsToUpdate) {
-      try {
-        await prisma.item.update({
-          where: { itemId },
-          data: {
-            name: item.name,
-            description: item.description || null,
-            plaintext: item.plaintext || null,
-            image: item.image?.full || null,
-            gold: item.gold ? JSON.stringify(item.gold) : null,
-            tags: item.tags ? JSON.stringify(item.tags) : null,
-            depth: item.depth || null,
-            fromItems: item.from ? JSON.stringify(item.from) : null,
-            maps: item.maps ? JSON.stringify(item.maps) : null,
-            inStore: item.inStore ?? true,
-            requiredChampion: item.requiredChampion || null,
-          },
-        });
-        updated++;
-      } catch (error) {
-        syncLogger.error(`Erreur lors de la mise à jour de ${item.name}`, error as Error, { itemId });
-      }
+    for (let i = 0; i < updateOps.length; i += batchSize) {
+      const batch = updateOps.slice(i, i + batchSize);
+      await prisma.$transaction(batch);
+      updated += batch.length;
     }
 
     // Invalider le cache des items
