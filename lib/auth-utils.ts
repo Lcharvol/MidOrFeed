@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/types/roles";
 import { verifyToken, extractTokenFromHeader, AUTH_COOKIE_NAME } from "@/lib/jwt";
 import { logger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 import { requireCsrf } from "@/lib/csrf";
 
 /**
@@ -66,7 +67,7 @@ export const getAuthenticatedUser = async (
   } catch (error) {
     logger.error(
       "Erreur lors de la récupération de l'utilisateur",
-      error as Error
+      toError(error)
     );
     return null;
   }

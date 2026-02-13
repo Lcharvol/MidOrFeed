@@ -1,6 +1,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getEnv } from "./env";
 import { logger } from "./logger";
+import { toError } from "./errors";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -63,7 +64,7 @@ export async function withRetry<T>(
     try {
       return await operation();
     } catch (error) {
-      lastError = error as Error;
+      lastError = toError(error);
 
       // Vérifier si c'est une erreur de connexion récupérable
       const isConnectionError =
@@ -108,7 +109,7 @@ try {
 } catch (error) {
   logger.error(
     "Erreur de configuration des variables d'environnement",
-    error as Error
+    toError(error)
   );
   throw error;
 }

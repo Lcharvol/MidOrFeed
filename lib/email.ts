@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
+import { toError } from "./errors";
 
 /**
  * Email utility for transactional emails (password reset, etc.)
@@ -59,7 +60,7 @@ export const sendEmail = async (options: SendEmailOptions): Promise<boolean> => 
     logger.info("Email sent", { to: options.to, subject: options.subject });
     return true;
   } catch (error) {
-    logger.error("Failed to send email", error as Error, {
+    logger.error("Failed to send email", toError(error), {
       to: options.to,
       subject: options.subject,
     });

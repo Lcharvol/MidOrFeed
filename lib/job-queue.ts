@@ -6,6 +6,7 @@ import {
   type WorkOptions,
 } from "pg-boss";
 import { createLogger } from "./logger";
+import { toError } from "./errors";
 import { getEnv } from "@/lib/env";
 
 const logger = createLogger("job-queue");
@@ -134,7 +135,7 @@ export async function registerWorker<T extends object, R = void>(
           return result;
         } catch (error) {
           const duration = Date.now() - startTime;
-          logger.error(`[${queueName}] Job ${job.id} failed after ${duration}ms`, error as Error);
+          logger.error(`[${queueName}] Job ${job.id} failed after ${duration}ms`, toError(error));
           throw error;
         }
       }

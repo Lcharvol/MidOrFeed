@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getLocaleFromRequest, createTranslator } from "@/lib/i18n-server";
 import { logger } from "@/lib/logger";
 import { alerting } from "@/lib/alerting";
+import { toError } from "@/lib/errors";
 
 /**
  * Types pour les helpers API
@@ -120,10 +121,10 @@ export function handleApiError(
   context: string,
   alertCategory: "auth" | "api" | "database" | "external" = "api"
 ): NextResponse<ApiErrorFormat> {
-  logger.error(`Erreur: ${context}`, error as Error);
+  logger.error(`Erreur: ${context}`, toError(error));
   alerting.medium(
     context,
-    error instanceof Error ? error.message : "Erreur inconnue",
+    toError(error).message,
     alertCategory
   );
   return NextResponse.json(
