@@ -20,26 +20,19 @@ export async function GET(request: NextRequest) {
     return authError;
   }
   try {
-    // Statistiques des joueurs découverts
-    const playerStats = await prisma.discoveredPlayer.groupBy({
-      by: ["crawlStatus"],
-      _count: { id: true },
-    });
-
-    const totalPlayers = await prisma.discoveredPlayer.count();
-
-    const totalMatches = await prisma.discoveredPlayer.aggregate({
-      _sum: { matchesCollected: true },
-    });
-
-    // Statistiques des matchs
-    const totalMatchesInDb = await prisma.match.count();
-
-    // Statistiques des champions
-    const totalChampions = await prisma.champion.count();
-
-    // Statistiques des items
-    const totalItems = await prisma.item.count();
+    const [playerStats, totalPlayers, totalMatches, totalMatchesInDb, totalChampions, totalItems] = await Promise.all([
+      prisma.discoveredPlayer.groupBy({
+        by: ["crawlStatus"],
+        _count: { id: true },
+      }),
+      prisma.discoveredPlayer.count(),
+      prisma.discoveredPlayer.aggregate({
+        _sum: { matchesCollected: true },
+      }),
+      prisma.match.count(),
+      prisma.champion.count(),
+      prisma.item.count(),
+    ]);
 
     // Statistiques des comptes League of Legends (somme de toutes les tables shardées)
     // Utiliser UNION ALL pour optimiser le comptage en une seule requête

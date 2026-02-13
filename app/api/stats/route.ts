@@ -26,20 +26,13 @@ export async function GET(request: NextRequest) {
       "public:stats",
       CacheTTL.LONG, // 30 minutes - les stats changent lentement
       async () => {
-        // Compter les matchs analyses
-        const totalMatches = await prisma.match.count({
-          where: {
-            participants: {
-              some: {},
-            },
-          },
-        });
-
-        // Compter les joueurs decouverts
-        const totalPlayers = await prisma.discoveredPlayer.count();
-
-        // Compter les champions
-        const totalChampions = await prisma.champion.count();
+        const [totalMatches, totalPlayers, totalChampions] = await Promise.all([
+          prisma.match.count({
+            where: { participants: { some: {} } },
+          }),
+          prisma.discoveredPlayer.count(),
+          prisma.champion.count(),
+        ]);
 
         return {
           totalMatches,
