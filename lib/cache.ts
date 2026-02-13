@@ -12,6 +12,8 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
+const MAX_CACHE_ENTRIES = 500;
+
 class MemoryCache {
   private store: Map<string, CacheEntry<unknown>> = new Map();
   private cleanupInterval: NodeJS.Timeout | null = null;
@@ -46,14 +48,33 @@ class MemoryCache {
       return null;
     }
 
+    // Move to end for LRU ordering (Map preserves insertion order)
+    this.store.delete(key);
+    this.store.set(key, entry);
+
     return entry.value as T;
   }
 
   set<T>(key: string, value: T, ttlMs: number): void {
+    // If key already exists, delete first to refresh insertion order
+    if (this.store.has(key)) {
+      this.store.delete(key);
+    }
+
     this.store.set(key, {
       value,
       expiresAt: Date.now() + ttlMs,
     });
+
+    // Evict oldest entries (LRU) if over max size
+    if (this.store.size > MAX_CACHE_ENTRIES) {
+      const excess = this.store.size - MAX_CACHE_ENTRIES;
+      const keysIterator = this.store.keys();
+      for (let i = 0; i < excess; i++) {
+        const oldest = keysIterator.next().value;
+        if (oldest !== undefined) this.store.delete(oldest);
+      }
+    }
   }
 
   delete(key: string): void {
