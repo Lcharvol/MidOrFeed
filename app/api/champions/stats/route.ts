@@ -83,7 +83,9 @@ export async function GET(request: NextRequest) {
     // Le premier est probablement l'actuel, donc on prend le deuxième pour la comparaison
     const historyMap = new Map<string, number>();
 
-    // Récupérer tous les historiques triés par champion et date (desc)
+    // Fetch the 2 most recent history records per champion for trend calculation.
+    // We fetch all records (bounded by analysis frequency, not user data) and
+    // filter in JS because Prisma doesn't support per-group LIMIT.
     const allHistory = await prisma.championWinRateHistory.findMany({
       where: {
         championId: { in: championIds },
@@ -97,8 +99,6 @@ export async function GET(request: NextRequest) {
         { championId: "asc" },
         { recordedAt: "desc" },
       ],
-      // Only need the 2 most recent records per champion for trend calculation
-      take: championIds.length * 2,
     });
 
     // Pour chaque champion, prendre le deuxième enregistrement le plus récent
