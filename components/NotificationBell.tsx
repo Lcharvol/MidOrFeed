@@ -87,7 +87,7 @@ export const NotificationBell = () => {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0" align="end">
+      <PopoverContent className="w-[min(320px,calc(100vw-2rem))] p-0" align="end">
         <div className="flex items-center justify-between px-4 py-3">
           <div>
             <p className="text-sm font-semibold">Notifications</p>
