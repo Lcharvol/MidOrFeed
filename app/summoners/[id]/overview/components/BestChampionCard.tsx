@@ -49,7 +49,7 @@ export const BestChampionCard = ({
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={getChampionSplashUrl(resolveSlug(bestChampionId))}
-          alt=""
+          alt={`${championName} splash art`}
           fill
           sizes="(max-width: 1024px) 100vw, 50vw"
           className="object-cover object-center opacity-45"

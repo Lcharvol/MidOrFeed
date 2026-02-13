@@ -185,7 +185,7 @@ export const ChampionLeadershipSection = ({
                           {player.profileIconId && (
                             <Image
                               src={getProfileIconUrl(player.profileIconId)}
-                              alt=""
+                              alt={`${displayName} profile icon`}
                               width={24}
                               height={24}
                               className="rounded-full border border-border/60 sm:w-8 sm:h-8"
