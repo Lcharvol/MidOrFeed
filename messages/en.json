@@ -1031,6 +1031,15 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "summonerPage": {
+    "searchError": "Error during search",
+    "nameAndTagRequired": "Name and tag are required",
+    "playerNotFound": "Player not found:",
+    "tooManyRequests": "Too many requests — try again in a few seconds",
+    "serverError": "Server error — try again later",
+    "networkError": "Network error — check your connection",
+    "enterPlayerName": "Enter a player name"
+  },
   "summonerSearch": {
     "noResultsTryFormat": "No player found. Try the Name#TAG format.",
     "searching": "Searching"

@@ -8,6 +8,7 @@ import { createLogger } from "@/lib/logger";
 const logger = createLogger("summoners-search");
 import { toast } from "sonner";
 import { useRecentSearch } from "@/lib/hooks/use-recent-search";
+import { useI18n } from "@/lib/i18n-context";
 import { HeroSearchSection } from "./components/HeroSearchSection";
 import { LinkedAccountCard } from "./components/LinkedAccountCard";
 import { RecentSearches } from "./components/RecentSearches";
@@ -33,6 +34,7 @@ export default function SummonersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("euw1");
   const [isSearching, setIsSearching] = useState(false);
@@ -56,7 +58,7 @@ export default function SummonersPage() {
         });
 
         if (!response.ok) {
-          toast.error("Erreur lors de la recherche");
+          toast.error(t("summonerPage.searchError"));
           return;
         }
 
@@ -76,7 +78,7 @@ export default function SummonersPage() {
         }
       } catch (error) {
         logger.error("Partial search error", error as Error);
-        toast.error("Erreur lors de la recherche");
+        toast.error(t("summonerPage.searchError"));
       } finally {
         setIsSearching(false);
       }
@@ -92,7 +94,7 @@ export default function SummonersPage() {
       const tagLine = searchQuery.slice(hashIndex + 1).trim();
 
       if (!gameName || !tagLine) {
-        setFormatHint("Le nom et le tag sont requis");
+        setFormatHint(t("summonerPage.nameAndTagRequired"));
         return;
       }
 
@@ -110,13 +112,11 @@ export default function SummonersPage() {
 
         if (!response.ok || !data.data?.puuid) {
           if (response.status === 404) {
-            toast.error(
-              `Joueur introuvable : ${gameName}#${tagLine} n'existe pas sur ${searchRegion.toUpperCase()}`
-            );
+            toast.error(`${t("summonerPage.playerNotFound")} ${gameName}#${tagLine} (${searchRegion.toUpperCase()})`);
           } else if (response.status === 429) {
-            toast.error("Trop de requetes — reessaie dans quelques secondes");
+            toast.error(t("summonerPage.tooManyRequests"));
           } else {
-            toast.error(data.error || "Erreur serveur — reessaie plus tard");
+            toast.error(data.error || t("summonerPage.serverError"));
           }
           return;
         }
@@ -126,7 +126,7 @@ export default function SummonersPage() {
         );
       } catch (error) {
         logger.error("Riot search error", error as Error);
-        toast.error("Erreur reseau — verifie ta connexion");
+        toast.error(t("summonerPage.networkError"));
       } finally {
         setIsSearching(false);
       }
@@ -138,7 +138,7 @@ export default function SummonersPage() {
     if (isSearching) return;
     const trimmed = query.trim();
     if (!trimmed) {
-      toast.error("Entrez un nom de joueur");
+      toast.error(t("summonerPage.enterPlayerName"));
       return;
     }
 
@@ -152,7 +152,7 @@ export default function SummonersPage() {
       // No # or trailing # → partial search
       const cleanQuery = hashIndex > 0 ? trimmed.slice(0, hashIndex).trim() : trimmed;
       if (cleanQuery.length < 2) {
-        toast.error("Entrez au moins 2 caracteres");
+        toast.error(t("homeSearch.minCharacters"));
         return;
       }
       await performPartialSearch(cleanQuery, region);
