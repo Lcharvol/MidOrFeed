@@ -424,6 +424,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
+        success: true,
         message: "Collecte terminée avec succès",
         matchesCollected,
         participantsCreated,
