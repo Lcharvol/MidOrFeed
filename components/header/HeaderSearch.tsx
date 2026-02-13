@@ -24,6 +24,7 @@ import {
 import { Loader2Icon, SearchIcon } from "lucide-react";
 import { useSummonerSearch } from "@/lib/hooks/use-summoner-search";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
+import { useI18n } from "@/lib/i18n-context";
 
 export function HeaderSearch({
   isSearchOpen,
@@ -32,6 +33,7 @@ export function HeaderSearch({
   isSearchOpen: boolean;
   setIsSearchOpen: (open: boolean) => void;
 }) {
+  const { t } = useI18n();
   const {
     searchQuery,
     setSearchQuery,
@@ -56,7 +58,7 @@ export function HeaderSearch({
           className="h-9 w-9 hover:bg-muted/60"
         >
           <SearchIcon className="size-5" />
-          <span className="sr-only">Rechercher</span>
+          <span className="sr-only">{t("homeSearch.search")}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -70,7 +72,7 @@ export function HeaderSearch({
               <SearchIcon className="size-4" />
             </div>
             <CommandInput
-              placeholder="Rechercher un invocateur..."
+              placeholder={t("header.searchPlaceholder")}
               value={searchQuery}
               onValueChange={setSearchQuery}
               onKeyDown={(event) => {
@@ -82,10 +84,10 @@ export function HeaderSearch({
             />
           </div>
           <div className="flex items-center justify-between gap-2 px-4 py-3 bg-background/70 backdrop-blur">
-            <span className="text-xs text-muted-foreground">Région</span>
+            <span className="text-xs text-muted-foreground">{t("headerSearch.region")}</span>
             <Select value={searchRegion} onValueChange={setSearchRegion}>
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Région" />
+                <SelectValue placeholder={t("headerSearch.region")} />
               </SelectTrigger>
               <SelectContent>
                 {RIOT_REGIONS.map((regionOption) => (
@@ -102,11 +104,11 @@ export function HeaderSearch({
           <CommandList>
             <CommandEmpty>
               {searchQuery.length >= 2
-                ? "Aucun invocateur trouvé."
-                : "Tapez au moins deux caractères pour rechercher."}
+                ? t("headerSearch.noSummonerFound")
+                : t("headerSearch.minCharacters")}
             </CommandEmpty>
             {searchResults.length > 0 && (
-              <CommandGroup heading="Résultats">
+              <CommandGroup heading={t("homeSearch.results")}>
                 {searchResults.map((result) => (
                   <CommandItem
                     key={result.puuid}
@@ -116,7 +118,7 @@ export function HeaderSearch({
                   >
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">
-                        {result.gameName ?? "Inconnu"}
+                        {result.gameName ?? t("headerSearch.unknown")}
                         {result.tagLine && (
                           <span className="text-muted-foreground">
                             #{result.tagLine}
@@ -134,7 +136,7 @@ export function HeaderSearch({
               </CommandGroup>
             )}
             {recentSearches.length > 0 && (
-              <CommandGroup heading="Recherches récentes">
+              <CommandGroup heading={t("homeSearch.recentSearches")}>
                 {recentSearches.map((recent) => (
                   <CommandItem
                     key={`${recent.gameName}#${recent.tagLine}@${recent.region}`}
@@ -169,12 +171,12 @@ export function HeaderSearch({
               {isSearching ? (
                 <>
                   <Loader2Icon className="mr-2 size-4 animate-spin" />
-                  Recherche...
+                  {t("header.searching")}
                 </>
               ) : (
                 <>
                   <SearchIcon className="mr-2 size-4" />
-                  Rechercher
+                  {t("homeSearch.search")}
                 </>
               )}
             </Button>

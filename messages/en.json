@@ -1031,6 +1031,12 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "headerSearch": {
+    "region": "Region",
+    "noSummonerFound": "No summoner found.",
+    "minCharacters": "Type at least two characters to search.",
+    "unknown": "Unknown"
+  },
   "playerSearch": {
     "searchPlayer": "Search for a player",
     "recentSearches": "Recent searches",

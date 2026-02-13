@@ -1033,6 +1033,12 @@
       "metaStats": "Meta & Stats"
     }
   },
+  "headerSearch": {
+    "region": "Région",
+    "noSummonerFound": "Aucun invocateur trouvé.",
+    "minCharacters": "Tapez au moins deux caractères pour rechercher.",
+    "unknown": "Inconnu"
+  },
   "playerSearch": {
     "searchPlayer": "Rechercher un joueur",
     "recentSearches": "Recherches récentes",
