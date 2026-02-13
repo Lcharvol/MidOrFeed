@@ -146,7 +146,7 @@ export async function POST(request: Request) {
       );
 
       // Préparer tous les upserts à exécuter en batch
-      const upsertPromises: Promise<unknown>[] = [];
+      const upsertOperations: Array<() => Promise<unknown>> = [];
       const newLevelNotifications: Array<{
         challengeId: number;
         currentLevel: string;
@@ -171,8 +171,8 @@ export async function POST(request: Request) {
           });
         }
 
-        // Ajouter l'upsert à la liste
-        upsertPromises.push(
+        // Ajouter l'upsert à la liste (thunked pour exécution différée)
+        upsertOperations.push(() =>
           prisma.playerChallenge.upsert({
             where: {
               leagueAccountId_challengeId: {
@@ -215,8 +215,12 @@ export async function POST(request: Request) {
         );
       }
 
-      // Exécuter tous les upserts en parallèle
-      await Promise.all(upsertPromises);
+      // Execute upserts in chunks of 50 to avoid memory exhaustion
+      const CHUNK_SIZE = 50;
+      for (let i = 0; i < upsertOperations.length; i += CHUNK_SIZE) {
+        const chunk = upsertOperations.slice(i, i + CHUNK_SIZE);
+        await Promise.all(chunk.map((op) => op()));
+      }
 
       // Envoyer les notifications
       for (const notification of newLevelNotifications) {
@@ -231,7 +235,7 @@ export async function POST(request: Request) {
         notificationsSent += 1;
       }
 
-      updatedCount = upsertPromises.length;
+      updatedCount = upsertOperations.length;
 
       await prisma.playerChallenge.deleteMany({
         where: {
