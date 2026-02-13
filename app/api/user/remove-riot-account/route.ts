@@ -59,6 +59,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json(
       {
+        success: true,
         message: "Association au compte League of Legends supprimée",
         user: {
           id: updatedUser.id,

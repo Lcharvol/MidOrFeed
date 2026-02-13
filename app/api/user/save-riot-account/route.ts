@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
     // Retourner les données du compte
     return NextResponse.json(
       {
+        success: true,
         message: "Compte Riot sauvegardé avec succès",
         user: {
           id: updatedUser.id,
