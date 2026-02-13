@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const updateUserSchema = z.object({
+  userId: z.string().min(1, "ID utilisateur manquant"),
+  role: z.enum(["user", "admin"]).optional(),
+  dailyAnalysisLimit: z.number().int().min(0).max(1000).optional(),
+}).refine(
+  (data) => data.role !== undefined || data.dailyAnalysisLimit !== undefined,
+  { message: "Aucune modification fournie" }
+);
 
 export async function GET(request: NextRequest) {
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
@@ -69,53 +79,22 @@ export async function POST(request: NextRequest) {
   const authError = await requireAdmin(request, { skipCsrf: true });
   if (authError) return authError;
   try {
-    const body = await request
-      .json()
-      .catch(() => ({} as { userId?: string; role?: string; dailyAnalysisLimit?: number }));
-    const userId = body?.userId ?? "";
-    const role = body?.role?.toLowerCase();
-    const dailyAnalysisLimit = body?.dailyAnalysisLimit;
+    const body = await request.json().catch(() => null);
+    const parsed = updateUserSchema.safeParse(body);
 
-    if (!userId) {
+    if (!parsed.success) {
+      const firstError = parsed.error.errors[0]?.message ?? "Données invalides";
       return NextResponse.json(
-        { success: false, error: "ID utilisateur manquant" },
+        { success: false, error: firstError },
         { status: 400 }
       );
     }
 
-    // Build update data
+    const { userId, role, dailyAnalysisLimit } = parsed.data;
+
     const updateData: { role?: string; dailyAnalysisLimit?: number } = {};
-
-    // Validate role if provided
-    if (role !== undefined) {
-      if (role !== "user" && role !== "admin") {
-        return NextResponse.json(
-          { success: false, error: "Rôle invalide" },
-          { status: 400 }
-        );
-      }
-      updateData.role = role;
-    }
-
-    // Validate dailyAnalysisLimit if provided
-    if (dailyAnalysisLimit !== undefined) {
-      const limit = parseInt(String(dailyAnalysisLimit), 10);
-      if (isNaN(limit) || limit < 0 || limit > 1000) {
-        return NextResponse.json(
-          { success: false, error: "Limite d'analyses invalide (0-1000)" },
-          { status: 400 }
-        );
-      }
-      updateData.dailyAnalysisLimit = limit;
-    }
-
-    // Check if there's anything to update
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { success: false, error: "Aucune modification fournie" },
-        { status: 400 }
-      );
-    }
+    if (role !== undefined) updateData.role = role;
+    if (dailyAnalysisLimit !== undefined) updateData.dailyAnalysisLimit = dailyAnalysisLimit;
 
     const updated = await prisma.user.update({
       where: { id: userId },
