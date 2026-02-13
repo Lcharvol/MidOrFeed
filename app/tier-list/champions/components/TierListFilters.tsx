@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -67,7 +68,7 @@ export const TierListFilters = ({
     setRankFilter,
   } = actions;
 
-  const TIER_OPTIONS = [
+  const TIER_OPTIONS = useMemo(() => [
     { value: "ALL", label: t("tierListChampions.allTiers") },
     { value: "S+", label: "S+" },
     { value: "S", label: "S" },
@@ -75,13 +76,13 @@ export const TierListFilters = ({
     { value: "B", label: "B" },
     { value: "C", label: "C" },
     { value: "D", label: "D" },
-  ] as const;
+  ] as const, [t]);
 
-  const QUEUE_TYPE_OPTIONS = [
+  const QUEUE_TYPE_OPTIONS = useMemo(() => [
     { value: "ALL", label: t("tierListChampions.allModes") },
     { value: "SOLO", label: t("summoners.rankedSolo") },
     { value: "FLEX", label: t("summoners.rankedFlex") },
-  ] as const;
+  ] as const, [t]);
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 sm:p-4">
