@@ -3,6 +3,9 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { SwordsIcon, HomeIcon, AlertCircleIcon } from "lucide-react";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("compare");
 import { toast } from "sonner";
 import { useApiSWR } from "@/lib/hooks/swr";
 import {
@@ -93,7 +96,7 @@ export default function ComparePage() {
         `/api/compare?puuid1=${data1.data.puuid}&region1=${region1}&puuid2=${data2.data.puuid}&region2=${region2}`
       );
     } catch (error) {
-      console.error(error);
+      logger.error("Compare search error", error as Error);
       setSearchError("Erreur réseau. Vérifie ta connexion et réessaie.");
     } finally {
       setIsSearching(false);

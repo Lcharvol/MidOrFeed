@@ -11,6 +11,7 @@ import {
   GoogleLogin,
   type CredentialResponse,
 } from "@react-oauth/google";
+import { createLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,6 +36,8 @@ import { useI18n } from "@/lib/i18n-context";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2Icon, CheckIcon, XIcon } from "lucide-react";
 import { useGoogleClientId } from "@/lib/hooks/use-google-client-id";
+
+const logger = createLogger("signup");
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -106,7 +109,7 @@ export default function SignupPage() {
       toast.success(t("login.connectionSuccessful"));
       router.push("/");
     } catch (error) {
-      console.error("Google signup error:", error);
+      logger.error("Google signup error", error as Error);
       toast.error("Connexion Google impossible");
     } finally {
       setIsGoogleLoading(false);
@@ -161,7 +164,7 @@ export default function SignupPage() {
       // Rediriger vers la page de connexion
       router.push("/login");
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error("Signup error", error as Error);
       toast.error(t("signup.error"), {
         description: "Vérifiez votre connexion internet et réessayez.",
       });

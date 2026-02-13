@@ -3,6 +3,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("summoners-search");
 import { toast } from "sonner";
 import { useRecentSearch } from "@/lib/hooks/use-recent-search";
 import { HeroSearchSection } from "./components/HeroSearchSection";
@@ -72,7 +75,7 @@ export default function SummonersPage() {
           });
         }
       } catch (error) {
-        console.error("Partial search error:", error);
+        logger.error("Partial search error", error as Error);
         toast.error("Erreur lors de la recherche");
       } finally {
         setIsSearching(false);
@@ -122,7 +125,7 @@ export default function SummonersPage() {
           `/summoners/${data.data.puuid}/overview?region=${searchRegion}`
         );
       } catch (error) {
-        console.error(error);
+        logger.error("Riot search error", error as Error);
         toast.error("Erreur reseau — verifie ta connexion");
       } finally {
         setIsSearching(false);
