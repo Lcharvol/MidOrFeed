@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { championId } = await params;
 
-    // Récupérer les participants pour ce champion avec leurs informations
+    // Récupérer les participants pour ce champion (borné à 50k pour éviter OOM)
     const participants = await prisma.matchParticipant.findMany({
       where: {
         championId,
@@ -24,6 +24,7 @@ export async function GET(
         deaths: true,
         assists: true,
       },
+      take: 50000,
     });
 
     // Agrégation des statistiques par joueur
