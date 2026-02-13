@@ -6,6 +6,8 @@ import {
   normalizeLane,
   resolveChampionRole,
 } from "@/lib/compositions/roles";
+import { getTiersForBracket, RANK_BRACKETS } from "@/constants/ranks";
+import { toError } from "@/lib/errors";
 
 const logger = createLogger("champion-stats-by-patch");
 
@@ -17,6 +19,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const patch = searchParams.get("patch");
+  const rank = searchParams.get("rank");
 
   if (!patch || !PATCH_FORMAT.test(patch)) {
     return NextResponse.json(
@@ -25,10 +28,21 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Validate rank bracket if provided
+  const validRank = rank && RANK_BRACKETS.some((b) => b.key === rank) ? rank : null;
+  const tierFilter = validRank && validRank !== "ALL" ? getTiersForBracket(validRank) : null;
+
   try {
-    // Get match IDs for this patch
+    // Get match IDs for this patch (filter to ranked solo/duo if rank filter active)
+    const matchWhere: Record<string, unknown> = {
+      gameVersion: { startsWith: `${patch}.` },
+    };
+    if (tierFilter) {
+      matchWhere.queueId = 420; // Ranked Solo/Duo only when filtering by rank
+    }
+
     const matchIds = await prisma.match.findMany({
-      where: { gameVersion: { startsWith: `${patch}.` } },
+      where: matchWhere,
       select: { id: true },
     });
 
@@ -45,8 +59,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all participants for these matches
+    const participantWhere: Record<string, unknown> = {
+      matchId: { in: matchIdList },
+    };
+    if (tierFilter) {
+      // Only apply tier filter if enriched tier data exists
+      const hasTierData = await prisma.matchParticipant.count({
+        where: { participantTier: { not: null } },
+        take: 1,
+      });
+      if (hasTierData > 0) {
+        participantWhere.participantTier = { in: tierFilter };
+      }
+    }
+
     const participants = await prisma.matchParticipant.findMany({
-      where: { matchId: { in: matchIdList } },
+      where: participantWhere,
       select: {
         championId: true,
         win: true,
@@ -238,7 +266,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    logger.error("Erreur lors de la récupération des stats par patch", error as Error);
+    logger.error("Erreur lors de la récupération des stats par patch", toError(error));
     return NextResponse.json(
       { success: false, error: "Erreur lors de la récupération des statistiques" },
       { status: 500 }

@@ -44,8 +44,16 @@ export async function GET(request: NextRequest) {
 
   try {
     // If rank filter is active, compute stats on-demand from participants
+    // But only if there is enriched tier data available
     if (tierFilter) {
-      return await computeFilteredStats(tierFilter);
+      const hasTierData = await prisma.matchParticipant.count({
+        where: { participantTier: { not: null } },
+        take: 1,
+      });
+      if (hasTierData > 0) {
+        return await computeFilteredStats(tierFilter);
+      }
+      // No tier data yet — fall through to pre-calculated stats
     }
 
     // Default: use pre-calculated ChampionStats table
