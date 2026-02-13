@@ -12,6 +12,13 @@ import {
 } from "recharts";
 import type { PlayerData } from "./types";
 
+const TOOLTIP_STYLE: React.CSSProperties = {
+  backgroundColor: "hsl(var(--background))",
+  border: "1px solid hsl(var(--border))",
+  borderRadius: "8px",
+  fontSize: "12px",
+};
+
 export const PlaystyleRadar = ({
   player1,
   player2,
@@ -50,14 +57,7 @@ export const PlaystyleRadar = ({
             fillOpacity={0.3}
           />
           <Legend />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--background))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-              fontSize: "12px",
-            }}
-          />
+          <Tooltip contentStyle={TOOLTIP_STYLE} />
         </RadarChart>
       </ResponsiveContainer>
     </div>

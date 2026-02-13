@@ -59,6 +59,13 @@ type HistoryResponse = {
   };
 };
 
+const TOOLTIP_STYLE: React.CSSProperties = {
+  backgroundColor: "hsl(var(--background))",
+  border: "1px solid hsl(var(--border))",
+  borderRadius: "8px",
+  fontSize: "12px",
+};
+
 const ROLE_LABELS: Record<string, string> = {
   TOP: "Top",
   JUNGLE: "Jungle",
@@ -174,12 +181,7 @@ export function ProgressionCharts({ puuid }: ProgressionChartsProps) {
                     width={30}
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
+                    contentStyle={TOOLTIP_STYLE}
                     formatter={(value: number) => [`${value}%`, "Win Rate"]}
                   />
                   <Line
@@ -213,12 +215,7 @@ export function ProgressionCharts({ puuid }: ProgressionChartsProps) {
                     width={30}
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
+                    contentStyle={TOOLTIP_STYLE}
                   />
                   <Area
                     type="monotone"

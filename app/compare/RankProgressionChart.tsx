@@ -12,6 +12,13 @@ import {
 } from "recharts";
 import type { PlayerData } from "./types";
 
+const TOOLTIP_STYLE: React.CSSProperties = {
+  backgroundColor: "hsl(var(--background))",
+  border: "1px solid hsl(var(--border))",
+  borderRadius: "8px",
+  fontSize: "12px",
+};
+
 export const RankProgressionChart = ({
   player1,
   player2,
@@ -62,14 +69,7 @@ export const RankProgressionChart = ({
         <LineChart data={data}>
           <XAxis dataKey="date" tick={{ fontSize: 10 }} />
           <YAxis hide />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--background))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-              fontSize: "12px",
-            }}
-          />
+          <Tooltip contentStyle={TOOLTIP_STYLE} />
           <Legend />
           <Line
             type="monotone"
