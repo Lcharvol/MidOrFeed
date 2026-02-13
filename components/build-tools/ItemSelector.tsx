@@ -83,14 +83,18 @@ export const ItemSelector = ({
     STATIC_DATA_CONFIG
   );
 
-  // Also fetch all items for displaying selected items (in case they don't match filter)
+  const hasFilters = !!(filterTag || completedOnly || starterOnly);
+
+  // Only fetch all items separately when filters are active (need to display
+  // selected items that may not match the filter). When no filters are active,
+  // apiUrl already fetches all items so this would be a duplicate request.
   const { data: allItemsData } = useApiSWR<ItemsResponse>(
-    "/api/items/list?limit=500",
+    hasFilters ? "/api/items/list?limit=500" : null,
     STATIC_DATA_CONFIG
   );
 
   const filteredListItems = itemsData?.data ?? [];
-  const allItemsLookup = allItemsData?.data ?? [];
+  const allItemsLookup = hasFilters ? (allItemsData?.data ?? []) : filteredListItems;
 
   // Filter items by search
   const filteredItems = useMemo(() => {
