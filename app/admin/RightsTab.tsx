@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -60,6 +60,46 @@ const formatRelativeDate = (dateString: string | null, t: (key: string) => strin
 
   return date.toLocaleDateString();
 };
+
+const PageNumbers = memo(function PageNumbers({
+  page,
+  totalPages,
+  loading,
+  goToPage,
+}: {
+  page: number;
+  totalPages: number;
+  loading: boolean;
+  goToPage: (p: number) => void;
+}) {
+  const pageNumbers = useMemo(() => {
+    return Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+      if (totalPages <= 5) return i + 1;
+      if (page <= 3) return i + 1;
+      if (page >= totalPages - 2) return totalPages - 4 + i;
+      return page - 2 + i;
+    });
+  }, [page, totalPages]);
+
+  return (
+    <div className="flex items-center gap-1 mx-2">
+      {pageNumbers.map((pageNum) => (
+        <Button
+          key={pageNum}
+          variant={pageNum === page ? "default" : "outline"}
+          size="icon"
+          className="size-8"
+          onClick={() => goToPage(pageNum)}
+          disabled={loading}
+          aria-label={`Page ${pageNum}`}
+          aria-current={pageNum === page ? "page" : undefined}
+        >
+          {pageNum}
+        </Button>
+      ))}
+    </div>
+  );
+});
 
 export const RightsTab = () => {
   const { t } = useI18n();
@@ -326,34 +366,12 @@ export const RightsTab = () => {
             >
               <ChevronLeftIcon className="size-4" />
             </Button>
-            <div className="flex items-center gap-1 mx-2">
-              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (pagination.totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (pagination.page <= 3) {
-                  pageNum = i + 1;
-                } else if (pagination.page >= pagination.totalPages - 2) {
-                  pageNum = pagination.totalPages - 4 + i;
-                } else {
-                  pageNum = pagination.page - 2 + i;
-                }
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={pageNum === pagination.page ? "default" : "outline"}
-                    size="icon"
-                    className="size-8"
-                    onClick={() => goToPage(pageNum)}
-                    disabled={loading}
-                    aria-label={`Page ${pageNum}`}
-                    aria-current={pageNum === pagination.page ? "page" : undefined}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
+            <PageNumbers
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              loading={loading}
+              goToPage={goToPage}
+            />
             <Button
               variant="outline"
               size="icon"
