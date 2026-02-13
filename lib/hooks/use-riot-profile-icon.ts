@@ -22,13 +22,15 @@ export function useRiotProfileIcon(
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchRiotDetails = async () => {
-      if (!riotPuuid || !riotRegion) {
-        // Nettoyer les détails si pas de puuid ou region
-        setRiotDetails(null);
-        return;
-      }
+    if (!riotPuuid || !riotRegion) {
+      setRiotDetails(null);
+      return;
+    }
 
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const fetchRiotDetails = async () => {
       setIsLoading(true);
 
       try {
@@ -41,21 +43,31 @@ export function useRiotProfileIcon(
             puuid: riotPuuid,
             region: riotRegion,
           }),
+          signal: controller.signal,
         });
 
         const result = await response.json();
 
-        if (response.ok && result.data) {
+        if (!cancelled && response.ok && result.data) {
           setRiotDetails(result.data);
         }
       } catch (error) {
-        console.error("Erreur:", error);
+        if (!cancelled && (error as Error).name !== "AbortError") {
+          console.error("Erreur:", error);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchRiotDetails();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [riotPuuid, riotRegion]);
 
   return {
