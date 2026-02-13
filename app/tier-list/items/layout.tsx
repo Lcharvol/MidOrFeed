@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     description:
       "Les meilleurs objets de League of Legends classés par winrate et taux de pick.",
   },
+  alternates: {
+    canonical: "https://midorfeed.gg/tier-list/items",
+  },
 };
 
 export default function TierListItemsLayout({ children }: { children: React.ReactNode }) {

@@ -19,6 +19,9 @@ export const metadata: Metadata = {
       "Leaderboard of the best League of Legends players in Challenger, Grandmaster, and Master tiers.",
     type: "website",
   },
+  alternates: {
+    canonical: "https://midorfeed.gg/leaderboard",
+  },
 };
 
 const leaderboardSchema = {

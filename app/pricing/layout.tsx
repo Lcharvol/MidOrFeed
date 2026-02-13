@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Tarifs",
   description:
     "Découvrez les plans gratuit et premium de Mid or Feed. Analyses IA illimitées, coaching personnalisé et statistiques avancées.",
+  alternates: {
+    canonical: "https://midorfeed.gg/pricing",
+  },
 };
 
 const pricingPageSchema = {

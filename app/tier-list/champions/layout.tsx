@@ -18,6 +18,9 @@ export const metadata: Metadata = {
       "Data-driven tier list with win rates, pick rates and rankings for all League of Legends champions.",
     type: "website",
   },
+  alternates: {
+    canonical: "https://midorfeed.gg/tier-list/champions",
+  },
 };
 
 const tierListSchema = {
