@@ -176,8 +176,10 @@ export async function POST(request: NextRequest) {
     const action = body?.action as "start" | "stop" | undefined;
     const seedRegion =
       (body?.seedRegion as string | undefined)?.toLowerCase() || "euw1";
-    const seedCount = Number(body?.seedCount ?? 50);
-    const maxRiotCallsPerCycle = Number(body?.maxRiotCallsPerCycle ?? 50);
+    const rawSeedCount = Number(body?.seedCount ?? 50);
+    const seedCount = Number.isFinite(rawSeedCount) ? Math.min(Math.max(rawSeedCount, 1), 500) : 50;
+    const rawMaxRiotCalls = Number(body?.maxRiotCallsPerCycle ?? 50);
+    const maxRiotCallsPerCycle = Number.isFinite(rawMaxRiotCalls) ? Math.min(Math.max(rawMaxRiotCalls, 1), 200) : 50;
 
     if (action === "start") {
       if (!global.__ADMIN_PIPELINE__) {
