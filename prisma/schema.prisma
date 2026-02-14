@@ -659,3 +659,19 @@ model ChampionGuideCommentVote {
   @@index([userId])
   @@map("champion_guide_comment_votes")
 }
+
+model NewsArticle {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  imageUrl    String?
+  externalUrl String?
+  publishedAt DateTime?
+  status      String    @default("draft") // draft | published
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, publishedAt])
+  @@map("news_articles")
+}

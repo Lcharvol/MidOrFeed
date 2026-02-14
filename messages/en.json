@@ -569,6 +569,7 @@
       "articleUpdated": "Article updated",
       "articleDeleted": "Article deleted",
       "imageUrl": "Image URL",
+      "externalUrl": "External URL",
       "excerpt": "Excerpt",
       "publishDate": "Publish date",
       "searchPlaceholder": "Search by title...",

@@ -14,6 +14,16 @@ export type LeaderboardEntry = {
   tier: string;
 };
 
+export type NewsArticle = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  imageUrl: string | null;
+  externalUrl: string | null;
+  publishedAt: string | null;
+};
+
 export type FeaturedGame = {
   gameId: number;
   gameMode: string;
