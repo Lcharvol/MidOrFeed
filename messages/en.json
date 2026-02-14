@@ -52,7 +52,16 @@
     "searchFor": "Search for",
     "searching": "Searching...",
     "searchInvalidFormat": "Invalid format. Use: Name#Tag",
-    "searchError": "Error searching"
+    "searchError": "Error searching",
+    "nav": {
+      "compare": "Compare",
+      "compareDescription": "Compare the stats of two players.",
+      "counterPicks": "Counter Picks",
+      "counterPicksDescription": "Find the best counters for every champion.",
+      "leaderboard": "Leaderboard",
+      "leaderboardDescription": "Browse the top-ranked players by region.",
+      "metaStats": "Meta & Stats"
+    }
   },
   "home": {
     "leagueOfLegends": "League of Legends",
@@ -1019,17 +1028,6 @@
     "loadingDescription": "Error loading data",
     "retry": "Retry",
     "home": "Home"
-  },
-  "header": {
-    "nav": {
-      "compare": "Compare",
-      "compareDescription": "Compare the stats of two players.",
-      "counterPicks": "Counter Picks",
-      "counterPicksDescription": "Find the best counters for every champion.",
-      "leaderboard": "Leaderboard",
-      "leaderboardDescription": "Browse the top-ranked players by region.",
-      "metaStats": "Meta & Stats"
-    }
   },
   "favorites": {
     "title": "Favorites",
