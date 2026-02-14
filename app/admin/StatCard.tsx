@@ -37,7 +37,7 @@ export function StatCard({
         {icon}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
+        <div className="text-xl sm:text-2xl font-bold">
           {loading ? (
             <Loader2Icon className="size-6 animate-spin" />
           ) : typeof value === "number" ? (

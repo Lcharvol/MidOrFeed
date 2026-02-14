@@ -4,7 +4,9 @@ import { useApiSWR, STATIC_DATA_CONFIG, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/
 import { useChampionStats } from "@/lib/hooks/use-champion-stats";
 import { useChampions } from "@/lib/hooks/use-champions";
 import {
+  AnnouncementBanner,
   HeroSection,
+  NewsSection,
   TopChampionsSection,
   FreeRotationSection,
   LeaderboardSection,
@@ -12,7 +14,7 @@ import {
   FeaturesOverview,
   CTASection,
 } from "./components/home";
-import type { PublicStats, LeaderboardEntry, FeaturedGame } from "./components/home/types";
+import type { PublicStats, LeaderboardEntry, FeaturedGame, NewsArticle } from "./components/home/types";
 
 export default function Home() {
   const { data: statsData, isLoading: statsLoading } = useApiSWR<{
@@ -32,6 +34,13 @@ export default function Home() {
 
   const freeChampionIds = rotationData?.data?.freeChampionIds ?? [];
 
+  const { data: newsData, isLoading: newsLoading } = useApiSWR<{
+    success: boolean;
+    data: NewsArticle[];
+  }>("/api/news/latest", SEMI_DYNAMIC_CONFIG);
+
+  const newsArticles = newsData?.data ?? [];
+
   const { data: featuredData, isLoading: featuredLoading } = useApiSWR<{
     success: boolean;
     data: { games: FeaturedGame[] };
@@ -49,7 +58,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
+      <AnnouncementBanner article={newsArticles[0] ?? null} />
       <HeroSection stats={stats} statsLoading={statsLoading} />
+      <NewsSection articles={newsArticles} isLoading={newsLoading} />
       <TopChampionsSection
         topChampions={topChampions}
         championsLoading={championsLoading}

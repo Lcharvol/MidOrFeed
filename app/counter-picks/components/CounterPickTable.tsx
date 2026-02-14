@@ -1,13 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,11 +47,11 @@ type SortDir = "asc" | "desc" | null;
 const getRankIcon = (index: number) => {
   switch (index) {
     case 0:
-      return <TrophyIcon className="size-4 text-warning" />;
+      return <TrophyIcon className="size-3.5 text-warning" />;
     case 1:
-      return <MedalIcon className="size-4 text-muted-foreground" />;
+      return <MedalIcon className="size-3.5 text-muted-foreground" />;
     case 2:
-      return <AwardIcon className="size-4 text-amber-700 dark:text-amber-500" />;
+      return <AwardIcon className="size-3.5 text-amber-700 dark:text-amber-500" />;
     default:
       return null;
   }
@@ -95,11 +88,11 @@ const getProgressColor = (winRate: number) => {
 
 const SortIcon = ({ column, sortKey, sortDir }: { column: SortKey; sortKey: SortKey; sortDir: SortDir }) => {
   if (sortKey !== column || sortDir === null) {
-    return <ChevronsUpDownIcon className="ml-1 size-3.5 opacity-50" />;
+    return <ChevronsUpDownIcon className="ml-1 size-3 opacity-50" />;
   }
   return sortDir === "asc"
-    ? <ArrowUpIcon className="ml-1 size-3.5" />
-    : <ArrowDownIcon className="ml-1 size-3.5" />;
+    ? <ArrowUpIcon className="ml-1 size-3" />
+    : <ArrowDownIcon className="ml-1 size-3" />;
 };
 
 const INITIAL_SHOW = 10;
@@ -144,55 +137,55 @@ export const CounterPickTable = ({
     return (
       <TableRow key={pair.enemyChampionId} className={cn(isTopThree && "bg-muted/10")}>
         {/* Rank */}
-        <TableCell className="w-12 text-center">
+        <TableCell className="w-10 text-center py-1.5">
           {isTopThree ? (
             <div
               className={cn(
-                "mx-auto flex size-7 items-center justify-center rounded-full border",
+                "mx-auto flex size-6 items-center justify-center rounded-full border",
                 getRankBadge(index)
               )}
             >
               {getRankIcon(index)}
             </div>
           ) : (
-            <span className="text-sm text-muted-foreground">{index + 1}</span>
+            <span className="text-xs text-muted-foreground">{index + 1}</span>
           )}
         </TableCell>
 
         {/* Champion */}
-        <TableCell>
+        <TableCell className="py-1.5">
           <Link
             href={`/champions/${encodeURIComponent(pair.enemyChampionId)}`}
-            className="flex items-center gap-3 hover:underline"
+            className="flex items-center gap-2 hover:underline"
           >
             <ChampionIcon
               championId={pair.enemyChampionId}
-              size={36}
+              size={28}
               shape="circle"
               className={cn(
-                "border-2 shrink-0",
+                "border shrink-0",
                 isTopThree ? "border-primary/30" : "border-border/50"
               )}
             />
-            <span className={cn("font-medium", isTopThree && "text-foreground")}>
+            <span className={cn("text-sm font-medium", isTopThree && "text-foreground")}>
               {enemyName}
             </span>
           </Link>
         </TableCell>
 
         {/* Win Rate */}
-        <TableCell>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block flex-1 max-w-24">
+        <TableCell className="py-1.5">
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:block flex-1 max-w-20">
               <Progress
                 value={pair.winRate * 100}
-                className="h-2"
+                className="h-1.5"
                 indicatorClassName={getProgressColor(pair.winRate)}
               />
             </div>
             <span
               className={cn(
-                "w-14 text-right text-sm font-semibold tabular-nums",
+                "w-12 text-right text-xs font-semibold tabular-nums",
                 getWinRateColor(pair.winRate)
               )}
             >
@@ -202,15 +195,15 @@ export const CounterPickTable = ({
         </TableCell>
 
         {/* Matches */}
-        <TableCell className="text-right">
-          <span className="text-sm text-muted-foreground tabular-nums">
+        <TableCell className="text-right py-1.5">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {formatNumber(pair.games)}
           </span>
         </TableCell>
 
         {/* W / L */}
-        <TableCell className="text-right hidden sm:table-cell">
-          <span className="text-sm tabular-nums">
+        <TableCell className="text-right hidden sm:table-cell py-1.5">
+          <span className="text-xs tabular-nums">
             <span className="text-success-muted-foreground">{formatNumber(pair.wins)}</span>
             {" / "}
             <span className="text-danger-muted-foreground">{formatNumber(pair.losses)}</span>
@@ -222,36 +215,37 @@ export const CounterPickTable = ({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <Card className="border-border/50">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <SwordsIcon className="size-5 text-muted-foreground" />
-                {t("counterPicks.counterRanking")}
-              </CardTitle>
-              <CardDescription>
-                {mode === "same_lane"
-                  ? t("counterPicks.counterRankingDescSameLane").replace("{championName}", championName)
-                  : t("counterPicks.counterRankingDescGlobal").replace("{championName}", championName)}
-              </CardDescription>
-            </div>
-            <Badge emphasis="info" emphasisVariant="subtle" className="px-3">
-              {t("counterPicks.matchupsCount").replace("{count}", String(pairs.length))}
-            </Badge>
+      <div className="space-y-3">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <SwordsIcon className="size-4 text-muted-foreground" />
+              {t("counterPicks.counterRanking")}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {mode === "same_lane"
+                ? t("counterPicks.counterRankingDescSameLane").replace("{championName}", championName)
+                : t("counterPicks.counterRankingDescGlobal").replace("{championName}", championName)}
+            </p>
           </div>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
+          <Badge emphasis="info" emphasisVariant="subtle" className="px-2 text-[10px]">
+            {t("counterPicks.matchupsCount").replace("{count}", String(pairs.length))}
+          </Badge>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-hidden rounded-lg border border-border/50">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="w-12 text-center text-xs">
+                <TableHead className="w-10 text-center text-[10px]">
                   {t("counterPicks.rank")}
                 </TableHead>
-                <TableHead className="text-xs">
+                <TableHead className="text-[10px]">
                   {t("counterPicks.champion")}
                 </TableHead>
-                <TableHead className="text-xs">
+                <TableHead className="text-[10px]">
                   <button
                     className="flex items-center hover:text-foreground transition-colors"
                     onClick={() => handleSort("winRate")}
@@ -260,7 +254,7 @@ export const CounterPickTable = ({
                     <SortIcon column="winRate" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </TableHead>
-                <TableHead className="text-right text-xs">
+                <TableHead className="text-right text-[10px]">
                   <button
                     className="ml-auto flex items-center hover:text-foreground transition-colors"
                     onClick={() => handleSort("games")}
@@ -269,7 +263,7 @@ export const CounterPickTable = ({
                     <SortIcon column="games" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </TableHead>
-                <TableHead className="text-right text-xs hidden sm:table-cell">
+                <TableHead className="text-right text-[10px] hidden sm:table-cell">
                   {t("counterPicks.winsLosses")}
                 </TableHead>
               </TableRow>
@@ -292,12 +286,12 @@ export const CounterPickTable = ({
                 </Table>
               </CollapsibleContent>
 
-              <div className="border-t border-border/50 p-4">
+              <div className="border-t border-border/50 p-2">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full">
+                  <Button variant="ghost" size="sm" className="w-full h-7 text-xs">
                     <ChevronDownIcon
                       className={cn(
-                        "mr-2 size-4 transition-transform",
+                        "mr-1.5 size-3.5 transition-transform",
                         open && "rotate-180"
                       )}
                     />
@@ -309,8 +303,8 @@ export const CounterPickTable = ({
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Collapsible>
   );
 };

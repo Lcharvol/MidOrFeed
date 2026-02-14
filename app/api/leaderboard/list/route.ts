@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
 import { toError } from "@/lib/errors";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 
 const logger = createLogger("leaderboard");
 
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
       cacheKey,
       CacheTTL.MEDIUM, // 5 minutes - le leaderboard change régulièrement
       async () => {
-        return prisma.leaderboardEntry.findMany({
+        const raw = await prisma.leaderboardEntry.findMany({
           where: {
             region,
             queueType: "RANKED_SOLO_5x5",
@@ -48,6 +49,46 @@ export async function GET(req: NextRequest) {
           orderBy: { leaguePoints: "desc" },
           take,
         });
+
+        // Enrich top 50 entries with profile icon and most played champion
+        try {
+          const toEnrich = raw.slice(0, 50);
+          const summonerIds = toEnrich
+            .map((e) => e.summonerId)
+            .filter(Boolean);
+
+          if (summonerIds.length > 0) {
+            const accounts =
+              await ShardedLeagueAccounts.findManyBySummonerIds(
+                summonerIds,
+                region
+              );
+
+            const enrichMap = new Map(
+              accounts.map((a) => [
+                a.riotSummonerId,
+                {
+                  profileIconId: a.profileIconId,
+                  mostPlayedChampion: a.mostPlayedChampion,
+                },
+              ])
+            );
+
+            return raw.map((entry, idx) => {
+              if (idx >= 50) return entry;
+              const extra = enrichMap.get(entry.summonerId);
+              return {
+                ...entry,
+                profileIconId: extra?.profileIconId ?? null,
+                mostPlayedChampion: extra?.mostPlayedChampion ?? null,
+              };
+            });
+          }
+        } catch (err) {
+          logger.warn("Leaderboard enrichment failed, continuing without", { error: toError(err).message });
+        }
+
+        return raw;
       }
     );
 

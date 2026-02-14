@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
             deaths: true,
             assists: true,
             goldEarned: true,
+            totalDamageDealtToChampions: true,
+            totalDamageTaken: true,
             visionScore: true,
             win: true,
             item0: true,

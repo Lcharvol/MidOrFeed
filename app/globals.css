@@ -81,7 +81,7 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
   /* 🌞 Light mode - teinte violette subtile */
   --background: oklch(0.98 0.005 280);
@@ -124,20 +124,20 @@
   --sidebar-ring: oklch(0.55 0.2 280);
 
   /* Couleurs sémantiques - Light mode */
-  --success: oklch(0.45 0.15 145);
+  --success: oklch(0.55 0.19 155);
   --success-foreground: oklch(1 0 0);
-  --success-muted: oklch(0.92 0.05 145);
-  --success-muted-foreground: oklch(0.35 0.12 145);
+  --success-muted: oklch(0.94 0.06 155);
+  --success-muted-foreground: oklch(0.4 0.14 155);
 
   --warning: oklch(0.55 0.15 55);
   --warning-foreground: oklch(0.25 0 0);
   --warning-muted: oklch(0.95 0.05 55);
   --warning-muted-foreground: oklch(0.45 0.12 55);
 
-  --danger: oklch(0.5 0.18 25);
+  --danger: oklch(0.55 0.22 15);
   --danger-foreground: oklch(1 0 0);
-  --danger-muted: oklch(0.95 0.04 25);
-  --danger-muted-foreground: oklch(0.45 0.15 25);
+  --danger-muted: oklch(0.95 0.05 15);
+  --danger-muted-foreground: oklch(0.48 0.17 15);
 
   --info: oklch(0.5 0.15 230);
   --info-foreground: oklch(1 0 0);
@@ -145,9 +145,9 @@
   --info-muted-foreground: oklch(0.4 0.12 230);
 
   /* Win/Loss - Light mode */
-  --win: oklch(0.55 0.18 145);
+  --win: oklch(0.55 0.19 155);
   --win-foreground: oklch(1 0 0);
-  --loss: oklch(0.55 0.2 25);
+  --loss: oklch(0.55 0.22 15);
   --loss-foreground: oklch(1 0 0);
 
   /* Tiers LoL - Light mode */
@@ -208,20 +208,20 @@
   --primary-gradient: linear-gradient(135deg, #7c3aed, #6d28d9);
 
   /* Couleurs sémantiques - Dark mode */
-  --success: oklch(0.6 0.18 145);
+  --success: oklch(0.7 0.2 155);
   --success-foreground: oklch(0.15 0 0);
-  --success-muted: oklch(0.25 0.08 145);
-  --success-muted-foreground: oklch(0.75 0.12 145);
+  --success-muted: oklch(0.25 0.08 155);
+  --success-muted-foreground: oklch(0.78 0.14 155);
 
   --warning: oklch(0.7 0.15 55);
   --warning-foreground: oklch(0.15 0 0);
   --warning-muted: oklch(0.28 0.06 55);
   --warning-muted-foreground: oklch(0.8 0.1 55);
 
-  --danger: oklch(0.6 0.2 25);
+  --danger: oklch(0.65 0.23 15);
   --danger-foreground: oklch(1 0 0);
-  --danger-muted: oklch(0.25 0.08 25);
-  --danger-muted-foreground: oklch(0.75 0.15 25);
+  --danger-muted: oklch(0.25 0.09 15);
+  --danger-muted-foreground: oklch(0.78 0.16 15);
 
   --info: oklch(0.65 0.15 230);
   --info-foreground: oklch(0.15 0 0);
@@ -229,9 +229,9 @@
   --info-muted-foreground: oklch(0.75 0.1 230);
 
   /* Win/Loss - Dark mode */
-  --win: oklch(0.65 0.2 145);
+  --win: oklch(0.7 0.2 155);
   --win-foreground: oklch(0.15 0 0);
-  --loss: oklch(0.6 0.22 25);
+  --loss: oklch(0.65 0.23 15);
   --loss-foreground: oklch(1 0 0);
 
   /* Tiers LoL - Dark mode */

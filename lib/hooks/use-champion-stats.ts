@@ -12,12 +12,13 @@ type ChampionStatsResponse = ApiResponse<TierListChampionStats[]> & {
 
 type UseChampionStatsOptions = {
   patch?: string;
+  rank?: string;
 };
 
 export const useChampionStats = (options?: UseChampionStatsOptions) => {
   const key = options?.patch
-    ? apiKeys.championStatsByPatch(options.patch)
-    : apiKeys.championStats();
+    ? apiKeys.championStatsByPatch(options.patch, options.rank)
+    : apiKeys.championStats(options?.rank ? { rank: options.rank } : undefined);
 
   const { data, error, isLoading, mutate, isValidating } =
     useApiSWR<ChampionStatsResponse>(key, {

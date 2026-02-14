@@ -132,13 +132,89 @@ export async function POST(request: Request) {
       if (accountResponse.status === 400) {
         const riotMessage = (errorBody as { status?: { message?: string } })?.status?.message ?? "";
         const isDecryptionError = riotMessage.toLowerCase().includes("decrypting");
+
+        if (isDecryptionError) {
+          // Auto-resolve: look up gameName/tagLine from DB and re-search by Riot ID
+          const existingAccount = await ShardedLeagueAccounts.findUniqueByPuuid(
+            validatedData.puuid,
+            normalizedRegion
+          ) ?? await ShardedLeagueAccounts.findUniqueByPuuidGlobal(
+            validatedData.puuid,
+            normalizedRegion
+          );
+
+          if (existingAccount?.riotGameName && existingAccount?.riotTagLine) {
+            logger.info("PUUID expired, re-resolving via Riot ID", {
+              oldPuuid: validatedData.puuid,
+              gameName: existingAccount.riotGameName,
+              tagLine: existingAccount.riotTagLine,
+            });
+
+            const reResolveResponse = await fetchWithRetry(
+              `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(existingAccount.riotGameName)}/${encodeURIComponent(existingAccount.riotTagLine)}`
+            );
+
+            if (reResolveResponse.ok) {
+              const newAccountData = await reResolveResponse.json();
+              const newPuuid: string = newAccountData.puuid;
+
+              // Update the PUUID in the sharded table
+              await ShardedLeagueAccounts.updatePuuid(
+                validatedData.puuid,
+                newPuuid,
+                normalizedRegion
+              );
+
+              // Also update the main league_accounts table if it exists there
+              await prisma.leagueOfLegendsAccount.updateMany({
+                where: { puuid: validatedData.puuid },
+                data: { puuid: newPuuid },
+              });
+
+              // Update any User references
+              await prisma.user.updateMany({
+                where: { riotPuuid: validatedData.puuid },
+                data: { riotPuuid: newPuuid },
+              });
+
+              logger.info("PUUID re-resolved successfully", {
+                oldPuuid: validatedData.puuid,
+                newPuuid,
+              });
+
+              // Return a redirect-like response so the client navigates to the new profile
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: "PUUID mis à jour automatiquement.",
+                  code: "PUUID_REFRESHED",
+                  newPuuid,
+                },
+                { status: 301 }
+              );
+            }
+
+            logger.warn("Failed to re-resolve PUUID via Riot ID", {
+              status: reResolveResponse.status,
+              gameName: existingAccount.riotGameName,
+            });
+          }
+
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Ce PUUID n'est plus valide côté Riot (clé expirée). Veuillez re-chercher le joueur par son pseudo.",
+              code: "PUUID_EXPIRED",
+            },
+            { status: 400 }
+          );
+        }
+
         return NextResponse.json(
           {
             success: false,
-            error: isDecryptionError
-              ? "Ce PUUID n'est plus valide côté Riot (clé expirée). Veuillez re-chercher le joueur par son pseudo."
-              : "Requête invalide — le PUUID est peut-être corrompu.",
-            code: isDecryptionError ? "PUUID_EXPIRED" : "BAD_REQUEST",
+            error: "Requête invalide — le PUUID est peut-être corrompu.",
+            code: "BAD_REQUEST",
           },
           { status: 400 }
         );

@@ -30,6 +30,11 @@ const ApiTestTab = dynamic(
   { loading: () => <LazyLoadingFallback />, ssr: false }
 );
 
+const NewsTab = dynamic(
+  () => import("./NewsTab").then((mod) => ({ default: mod.NewsTab })),
+  { loading: () => <LazyLoadingFallback />, ssr: false }
+);
+
 export default function AdminPage() {
   const { user, isLoading } = useAuth();
   const { t } = useI18n();
@@ -78,9 +83,9 @@ export default function AdminPage() {
         </div>
       }
     >
-      <div className="container mx-auto py-10 space-y-8">
+      <div className="container mx-auto py-6 sm:py-10 space-y-8">
         <div>
-          <h1 className="text-4xl font-bold mb-2">{t("admin.title")}</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">{t("admin.title")}</h1>
           <p className="text-muted-foreground">{t("admin.description")}</p>
         </div>
         <AdminTabs />
@@ -94,7 +99,7 @@ function AdminTabs() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab =
-    (searchParams?.get("tab") as "discover" | "jobs" | "rights" | "api") ||
+    (searchParams?.get("tab") as "discover" | "jobs" | "rights" | "api" | "news") ||
     "discover";
 
   return (
@@ -103,11 +108,12 @@ function AdminTabs() {
       onValueChange={(v) => router.replace(`/admin?tab=${v}`)}
       className="w-full"
     >
-      <TabsList className="mb-6">
+      <TabsList className="mb-6 w-full sm:w-fit overflow-x-auto">
         <TabsTrigger value="discover">{t("admin.tabs.discover")}</TabsTrigger>
         <TabsTrigger value="jobs">Jobs</TabsTrigger>
         <TabsTrigger value="rights">{t("admin.tabs.rights")}</TabsTrigger>
         <TabsTrigger value="api">{t("admin.tabs.api")}</TabsTrigger>
+        <TabsTrigger value="news">{t("admin.tabs.news")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="discover" className="space-y-6">
@@ -124,6 +130,10 @@ function AdminTabs() {
 
       <TabsContent value="api">
         <ApiTestTab />
+      </TabsContent>
+
+      <TabsContent value="news">
+        <NewsTab />
       </TabsContent>
     </Tabs>
   );

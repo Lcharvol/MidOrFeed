@@ -1097,5 +1097,33 @@
   },
   "pricing": {
     "premiumUnavailable": "Premium is temporarily unavailable."
+  },
+  "draft": {
+    "title": "Draft Simulator",
+    "description": "Practice the ranked champion select against an AI opponent. Build your team composition, then see how it scores.",
+    "blueTeam": "Blue Team",
+    "redTeam": "Red Team",
+    "yourTurn": "Your Turn",
+    "enemyTurn": "Enemy Turn",
+    "banPhase": "Ban",
+    "bans": "Bans",
+    "timer": "Timer",
+    "on": "On",
+    "off": "Off",
+    "startDraft": "Start Draft",
+    "selectRole": "Role",
+    "searchChampion": "Search champion...",
+    "noChampionsFound": "No champions found.",
+    "results": "Draft Results",
+    "laneMatchups": "Lane Matchups",
+    "avgWinRate": "Avg Win Rate",
+    "playAgain": "Play Again",
+    "history": "Score History",
+    "recentDrafts": "Recent Drafts",
+    "avgWinProb": "Avg Win Prob",
+    "loginToTrack": "Log in to save your draft history",
+    "noDraftsYet": "No drafts yet",
+    "navTitle": "Draft Simulator",
+    "navDescription": "Practice champion select draft"
   }
 }

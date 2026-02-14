@@ -10,7 +10,12 @@ export const apiKeys = {
     const query = searchParams.toString();
     return `/api/champions/list${query ? `?${query}` : ""}`;
   },
-  championStats: () => "/api/champions/stats",
+  championStats: (params?: { rank?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.rank) searchParams.set("rank", params.rank);
+    const query = searchParams.toString();
+    return `/api/champions/stats${query ? `?${query}` : ""}`;
+  },
   matches: (params?: { puuid?: string }) =>
     params?.puuid ? `/api/matches/list?puuid=${params.puuid}` : "/api/matches/list",
   counterPicks: (championId: string, mode?: "same_lane" | "global") =>
@@ -33,7 +38,14 @@ export const apiKeys = {
     const query = searchParams.toString();
     return `/api/items/list${query ? `?${query}` : ""}`;
   },
+  draftAnalyze: () => "/api/draft/analyze",
+  draftSave: () => "/api/draft/save",
+  draftHistory: (limit = 30) => `/api/draft/history?limit=${limit}`,
   patches: () => "/api/patches",
-  championStatsByPatch: (patch: string) =>
-    `/api/champions/stats/by-patch?patch=${encodeURIComponent(patch)}`,
+  championStatsByPatch: (patch: string, rank?: string) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("patch", patch);
+    if (rank) searchParams.set("rank", rank);
+    return `/api/champions/stats/by-patch?${searchParams.toString()}`;
+  },
 };

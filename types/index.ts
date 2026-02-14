@@ -9,4 +9,5 @@ export * from "./roles";
 export type * from "./summoners";
 export type * from "./tier-list";
 export type * from "./user";
+export type * from "./draft";
 export type * from "./versions";

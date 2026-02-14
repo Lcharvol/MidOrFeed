@@ -123,7 +123,7 @@ export const LiveGameSection = ({ region, puuid }: LiveGameSectionProps) => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Blue Team */}
                   <div>
                     <Badge className="mb-2 bg-blue-500/20 text-blue-600 border-blue-500/30">

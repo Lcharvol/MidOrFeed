@@ -22,6 +22,7 @@ import {
   UsersIcon,
   BarChartIcon,
   DownloadIcon,
+  GamepadIcon,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -77,6 +78,14 @@ export function Header() {
         description: t("compositions.favorites.description"),
         isActive: pathEquals("/compositions/favorites"),
       },
+      {
+        key: "compositions-draft",
+        href: "/draft",
+        icon: GamepadIcon,
+        title: t("draft.navTitle"),
+        description: t("draft.navDescription"),
+        isActive: pathEquals("/draft"),
+      },
     ];
 
     const meta: NavEntry[] = [
@@ -128,7 +137,11 @@ export function Header() {
         label: t("compositions.menu"),
         icon: LayersIcon,
         entries: compositions,
-        isActive: pathStartsWith("/compositions"),
+        isActive: (path) =>
+          Boolean(
+            path &&
+              (path.startsWith("/compositions") || path === "/draft")
+          ),
       },
       {
         key: "meta",

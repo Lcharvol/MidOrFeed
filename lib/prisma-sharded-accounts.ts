@@ -425,6 +425,31 @@ export class ShardedLeagueAccounts {
   }
 
   /**
+   * Remplace le PUUID d'un compte existant (ex: après expiration de clé Riot)
+   */
+  static async updatePuuid(
+    oldPuuid: string,
+    newPuuid: string,
+    region: string
+  ): Promise<void> {
+    const tableName = getLeagueAccountsTableName(region);
+    if (!/^[a-z0-9_]+$/.test(tableName.replace("league_accounts_", ""))) {
+      throw new Error(`Invalid region name for table: ${region}`);
+    }
+
+    await prisma.$executeRawUnsafe(
+      `UPDATE "${tableName}" SET "puuid" = $1, "updatedAt" = NOW() WHERE "puuid" = $2`,
+      newPuuid,
+      oldPuuid
+    );
+
+    // Mettre à jour le cache de région
+    this.regionCache.delete(oldPuuid);
+    this.regionCache.set(newPuuid, region);
+    this.regionCacheTimestamps.set(newPuuid, Date.now());
+  }
+
+  /**
    * Trouve plusieurs comptes par PUUIDs dans une région
    */
   static async findManyByPuuids(
@@ -489,6 +514,49 @@ export class ShardedLeagueAccounts {
       // Si on a trouvé tous les comptes, on peut arrêter
       if (result.size === puuids.length) break;
     }
+
+    return result;
+  }
+
+  /**
+   * Trouve plusieurs comptes par riotSummonerId dans une région
+   * Retourne uniquement les champs nécessaires pour l'enrichissement du leaderboard
+   */
+  static async findManyBySummonerIds(
+    summonerIds: string[],
+    region: string
+  ): Promise<
+    Array<{
+      riotSummonerId: string;
+      profileIconId: number | null;
+      mostPlayedChampion: string | null;
+    }>
+  > {
+    if (summonerIds.length === 0) return [];
+
+    if (!validateRegion(region)) {
+      throw new Error(`Invalid region: ${region}`);
+    }
+
+    const tableName = getLeagueAccountsTableName(region);
+
+    if (!validateTableName(tableName)) {
+      throw new Error(`Invalid table name: ${tableName}`);
+    }
+
+    const escapedTableName = escapeSqlIdentifier(tableName);
+    const placeholders = summonerIds.map((_, i) => `$${i + 1}`).join(", ");
+
+    const result = await prisma.$queryRawUnsafe<
+      Array<{
+        riotSummonerId: string;
+        profileIconId: number | null;
+        mostPlayedChampion: string | null;
+      }>
+    >(
+      `SELECT "riotSummonerId", "profileIconId", "mostPlayedChampion" FROM ${escapedTableName} WHERE "riotSummonerId" IN (${placeholders})`,
+      ...summonerIds
+    );
 
     return result;
   }

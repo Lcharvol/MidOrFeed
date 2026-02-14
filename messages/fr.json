@@ -1099,5 +1099,33 @@
   },
   "pricing": {
     "premiumUnavailable": "Premium temporairement indisponible."
+  },
+  "draft": {
+    "title": "Simulateur de Draft",
+    "description": "Entraînez-vous à la phase de sélection des champions contre une IA. Construisez votre composition, puis découvrez son score.",
+    "blueTeam": "Équipe Bleue",
+    "redTeam": "Équipe Rouge",
+    "yourTurn": "Votre Tour",
+    "enemyTurn": "Tour Ennemi",
+    "banPhase": "Ban",
+    "bans": "Bans",
+    "timer": "Chrono",
+    "on": "Activé",
+    "off": "Désactivé",
+    "startDraft": "Lancer la Draft",
+    "selectRole": "Rôle",
+    "searchChampion": "Rechercher un champion...",
+    "noChampionsFound": "Aucun champion trouvé.",
+    "results": "Résultats de la Draft",
+    "laneMatchups": "Matchups par Lane",
+    "avgWinRate": "Winrate Moyen",
+    "playAgain": "Rejouer",
+    "history": "Historique des Scores",
+    "recentDrafts": "Drafts Récents",
+    "avgWinProb": "Prob. Victoire Moy.",
+    "loginToTrack": "Connectez-vous pour sauvegarder vos drafts",
+    "noDraftsYet": "Aucun draft pour le moment",
+    "navTitle": "Simulateur de Draft",
+    "navDescription": "Entraînez-vous à la sélection des champions"
   }
 }

@@ -34,6 +34,7 @@ model User {
   championGuideCommentVotes ChampionGuideCommentVote[]
   favoritePlayers           FavoritePlayer[]
   compositionSuggestions    CompositionSuggestion[]
+  draftHistory              DraftHistory[]
 
   passwordResetTokens PasswordResetToken[]
 
@@ -658,6 +659,25 @@ model ChampionGuideCommentVote {
   @@unique([commentId, userId])
   @@index([userId])
   @@map("champion_guide_comment_votes")
+}
+
+model DraftHistory {
+  id                 String   @id @default(cuid())
+  userId             String
+  blueWinProbability Float
+  bluePicks          Json     // [{championId, role}]
+  redPicks           Json     // [{championId, role}]
+  blueAvgWinRate     Float
+  blueAvgKDA         Float
+  blueAvgScore       Float
+  redAvgWinRate      Float
+  redAvgKDA          Float
+  redAvgScore        Float
+  recordedAt         DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt])
+  @@map("draft_history")
 }
 
 model NewsArticle {

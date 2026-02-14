@@ -7,6 +7,7 @@ import type {
   TierListChampionStats,
 } from "@/types";
 import { MATCHES_FETCH_LIMIT } from "@/constants/matches";
+import { DEFAULT_RANK_BRACKET } from "@/constants/ranks";
 import { computeChampionScore, normalizeRoleKey, resolveTier } from "../utils";
 import { useChampions } from "@/lib/hooks/use-champions";
 import { useChampionStats } from "@/lib/hooks/use-champion-stats";
@@ -25,6 +26,7 @@ export type TierListState = {
   reliabilityOnly: boolean;
   eliteOnly: boolean;
   selectedPatch: string | undefined;
+  rankFilter: string;
 };
 
 export type TierListActions = {
@@ -38,6 +40,7 @@ export type TierListActions = {
   handleSort: (column: SortColumn) => void;
   toggleWinRateSort: () => void;
   setSelectedPatch: (value: string | undefined) => void;
+  setRankFilter: (value: string) => void;
 };
 
 export type TierListDerived = {
@@ -69,6 +72,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
   const [reliabilityOnly, setReliabilityOnly] = useState(false);
   const [eliteOnly, setEliteOnly] = useState(false);
   const [selectedPatch, setSelectedPatch] = useState<string | undefined>(undefined);
+  const [rankFilter, setRankFilter] = useState<string>(DEFAULT_RANK_BRACKET);
 
   const {
     champions,
@@ -82,7 +86,10 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     totalUniqueMatches: statsTotalUniqueMatches,
     isLoading: statsLoading,
     error: statsError,
-  } = useChampionStats(selectedPatch ? { patch: selectedPatch } : undefined);
+  } = useChampionStats({
+    patch: selectedPatch,
+    rank: rankFilter,
+  });
 
   const statsMap = useMemo(() => {
     const map = new Map<string, TierListChampionStats>();
@@ -271,7 +278,8 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     roleFilter !== "ALL" ||
     tierFilter !== "ALL" ||
     queueTypeFilter !== "ALL" ||
-    selectedPatch !== undefined;
+    selectedPatch !== undefined ||
+    rankFilter !== DEFAULT_RANK_BRACKET;
   const isWinRateSort = sortColumn === "winRate";
 
   const resetFilters = useCallback(() => {
@@ -281,6 +289,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
     setQueueTypeFilter("ALL");
     setEliteOnly(false);
     setSelectedPatch(undefined);
+    setRankFilter(DEFAULT_RANK_BRACKET);
     setSortColumn("score");
     setSortDirection("desc");
   }, []);
@@ -314,6 +323,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
       reliabilityOnly,
       eliteOnly,
       selectedPatch,
+      rankFilter,
     },
     actions: {
       setSearchTerm,
@@ -326,6 +336,7 @@ export const useChampionTierList = (): UseChampionTierListReturn => {
       handleSort,
       toggleWinRateSort,
       setSelectedPatch,
+      setRankFilter,
     },
     derived: {
       championsWithStats,

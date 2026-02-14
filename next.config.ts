@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
         hostname: "ddragon.leagueoflegends.com",
         pathname: "/cdn/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.contentstack.io",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cmsassets.rgpub.io",
+        pathname: "/**",
+      },
     ],
     // Data Dragon images are served from Riot CDN and don't need optimization
     // We use dangerouslyAllowSVG for champion/item icons

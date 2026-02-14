@@ -98,7 +98,7 @@ export const MasterySection = ({ region, puuid }: MasterySectionProps) => {
               </span>
             </div>
 
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {masteryData.data.topMasteries.map((mastery) => {
                 const champSlug = championKeyToIdMap.get(String(mastery.championId)) || String(mastery.championId);
                 return (

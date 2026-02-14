@@ -232,12 +232,12 @@ export const RightsTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           placeholder={t("admin.rights.filterPlaceholder")}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="max-w-sm"
+          className="w-full sm:max-w-sm"
         />
         <Button
           variant="outline"
@@ -247,12 +247,13 @@ export const RightsTab = () => {
           <RefreshCwIcon className={`size-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           {t("admin.rights.reload")}
         </Button>
-        <div className="ml-auto text-sm text-muted-foreground">
+        <div className="sm:ml-auto text-sm text-muted-foreground">
           {pagination.totalCount} {t("admin.rights.usersTotal")}
         </div>
       </div>
 
-      <div className="rounded-md border overflow-hidden">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="rounded-md border overflow-hidden min-w-[700px]">
         <div className="grid grid-cols-12 px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/40">
           <div className="col-span-3">{t("admin.rights.email")}</div>
           <div className="col-span-2">{t("admin.rights.name")}</div>
@@ -338,10 +339,11 @@ export const RightsTab = () => {
           </ul>
         )}
       </div>
+      </div>
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-2">
           <div className="text-sm text-muted-foreground">
             {t("admin.rights.page")} {pagination.page} / {pagination.totalPages}
           </div>

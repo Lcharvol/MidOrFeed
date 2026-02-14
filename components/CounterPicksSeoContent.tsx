@@ -19,12 +19,12 @@ export function CounterPicksSeoContent({
     return (
       <section
         className={cn(
-          "mt-12 space-y-6 text-muted-foreground text-sm leading-relaxed",
+          "mt-6 space-y-4 text-muted-foreground text-xs sm:text-sm leading-relaxed",
           className
         )}
       >
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">
+        <div className="space-y-3">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">
             Comment contrer {championName} sur League of Legends
           </h2>
           <p>
@@ -43,7 +43,7 @@ export function CounterPicksSeoContent({
 
         {topCounters.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-lg font-medium text-foreground">
+            <h3 className="text-sm sm:text-base font-medium text-foreground">
               Meilleurs counters de {championName}
             </h3>
             <p>
@@ -54,16 +54,16 @@ export function CounterPicksSeoContent({
           </div>
         )}
 
-        <div className="space-y-4 border-t pt-6">
-          <h3 className="text-lg font-medium text-foreground">
-            Questions fréquentes - FAQ
+        <div className="space-y-3 border-t pt-4">
+          <h3 className="text-sm sm:text-base font-medium text-foreground">
+            FAQ
           </h3>
 
           <details className="group">
-            <summary className="cursor-pointer font-medium text-foreground hover:text-primary">
+            <summary className="cursor-pointer text-xs sm:text-sm font-medium text-foreground hover:text-primary">
               Quel est le meilleur counter de {championName} ?
             </summary>
-            <p className="mt-2 pl-4">
+            <p className="mt-1.5 pl-4 text-xs">
               Le meilleur counter de {championName} dépend de votre rôle et de
               votre style de jeu. Consultez notre analyse ci-dessus pour voir les
               champions avec le meilleur winrate contre {championName} basé sur
@@ -72,10 +72,10 @@ export function CounterPicksSeoContent({
           </details>
 
           <details className="group">
-            <summary className="cursor-pointer font-medium text-foreground hover:text-primary">
+            <summary className="cursor-pointer text-xs sm:text-sm font-medium text-foreground hover:text-primary">
               Comment jouer contre {championName} en lane ?
             </summary>
-            <p className="mt-2 pl-4">
+            <p className="mt-1.5 pl-4 text-xs">
               Pour bien jouer contre {championName}, choisissez un champion avec
               un kit qui exploite ses faiblesses. Étudiez les cooldowns de ses
               capacités principales et punissez-le quand elles sont en
@@ -84,10 +84,10 @@ export function CounterPicksSeoContent({
           </details>
 
           <details className="group">
-            <summary className="cursor-pointer font-medium text-foreground hover:text-primary">
+            <summary className="cursor-pointer text-xs sm:text-sm font-medium text-foreground hover:text-primary">
               What is the best counter for {championName}?
             </summary>
-            <p className="mt-2 pl-4">
+            <p className="mt-1.5 pl-4 text-xs">
               The best counter for {championName} depends on your role and
               playstyle. Check our analysis above to see the champions with the
               highest winrate against {championName} based on current season
@@ -103,12 +103,12 @@ export function CounterPicksSeoContent({
   return (
     <section
       className={cn(
-        "mt-12 space-y-6 text-muted-foreground text-sm leading-relaxed",
+        "mt-6 space-y-4 text-muted-foreground text-xs sm:text-sm leading-relaxed",
         className
       )}
     >
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">
+      <div className="space-y-3">
+        <h2 className="text-base sm:text-lg font-semibold text-foreground">
           Counter picks League of Legends - Guide complet
         </h2>
         <p>
@@ -123,8 +123,8 @@ export function CounterPicksSeoContent({
         </p>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium text-foreground">
+      <div className="space-y-3">
+        <h3 className="text-sm sm:text-base font-medium text-foreground">
           Qu&apos;est-ce qu&apos;un counter pick ?
         </h3>
         <p>
@@ -141,16 +141,16 @@ export function CounterPicksSeoContent({
         </p>
       </div>
 
-      <div className="space-y-4 border-t pt-6">
-        <h3 className="text-lg font-medium text-foreground">
-          Questions fréquentes - FAQ
+      <div className="space-y-3 border-t pt-4">
+        <h3 className="text-sm sm:text-base font-medium text-foreground">
+          FAQ
         </h3>
 
         <details className="group">
-          <summary className="cursor-pointer font-medium text-foreground hover:text-primary">
+          <summary className="cursor-pointer text-xs sm:text-sm font-medium text-foreground hover:text-primary">
             Comment trouver le meilleur counter pick ?
           </summary>
-          <p className="mt-2 pl-4">
+          <p className="mt-1.5 pl-4 text-xs">
             Utilisez notre outil ci-dessus pour sélectionner le champion adverse.
             Nous afficherons automatiquement les meilleurs counters basés sur les
             données de winrate actuelles.
@@ -158,10 +158,10 @@ export function CounterPicksSeoContent({
         </details>
 
         <details className="group">
-          <summary className="cursor-pointer font-medium text-foreground hover:text-primary">
+          <summary className="cursor-pointer text-xs sm:text-sm font-medium text-foreground hover:text-primary">
             Les counter picks sont-ils fiables ?
           </summary>
-          <p className="mt-2 pl-4">
+          <p className="mt-1.5 pl-4 text-xs">
             Nos données sont basées sur des milliers de matchs analysés. Cependant,
             le skill individuel et la composition d&apos;équipe jouent aussi un
             rôle important. Utilisez ces informations comme guide, pas comme règle
@@ -170,10 +170,10 @@ export function CounterPicksSeoContent({
         </details>
 
         <details className="group">
-          <summary className="cursor-pointer font-medium text-foreground hover:text-primary">
+          <summary className="cursor-pointer text-xs sm:text-sm font-medium text-foreground hover:text-primary">
             How do I find the best counter pick?
           </summary>
-          <p className="mt-2 pl-4">
+          <p className="mt-1.5 pl-4 text-xs">
             Use our tool above to select the enemy champion. We will automatically
             display the best counters based on current winrate data.
           </p>

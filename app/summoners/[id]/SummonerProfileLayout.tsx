@@ -90,6 +90,12 @@ export default function SummonerProfileLayout({
     try {
       const result = await refreshAccountAndMatches(region);
       if (!result.success) {
+        // Handle auto-resolved PUUID: redirect to new profile
+        if ("newPuuid" in result && result.newPuuid) {
+          toast.info("PUUID mis à jour, redirection...");
+          router.replace(`/summoners/${result.newPuuid}/overview?region=${region}`);
+          return;
+        }
         toast.error(result.error ?? "Erreur lors de la mise à jour");
         return;
       }

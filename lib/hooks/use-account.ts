@@ -139,10 +139,28 @@ export function useAccount(puuid?: string | null, region?: string | null) {
       isRefreshingRef.current = true;
 
       try {
-        const accountRes = await postRequest<
-          { puuid: string; region: string; force: boolean },
-          ApiResponse<unknown>
-        >("/api/riot/get-account-details", { puuid, region, force: true });
+        let accountRes: ApiResponse<unknown> & { code?: string; newPuuid?: string };
+        try {
+          accountRes = await postRequest<
+            { puuid: string; region: string; force: boolean },
+            ApiResponse<unknown> & { code?: string; newPuuid?: string }
+          >("/api/riot/get-account-details", { puuid, region, force: true });
+        } catch (err) {
+          // Check if the error contains a PUUID_REFRESHED response
+          if (err instanceof Error) {
+            try {
+              const parsed = JSON.parse(err.message);
+              if (parsed.code === "PUUID_REFRESHED" && parsed.newPuuid) {
+                return {
+                  success: false as const,
+                  error: "PUUID_REFRESHED",
+                  newPuuid: parsed.newPuuid as string,
+                };
+              }
+            } catch { /* not JSON, rethrow */ }
+          }
+          throw err;
+        }
 
         if (!accountRes.success) {
           return accountRes;

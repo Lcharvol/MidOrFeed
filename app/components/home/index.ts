@@ -1,4 +1,6 @@
+export { AnnouncementBanner } from "./AnnouncementBanner";
 export { HeroSection } from "./HeroSection";
+export { NewsSection } from "./NewsSection";
 export { TopChampionsSection } from "./TopChampionsSection";
 export { FreeRotationSection } from "./FreeRotationSection";
 export { LeaderboardSection } from "./LeaderboardSection";
