@@ -147,7 +147,9 @@
     "passwordRequired": "Le mot de passe est requis",
     "rememberMe": "Se souvenir de moi",
     "connecting": "Connexion...",
-    "orContinueWith": "Ou continuer avec"
+    "orContinueWith": "Ou continuer avec",
+    "googleError": "Connexion Google impossible",
+    "googleNotConfigured": "non configuré"
   },
   "signup": {
     "title": "Créer votre compte",

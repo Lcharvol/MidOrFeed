@@ -20,32 +20,57 @@ const oauthClient = GOOGLE_CLIENT_ID
   : null;
 
 export async function POST(request: Request) {
-  if (!oauthClient || !GOOGLE_CLIENT_ID) {
+  if (!GOOGLE_CLIENT_ID) {
     return errorResponse("Google OAuth non configuré", 500);
   }
 
   try {
-    const { data: body, error: parseError } = await safeParseJson<{ token?: string }>(request);
+    const { data: body, error: parseError } = await safeParseJson<{ token?: string; accessToken?: string }>(request);
 
-    if (parseError || !body?.token) {
+    if (parseError || (!body?.token && !body?.accessToken)) {
       return errorResponse(parseError ?? "Jeton Google manquant", 400);
     }
 
-    const googleToken = body.token;
+    let email: string;
+    let name: string;
 
-    const ticket = await oauthClient.verifyIdToken({
-      idToken: googleToken,
-      audience: GOOGLE_CLIENT_ID,
-    });
+    if (body.accessToken) {
+      // Flow: access_token from useGoogleLogin (popup OAuth)
+      const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${body.accessToken}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) {
+        return errorResponse("Token Google invalide", 401);
+      }
+      const userInfo = (await res.json()) as { email?: string; name?: string };
+      if (!userInfo.email) {
+        return errorResponse("Impossible de valider l'adresse e-mail", 400);
+      }
+      email = userInfo.email;
+      name = userInfo.name ?? email.split("@")[0];
+    } else if (body.token) {
+      // Flow: ID token from GoogleLogin credential (legacy)
+      if (!oauthClient) {
+        return errorResponse("Google OAuth non configuré", 500);
+      }
 
-    const payload = ticket.getPayload();
+      const ticket = await oauthClient.verifyIdToken({
+        idToken: body.token,
+        audience: GOOGLE_CLIENT_ID,
+      });
 
-    if (!payload?.email) {
-      return errorResponse("Impossible de valider l'adresse e-mail", 400);
+      const payload = ticket.getPayload();
+
+      if (!payload?.email) {
+        return errorResponse("Impossible de valider l'adresse e-mail", 400);
+      }
+
+      email = payload.email;
+      name = payload.name ?? payload.given_name ?? email.split("@")[0];
+    } else {
+      return errorResponse("Jeton Google manquant", 400);
     }
-
-    const email = payload.email;
-    const name = payload.name ?? payload.given_name ?? email.split("@")[0];
 
     let user = await prisma.user.findUnique({
       where: { email },

@@ -6,13 +6,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  GoogleOAuthProvider,
-  GoogleLogin,
-  type CredentialResponse,
-} from "@react-oauth/google";
 import { createLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import {
   Card,
   CardContent,
@@ -34,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n-context";
 import { useAuth } from "@/lib/auth-context";
-import { Loader2Icon, CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import { useGoogleClientId } from "@/lib/hooks/use-google-client-id";
 
 const logger = createLogger("signup");
@@ -80,44 +76,32 @@ export default function SignupPage() {
 
   type SignupFormValues = z.infer<typeof signupSchema>;
 
-  const handleGoogleSuccess = async (
-    credentialResponse: CredentialResponse
-  ) => {
-    if (!credentialResponse.credential) {
-      toast.error("Connexion Google impossible");
-      return;
-    }
-
+  const handleGoogleAccessToken = async (accessToken: string) => {
     setIsGoogleLoading(true);
     try {
       const response = await fetch("/api/auth/google-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: credentialResponse.credential }),
-        credentials: "include", // Important: include cookies
+        body: JSON.stringify({ accessToken }),
+        credentials: "include",
       });
 
       const result = await response.json();
 
       if (!response.ok || !result?.user) {
-        toast.error(result?.error ?? "Connexion Google impossible");
+        toast.error(result?.error ?? t("login.googleError"));
         return;
       }
 
-      // Store user data (token is now in HTTP-only cookie set by server)
       login(result.user);
       toast.success(t("login.connectionSuccessful"));
       router.push("/");
     } catch (error) {
       logger.error("Google signup error", error as Error);
-      toast.error("Connexion Google impossible");
+      toast.error(t("login.googleError"));
     } finally {
       setIsGoogleLoading(false);
     }
-  };
-
-  const handleGoogleError = () => {
-    toast.error("Connexion Google impossible");
   };
 
   const form = useForm<SignupFormValues>({
@@ -370,35 +354,18 @@ export default function SignupPage() {
             <div className="w-full">
               {isGoogleConfigLoading ? (
                 <Button variant="outline" className="w-full" disabled>
-                  Chargement...
+                  {t("common.loading")}
                 </Button>
               ) : isGoogleConfigured && googleClientId ? (
-                <GoogleOAuthProvider clientId={googleClientId}>
-                  <div className="relative flex w-full justify-center">
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={handleGoogleError}
-                      theme="outline"
-                      shape="rectangular"
-                      text="signin_with"
-                      type="standard"
-                      logo_alignment="left"
-                      size="large"
-                      width="100%"
-                      locale="fr"
-                      auto_select={false}
-                      useOneTap={false}
-                    />
-                    {isGoogleLoading ? (
-                      <div className="absolute inset-0 flex items-center justify-center rounded-md bg-background/70">
-                        <Loader2Icon className="size-5 animate-spin text-primary" />
-                      </div>
-                    ) : null}
-                  </div>
-                </GoogleOAuthProvider>
+                <GoogleSignInButton
+                  clientId={googleClientId}
+                  onAccessToken={handleGoogleAccessToken}
+                  text="Google"
+                  disabled={isGoogleLoading}
+                />
               ) : (
                 <Button variant="outline" className="w-full" disabled>
-                  Google (non configuré)
+                  Google ({t("login.googleNotConfigured")})
                 </Button>
               )}
             </div>

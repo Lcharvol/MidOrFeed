@@ -147,7 +147,9 @@
     "passwordRequired": "Password is required",
     "rememberMe": "Remember me",
     "connecting": "Connecting...",
-    "orContinueWith": "Or continue with"
+    "orContinueWith": "Or continue with",
+    "googleError": "Google sign-in failed",
+    "googleNotConfigured": "not configured"
   },
   "signup": {
     "title": "Create Your Account",
