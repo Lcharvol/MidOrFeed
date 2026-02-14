@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
+import { buildSiteUrl } from "@/constants/site";
+import { baseOpenGraph } from "@/constants/seo";
 
 export const metadata: Metadata = {
-  title: "LoL Leaderboard - Challenger, Grandmaster & Master Rankings",
+  title: "Classement LoL - Rank Challenger, Grandmaster & Master League of Legends",
   description:
-    "View the top League of Legends players in Challenger, Grandmaster, and Master tiers across all regions. Track LP, win rates, and rankings.",
+    "Classement des meilleurs joueurs League of Legends : Challenger, Grandmaster et Master. Suivez les ranks, LP et winrates par région.",
   keywords: [
+    "rank league of legends",
+    "classement lol",
+    "classement league of legends",
     "lol leaderboard",
     "league of legends challenger",
     "lol challenger players",
@@ -14,13 +19,14 @@ export const metadata: Metadata = {
     "lol rankings",
   ],
   openGraph: {
-    title: "LoL Leaderboard - Top Ranked Players",
+    ...baseOpenGraph,
+    title: "Classement LoL - Rank Challenger, Grandmaster & Master League of Legends",
     description:
-      "Leaderboard of the best League of Legends players in Challenger, Grandmaster, and Master tiers.",
+      "Classement des meilleurs joueurs League of Legends : Challenger, Grandmaster et Master.",
     type: "website",
   },
   alternates: {
-    canonical: "https://midorfeed.gg/leaderboard",
+    canonical: buildSiteUrl("/leaderboard"),
   },
 };
 
@@ -30,7 +36,7 @@ const leaderboardSchema = {
   name: "League of Legends Ranked Leaderboard",
   description:
     "Ranking of the top League of Legends players in Challenger, Grandmaster, and Master tiers.",
-  url: "https://midorfeed.gg/leaderboard",
+  url: buildSiteUrl("/leaderboard"),
   itemListOrder: "https://schema.org/ItemListOrderDescending",
 };
 

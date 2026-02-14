@@ -5,8 +5,8 @@ import { getChampionDetails } from "@/lib/champions/get-champion-details";
 import { getChampionAbilities } from "@/lib/champions/get-champion-abilities";
 import { getChampionSplashUrl } from "@/constants/ddragon";
 import { buildSiteUrl } from "@/constants/site";
+import { SITE_NAME } from "@/constants/seo";
 import {
-  SITE_NAME,
   type ChampionPageParams,
   generateMetadata as generateChampionMetadata,
 } from "./metadata";

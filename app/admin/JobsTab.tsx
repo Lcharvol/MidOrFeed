@@ -8,6 +8,7 @@ import { RefreshCwIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { STATUS_STYLES } from "@/lib/styles/game-colors";
 import { cn } from "@/lib/utils";
+import { authenticatedFetch } from "@/lib/api-client";
 
 import { ActiveJobsList } from "./components/jobs/ActiveJobsList";
 import { QueueCategoryGroup } from "./components/jobs/QueueStatusCard";
@@ -44,7 +45,7 @@ export function JobsTab() {
 
   const fetchJobs = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/jobs");
+      const res = await authenticatedFetch("/api/admin/jobs");
       const json = await res.json();
       if (!res.ok) {
         throw new Error(json.error || "Failed to fetch jobs");
@@ -75,7 +76,7 @@ export function JobsTab() {
 
   const fetchActiveJobDetails = async (queueName: string) => {
     try {
-      const res = await fetch(`/api/admin/jobs/${queueName}`);
+      const res = await authenticatedFetch(`/api/admin/jobs/${queueName}`);
       const json = await res.json();
       if (res.ok && json.jobs) {
         const activeJobs = json.jobs.filter(
@@ -129,7 +130,7 @@ export function JobsTab() {
     try {
       // Analyze items uses a direct endpoint (no pg-boss worker)
       if (queue === "analyze-items") {
-        const res = await fetch("/api/admin/analyze-items", {
+        const res = await authenticatedFetch("/api/admin/analyze-items", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
@@ -148,7 +149,7 @@ export function JobsTab() {
 
       // Leaderboard sync uses a direct endpoint (bypasses pg-boss for reliability)
       if (queue === "leaderboard-sync") {
-        const res = await fetch("/api/admin/leaderboard/sync", {
+        const res = await authenticatedFetch("/api/admin/leaderboard/sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
@@ -166,7 +167,7 @@ export function JobsTab() {
         return;
       }
 
-      const res = await fetch("/api/admin/jobs", {
+      const res = await authenticatedFetch("/api/admin/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ queue }),
@@ -188,7 +189,7 @@ export function JobsTab() {
     const key = `${queue}-${jobId}`;
     setCancellingJob(key);
     try {
-      const res = await fetch(`/api/admin/jobs/${queue}/${jobId}?force=true`, {
+      const res = await authenticatedFetch(`/api/admin/jobs/${queue}/${jobId}?force=true`, {
         method: "DELETE",
       });
       const json = await res.json();
@@ -211,7 +212,7 @@ export function JobsTab() {
 
   const cleanQueue = async (queue: string) => {
     try {
-      const res = await fetch(`/api/admin/jobs/${queue}`, {
+      const res = await authenticatedFetch(`/api/admin/jobs/${queue}`, {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -294,6 +295,7 @@ export function JobsTab() {
           category={category}
           queueNames={queuesByCategory[category] || []}
           queues={data?.queues}
+          schedules={data?.schedules}
           triggeringQueue={triggeringQueue}
           onTriggerJob={triggerJob}
           onCleanQueue={cleanQueue}

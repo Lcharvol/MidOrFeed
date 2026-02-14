@@ -314,6 +314,25 @@ export async function retryJob(queueName: QueueName, jobId: string) {
 }
 
 /**
+ * Get all schedules from pg-boss
+ */
+export async function getAllSchedules(): Promise<
+  Record<string, { cron: string; timezone: string }>
+> {
+  try {
+    const boss = await getJobQueue();
+    const schedules = await boss.getSchedules();
+    const result: Record<string, { cron: string; timezone: string }> = {};
+    for (const s of schedules) {
+      result[s.name] = { cron: s.cron, timezone: s.timezone ?? "UTC" };
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+/**
  * Close the job queue gracefully
  */
 export async function closeJobQueue(): Promise<void> {

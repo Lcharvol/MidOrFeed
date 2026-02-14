@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { buildSiteUrl } from "@/constants/site";
+import { SITE_NAME } from "@/constants/seo";
 import SummonerProfileLayout from "./SummonerProfileLayout";
 import SummonerProfileLoading from "./loading";
 
@@ -38,7 +39,7 @@ export async function generateMetadata({
       title: `${name} - Statistiques LoL`,
       description,
       url: canonicalUrl,
-      siteName: "Mid or Feed",
+      siteName: SITE_NAME,
       type: "profile",
     },
     twitter: {

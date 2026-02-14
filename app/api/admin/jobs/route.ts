@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getAllQueuesStatus,
+  getAllSchedules,
   getRecentJobs,
   QUEUE_NAMES,
   sendJob,
@@ -26,15 +27,17 @@ export async function GET(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const [queuesStatus, recentJobs] = await Promise.all([
+    const [queuesStatus, recentJobs, schedules] = await Promise.all([
       getAllQueuesStatus(),
       getRecentJobs(30),
+      getAllSchedules(),
     ]);
 
     return NextResponse.json({
       connected: true,
       queues: queuesStatus,
       recentJobs,
+      schedules,
       timestamp: Date.now(),
     });
   } catch (error) {

@@ -1,17 +1,28 @@
 import type { Metadata } from "next";
+import { buildSiteUrl } from "@/constants/site";
+import { baseOpenGraph } from "@/constants/seo";
 
 export const metadata: Metadata = {
-  title: "Tier List Objets LoL",
+  title: "Tier List Items LoL - Meilleurs Objets League of Legends",
   description:
-    "Découvrez les meilleurs objets de League of Legends classés par winrate et taux de pick. Optimisez vos builds avec notre tier list objets.",
-  keywords: ["lol items tier list", "best lol items", "league of legends items", "lol build"],
+    "Tier list des items League of Legends classés par winrate et pickrate. Trouvez les meilleurs objets LoL pour optimiser vos builds chaque patch.",
+  keywords: [
+    "item league of legends",
+    "objets league of legends",
+    "item lol",
+    "lol items tier list",
+    "best lol items",
+    "league of legends items",
+    "lol build",
+  ],
   openGraph: {
-    title: "Tier List Objets LoL - Meilleurs Items League of Legends",
+    ...baseOpenGraph,
+    title: "Tier List Items LoL - Meilleurs Objets League of Legends",
     description:
-      "Les meilleurs objets de League of Legends classés par winrate et taux de pick.",
+      "Tier list des items League of Legends classés par winrate et pickrate. Trouvez les meilleurs objets LoL pour optimiser vos builds.",
   },
   alternates: {
-    canonical: "https://midorfeed.gg/tier-list/items",
+    canonical: buildSiteUrl("/tier-list/items"),
   },
 };
 

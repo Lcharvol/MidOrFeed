@@ -9,13 +9,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PlayIcon, Loader2Icon, TrashIcon } from "lucide-react";
+import { PlayIcon, Loader2Icon, TrashIcon, ClockIcon } from "lucide-react";
 import { STATUS_STYLES } from "@/lib/styles/game-colors";
 import { cn } from "@/lib/utils";
 import {
   QUEUE_CONFIG,
   CATEGORY_LABELS,
   type QueueStatus,
+  type ScheduleInfo,
 } from "./constants";
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,7 @@ import {
 interface QueueStatusCardProps {
   queueName: string;
   status: QueueStatus | undefined;
+  schedule?: ScheduleInfo;
   triggeringQueue: string | null;
   onTriggerJob: (queue: string) => void;
   onCleanQueue: (queue: string) => void;
@@ -33,6 +35,7 @@ interface QueueStatusCardProps {
 export function QueueStatusCard({
   queueName,
   status,
+  schedule,
   triggeringQueue,
   onTriggerJob,
   onCleanQueue,
@@ -56,6 +59,14 @@ export function QueueStatusCard({
             <CardDescription className="text-xs line-clamp-2">
               {config.description}
             </CardDescription>
+            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+              <ClockIcon className="size-3 shrink-0" />
+              {schedule ? (
+                <code className="text-[11px]">{schedule.cron}</code>
+              ) : (
+                <span>Non planifié</span>
+              )}
+            </div>
           </div>
         </div>
         <Button
@@ -133,6 +144,7 @@ interface QueueCategoryGroupProps {
   category: "analysis" | "sync" | "maintenance";
   queueNames: string[];
   queues: Record<string, QueueStatus> | undefined;
+  schedules?: Record<string, ScheduleInfo>;
   triggeringQueue: string | null;
   onTriggerJob: (queue: string) => void;
   onCleanQueue: (queue: string) => void;
@@ -142,6 +154,7 @@ export function QueueCategoryGroup({
   category,
   queueNames,
   queues,
+  schedules,
   triggeringQueue,
   onTriggerJob,
   onCleanQueue,
@@ -159,6 +172,7 @@ export function QueueCategoryGroup({
             key={queueName}
             queueName={queueName}
             status={queues?.[queueName]}
+            schedule={schedules?.[queueName]}
             triggeringQueue={triggeringQueue}
             onTriggerJob={onTriggerJob}
             onCleanQueue={onCleanQueue}

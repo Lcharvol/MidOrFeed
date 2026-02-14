@@ -11,6 +11,8 @@ import { ServerStatusBanner } from "@/components/ServerStatusBanner";
 import { ConstructionBanner } from "@/components/ConstructionBanner";
 import { JsonLd } from "@/components/JsonLd";
 import { Footer } from "@/components/Footer";
+import { buildSiteUrl } from "@/constants/site";
+import { SITE_NAME, TWITTER_HANDLE, DEFAULT_LOCALE, LOGO_URL_PATH } from "@/constants/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,24 +27,35 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Mid or Feed - LoL Counter Picks & Stats",
+    default: "Mid or Feed - Champions LoL, Tier List & Stats League of Legends",
     template: "%s | Mid or Feed",
   },
   description:
-    "Trouvez les meilleurs counter picks LoL, analysez vos performances et obtenez des suggestions de compositions. Find the best League of Legends counters and improve your gameplay.",
+    "Tier list des champions League of Legends, statistiques, counter picks et compositions d'équipe. Retrouvez les stats de tous les personnages LoL, les meilleurs items et le classement des joueurs.",
   keywords: [
+    "lol",
+    "league of legend",
+    "league of legends",
+    "champions league of legends",
+    "league of legends champions",
+    "league of legends personnage",
+    "tier list league of legends",
+    "league of legends tier list",
+    "league of legends stats",
+    "league of legends news",
+    "patch league of legends",
+    "jeu league of legends",
     "lol counter",
     "counter lol",
     "league of legends counter",
     "lol counter pick",
     "counter picks lol",
     "lol stats",
-    "league of legends",
     "mid or feed",
   ],
-  authors: [{ name: "Mid or Feed" }],
-  creator: "Mid or Feed",
-  publisher: "Mid or Feed",
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
   robots: {
     index: true,
     follow: true,
@@ -56,16 +69,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "fr_FR",
+    locale: DEFAULT_LOCALE,
     alternateLocale: "en_US",
-    siteName: "Mid or Feed",
+    siteName: SITE_NAME,
   },
   twitter: {
     card: "summary_large_image",
-    site: "@MidOrFeed",
-    creator: "@MidOrFeed",
+    site: TWITTER_HANDLE,
+    creator: TWITTER_HANDLE,
   },
-  metadataBase: new URL("https://midorfeed.gg"),
+  metadataBase: new URL(buildSiteUrl("/")),
 };
 
 export const viewport: Viewport = {
@@ -83,15 +96,15 @@ export const viewport: Viewport = {
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Mid or Feed",
+  name: SITE_NAME,
   alternateName: "MidOrFeed",
-  url: "https://midorfeed.gg",
+  url: buildSiteUrl("/"),
   description: "Find the best League of Legends counter picks, analyze your performance, and get team composition suggestions with AI-powered coaching.",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://midorfeed.gg/summoners?search={search_term_string}",
+      urlTemplate: `${buildSiteUrl("/summoners")}?search={search_term_string}`,
     },
     "query-input": "required name=search_term_string",
   },
@@ -100,9 +113,9 @@ const websiteSchema = {
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Mid or Feed",
-  url: "https://midorfeed.gg",
-  logo: "https://midorfeed.gg/logo.webp",
+  name: SITE_NAME,
+  url: buildSiteUrl("/"),
+  logo: buildSiteUrl(LOGO_URL_PATH),
   sameAs: ["https://twitter.com/MidOrFeed"],
 };
 

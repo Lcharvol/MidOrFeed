@@ -12,6 +12,7 @@ import {
   UserCheckIcon,
   CalendarIcon,
   DatabaseIcon,
+  SproutIcon,
 } from "lucide-react";
 import { createElement } from "react";
 import { WORKER_DESCRIPTIONS } from "@/lib/workers/descriptions";
@@ -47,6 +48,11 @@ export interface RecentJob {
   output?: Record<string, unknown> | null;
 }
 
+export interface ScheduleInfo {
+  cron: string;
+  timezone: string;
+}
+
 export interface ActiveJobDetails {
   id: string;
   name: string;
@@ -61,6 +67,7 @@ export interface JobsData {
   connected: boolean;
   queues: Record<string, QueueStatus>;
   recentJobs: RecentJob[];
+  schedules?: Record<string, ScheduleInfo>;
   timestamp: number;
 }
 
@@ -91,6 +98,7 @@ const QUEUE_ICONS: Record<string, React.ReactNode> = {
   "data-cleanup": createElement(EraserIcon, { className: iconClass }),
   "account-refresh": createElement(UserCheckIcon, { className: iconClass }),
   "daily-reset": createElement(CalendarIcon, { className: iconClass }),
+  "crawl-seed": createElement(SproutIcon, { className: iconClass }),
 };
 
 const QUEUE_CATEGORIES: Record<string, "analysis" | "sync" | "maintenance"> = {
@@ -107,6 +115,7 @@ const QUEUE_CATEGORIES: Record<string, "analysis" | "sync" | "maintenance"> = {
   "account-refresh": "sync",
   "data-cleanup": "maintenance",
   "daily-reset": "maintenance",
+  "crawl-seed": "sync",
 };
 
 export const CATEGORY_LABELS: Record<string, string> = {

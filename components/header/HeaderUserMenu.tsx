@@ -18,22 +18,22 @@ import {
   LogOutIcon,
   SettingsIcon,
   UserIcon,
-  Loader2Icon,
   HeartIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useRiotProfileIcon } from "@/lib/hooks/use-riot-profile-icon";
 import { getInitials } from "@/lib/profile-utils";
 import { useI18n } from "@/lib/i18n-context";
+import { getProfileIconUrl } from "@/constants/ddragon";
 
 export function HeaderUserMenu() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { profileIconUrl, isLoading: isLoadingIcon } = useRiotProfileIcon(
-    user?.leagueAccount?.puuid,
-    user?.leagueAccount?.riotRegion
-  );
   const { t } = useI18n();
+
+  const profileIconId = user?.leagueAccount?.profileIconId;
+  const profileIconUrl = profileIconId
+    ? getProfileIconUrl(profileIconId)
+    : null;
 
   const handleLogout = () => {
     logout();
@@ -52,25 +52,15 @@ export function HeaderUserMenu() {
           <DropdownMenuTrigger asChild>
             <button className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background outline-none" aria-label="Menu utilisateur">
               <Avatar className="h-9 w-9 cursor-pointer">
-                {isLoadingIcon ? (
-                  <AvatarFallback className="bg-muted">
-                    <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
-                  </AvatarFallback>
-                ) : profileIconUrl ? (
-                  <>
-                    <AvatarImage
-                      src={profileIconUrl}
-                      alt="Profile Icon"
-                    />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getInitials(user.name, user.email)}
-                    </AvatarFallback>
-                  </>
-                ) : (
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {getInitials(user.name, user.email)}
-                  </AvatarFallback>
+                {profileIconUrl && (
+                  <AvatarImage
+                    src={profileIconUrl}
+                    alt="Profile Icon"
+                  />
                 )}
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {getInitials(user.name, user.email)}
+                </AvatarFallback>
               </Avatar>
             </button>
           </DropdownMenuTrigger>

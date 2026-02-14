@@ -1,14 +1,28 @@
 import type { Metadata } from "next";
+import { buildSiteUrl } from "@/constants/site";
+import { baseOpenGraph } from "@/constants/seo";
 
 export const metadata: Metadata = {
-  title: "Rechercher un Invocateur",
+  title: "Stats LoL - Rechercher un Joueur League of Legends",
   description:
-    "Recherchez n'importe quel joueur de League of Legends pour consulter ses statistiques, son historique de matchs et ses performances détaillées.",
-  keywords: ["lol stats", "league of legends player search", "lol summoner lookup", "lol profile"],
+    "Recherchez n'importe quel joueur League of Legends : statistiques détaillées, historique de matchs, champions joués et performances ranked.",
+  keywords: [
+    "league of legends stats",
+    "stats league of legends",
+    "statistiques lol",
+    "lol stats",
+    "league of legends player search",
+    "lol summoner lookup",
+    "lol profile",
+  ],
   openGraph: {
-    title: "Rechercher un Invocateur LoL",
+    ...baseOpenGraph,
+    title: "Stats LoL - Rechercher un Joueur League of Legends",
     description:
-      "Recherchez n'importe quel joueur de League of Legends pour consulter ses statistiques et performances.",
+      "Recherchez n'importe quel joueur League of Legends : statistiques détaillées et performances ranked.",
+  },
+  alternates: {
+    canonical: buildSiteUrl("/summoners"),
   },
 };
 

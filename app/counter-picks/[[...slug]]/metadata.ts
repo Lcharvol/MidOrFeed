@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getChampionSplashUrl } from "@/constants/ddragon";
 import { buildSiteUrl } from "@/constants/site";
-
-export const SITE_NAME = "Mid or Feed";
-
-const buildUrl = (path: string) => buildSiteUrl(path);
+import { SITE_NAME } from "@/constants/seo";
 
 export type CounterPicksPageParams = {
   slug?: string[];
@@ -42,7 +39,7 @@ export const generateMetadata = async ({
     const title = "LoL Counter Picks - Meilleurs counters League of Legends | Mid or Feed";
     const description =
       "Trouvez les meilleurs counter picks LoL. Analyse de milliers de matchs pour vous recommander les counters parfaits contre chaque champion League of Legends. Find the best LoL counters.";
-    const url = buildUrl("/counter-picks");
+    const url = buildSiteUrl("/counter-picks");
 
     return {
       title,
@@ -52,6 +49,7 @@ export const generateMetadata = async ({
         "counter lol",
         "counter picks lol",
         "league of legends counter",
+        "counter league of legends",
         "lol counter pick",
         "counter champion lol",
         "meilleur counter lol",
@@ -84,10 +82,10 @@ export const generateMetadata = async ({
   const championName = champion?.name ?? championId;
   const resolvedChampionId = champion?.championId ?? championId;
   const canonicalPath = `/counter-picks/${encodeURIComponent(resolvedChampionId)}`;
-  const canonicalUrl = buildUrl(canonicalPath);
+  const canonicalUrl = buildSiteUrl(canonicalPath);
   const ogImage = champion
     ? getChampionSplashUrl(champion.championId)
-    : buildUrl("/logo.webp");
+    : buildSiteUrl("/logo.webp");
 
   const title = `Counter ${championName} LoL - Meilleurs counters | ${SITE_NAME}`;
   const description = `Counter ${championName} : découvrez les meilleurs counters et comment battre ${championName} sur LoL. Statistiques et conseils basés sur des milliers de matchs. Best ${championName} counters in League of Legends.`;

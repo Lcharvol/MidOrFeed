@@ -7,8 +7,8 @@ import {
   CounterPicksSeoContent,
   generateFaqSchema,
 } from "@/components/CounterPicksSeoContent";
+import { SITE_NAME } from "@/constants/seo";
 import {
-  SITE_NAME,
   type CounterPicksPageParams,
   generateMetadata as generateCounterPicksMetadata,
   findChampion,

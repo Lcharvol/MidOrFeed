@@ -1,25 +1,34 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
+import { buildSiteUrl } from "@/constants/site";
+import { baseOpenGraph } from "@/constants/seo";
 
 export const metadata: Metadata = {
-  title: "LoL Champion Tier List - Best Champions to Play",
+  title: "Tier List Champions LoL - Meilleurs Champions League of Legends",
   description:
-    "Discover the best League of Legends champions to play ranked with our data-driven tier list. Updated daily with win rates, pick rates, and tier rankings.",
+    "Tier list des champions League of Legends mise à jour quotidiennement. Winrate, pickrate et classement des meilleurs personnages LoL par tier pour grimper en ranked.",
   keywords: [
     "lol tier list",
     "league of legends tier list",
+    "tier list league of legends",
+    "champions league of legends",
+    "league of legends champions",
+    "champion league of legends",
+    "league of legends personnage",
+    "meilleurs champions lol",
     "best lol champions",
     "lol champion rankings",
     "lol meta",
   ],
   openGraph: {
-    title: "LoL Champion Tier List - Best Champions to Play",
+    ...baseOpenGraph,
+    title: "Tier List Champions LoL - Meilleurs Champions League of Legends",
     description:
-      "Data-driven tier list with win rates, pick rates and rankings for all League of Legends champions.",
+      "Tier list des champions League of Legends mise à jour quotidiennement. Winrate, pickrate et classement des meilleurs personnages LoL.",
     type: "website",
   },
   alternates: {
-    canonical: "https://midorfeed.gg/tier-list/champions",
+    canonical: buildSiteUrl("/tier-list/champions"),
   },
 };
 
@@ -29,7 +38,7 @@ const tierListSchema = {
   name: "League of Legends Champion Tier List",
   description:
     "Ranking of League of Legends champions based on win rate, pick rate, and overall performance in ranked games.",
-  url: "https://midorfeed.gg/tier-list/champions",
+  url: buildSiteUrl("/tier-list/champions"),
   itemListOrder: "https://schema.org/ItemListOrderDescending",
   numberOfItems: 168,
 };
@@ -40,18 +49,18 @@ const faqSchema = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "What is the best champion to play in LoL?",
+      name: "Quel est le meilleur personnage de League of Legends ?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "The best champions vary by patch and role. Check our tier list for the current meta picks with the highest win rates across all ranks.",
+        text: "Les meilleurs personnages LoL varient selon le patch et le rôle. Consultez notre tier list pour découvrir les champions avec les meilleurs winrates, mise à jour quotidiennement.",
       },
     },
     {
       "@type": "Question",
-      name: "How is the tier list calculated?",
+      name: "Comment fonctionne la tier list des champions LoL ?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Our tier list is calculated using win rate, pick rate, ban rate, and performance data from thousands of ranked games, updated daily.",
+        text: "Notre tier list est calculée à partir du winrate, du pickrate, du banrate et des données de performance de milliers de parties ranked, mise à jour chaque jour.",
       },
     },
   ],

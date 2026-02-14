@@ -6,10 +6,7 @@ import {
 import { getChampionDetails } from "@/lib/champions/get-champion-details";
 import { getChampionSplashUrl } from "@/constants/ddragon";
 import { buildSiteUrl } from "@/constants/site";
-
-export const SITE_NAME = "Mid or Feed";
-
-const buildUrl = (path: string) => buildSiteUrl(path);
+import { SITE_NAME } from "@/constants/seo";
 
 export type ChampionPageParams = {
   championId: string;
@@ -25,7 +22,7 @@ export const generateMetadata = async ({
 
   if (!details) {
     const defaultTitle = `Champion ${championId} | ${SITE_NAME}`;
-    const canonicalUrl = buildUrl(
+    const canonicalUrl = buildSiteUrl(
       `/champions/${encodeURIComponent(championId)}`
     );
     return {
@@ -38,21 +35,24 @@ export const generateMetadata = async ({
 
   const { champion, stats } = details;
   const canonicalPath = `/champions/${encodeURIComponent(champion.championId)}`;
-  const canonicalUrl = buildUrl(canonicalPath);
+  const canonicalUrl = buildSiteUrl(canonicalPath);
   const splashUrl = getChampionSplashUrl(champion.championId);
   const tier = resolveTier(stats);
   const score = computeChampionScore(stats);
 
-  const title = `${champion.name} - Stats & guide | ${SITE_NAME}`;
-  const description = `Analyse complète de ${
-    champion.name
-  } : statistiques, score global${
-    score ? ` (${score.toFixed(1)})` : ""
-  }, tier ${tier}, forces et informations clés via Mid or Feed.`;
+  const title = `${champion.name} LoL - Stats, Counter & Guide | ${SITE_NAME}`;
+  const description = `Statistiques de ${champion.name} sur League of Legends : winrate, score global${score ? ` (${score.toFixed(1)})` : ""}, tier ${tier}. Guide, counters et builds pour ce personnage LoL.`;
 
   return {
     title,
     description,
+    keywords: [
+      `${champion.name} lol`,
+      `${champion.name} league of legends`,
+      `${champion.name} stats`,
+      `${champion.name} counter`,
+      `${champion.name} build`,
+    ],
     alternates: { canonical: canonicalUrl },
     openGraph: {
       title,

@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { buildSiteUrl } from "@/constants/site";
 import { getChampionSplashUrl } from "@/constants/ddragon";
 import { JsonLd } from "@/components/JsonLd";
-
-const SITE_NAME = "Mid or Feed";
+import { SITE_NAME, LOGO_URL_PATH } from "@/constants/seo";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -126,7 +125,7 @@ export default async function GuideLayout({ children, params }: LayoutProps) {
       name: SITE_NAME,
       logo: {
         "@type": "ImageObject",
-        url: buildSiteUrl("/logo.webp"),
+        url: buildSiteUrl(LOGO_URL_PATH),
       },
     },
     image: imageUrl,
