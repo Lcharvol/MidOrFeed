@@ -176,6 +176,134 @@ Every public page should have:
 - **Environment variables** → validated via Zod in `lib/env.ts`, accessed through `getEnv()`
 - **Shared types** → `types/` directory, re-exported from `types/index.ts`
 
+## Design System
+
+### Foundation
+
+- **Framework**: Tailwind CSS v4 with CSS custom properties (`app/globals.css`)
+- **Component library**: shadcn/ui (New York style, `components.json`) — always prefer `@/components/ui/*` over custom implementations
+- **Icons**: lucide-react + custom SVG role icons in `components/icons/` (`TopRoleIcon`, `JungleRoleIcon`, `MidRoleIcon`, `BottomRoleIcon`, `SupportRoleIcon`)
+- **Fonts**: Geist Sans + Geist Mono via `next/font/google` (CSS vars `--font-geist-sans`, `--font-geist-mono`)
+- **Color space**: OKLCh for perceptual uniformity
+
+### Color System
+
+**Semantic colors** (defined as CSS custom properties with light/dark variants):
+
+| Token | Usage |
+|-------|-------|
+| `primary` | Violet — brand, interactive elements |
+| `success` | Green — win states, positive feedback |
+| `warning` | Orange — cautions |
+| `danger` | Red — loss states, destructive actions |
+| `info` | Blue — informational |
+| `muted` | Gray — secondary text, subtle backgrounds |
+| `win` / `loss` | Green / Red — game result indicators |
+
+**Tier colors** (full LoL rank spectrum): `tier-iron`, `tier-bronze`, `tier-silver`, `tier-gold`, `tier-platinum`, `tier-emerald`, `tier-diamond`, `tier-master`, `tier-grandmaster`, `tier-challenger` — available as `text-tier-*`, `bg-tier-*`, `border-tier-*`.
+
+**Chart/role colors**: `--chart-1` through `--chart-5` for data visualizations and role-based color coding.
+
+**Dark mode**: Enabled by default via `dark` class. Uses deeper, more saturated colors. Background is a deep violet (`oklch(0.13 0.035 290)`). Buttons get a subtle primary gradient.
+
+### Components Cheat Sheet
+
+**Layout & containers**:
+```tsx
+// Page container
+<div className="container mx-auto px-4 py-8 sm:py-12 space-y-6">
+
+// Card (standard)
+<Card><CardContent className="p-6">...</CardContent></Card>
+
+// Empty state
+<Empty><EmptyHeader><EmptyMedia variant="icon"><SearchIcon /></EmptyMedia>
+<EmptyTitle>No results</EmptyTitle></EmptyHeader></Empty>
+
+// Page hero section
+<PageHero title="..." description="..." badge="..." metrics={[...]} />
+```
+
+**Badge system** — two modes:
+```tsx
+// Standard variants: default, secondary, destructive, outline, info, warning, success
+<Badge variant="success">Active</Badge>
+
+// Emphasis system (semantic): neutral, positive, warning, danger, info
+// Each with emphasisVariant: solid, subtle, outline
+<Badge emphasis="positive" emphasisVariant="subtle" rounded="full">55.2%</Badge>
+```
+
+**TierBadge** (`components/TierBadge.tsx`): tiers S+, S, A, B, C, D with shine animation on premium tiers.
+
+**StatTile** (`components/ui/stat-tile.tsx`): metric cards with label, value, hint, icon, emphasis colors.
+
+**Button sizes**: `xs`, `sm`, `default`, `lg`, `icon`, `icon-xs`, `icon-sm`, `icon-lg`. Variants: `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`.
+
+**Skeleton loaders**: `Skeleton`, `SkeletonText`, `SkeletonAvatar`, `SkeletonCard`, `SkeletonButton`, `SkeletonTable`, `SkeletonList` — use `animate-pulse`.
+
+### Images & Game Assets
+
+All game images use builders from `constants/ddragon.ts`:
+
+```tsx
+import { getChampionImageUrl, getChampionSplashUrl, getProfileIconUrl, getTierIconUrl, getItemImageUrl } from "@/constants/ddragon";
+
+// Champion square icon
+<Image src={getChampionImageUrl("Ahri")} width={48} height={48} />
+
+// Champion splash art (backgrounds)
+<Image src={getChampionSplashUrl("Ahri")} fill className="object-cover opacity-20" />
+
+// Profile icon
+<Image src={getProfileIconUrl(4862)} width={80} height={80} className="rounded-full" />
+
+// Tier medal (local webp)
+<Image src={getTierIconUrl("CHALLENGER")} width={24} height={24} />
+```
+
+Remote image domains configured in `next.config.ts`: `ddragon.leagueoflegends.com`, `images.contentstack.io`, `cmsassets.rgpub.io`.
+
+### Animations
+
+Custom keyframes defined in `globals.css`:
+- `animate-shimmer` — loading skeleton shimmer
+- `animate-shine` — premium tier badge shine overlay (2s loop)
+- `animate-border-glow` — pulsing border glow (3s)
+- `animate-fade-up` — entrance animation (0.4s), with `-delay-1/2/3` variants for staggering
+
+Glass effect: `.glass` class (backdrop-blur 12px + saturate 1.5).
+
+Buttons use `active:scale-[0.98]` for press feedback. Respect `prefers-reduced-motion`.
+
+### Responsive Patterns
+
+Standard breakpoints (Tailwind defaults): `sm` 640px, `md` 768px, `lg` 1024px, `xl` 1280px.
+
+Common patterns:
+```tsx
+// Responsive padding
+className="px-4 sm:px-6 lg:px-8"
+
+// Responsive grid
+className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+
+// Stack → row
+className="flex flex-col lg:flex-row gap-4"
+
+// Visibility toggle
+className="hidden md:table-cell"
+```
+
+### Border Radius Scale
+
+`--radius: 0.5rem` (base), then `sm` (0.25rem), `md` (0.375rem), `lg` (0.5rem), `xl` (0.75rem), `2xl` (1rem). Cards use `rounded-xl`, buttons `rounded-md`, avatars `rounded-full`.
+
+### Shadows
+
+Light mode: subtle (`rgba(0,0,0,0.06–0.14)`). Dark mode: deeper opacity.
+Special: `shadow-glow` — violet glow for interactive card hover states.
+
 ## Security
 
 ### Middleware
