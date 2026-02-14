@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
         headers: {
           "X-Riot-Token": RIOT_API_KEY,
         },
+        signal: AbortSignal.timeout(10_000),
       }
     );
 
@@ -117,6 +118,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Données invalides", details: error.errors },
         { status: 400 }
+      );
+    }
+
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      logger.warn("Riot API timeout lors de la recherche du compte");
+      return NextResponse.json(
+        { success: false, error: "Le serveur Riot a mis trop de temps à répondre" },
+        { status: 504 }
       );
     }
 

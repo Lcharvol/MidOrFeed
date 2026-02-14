@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
 import type {
-  DraftAnalyzeRequest,
   DraftAnalyzeResponse,
   DraftAnalyzeTeamPick,
   LaneMatchup,
@@ -11,30 +13,38 @@ import type {
 import type { CompositionRole } from "@/lib/compositions/roles";
 import { ROLE_PRIORITY } from "@/lib/compositions/roles";
 
+const logger = createLogger("draft-analyze");
+
+const pickSchema = z.object({
+  championId: z.string().min(1),
+  role: z.enum(["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"]),
+});
+
+const draftSchema = z.object({
+  bluePicks: z.array(pickSchema).length(5),
+  redPicks: z.array(pickSchema).length(5),
+});
+
 export async function POST(request: NextRequest) {
   const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
   if (rateLimitResponse) return rateLimitResponse;
 
-  let body: DraftAnalyzeRequest;
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { bluePicks, redPicks } = body;
-
-  if (
-    !Array.isArray(bluePicks) ||
-    !Array.isArray(redPicks) ||
-    bluePicks.length !== 5 ||
-    redPicks.length !== 5
-  ) {
+  const parsed = draftSchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Each team must have exactly 5 picks" },
+      { success: false, error: "Each team must have exactly 5 picks", details: parsed.error.flatten() },
       { status: 400 }
     );
   }
+
+  const { bluePicks, redPicks } = parsed.data;
 
   try {
     const allChampionIds = [
@@ -146,11 +156,11 @@ export async function POST(request: NextRequest) {
       redTeamStats,
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json({ success: true, data: response });
   } catch (error) {
-    console.error("Draft analyze error:", error);
+    logger.error("Draft analyze error", toError(error));
     return NextResponse.json(
-      { error: "Internal server error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }

@@ -103,15 +103,7 @@ export async function POST(req: Request) {
         puuid: e.puuid || null,
       })
     );
-    const db = prisma as unknown as {
-      leaderboardEntry: {
-        deleteMany: (args: unknown) => Promise<{ count: number }>;
-        createMany: (args: unknown) => Promise<{ count: number }>;
-        findMany: (args: unknown) => Promise<Array<{ summonerId: string }>>;
-        update: (args: unknown) => Promise<unknown>;
-      };
-    };
-    await db.leaderboardEntry.deleteMany({
+    await prisma.leaderboardEntry.deleteMany({
       where: {
         region: regionLower,
         tier: tierUpper,
@@ -126,7 +118,7 @@ export async function POST(req: Request) {
       seen.add(key);
       return true;
     });
-    const createRes = await db.leaderboardEntry.createMany({
+    const createRes = await prisma.leaderboardEntry.createMany({
       data: unique,
     });
     const upserts = createRes.count;

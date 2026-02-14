@@ -17,6 +17,7 @@ import type {
   CompositionSuggestionsPayload,
 } from "@/types";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n-context";
 import { PopularHero } from "./components/PopularHero";
 import { CompositionCard } from "./components/CompositionCard";
 import { formatUpdatedAt } from "./components/utils";
@@ -28,6 +29,7 @@ import { DataState } from "@/components/ui/data-state";
 import { Button } from "@/components/ui/button";
 
 const PopularCompositionsPage = () => {
+  const { t } = useI18n();
   const { data, error, isLoading, mutate, isValidating } = useApiSWR<
     ApiResponse<CompositionSuggestionsPayload>
   >(apiKeys.compositionsPopular(), {
@@ -57,13 +59,13 @@ const PopularCompositionsPage = () => {
   const handleCopy = useCallback((composition: CompositionSuggestionDTO) => {
     const champions = composition.teamChampions;
     if (typeof navigator === "undefined" || !navigator.clipboard) {
-      toast.error("Copie impossible dans cet environnement");
+      toast.error(t("compositions.popular.copyUnavailable"));
       return;
     }
     navigator.clipboard
       .writeText(champions.join(", "))
-      .then(() => toast.success("Composition copiée dans le presse-papier"))
-      .catch(() => toast.error("Impossible de copier la composition"));
+      .then(() => toast.success(t("compositions.popular.copiedToClipboard")))
+      .catch(() => toast.error(t("compositions.popular.copyFailed")));
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -75,8 +77,8 @@ const PopularCompositionsPage = () => {
       <DataState
         variant="plain"
         isLoading
-        title="Chargement des compositions"
-        description="Nous récupérons les compositions idéales pour vous."
+        title={t("compositions.popular.loading")}
+        description={t("compositions.popular.loadingDescription")}
         containerClassName="container mx-auto py-16"
       />
     );
@@ -86,11 +88,11 @@ const PopularCompositionsPage = () => {
     return (
       <DataState
         tone="danger"
-        title="Impossible de charger les compositions"
-        description="Une erreur est survenue lors de la récupération des suggestions populaires."
+        title={t("compositions.popular.errorTitle")}
+        description={t("compositions.popular.errorDescription")}
         action={
           <Button variant="outline" onClick={handleRefresh}>
-            Réessayer
+            {t("compositions.popular.retry")}
           </Button>
         }
         containerClassName="container mx-auto py-16"
@@ -107,7 +109,7 @@ const PopularCompositionsPage = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Compositions Populaires</BreadcrumbPage>
+            <BreadcrumbPage>{t("compositions.popular.breadcrumb")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -121,8 +123,8 @@ const PopularCompositionsPage = () => {
       {compositions.length === 0 ? (
         <DataState
           tone="info"
-          title="Aucune composition disponible"
-          description="Lancez l’analyse des champions puis générez les suggestions dans l’admin panel pour remplir cette liste."
+          title={t("compositions.popular.emptyTitle")}
+          description={t("compositions.popular.emptyDescription")}
           containerClassName="py-12"
         />
       ) : (

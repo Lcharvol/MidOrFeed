@@ -391,7 +391,14 @@
     "analyze": "Analyser",
     "searchPlayer": "Rechercher un joueur...",
     "errorLoading": "Erreur lors du chargement des données",
-    "loadingAdvice": "Chargement des conseils..."
+    "loadingAdvice": "Chargement des conseils...",
+    "ranking": {
+      "divisionPosition": "Position dans la division",
+      "playersInDivision": "joueurs dans cette division",
+      "lpTooltip": "League Points — Points de classement accumulés dans cette division",
+      "winRateTooltip": "Victoires / (Victoires + Défaites) × 100",
+      "loading": "Chargement du classement..."
+    }
   },
   "matches": {
     "victory": "Victoire",
@@ -476,7 +483,18 @@
     },
     "popular": {
       "title": "Populaires",
-      "description": "Les compositions les plus utilisées"
+      "description": "Les compositions les plus utilisées",
+      "copyUnavailable": "Copie impossible dans cet environnement",
+      "copiedToClipboard": "Composition copiée dans le presse-papier",
+      "copyFailed": "Impossible de copier la composition",
+      "loading": "Chargement des compositions",
+      "loadingDescription": "Nous récupérons les compositions idéales pour vous.",
+      "errorTitle": "Impossible de charger les compositions",
+      "errorDescription": "Une erreur est survenue lors de la récupération des suggestions populaires.",
+      "retry": "Réessayer",
+      "breadcrumb": "Compositions Populaires",
+      "emptyTitle": "Aucune composition disponible",
+      "emptyDescription": "Lancez l'analyse des champions puis générez les suggestions dans l'admin panel pour remplir cette liste."
     },
     "favorites": {
       "title": "Favoris",

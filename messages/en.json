@@ -389,7 +389,14 @@
     "analyze": "Analyze",
     "searchPlayer": "Search for a player...",
     "errorLoading": "Error loading data",
-    "loadingAdvice": "Loading advice..."
+    "loadingAdvice": "Loading advice...",
+    "ranking": {
+      "divisionPosition": "Division position",
+      "playersInDivision": "players in this division",
+      "lpTooltip": "League Points — Ranking points accumulated in this division",
+      "winRateTooltip": "Victories / (Victories + Defeats) × 100",
+      "loading": "Loading ranking..."
+    }
   },
   "matches": {
     "victory": "Victory",
@@ -474,7 +481,18 @@
     },
     "popular": {
       "title": "Popular",
-      "description": "The most used compositions"
+      "description": "The most used compositions",
+      "copyUnavailable": "Copy not available in this environment",
+      "copiedToClipboard": "Composition copied to clipboard",
+      "copyFailed": "Failed to copy composition",
+      "loading": "Loading compositions",
+      "loadingDescription": "We are fetching the ideal compositions for you.",
+      "errorTitle": "Unable to load compositions",
+      "errorDescription": "An error occurred while fetching popular suggestions.",
+      "retry": "Retry",
+      "breadcrumb": "Popular Compositions",
+      "emptyTitle": "No compositions available",
+      "emptyDescription": "Run the champion analysis then generate suggestions in the admin panel to fill this list."
     },
     "favorites": {
       "title": "Favorites",

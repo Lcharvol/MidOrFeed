@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { requireCsrf } from "@/lib/csrf";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/logger";
+import { toError } from "@/lib/errors";
+
+const logger = createLogger("advice-vote");
 
 const voteSchema = z.object({
   adviceId: z.string().min(1),
@@ -53,7 +57,7 @@ export const POST = async (request: NextRequest) => {
   const csrfError = await requireCsrf(request);
   if (csrfError) return csrfError;
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const parsed = voteSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -74,34 +78,89 @@ export const POST = async (request: NextRequest) => {
 
   const { adviceId, value } = parsed.data;
 
-  const adviceExists = await prisma.championAdvice.findUnique({
-    where: { id: adviceId },
-    select: { id: true },
-  });
-
-  if (!adviceExists) {
-    return NextResponse.json(
-      { success: false, error: "Conseil introuvable" },
-      { status: 404 }
-    );
-  }
-
-  const result = await prisma.$transaction(async (transaction) => {
-    const existingVote = await transaction.championAdviceVote.findUnique({
-      where: {
-        adviceId_userId: {
-          adviceId,
-          userId: user.id,
-        },
-      },
+  try {
+    const adviceExists = await prisma.championAdvice.findUnique({
+      where: { id: adviceId },
+      select: { id: true },
     });
 
-    const existingValue = existingVote?.value ?? 0;
-    const desiredValue = value === existingValue ? 0 : value;
+    if (!adviceExists) {
+      return NextResponse.json(
+        { success: false, error: "Conseil introuvable" },
+        { status: 404 }
+      );
+    }
 
-    if (!existingVote && desiredValue === 0) {
-      const currentAdvice = await transaction.championAdvice.findUnique({
+    const result = await prisma.$transaction(async (transaction) => {
+      const existingVote = await transaction.championAdviceVote.findUnique({
+        where: {
+          adviceId_userId: {
+            adviceId,
+            userId: user.id,
+          },
+        },
+      });
+
+      const existingValue = existingVote?.value ?? 0;
+      const desiredValue = value === existingValue ? 0 : value;
+
+      if (!existingVote && desiredValue === 0) {
+        const currentAdvice = await transaction.championAdvice.findUnique({
+          where: { id: adviceId },
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        });
+        if (!currentAdvice) {
+          throw new Error("Conseil introuvable");
+        }
+        return { advice: currentAdvice, viewerVote: null as -1 | 0 | 1 | null };
+      }
+
+      const deltaScore = desiredValue - existingValue;
+      const deltaUpvotes =
+        (desiredValue === 1 ? 1 : 0) - (existingValue === 1 ? 1 : 0);
+      const deltaDownvotes =
+        (desiredValue === -1 ? 1 : 0) - (existingValue === -1 ? 1 : 0);
+
+      if (existingVote) {
+        if (desiredValue === 0) {
+          await transaction.championAdviceVote.delete({
+            where: {
+              adviceId_userId: {
+                adviceId,
+                userId: user.id,
+              },
+            },
+          });
+        } else {
+          await transaction.championAdviceVote.update({
+            where: { id: existingVote.id },
+            data: { value: desiredValue },
+          });
+        }
+      } else if (desiredValue !== 0) {
+        await transaction.championAdviceVote.create({
+          data: {
+            adviceId,
+            userId: user.id,
+            value: desiredValue,
+          },
+        });
+      }
+
+      const updatedAdvice = await transaction.championAdvice.update({
         where: { id: adviceId },
+        data: {
+          score: { increment: deltaScore },
+          upvotes: { increment: deltaUpvotes },
+          downvotes: { increment: deltaDownvotes },
+        },
         include: {
           author: {
             select: {
@@ -111,70 +170,23 @@ export const POST = async (request: NextRequest) => {
           },
         },
       });
-      if (!currentAdvice) {
-        throw new Error("Conseil introuvable");
-      }
-      return { advice: currentAdvice, viewerVote: null as -1 | 0 | 1 | null };
-    }
 
-    const deltaScore = desiredValue - existingValue;
-    const deltaUpvotes =
-      (desiredValue === 1 ? 1 : 0) - (existingValue === 1 ? 1 : 0);
-    const deltaDownvotes =
-      (desiredValue === -1 ? 1 : 0) - (existingValue === -1 ? 1 : 0);
-
-    if (existingVote) {
-      if (desiredValue === 0) {
-        await transaction.championAdviceVote.delete({
-          where: {
-            adviceId_userId: {
-              adviceId,
-              userId: user.id,
-            },
-          },
-        });
-      } else {
-        await transaction.championAdviceVote.update({
-          where: { id: existingVote.id },
-          data: { value: desiredValue },
-        });
-      }
-    } else if (desiredValue !== 0) {
-      await transaction.championAdviceVote.create({
-        data: {
-          adviceId,
-          userId: user.id,
-          value: desiredValue,
-        },
-      });
-    }
-
-    const updatedAdvice = await transaction.championAdvice.update({
-      where: { id: adviceId },
-      data: {
-        score: { increment: deltaScore },
-        upvotes: { increment: deltaUpvotes },
-        downvotes: { increment: deltaDownvotes },
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      return { advice: updatedAdvice, viewerVote: desiredValue };
     });
 
-    return { advice: updatedAdvice, viewerVote: desiredValue };
-  });
-
-  return NextResponse.json({
-    success: true,
-    data: {
-      advice: buildAdvicePayload(result.advice, result.viewerVote),
-    },
-  });
+    return NextResponse.json({
+      success: true,
+      data: {
+        advice: buildAdvicePayload(result.advice, result.viewerVote),
+      },
+    });
+  } catch (error) {
+    logger.error("Advice vote error", toError(error));
+    return NextResponse.json(
+      { success: false, error: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 };
 
 

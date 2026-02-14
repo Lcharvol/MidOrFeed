@@ -71,6 +71,7 @@ function DivisionStanding({
   region: string;
   queueType: string;
 }) {
+  const { t } = useI18n();
   const HIGH_TIERS = ["MASTER", "GRANDMASTER", "CHALLENGER"];
   const { data, isLoading } = useApiSWR<DivisionStandingsData>(
     !HIGH_TIERS.includes(tier) && region
@@ -88,11 +89,11 @@ function DivisionStanding({
     <div className="mt-4 rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
       <div className="flex items-center gap-2 text-xs font-semibold">
         <UsersIcon className="size-3.5 text-muted-foreground" />
-        Position dans la division
+        {t("summoners.ranking.divisionPosition")}
       </div>
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">
-          {totalPlayers} joueurs dans cette division
+          {totalPlayers} {t("summoners.ranking.playersInDivision")}
         </span>
         {percentile !== null && (
           <Badge emphasis={percentile <= 25 ? "positive" : percentile <= 50 ? "info" : "neutral"} emphasisVariant="subtle" className="text-[10px]">
@@ -172,7 +173,7 @@ function QueueCard({
                   {current.lp} LP
                 </div>
               </TooltipTrigger>
-              <TooltipContent>League Points — Points de classement accumulés dans cette division</TooltipContent>
+              <TooltipContent>{t("summoners.ranking.lpTooltip")}</TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -204,7 +205,7 @@ function QueueCard({
                 </div>
               </div>
             </TooltipTrigger>
-            <TooltipContent>Victoires / (Victoires + Défaites) × 100</TooltipContent>
+            <TooltipContent>{t("summoners.ranking.winRateTooltip")}</TooltipContent>
           </Tooltip>
         </div>
         {current.freshBlood && (
@@ -268,7 +269,7 @@ export default function RankingByIdPage() {
       <DataState
         isLoading
         variant="plain"
-        title="Chargement du classement..."
+        title={t("summoners.ranking.loading")}
         containerClassName="py-20"
       />
     );
