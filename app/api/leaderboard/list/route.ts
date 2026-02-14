@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
 import { toError } from "@/lib/errors";
-import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 
 const logger = createLogger("leaderboard");
 
@@ -50,53 +49,14 @@ export async function GET(req: NextRequest) {
           take,
         });
 
-        // Enrich all entries with gameName, tagLine, profileIconId, mostPlayedChampion via puuid
-        try {
-          const puuids = raw
-            .map((e) => e.puuid)
-            .filter((p): p is string => !!p);
-
-          if (puuids.length > 0) {
-            const accounts =
-              await ShardedLeagueAccounts.findManyByPuuidsForLeaderboard(
-                puuids,
-                region
-              );
-
-            const enrichMap = new Map(
-              accounts.map((a) => [
-                a.puuid,
-                {
-                  riotGameName: a.riotGameName,
-                  riotTagLine: a.riotTagLine,
-                  profileIconId: a.profileIconId,
-                  mostPlayedChampion: a.mostPlayedChampion,
-                },
-              ])
-            );
-
-            return raw.map((entry) => {
-              if (!entry.puuid) return entry;
-              const extra = enrichMap.get(entry.puuid);
-              if (!extra) return entry;
-              const gameName = extra.riotGameName;
-              const tagLine = extra.riotTagLine;
-              return {
-                ...entry,
-                summonerName:
-                  gameName && tagLine
-                    ? `${gameName}#${tagLine}`
-                    : gameName || entry.summonerName,
-                profileIconId: extra.profileIconId ?? null,
-                mostPlayedChampion: extra.mostPlayedChampion ?? null,
-              };
-            });
-          }
-        } catch (err) {
-          logger.warn("Leaderboard enrichment failed, continuing without", { error: toError(err).message });
-        }
-
-        return raw;
+        return raw.map((entry) => ({
+          ...entry,
+          summonerName:
+            entry.gameName && entry.tagLine
+              ? `${entry.gameName}#${entry.tagLine}`
+              : entry.gameName || entry.summonerName,
+          profileIconId: entry.profileIconId ?? null,
+        }));
       }
     );
 

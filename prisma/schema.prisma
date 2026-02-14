@@ -319,9 +319,12 @@ model LeaderboardEntry {
   leaguePoints Int
   wins         Int
   losses       Int
-  puuid        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  puuid         String?
+  gameName      String?
+  tagLine       String?
+  profileIconId Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([region, queueType, tier, summonerId])
   @@index([region, tier])

@@ -55,54 +55,26 @@ export async function createLeaderboardEnrichWorker() {
 
         for (const region of regions) {
           // Find leaderboard entries with puuid that need enrichment
+          // (missing gameName or profileIconId directly on the entry)
           const entries = await prisma.leaderboardEntry.findMany({
             where: {
               region,
               puuid: { not: null },
+              OR: [
+                { gameName: null },
+                { profileIconId: null },
+              ],
             },
             select: { puuid: true },
             distinct: ["puuid"],
           });
 
-          const puuids = entries
+          const toEnrich = entries
             .map((e) => e.puuid)
             .filter((p): p is string => !!p);
 
-          if (puuids.length === 0) {
-            logger.info(`No entries with puuid for ${region}, skipping`);
-            continue;
-          }
-
-          // Check which puuids already have complete data in sharded tables
-          let existingAccounts: Array<{
-            puuid: string;
-            riotGameName: string | null;
-            riotTagLine: string | null;
-            profileIconId: number | null;
-            mostPlayedChampion: string | null;
-          }> = [];
-          try {
-            existingAccounts =
-              await ShardedLeagueAccounts.findManyByPuuidsForLeaderboard(
-                puuids,
-                region
-              );
-          } catch {
-            // Table might not exist yet for this region
-            logger.warn(`Could not query sharded table for ${region}`);
-          }
-
-          const existingSet = new Set(
-            existingAccounts
-              .filter((a) => a.riotGameName && a.profileIconId !== null)
-              .map((a) => a.puuid)
-          );
-
-          // Filter to puuids that need enrichment
-          const toEnrich = puuids.filter((p) => !existingSet.has(p));
-
           if (toEnrich.length === 0) {
-            logger.info(`All ${puuids.length} entries for ${region} already enriched`);
+            logger.info(`All entries for ${region} already enriched`);
             continue;
           }
 
@@ -164,7 +136,17 @@ export async function createLeaderboardEnrichWorker() {
                 logger.warn(`Could not fetch summoner data for ${puuid}`);
               }
 
-              // Upsert into sharded table
+              // Update LeaderboardEntry directly with enrichment data
+              await prisma.leaderboardEntry.updateMany({
+                where: { puuid, region },
+                data: {
+                  gameName,
+                  tagLine,
+                  profileIconId,
+                },
+              });
+
+              // Also upsert into sharded table for other features
               await ShardedLeagueAccounts.upsert({
                 puuid,
                 riotRegion: region,

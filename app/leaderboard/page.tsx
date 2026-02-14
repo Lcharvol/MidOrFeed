@@ -119,6 +119,8 @@ export default function LeaderboardPage() {
     const list: Array<{
       summonerId?: string;
       summonerName: string;
+      gameName?: string | null;
+      tagLine?: string | null;
       leaguePoints: number;
       wins: number;
       losses: number;
