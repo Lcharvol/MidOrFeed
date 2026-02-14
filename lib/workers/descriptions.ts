@@ -59,4 +59,8 @@ export const WORKER_DESCRIPTIONS: Record<string, { name: string; description: st
     name: "Crawl Seed",
     description: "Découvre de nouveaux joueurs à partir des participants de matchs existants",
   },
+  "leaderboard-enrich": {
+    name: "Leaderboard Enrich",
+    description: "Enrichit les joueurs du leaderboard avec leur nom, icône et champion principal via l'API Riot",
+  },
 };

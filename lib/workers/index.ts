@@ -11,6 +11,7 @@ import { createAccountRefreshWorker } from "./account-refresh.worker";
 import { createDailyResetWorker } from "./daily-reset.worker";
 import { createAccountSyncWorker } from "./account-sync.worker";
 import { createCrawlSeedWorker } from "./crawl-seed.worker";
+import { createLeaderboardEnrichWorker } from "./leaderboard-enrich.worker";
 import { closeJobQueue, scheduleJob, QUEUE_NAMES } from "../job-queue";
 import { createLogger } from "../logger";
 import { toError } from "../errors";
@@ -31,6 +32,7 @@ export { createAccountRefreshWorker } from "./account-refresh.worker";
 export { createDailyResetWorker } from "./daily-reset.worker";
 export { createAccountSyncWorker } from "./account-sync.worker";
 export { createCrawlSeedWorker } from "./crawl-seed.worker";
+export { createLeaderboardEnrichWorker } from "./leaderboard-enrich.worker";
 
 /**
  * Start all workers
@@ -53,6 +55,7 @@ export async function startAllWorkers() {
 
     // Sync jobs
     createLeaderboardSyncWorker(),
+    createLeaderboardEnrichWorker(),
     createDDragonSyncWorker(),
     createAccountRefreshWorker(),
 
@@ -96,6 +99,8 @@ export async function scheduleAllJobs() {
     { queue: QUEUE_NAMES.DATA_CLEANUP, cron: "0 1 * * *", data: { daysToKeep: 90 } },
     // Every 4 hours — sync leaderboards
     { queue: QUEUE_NAMES.LEADERBOARD_SYNC, cron: "0 */4 * * *", data: {} },
+    // Every 4 hours, 30min after sync — enrich leaderboard players
+    { queue: QUEUE_NAMES.LEADERBOARD_ENRICH, cron: "30 */4 * * *", data: {} },
     // Every 6 hours — sync DDragon (champion/item data)
     { queue: QUEUE_NAMES.DDRAGON_SYNC, cron: "0 */6 * * *", data: {} },
     // Every 2 hours — refresh stale accounts

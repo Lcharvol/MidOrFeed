@@ -1,10 +1,9 @@
 # Claude Code — Project Guidelines
 
-## Deployment
+## Workflow
 
-- **Never run `fly deploy` automatically** — deployments can disrupt production users
-- Only commit and push (`git add`, `git commit`, `git push`)
-- Let the user decide when to deploy manually
+- **Always commit and push** after completing a change — `git add`, `git commit`, `git push`
+- **Never run `fly deploy` automatically** — deployments can disrupt production users, let the user decide when to deploy manually
 
 ## Commit Conventions
 
@@ -40,6 +39,26 @@
 - **Server components**: direct Prisma queries, use `Promise.all` for parallel fetches
 - **Client components**: `useApiSWR` hook with `apiKeys.*` builders from `lib/api/keys.ts`
 - **Caching**: `getOrSetCache(key, CacheTTL.*, fetchFn)` — prefer `CacheTTL.LONG` (15min) for static data
+
+**SWR presets** (from `lib/hooks/swr.ts`):
+
+| Preset | Dedup interval | Use case |
+|--------|---------------|----------|
+| `STATIC_DATA_CONFIG` | 5 min | Champions, items, versions |
+| `SEMI_DYNAMIC_CONFIG` | 2 min | Stats, leaderboards |
+| `REALTIME_CONFIG` | 10 sec | Notifications, live status |
+
+```typescript
+// Read data
+const { data, error } = useApiSWR<MyType>(apiKeys.champions(), STATIC_DATA_CONFIG);
+
+// Mutate data (POST/PUT/DELETE)
+const { trigger } = useApiMutation<MyType>("/api/endpoint", { method: "POST" });
+
+// Invalidate cache
+invalidateSWRCache("/api/champions"); // exact key
+invalidateSWRCache(/^\/api\/champions/); // regex pattern
+```
 
 ## Code Conventions
 
@@ -102,19 +121,27 @@ export async function GET(request: NextRequest) {
 
 **Rate limit presets**: `rateLimitPresets.api` (100/min), `.auth` (5/15min), `.admin` (50/min), `.ugc` (20/min), `.vote` (60/min).
 
-### Error Handling
+**Validation schemas**: Centralized in `lib/api/schemas.ts` using Zod. Pattern `ValidationResult<T>`: `{ ok: true, value: T } | { ok: false, error: string }`. For POST routes, define the schema inline in the route file and use `safeParse` + `flatten()` for errors.
 
-- Use `toError(error)` from `lib/logger` to safely convert unknown errors
-- Log with the structured logger: `logger.error("message", toError(error))`
+### Error Handling & Logging
+
+- `toError(error)` from `lib/errors` safely converts unknown caught values to `Error`
+- `createLogger("service-name")` creates a logger with context; `logger` is the global default from `lib/logger`
+- Levels: `.debug()` (dev only), `.info()`, `.warn()`, `.error(message, error?, data?)`
+- Production: JSON output for log aggregation. Development: human-readable with colors
 - Return user-facing error messages in French for public endpoints
 - Never expose stack traces or internal details in API responses
 
-### Prisma Queries
+### Prisma & Database
 
+- **Singleton** in `lib/prisma.ts` with connection pooling (5 connections, 20s pool timeout, TCP keepalives)
 - Always use `select` or `include` to fetch only needed fields — never fetch entire records blindly
 - Use `Promise.all` for parallel independent queries
-- Wrap critical queries with `withRetry` for connection resilience
-- Use `prismaWithTimeout` for operations that may hang
+- `withRetry(operation, maxRetries?, delayMs?)` — automatic retry with exponential backoff for connection errors
+- `prismaWithTimeout` for operations that may hang
+- **Sharded accounts**: `lib/prisma-sharded-accounts.ts` for region-based account queries
+- **SQL sanitization**: `escapeLikePattern()`, `escapeSqlIdentifier()`, `validateTableName()`, `validateRegion()` from `lib/sql-sanitization.ts`
+- **Migrations**: run `pnpm prisma migrate dev --name descriptive-name`
 
 ### SEO
 
@@ -130,11 +157,17 @@ Every public page should have:
 - `openGraph` with `...baseOpenGraph` spread
 - JSON-LD schemas rendered via `<JsonLd data={...} />`
 
-### Components
+### Components & i18n
 
 - Use shadcn/ui components from `@/components/ui/` — don't reinvent form controls, dialogs, etc.
-- Translations via `const { t } = useI18n()` — never hardcode user-facing French strings in components
 - Use `useMemo` / `useCallback` for expensive computations and stable references in hooks
+
+**Internationalization**:
+- Hook: `const { t, locale, setLocale } = useI18n()` from `lib/i18n-context.tsx`
+- Translate: `t("domain.subDomain.key")` — dot-notation keys (e.g. `"admin.tabs.discover"`)
+- Always add translations in **both** `messages/fr.json` and `messages/en.json`
+- Default locale is `fr`, stored in `localStorage`
+- Never hardcode user-facing French strings in components — always use `t()`
 
 ### Constants & Configuration
 
@@ -143,6 +176,90 @@ Every public page should have:
 - **Environment variables** → validated via Zod in `lib/env.ts`, accessed through `getEnv()`
 - **Shared types** → `types/` directory, re-exported from `types/index.ts`
 
+## Security
+
+### Middleware
+
+`middleware.ts` applies to all non-static routes and handles:
+- **Security headers** via `lib/security-headers.ts`: X-Frame-Options (DENY), X-Content-Type-Options (nosniff), X-XSS-Protection, Referrer-Policy (strict-origin-when-cross-origin), Permissions-Policy, COOP, CSP
+- **HSTS** in production only: `max-age=31536000; includeSubDomains; preload`
+- **Cache-Control** `no-store` for `/api/auth` and `/api/admin` routes
+- **CSRF token** generation if not present in cookies
+
+### Authentication
+
+- `getAuthenticatedUser(request)` from `lib/auth-utils.ts` — reads JWT from HTTP-only cookie (`AUTH_COOKIE_NAME`), falls back to `Authorization` header
+- `requireAuth(request)` — returns 401 response if not authenticated, `null` if OK
+- `requireAdmin(request)` — checks auth + `role === "admin"` + CSRF for mutations; returns 401/403 or `null`
+
+### CSRF Protection
+
+- **Double Submit Cookie** pattern in `lib/csrf.ts`
+- Middleware generates token → stored in `csrf-token` cookie (readable by JS)
+- Client sends same token in `X-CSRF-Token` header on mutations
+- `requireCsrf(request)` validates both match and token isn't expired (24h TTL)
+- Safe methods (GET, HEAD, OPTIONS) skip CSRF validation
+
+### Encryption
+
+`lib/encryption.ts` — AES-256-GCM for data at rest:
+- `encrypt(text)` → `{IV_hex}:{AUTH_TAG_hex}:{ENCRYPTED_hex}`
+- `decrypt(encryptedData)` → original text
+- `hashSensitive(value)` / `verifyHash(value, hash)` — SHA-256 irreversible hashes
+- Requires `ENCRYPTION_KEY` env var (32 bytes hex or derived via PBKDF2)
+
+## Background Jobs (pg-boss)
+
+Queue names are defined in `QUEUE_NAMES` from `lib/job-queue.ts`. Workers live in `lib/workers/*.worker.ts`.
+
+### Key APIs
+
+```typescript
+import { sendJob, scheduleJob, registerWorker, QUEUE_NAMES } from "@/lib/job-queue";
+
+// Send a one-off job (retries 3x with exponential backoff, expires in 30min)
+await sendJob(QUEUE_NAMES.DATA_CRAWL, { region: "euw1" });
+
+// Register a worker to process jobs
+await registerWorker(QUEUE_NAMES.DATA_CRAWL, async (job) => {
+  // job.data contains the payload
+});
+
+// Schedule a recurring cron job
+await scheduleJob(QUEUE_NAMES.DAILY_RESET, "0 0 * * *", {});
+```
+
+### Worker Structure
+
+Each worker file exports a `create*Worker()` function that calls `registerWorker()`. All workers are started via `startAllWorkers()` in `lib/workers/index.ts`. Cron schedules are centralized in `scheduleAllJobs()`.
+
+### Processes
+
+- **app process**: Next.js server (`/app/start.sh`)
+- **worker process**: `npx tsx scripts/start-workers.ts` — runs `startAllWorkers()` + `scheduleAllJobs()`
+- Both processes are defined in `fly.toml` under `[processes]`
+
+## Environment Variables
+
+Validated via Zod in `lib/env.ts`, accessed through `getEnv()`:
+
+- **Build-time**: when `NEXT_PHASE === "phase-production-build"`, safe defaults are used for missing variables
+- **Runtime**: strict validation — crashes if critical variables are invalid
+- Helpers: `isProduction()`, `isDevelopment()` from `lib/env.ts`
+
+Key variables:
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `DATABASE_URL` | PostgreSQL connection | required at runtime |
+| `RIOT_API_KEY` | Riot Games API | required at runtime |
+| `JWT_SECRET` | JWT signing key | auto-generated in dev |
+| `ENCRYPTION_KEY` | AES-256 key (hex) | required for encryption |
+| `NODE_ENV` | Environment | `development` |
+| `NEXT_PUBLIC_APP_URL` | Public app URL | — |
+| `DB_TIMEOUT_MS` | DB query timeout | `30000` |
+| `API_TIMEOUT_MS` | API call timeout | `10000` |
+| `SLACK_WEBHOOK_URL` | Alert notifications | optional |
+
 ## Testing
 
 - **Framework**: Vitest
@@ -150,6 +267,29 @@ Every public page should have:
 - **Test location**: colocate test files next to source (`lib/pagination.test.ts` next to `lib/pagination.ts`) or in `__tests__/` for integration tests
 - **Run**: `pnpm test` (single run), `pnpm test:watch` (watch mode), `pnpm test:coverage` (coverage)
 - Before pushing significant lib/ changes, run `pnpm test` to check for regressions.
+
+**Patterns**:
+- Mock dependencies: `vi.mock("@/lib/module")` before imports
+- Always mock `logger`, `prisma`, and `alerting` in tests that touch API routes
+- Structure: `describe()` → `it()` → `expect()` assertions
+- Existing suites cover: pagination, jwt, csrf, rate-limit, cache, sql-sanitization, env, encryption, etc.
+
+## Deployment Infrastructure
+
+- **Docker**: multi-stage build (`deps` → `builder` → `runner`) on `node:20-alpine`
+- **Next.js**: `output: "standalone"` in `next.config.ts` for minimal production image
+- **Fly.io**: region `cdg` (Paris), 512MB RAM, shared CPU
+- **Release command**: `prisma migrate deploy` runs before each deployment
+- **Processes**: `app` (Next.js on port 8080) and `worker` (pg-boss workers via tsx)
+- **Health check**: `GET /api/health` every 15s, 60s grace period
+- **Auto-scaling**: min 1 machine, auto-stop on idle, auto-start on traffic
+
+### Next.js Config
+
+- `reactStrictMode: true`, `output: "standalone"`
+- Remote image patterns: `ddragon.leagueoflegends.com`, `images.contentstack.io`, `cmsassets.rgpub.io`
+- SVG allowed with CSP sandbox (`dangerouslyAllowSVG: true`)
+- Image optimization disabled in development
 
 ## Key Files Reference
 
@@ -164,9 +304,25 @@ Every public page should have:
 | `lib/cache.ts` | In-memory cache with TTL + prefix invalidation |
 | `lib/rate-limit.ts` | Rate limiting with presets |
 | `lib/logger.ts` | Structured logger (`createLogger("service")`) |
-| `lib/job-queue.ts` | pg-boss queue configuration |
+| `lib/errors.ts` | `toError()` safe error conversion |
+| `lib/job-queue.ts` | pg-boss queue config + `QUEUE_NAMES` |
+| `lib/workers/index.ts` | `startAllWorkers()`, `scheduleAllJobs()` |
 | `lib/api/keys.ts` | `apiKeys.*` URL builders for SWR |
+| `lib/api/schemas.ts` | Zod validation schemas + `ValidationResult<T>` |
+| `lib/hooks/swr.ts` | `useApiSWR`, `useApiMutation`, SWR presets |
 | `lib/riot-api.ts` | Riot API client with retry and cache |
+| `lib/auth-utils.ts` | `getAuthenticatedUser`, `requireAdmin`, `requireAuth` |
+| `lib/csrf.ts` | CSRF double-submit cookie + `requireCsrf` |
+| `lib/security-headers.ts` | Security headers + CSP |
+| `lib/encryption.ts` | AES-256-GCM encrypt/decrypt + hashing |
+| `lib/sql-sanitization.ts` | `escapeLikePattern`, `validateTableName`, `validateRegion` |
+| `lib/i18n-context.tsx` | `I18nProvider`, `useI18n()` hook |
+| `components/JsonLd.tsx` | JSON-LD structured data renderer |
 | `types/index.ts` | Barrel export for all shared types |
 | `messages/fr.json` | French translations |
 | `messages/en.json` | English translations |
+| `middleware.ts` | Security headers, CSRF, cache control |
+| `next.config.ts` | Next.js configuration |
+| `fly.toml` | Fly.io deployment config |
+| `Dockerfile` | Multi-stage Docker build |
+| `scripts/start-workers.ts` | Worker process entry point |

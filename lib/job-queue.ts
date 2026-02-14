@@ -26,6 +26,7 @@ export const QUEUE_NAMES = {
   ACCOUNT_REFRESH: "account-refresh",
   DAILY_RESET: "daily-reset",
   CRAWL_SEED: "crawl-seed",
+  LEADERBOARD_ENRICH: "leaderboard-enrich",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

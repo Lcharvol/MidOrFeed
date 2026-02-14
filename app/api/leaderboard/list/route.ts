@@ -50,37 +50,45 @@ export async function GET(req: NextRequest) {
           take,
         });
 
-        // Enrich top 50 entries with profile icon and most played champion
+        // Enrich all entries with gameName, tagLine, profileIconId, mostPlayedChampion via puuid
         try {
-          const toEnrich = raw.slice(0, 50);
-          const summonerIds = toEnrich
-            .map((e) => e.summonerId)
-            .filter(Boolean);
+          const puuids = raw
+            .map((e) => e.puuid)
+            .filter((p): p is string => !!p);
 
-          if (summonerIds.length > 0) {
+          if (puuids.length > 0) {
             const accounts =
-              await ShardedLeagueAccounts.findManyBySummonerIds(
-                summonerIds,
+              await ShardedLeagueAccounts.findManyByPuuidsForLeaderboard(
+                puuids,
                 region
               );
 
             const enrichMap = new Map(
               accounts.map((a) => [
-                a.riotSummonerId,
+                a.puuid,
                 {
+                  riotGameName: a.riotGameName,
+                  riotTagLine: a.riotTagLine,
                   profileIconId: a.profileIconId,
                   mostPlayedChampion: a.mostPlayedChampion,
                 },
               ])
             );
 
-            return raw.map((entry, idx) => {
-              if (idx >= 50) return entry;
-              const extra = enrichMap.get(entry.summonerId);
+            return raw.map((entry) => {
+              if (!entry.puuid) return entry;
+              const extra = enrichMap.get(entry.puuid);
+              if (!extra) return entry;
+              const gameName = extra.riotGameName;
+              const tagLine = extra.riotTagLine;
               return {
                 ...entry,
-                profileIconId: extra?.profileIconId ?? null,
-                mostPlayedChampion: extra?.mostPlayedChampion ?? null,
+                summonerName:
+                  gameName && tagLine
+                    ? `${gameName}#${tagLine}`
+                    : gameName || entry.summonerName,
+                profileIconId: extra.profileIconId ?? null,
+                mostPlayedChampion: extra.mostPlayedChampion ?? null,
               };
             });
           }

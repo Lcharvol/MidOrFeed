@@ -180,3 +180,16 @@ export interface CrawlSeedJobResult {
   duration: number;
   errors: string[];
 }
+
+// Leaderboard Enrich Worker
+export interface LeaderboardEnrichJobData {
+  regions?: string[];
+  limit?: number;
+}
+
+export interface LeaderboardEnrichJobResult {
+  accountsEnriched: number;
+  accountsSkipped: number;
+  duration: number;
+  errors: string[];
+}

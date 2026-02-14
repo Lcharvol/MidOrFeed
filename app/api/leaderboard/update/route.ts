@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
 import { REGION_TO_BASE_URL } from "@/constants/regions";
 import { createLogger } from "@/lib/logger";
 import { getEnv } from "@/lib/env";
@@ -51,6 +50,7 @@ export async function POST(req: Request) {
     const json = await res.json();
     interface RiotLeagueEntry {
       summonerId?: string;
+      puuid?: string;
       summonerName?: string;
       leaguePoints?: number;
       wins?: number;
@@ -62,6 +62,7 @@ export async function POST(req: Request) {
       : [];
     const entries = rawEntries.map((e: RiotLeagueEntry, _i: number) => ({
       summonerId: String(e?.summonerId ?? "").trim(),
+      puuid: typeof e?.puuid === "string" ? e.puuid.trim() : null,
       summonerName: typeof e?.summonerName === "string" ? e.summonerName : "",
       leaguePoints: Number(e?.leaguePoints) || 0,
       wins: Number(e?.wins) || 0,
@@ -76,6 +77,7 @@ export async function POST(req: Request) {
       (
         e: {
           summonerId: string;
+          puuid: string | null;
           summonerName: string;
           leaguePoints: number;
           wins: number;
@@ -98,6 +100,7 @@ export async function POST(req: Request) {
         leaguePoints: e.leaguePoints,
         wins: e.wins,
         losses: e.losses,
+        puuid: e.puuid || null,
       })
     );
     const db = prisma as unknown as {
@@ -128,63 +131,6 @@ export async function POST(req: Request) {
     });
     const upserts = createRes.count;
 
-    // Enrichir les noms d'invocateur manquants (quota léger pour éviter 429)
-    let enriched = 0;
-    const maxEnrich = 60;
-    const candidates = await db.leaderboardEntry.findMany({
-      where: {
-        region: regionLower,
-        tier: tierUpper,
-        queueType: "RANKED_SOLO_5x5",
-        summonerName: "",
-        NOT: {
-          summonerId: { startsWith: "anon:" },
-        },
-      },
-      take: maxEnrich,
-    });
-
-    for (const c of candidates) {
-      try {
-        // Small spacing to be nice with API
-        await new Promise((r) => setTimeout(r, 200));
-        const summonerRes = await fetch(
-          `${REGION_TO_BASE_URL[regionLower]}/lol/summoner/v4/summoners/${c.summonerId}`,
-          { headers: { "X-Riot-Token": RIOT_API_KEY } }
-        );
-        if (summonerRes.status === 429) {
-          // basic backoff, one retry
-          const retryAfter = parseInt(
-            summonerRes.headers.get("Retry-After") || "1",
-            10
-          );
-          await new Promise((r) =>
-            setTimeout(r, (isNaN(retryAfter) ? 1 : retryAfter) * 1000)
-          );
-          continue;
-        }
-        if (!summonerRes.ok) continue;
-        const summonerJson = await summonerRes.json();
-        const name =
-          typeof summonerJson?.name === "string" ? summonerJson.name : "";
-        if (!name) continue;
-        await db.leaderboardEntry.update({
-          where: {
-            region_queueType_tier_summonerId: {
-              region: regionLower,
-              queueType: "RANKED_SOLO_5x5",
-              tier: tierUpper,
-              summonerId: c.summonerId,
-            },
-          },
-          data: { summonerName: name },
-        });
-        enriched++;
-      } catch {
-        // ignore single failures
-      }
-    }
-
     return NextResponse.json(
       {
         success: true,
@@ -202,7 +148,6 @@ export async function POST(req: Request) {
                 rank: entries[0].rank ?? null,
               }
             : null,
-        enriched,
       },
       { status: 200 }
     );

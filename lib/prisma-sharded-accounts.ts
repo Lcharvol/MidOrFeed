@@ -562,6 +562,53 @@ export class ShardedLeagueAccounts {
   }
 
   /**
+   * Finds multiple accounts by PUUIDs for leaderboard enrichment.
+   * Returns only the fields needed: gameName, tagLine, profileIconId, mostPlayedChampion.
+   */
+  static async findManyByPuuidsForLeaderboard(
+    puuids: string[],
+    region: string
+  ): Promise<
+    Array<{
+      puuid: string;
+      riotGameName: string | null;
+      riotTagLine: string | null;
+      profileIconId: number | null;
+      mostPlayedChampion: string | null;
+    }>
+  > {
+    if (puuids.length === 0) return [];
+
+    if (!validateRegion(region)) {
+      throw new Error(`Invalid region: ${region}`);
+    }
+
+    const tableName = getLeagueAccountsTableName(region);
+
+    if (!validateTableName(tableName)) {
+      throw new Error(`Invalid table name: ${tableName}`);
+    }
+
+    const escapedTableName = escapeSqlIdentifier(tableName);
+    const placeholders = puuids.map((_, i) => `$${i + 1}`).join(", ");
+
+    const result = await prisma.$queryRawUnsafe<
+      Array<{
+        puuid: string;
+        riotGameName: string | null;
+        riotTagLine: string | null;
+        profileIconId: number | null;
+        mostPlayedChampion: string | null;
+      }>
+    >(
+      `SELECT "puuid", "riotGameName", "riotTagLine", "profileIconId", "mostPlayedChampion" FROM ${escapedTableName} WHERE "puuid" IN (${placeholders})`,
+      ...puuids
+    );
+
+    return result;
+  }
+
+  /**
    * Supprime un compte par PUUID dans la bonne table selon la région
    */
   static async deleteByPuuid(puuid: string, region: string): Promise<boolean> {

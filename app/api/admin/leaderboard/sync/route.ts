@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
               leaguePoints: entry.leaguePoints,
               wins: entry.wins,
               losses: entry.losses,
+              puuid: entry.puuid?.trim() || null,
             }));
 
           // Safety: don't delete existing data if new batch is empty
