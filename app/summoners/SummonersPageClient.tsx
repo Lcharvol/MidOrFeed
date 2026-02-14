@@ -11,6 +11,7 @@ import { useRecentSearch } from "@/lib/hooks/use-recent-search";
 import { useI18n } from "@/lib/i18n-context";
 import { HeroSearchSection } from "./components/HeroSearchSection";
 import { LinkedAccountCard } from "./components/LinkedAccountCard";
+import { LinkRiotAccountCard } from "./components/LinkRiotAccountCard";
 import { RecentSearches } from "./components/RecentSearches";
 import { FeatureCards } from "./components/FeatureCards";
 import { QuickLinks } from "./components/QuickLinks";
@@ -216,9 +217,11 @@ export default function SummonersPageClient() {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Linked Account Card */}
-          {hasLinkedAccount && user?.leagueAccount && (
+          {hasLinkedAccount && user?.leagueAccount ? (
             <LinkedAccountCard leagueAccount={user.leagueAccount} />
-          )}
+          ) : user ? (
+            <LinkRiotAccountCard />
+          ) : null}
 
           {/* Recently Viewed */}
           <RecentSearches recentSearches={recentSearches} />
