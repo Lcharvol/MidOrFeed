@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 import { buildSiteUrl } from "@/constants/site";
 import SummonerProfileLayout from "./SummonerProfileLayout";
+import SummonerProfileLoading from "./loading";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -51,5 +53,9 @@ export async function generateMetadata({
 }
 
 export default function Layout({ children }: LayoutProps) {
-  return <SummonerProfileLayout>{children}</SummonerProfileLayout>;
+  return (
+    <Suspense fallback={<SummonerProfileLoading />}>
+      <SummonerProfileLayout>{children}</SummonerProfileLayout>
+    </Suspense>
+  );
 }
