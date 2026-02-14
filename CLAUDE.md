@@ -169,6 +169,96 @@ Every public page should have:
 - Default locale is `fr`, stored in `localStorage`
 - Never hardcode user-facing French strings in components — always use `t()`
 
+### Forms
+
+Use `react-hook-form` + `zodResolver` for client-side validation. Zod schemas are created inside components to support i18n messages.
+
+```tsx
+const schema = z.object({
+  email: z.string().email(t("login.invalidEmail")),
+  password: z.string().min(1, t("login.passwordRequired")),
+});
+const form = useForm<FormValues>({
+  resolver: zodResolver(schema),
+  defaultValues: { email: "", password: "" },
+});
+```
+
+- Use shadcn/ui `Form`, `FormField`, `FormControl`, `FormItem`, `FormLabel`, `FormMessage` wrappers
+- Submit errors → `toast.error()`, success → `toast.success()`
+- Disable submit button during loading: `disabled={isLoading}`
+- Always pass `credentials: "include"` on fetch calls that need auth cookies
+- For complex forms, extract logic into custom hooks (`lib/hooks/use-*.ts`)
+
+### Toasts & Notifications
+
+**Sonner** for toast notifications:
+```tsx
+import { toast } from "sonner";
+toast.success(t("success.message"));
+toast.error(message, { description: "details", duration: 6000 });
+```
+
+`<Toaster />` is rendered in root layout. Available methods: `toast()`, `toast.success()`, `toast.error()`, `toast.warning()`.
+
+**NotificationProvider** for real-time notifications:
+- `useNotificationChannel` hook for player notifications
+- `useAdminNotificationChannel` for admin/job notifications
+- Context exposes: `notifications[]`, `unreadCount`, `markAsRead()`, `clearUnread()`, `status`
+
+### Dialogs & Modals
+
+- **Confirmations**: use `AlertDialog` (AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction)
+- **Rich content**: use `Dialog` (DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription)
+- **Mobile sheets**: use `Drawer` (Vaul-based, touch-optimized)
+- Always wrap triggers with `asChild={true}`
+
+### Loading & Error States
+
+**Loading pages** (`loading.tsx`): placed at route level, return skeleton UI for Suspense boundaries.
+
+```tsx
+export default function Loading() {
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <Skeleton className="h-10 w-48" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-32 rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+**Error pages** (`error.tsx`): receive `{ error, reset }` props. Display error card with retry button. Show error details only in development.
+
+**Inline loading**: use `Loader2Icon` from lucide-react with `animate-spin`.
+
+### Pagination
+
+Server-side pagination via `lib/pagination.ts`:
+- `getPaginationParams(request)` — extracts `page` and `limit` from query params
+- `createPaginatedResponse(data, total, page, limit)` — wraps data with pagination metadata
+- Response: `{ data: T[], pagination: { page, limit, total, totalPages, hasNext, hasPrevious } }`
+- Calculation: `skip = (page - 1) * limit`
+
+### Utilities
+
+- `cn()` from `lib/utils` — merges `clsx` + `tailwind-merge` to avoid Tailwind class conflicts
+- `toError(error)` from `lib/errors` — safely converts unknown to `Error`
+- `formatRelativeDate(date, locale)` — returns relative time string ("il y a 2 heures")
+- `isAdmin(role)` — checks if a user role is admin
+
+### Types
+
+Shared types live in `types/` and are barrel-exported from `types/index.ts`:
+- `champions.ts`, `summoners.ts`, `draft.ts`, `compositions.ts`, `guides.ts`, `matches.ts`, `notifications.ts`, `counter-picks.ts`, `user.ts`, `versions.ts`, `roles.ts`, `tier-list.ts`, `api.ts`
+- Always `export type { ... }` for type-only exports
+- API responses follow: `{ success: boolean, data?: T, error?: string, details?: unknown }`
+- Paginated responses: `{ success: true, data: T[], pagination: PaginationInfo }`
+
 ### Constants & Configuration
 
 - **Global constants** → `constants/` (SEO, site URLs, Data Dragon, ranks, regions)
@@ -304,6 +394,113 @@ className="hidden md:table-cell"
 Light mode: subtle (`rgba(0,0,0,0.06–0.14)`). Dark mode: deeper opacity.
 Special: `shadow-glow` — violet glow for interactive card hover states.
 
+## Client-Side Auth
+
+**AuthProvider + useAuth()** (`lib/auth-context.tsx`):
+- User data stored via HTTP-only cookie (JWT token), user object cached client-side
+- Methods: `login(user)`, `logout()`, `isLoading`
+- Cross-tab sync via `storage` event listener
+- User object: `{ id, email, name, role, subscriptionTier, riotGameName, leagueAccount }`
+- Google OAuth supported via `GoogleOAuthProvider` + `GoogleLogin`
+
+**Protected routes**: check `useAuth()` in component, redirect if not authenticated. Role-based: `isAdmin(user?.role)`.
+
+**authenticatedFetch()**: wrapper around `fetch` that automatically includes CSRF token in `X-CSRF-Token` header for mutations.
+
+## Navigation & Route Structure
+
+**Main routes**:
+- `/` — home
+- `/champions`, `/champions/[championId]` — champion database + detail pages
+- `/counter-picks`, `/counter-picks/[championId]` — counter-pick analysis
+- `/leaderboard` — ranked leaderboards
+- `/summoners` — summoner search + profiles
+- `/draft` — draft simulator
+- `/tier-list` — champion tier list
+- `/guides`, `/guides/[id]` — community champion guides
+- `/login`, `/signup` — auth pages (header hidden via `ConditionalHeader`)
+- `/admin` — admin panel (protected, role-based)
+- `/settings` — user settings
+
+**Admin panel** (`/admin`): lazy-loaded tabs via `dynamic()` with `ssr: false`:
+- **Discover** — data crawling, pipeline management, account sync
+- **Jobs** — pg-boss job queue visualization (active jobs, history, schedules)
+- **Rights** — user role management
+- **API Test** — Riot API testing (server status, live games, mastery)
+- **News** — news article management
+
+Tab state synced to URL query param `?tab=discover|jobs|rights|api|news` via `router.replace()`.
+
+## Riot API Integration
+
+`lib/riot-api.ts` — centralized Riot API client:
+
+```typescript
+const { data, cached, attempt } = await riotApiRequest<T>(url, {
+  region?,       // platform region
+  useCache?,     // default true
+  cacheTTL?,     // default CacheTTL.MEDIUM (5min)
+  maxRetries?,   // default from config
+  headers?,      // extra headers
+});
+```
+
+- Built-in exponential backoff with max delay
+- Rate limiter state per routing cluster (europe/americas/asia)
+- Respects `Retry-After` header from Riot API
+- Cache prefix: `riot:{url}`
+- Alerts on max retries exhausted (`alerting.high()`)
+- Uses `fetchWithTimeout()` for HTTP timeout handling
+
+**Region routing** (`constants/regions.ts`):
+- `REGION_TO_ROUTING` — maps platform ID → routing cluster (`euw1` → `"europe"`)
+- `REGION_TO_BASE_URL` — maps platform ID → base API URL
+- Account v1 endpoints use routing cluster: `https://{routing}.api.riotgames.com/riot/account/v1/...`
+- Summoner/League endpoints use platform: `https://{region}.api.riotgames.com/lol/...`
+
+## Alerting
+
+`lib/alerting.ts` — severity-based alerting with optional Slack integration:
+
+```typescript
+import { sendAlert, AlertSeverity } from "@/lib/alerting";
+sendAlert(AlertSeverity.HIGH, "Title", "Message", "service-name", { metadata });
+```
+
+- Severities: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`
+- Slack webhook: sends color-coded messages if `SLACK_WEBHOOK_URL` is set (green/orange/red/dark red)
+- Always logs to console/JSON regardless of Slack config
+
+## Charts
+
+**Recharts** for data visualizations:
+
+```tsx
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+<ResponsiveContainer width="100%" height={300}>
+  <LineChart data={chartData}>
+    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+    <XAxis dataKey="key" />
+    <YAxis domain={[0, 100]} />
+    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+    <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" />
+  </LineChart>
+</ResponsiveContainer>
+```
+
+Use CSS custom properties `--chart-1` through `--chart-5` for consistent chart colors.
+
+## Performance
+
+- **Lazy loading**: `dynamic(() => import(...), { loading, ssr: false })` for heavy components (admin tabs, charts)
+- **SWR deduplication**: prevents duplicate requests within configurable windows (5min/2min/10sec)
+- **`keepPreviousData: true`**: shows stale data while revalidating, avoids layout shift
+- **`revalidateOnFocus: false`**: SWR default overridden to avoid unnecessary refetches
+- **`prefetchSWR(key)`**: preload data on hover/anticipation
+- **Image optimization**: Next.js `<Image>` with remote patterns, disabled in dev
+- **Standalone output**: `next.config.ts` uses `output: "standalone"` for minimal Docker images
+
 ## Security
 
 ### Middleware
@@ -423,34 +620,55 @@ Key variables:
 
 | File | Purpose |
 |------|---------|
-| `constants/seo.ts` | Centralized SEO constants |
+| **Constants** | |
+| `constants/seo.ts` | `SITE_NAME`, `baseOpenGraph`, `websiteJsonLd` |
 | `constants/site.ts` | `buildSiteUrl()`, `getSiteUrl()` |
-| `constants/ddragon.ts` | Data Dragon CDN URL builders |
+| `constants/ddragon.ts` | `DDRAGON_VERSION`, image URL builders |
+| `constants/regions.ts` | `REGION_TO_ROUTING`, `REGION_TO_BASE_URL` |
+| `constants/riot-regions.ts` | `RIOT_REGIONS`, `MAIN_REGIONS`, `isValidRegion()` |
+| **Lib — Core** | |
 | `lib/prisma.ts` | Prisma singleton with retry/pooling |
-| `lib/prisma-sharded-accounts.ts` | Region-sharded account queries |
-| `lib/env.ts` | Zod-validated environment variables |
+| `lib/prisma-sharded-accounts.ts` | Region-sharded account queries (`ShardedLeagueAccounts`) |
+| `lib/env.ts` | Zod-validated env variables, `getEnv()`, `isProduction()` |
 | `lib/cache.ts` | In-memory cache with TTL + prefix invalidation |
 | `lib/rate-limit.ts` | Rate limiting with presets |
 | `lib/logger.ts` | Structured logger (`createLogger("service")`) |
 | `lib/errors.ts` | `toError()` safe error conversion |
-| `lib/job-queue.ts` | pg-boss queue config + `QUEUE_NAMES` |
-| `lib/workers/index.ts` | `startAllWorkers()`, `scheduleAllJobs()` |
-| `lib/api/keys.ts` | `apiKeys.*` URL builders for SWR |
-| `lib/api/schemas.ts` | Zod validation schemas + `ValidationResult<T>` |
-| `lib/hooks/swr.ts` | `useApiSWR`, `useApiMutation`, SWR presets |
-| `lib/riot-api.ts` | Riot API client with retry and cache |
+| `lib/utils.ts` | `cn()` class merge, misc utilities |
+| `lib/pagination.ts` | `getPaginationParams()`, `createPaginatedResponse()` |
+| **Lib — Auth & Security** | |
 | `lib/auth-utils.ts` | `getAuthenticatedUser`, `requireAdmin`, `requireAuth` |
+| `lib/auth-context.tsx` | `AuthProvider`, `useAuth()` hook |
 | `lib/csrf.ts` | CSRF double-submit cookie + `requireCsrf` |
 | `lib/security-headers.ts` | Security headers + CSP |
 | `lib/encryption.ts` | AES-256-GCM encrypt/decrypt + hashing |
 | `lib/sql-sanitization.ts` | `escapeLikePattern`, `validateTableName`, `validateRegion` |
+| **Lib — API & Data** | |
+| `lib/riot-api.ts` | Riot API client with retry, rate limiting, cache |
+| `lib/alerting.ts` | Severity-based alerting + Slack webhook |
+| `lib/api/keys.ts` | `apiKeys.*` URL builders for SWR |
+| `lib/api/schemas.ts` | Zod validation schemas + `ValidationResult<T>` |
+| `lib/hooks/swr.ts` | `useApiSWR`, `useApiMutation`, SWR presets |
+| **Lib — Workers** | |
+| `lib/job-queue.ts` | pg-boss queue config + `QUEUE_NAMES` |
+| `lib/queues/types.ts` | Job data/result TypeScript interfaces |
+| `lib/workers/index.ts` | `startAllWorkers()`, `scheduleAllJobs()` |
+| `lib/workers/descriptions.ts` | Admin panel worker descriptions |
+| **Lib — i18n** | |
 | `lib/i18n-context.tsx` | `I18nProvider`, `useI18n()` hook |
-| `components/JsonLd.tsx` | JSON-LD structured data renderer |
-| `types/index.ts` | Barrel export for all shared types |
 | `messages/fr.json` | French translations |
 | `messages/en.json` | English translations |
+| **Components** | |
+| `components/ui/` | shadcn/ui component library |
+| `components/icons/` | Custom SVG role icons (Top, Jungle, Mid, Bot, Support) |
+| `components/JsonLd.tsx` | JSON-LD structured data renderer |
+| `components/TierBadge.tsx` | Tier badge with shine animation (S+/S/A/B/C/D) |
+| **Config** | |
+| `types/index.ts` | Barrel export for all shared types |
 | `middleware.ts` | Security headers, CSRF, cache control |
 | `next.config.ts` | Next.js configuration |
+| `components.json` | shadcn/ui config (New York style, lucide icons) |
+| `app/globals.css` | CSS custom properties, theme, animations |
 | `fly.toml` | Fly.io deployment config |
 | `Dockerfile` | Multi-stage Docker build |
 | `scripts/start-workers.ts` | Worker process entry point |
