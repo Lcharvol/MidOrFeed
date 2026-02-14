@@ -155,3 +155,28 @@ export interface DailyResetJobResult {
   duration: number;
   errors: string[];
 }
+
+// Account Sync Worker
+export interface AccountSyncJobData {
+  batchSize?: number;
+}
+
+export interface AccountSyncJobResult {
+  accountsCreated: number;
+  accountsSkipped: number;
+  duration: number;
+  errors: string[];
+}
+
+// Crawl Seed Worker
+export interface CrawlSeedJobData {
+  regions?: string[];
+  countPerRegion?: number;
+}
+
+export interface CrawlSeedJobResult {
+  regionsProcessed: number;
+  newPlayersDiscovered: number;
+  duration: number;
+  errors: string[];
+}

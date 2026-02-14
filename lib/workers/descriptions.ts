@@ -17,7 +17,7 @@ export const WORKER_DESCRIPTIONS: Record<string, { name: string; description: st
   },
   "account-sync": {
     name: "Account Sync",
-    description: "Synchronise les comptes joueurs depuis l'API Riot",
+    description: "Convertit les participants de matchs en comptes LeagueAccount avec stats calculées",
   },
   "leaderboard-sync": {
     name: "Leaderboard Sync",
@@ -54,5 +54,9 @@ export const WORKER_DESCRIPTIONS: Record<string, { name: string; description: st
   "daily-reset": {
     name: "Daily Reset",
     description: "Reset les quotas journaliers et effectue la maintenance quotidienne",
+  },
+  "crawl-seed": {
+    name: "Crawl Seed",
+    description: "Découvre de nouveaux joueurs à partir des participants de matchs existants",
   },
 };

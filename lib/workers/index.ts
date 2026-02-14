@@ -9,6 +9,8 @@ import { createItemBuildsWorker } from "./item-builds.worker";
 import { createDataCleanupWorker } from "./data-cleanup.worker";
 import { createAccountRefreshWorker } from "./account-refresh.worker";
 import { createDailyResetWorker } from "./daily-reset.worker";
+import { createAccountSyncWorker } from "./account-sync.worker";
+import { createCrawlSeedWorker } from "./crawl-seed.worker";
 import { closeJobQueue, scheduleJob, QUEUE_NAMES } from "../job-queue";
 import { createLogger } from "../logger";
 import { toError } from "../errors";
@@ -27,6 +29,8 @@ export { createItemBuildsWorker } from "./item-builds.worker";
 export { createDataCleanupWorker } from "./data-cleanup.worker";
 export { createAccountRefreshWorker } from "./account-refresh.worker";
 export { createDailyResetWorker } from "./daily-reset.worker";
+export { createAccountSyncWorker } from "./account-sync.worker";
+export { createCrawlSeedWorker } from "./crawl-seed.worker";
 
 /**
  * Start all workers
@@ -55,6 +59,10 @@ export async function startAllWorkers() {
     // Maintenance jobs
     createDataCleanupWorker(),
     createDailyResetWorker(),
+
+    // Account & discovery jobs
+    createAccountSyncWorker(),
+    createCrawlSeedWorker(),
   ]);
 
   workerIds.push(...workers);
@@ -104,6 +112,10 @@ export async function scheduleAllJobs() {
     { queue: QUEUE_NAMES.DATA_CRAWL, cron: "0 */2 * * *", data: {} },
     // Every 4 hours — generate compositions
     { queue: QUEUE_NAMES.COMPOSITIONS, cron: "0 */4 * * *", data: {} },
+    // Every 4 hours — sync accounts from match participants
+    { queue: QUEUE_NAMES.ACCOUNT_SYNC, cron: "0 */4 * * *", data: {} },
+    // Every 6 hours — discover new players from match data
+    { queue: QUEUE_NAMES.CRAWL_SEED, cron: "0 */6 * * *", data: {} },
   ];
 
   for (const { queue, cron, data } of schedules) {

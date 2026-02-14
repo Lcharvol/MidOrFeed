@@ -25,6 +25,7 @@ export const QUEUE_NAMES = {
   DATA_CLEANUP: "data-cleanup",
   ACCOUNT_REFRESH: "account-refresh",
   DAILY_RESET: "daily-reset",
+  CRAWL_SEED: "crawl-seed",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -348,3 +349,9 @@ export const sendAccountRefreshJob = (data: { puuid?: string }) =>
 
 export const sendDailyResetJob = (data: Record<string, unknown>) =>
   sendJob(QUEUE_NAMES.DAILY_RESET, data);
+
+export const sendAccountSyncJob = (data: { batchSize?: number }) =>
+  sendJob(QUEUE_NAMES.ACCOUNT_SYNC, data);
+
+export const sendCrawlSeedJob = (data: { regions?: string[]; countPerRegion?: number }) =>
+  sendJob(QUEUE_NAMES.CRAWL_SEED, data);
