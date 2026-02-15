@@ -95,52 +95,34 @@ const CounterPicksPageClient = ({
     router.replace(targetPath, { scroll: false });
   };
 
-  // Empty state
+  // Empty state — popular champions grid only (filter is in PageHero)
   const renderEmptyState = () => (
-    <div className="space-y-6">
-      <div className="max-w-md mx-auto text-center space-y-4">
-        <h2 className="text-lg sm:text-xl font-bold">
-          {t("counterPicks.findPerfectCounter")}
-        </h2>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          {t("counterPicks.selectChampionPrompt")}
-        </p>
-        <CounterPickFilterBar
-          championOptions={championOptions}
-          selectedChampion={selectedChampion}
-          onChampionChange={handleChampionChange}
-          mode={mode}
-          onModeChange={setMode}
-        />
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <TrendingUpIcon className="size-3.5" />
+        <span>{t("counterPicks.popularChampions")}</span>
       </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <TrendingUpIcon className="size-3.5" />
-          <span>{t("counterPicks.popularChampions")}</span>
-        </div>
-        <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
-          {POPULAR_CHAMPIONS.map((champId) => {
-            const name = championNameMap.get(champId) ?? champId;
-            return (
-              <button
-                key={champId}
-                onClick={() => handleChampionChange(champId)}
-                className="group flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-card/50 p-3 transition-all hover:bg-accent/50 hover:ring-2 hover:ring-primary/20"
-              >
-                <ChampionIcon
-                  championId={champId}
-                  size={48}
-                  shape="circle"
-                  className="border border-border/50 transition-transform group-hover:scale-105"
-                />
-                <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground truncate max-w-full">
-                  {name}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
+        {POPULAR_CHAMPIONS.map((champId) => {
+          const name = championNameMap.get(champId) ?? champId;
+          return (
+            <button
+              key={champId}
+              onClick={() => handleChampionChange(champId)}
+              className="group flex flex-col items-center gap-1.5 rounded-xl p-3 transition-all hover:bg-muted/50"
+            >
+              <ChampionIcon
+                championId={champId}
+                size={48}
+                shape="circle"
+                className="transition-transform group-hover:scale-105"
+              />
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground truncate max-w-full">
+                {name}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -320,12 +302,22 @@ const CounterPicksPageClient = ({
         </div>
       )}
 
-      {/* Page header when no champion selected */}
+      {/* Page header with integrated filter when no champion selected */}
       {!selectedChampion && (
         <PageHero
           title={t("counterPicks.title")}
           description={t("counterPicks.description")}
-        />
+        >
+          <div className="w-full max-w-sm space-y-3">
+            <CounterPickFilterBar
+              championOptions={championOptions}
+              selectedChampion={selectedChampion}
+              onChampionChange={handleChampionChange}
+              mode={mode}
+              onModeChange={setMode}
+            />
+          </div>
+        </PageHero>
       )}
 
       {/* Filter bar — always rendered as separate section when champion selected */}
