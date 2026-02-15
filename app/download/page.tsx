@@ -23,6 +23,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n-context";
+import { cn } from "@/lib/utils";
 
 type Platform = "windows" | "mac" | "unknown";
 
@@ -30,19 +32,18 @@ const GITHUB_REPO = "Lcharvol/lol-comp-maker";
 const APP_VERSION = "1.0.0";
 
 export default function DownloadPage() {
+  const { t } = useI18n();
   const [platform, setPlatform] = useState<Platform>("unknown");
   const [isLoading, setIsLoading] = useState(false);
   const [isAppleSilicon, setIsAppleSilicon] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Detect user's platform
     const userAgent = navigator.userAgent.toLowerCase();
     if (userAgent.includes("win")) {
       setPlatform("windows");
     } else if (userAgent.includes("mac")) {
       setPlatform("mac");
-      // Try to detect Apple Silicon
       // @ts-expect-error - userAgentData is not yet in TypeScript types
       if (navigator.userAgentData?.platform === "macOS") {
         // @ts-expect-error - userAgentData is not yet in TypeScript types
@@ -80,19 +81,32 @@ export default function DownloadPage() {
   const features = [
     {
       icon: ZapIcon,
-      title: "Champion Select Helper",
-      description: "Suggestions de picks en temps reel pendant la selection des champions"
+      title: t("download.featureChampSelectTitle"),
+      description: t("download.featureChampSelectDescription"),
+      iconBg: "bg-warning-muted",
+      iconColor: "text-warning",
     },
     {
       icon: EyeIcon,
-      title: "Overlay Transparent",
-      description: "S'affiche par-dessus le jeu sans bloquer votre vue"
+      title: t("download.featureOverlayTitle"),
+      description: t("download.featureOverlayDescription"),
+      iconBg: "bg-info-muted",
+      iconColor: "text-info",
     },
     {
       icon: ShieldIcon,
-      title: "100% Safe",
-      description: "Utilise uniquement l'API officielle de Riot Games, aucun risque de ban"
-    }
+      title: t("download.featureSafeTitle"),
+      description: t("download.featureSafeDescription"),
+      iconBg: "bg-success-muted",
+      iconColor: "text-success",
+    },
+  ];
+
+  const steps = [
+    t("download.step1"),
+    t("download.step2"),
+    t("download.step3"),
+    t("download.step4"),
   ];
 
   return (
@@ -104,19 +118,20 @@ export default function DownloadPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Telecharger</BreadcrumbPage>
+            <BreadcrumbPage>{t("download.breadcrumb")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+
       <div className="text-center mb-12 animate-fade-up">
         <Badge emphasis="info" emphasisVariant="subtle" className="mb-4">
           Version {APP_VERSION}
         </Badge>
         <h1 className="text-4xl font-bold mb-4">
-          MidOrFeed Overlay
+          {t("download.title")}
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Application desktop pour afficher des informations en temps reel pendant vos parties de League of Legends.
+          {t("download.subtitle")}
         </p>
       </div>
 
@@ -126,17 +141,17 @@ export default function DownloadPage() {
         <Card className={platform === "windows" ? "border-primary" : ""}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <MonitorIcon className="h-6 w-6 text-blue-500" />
+              <div className="p-2 bg-info-muted rounded-lg">
+                <MonitorIcon className="h-6 w-6 text-info" />
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
                   Windows
                   {platform === "windows" && (
-                    <Badge emphasis="positive" emphasisVariant="subtle" className="text-xs">Recommande</Badge>
+                    <Badge emphasis="positive" emphasisVariant="subtle" className="text-xs">{t("download.recommended")}</Badge>
                   )}
                 </CardTitle>
-                <CardDescription>Windows 10/11 (64-bit)</CardDescription>
+                <CardDescription>{t("download.windowsDescription")}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -148,10 +163,10 @@ export default function DownloadPage() {
               disabled={isLoading}
             >
               <DownloadIcon className="mr-2 h-4 w-4" />
-              Telecharger pour Windows
+              {t("download.downloadWindows")}
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-2">
-              .exe - Installateur NSIS
+              {t("download.installerExe")}
             </p>
           </CardContent>
         </Card>
@@ -160,17 +175,17 @@ export default function DownloadPage() {
         <Card className={platform === "mac" ? "border-primary" : ""}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-500/10 rounded-lg">
+              <div className="p-2 bg-muted rounded-lg">
                 <AppleIcon className="h-6 w-6" />
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
                   macOS
                   {platform === "mac" && (
-                    <Badge emphasis="positive" emphasisVariant="subtle" className="text-xs">Recommande</Badge>
+                    <Badge emphasis="positive" emphasisVariant="subtle" className="text-xs">{t("download.recommended")}</Badge>
                   )}
                 </CardTitle>
-                <CardDescription>macOS 10.15+ (Intel & Apple Silicon)</CardDescription>
+                <CardDescription>{t("download.macDescription")}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -183,64 +198,87 @@ export default function DownloadPage() {
               disabled={isLoading}
             >
               <DownloadIcon className="mr-2 h-4 w-4" />
-              Telecharger pour Mac
+              {t("download.downloadMac")}
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-2">
-              .dmg - Image disque
+              {t("download.installerDmg")}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Features */}
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-8">Fonctionnalites</h2>
-        <div className="grid md:grid-cols-3 gap-6">
+      {/* Features — horizontal rows */}
+      <div className="max-w-3xl mx-auto mb-12">
+        <h2 className="text-2xl font-bold mb-6">{t("download.featuresTitle")}</h2>
+        <div className="space-y-2">
           {features.map((feature, index) => (
-            <Card key={index} className="text-center">
-              <CardContent>
-                <div className="inline-flex p-3 bg-muted rounded-full mb-4">
-                  <feature.icon className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <h3 className="font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* How it works */}
-      <div className="max-w-2xl mx-auto mt-12">
-        <h2 className="text-2xl font-bold text-center mb-8">Comment ca marche ?</h2>
-        <div className="space-y-4">
-          {[
-            "Telechargez et installez l'application",
-            "Lancez MidOrFeed Overlay",
-            "Lancez League of Legends",
-            "L'overlay detecte automatiquement le client et s'affiche pendant le Champion Select"
-          ].map((step, index) => (
-            <div key={index} className="flex items-center gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
-                {index + 1}
+            <div
+              key={index}
+              className={cn(
+                "flex items-start gap-4 rounded-xl p-5 transition-colors hover:bg-muted/30",
+                index === 0 && "animate-fade-up",
+                index === 1 && "animate-fade-up-delay-1",
+                index === 2 && "animate-fade-up-delay-2",
+              )}
+            >
+              <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", feature.iconBg)}>
+                <feature.icon className={cn("size-5", feature.iconColor)} />
               </div>
-              <p className="text-muted-foreground">{step}</p>
+              <div>
+                <h3 className="font-semibold">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{feature.description}</p>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* FAQ / Notes */}
-      <div className="max-w-2xl mx-auto mt-12 text-center">
-        <Card className="bg-muted/50">
+      {/* How it works — vertical timeline */}
+      <div className="max-w-2xl mx-auto mb-12">
+        <h2 className="text-2xl font-bold mb-8">{t("download.howItWorksTitle")}</h2>
+        <div className="relative pl-12">
+          {/* Vertical line */}
+          <div className="absolute left-4 top-4 bottom-4 w-px bg-border" />
+
+          <div className="space-y-6">
+            {steps.map((step, index) => {
+              const isLast = index === steps.length - 1;
+              return (
+                <div key={index} className="relative flex items-start gap-4">
+                  {/* Circle on the line */}
+                  <div
+                    className={cn(
+                      "absolute -left-8 flex size-9 shrink-0 items-center justify-center rounded-full border font-bold text-sm",
+                      isLast
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted border-border"
+                    )}
+                  >
+                    {index + 1}
+                  </div>
+                  <p className={cn(
+                    "pt-1.5",
+                    isLast ? "text-foreground font-medium" : "text-muted-foreground"
+                  )}>
+                    {step}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Compliance */}
+      <div className="max-w-2xl mx-auto">
+        <Card className="bg-success-muted/30 border-success/20">
           <CardContent>
             <div className="flex items-center justify-center gap-2 mb-2">
               <CheckCircleIcon className="h-5 w-5 text-success" />
-              <span className="font-semibold">Conforme aux conditions d'utilisation de Riot Games</span>
+              <span className="font-semibold">{t("download.complianceTitle")}</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Cette application utilise uniquement l'API officielle League Client Update (LCU)
-              et ne modifie en aucun cas les fichiers du jeu.
+            <p className="text-sm text-muted-foreground text-center">
+              {t("download.complianceDescription")}
             </p>
           </CardContent>
         </Card>

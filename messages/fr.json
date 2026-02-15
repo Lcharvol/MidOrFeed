@@ -1238,6 +1238,32 @@
   "pricing": {
     "premiumUnavailable": "Premium temporairement indisponible."
   },
+  "download": {
+    "breadcrumb": "Télécharger",
+    "title": "MidOrFeed Overlay",
+    "subtitle": "Application desktop pour afficher des informations en temps réel pendant vos parties de League of Legends.",
+    "recommended": "Recommandé",
+    "downloadWindows": "Télécharger pour Windows",
+    "downloadMac": "Télécharger pour Mac",
+    "windowsDescription": "Windows 10/11 (64-bit)",
+    "macDescription": "macOS 10.15+ (Intel & Apple Silicon)",
+    "installerExe": ".exe — Installateur NSIS",
+    "installerDmg": ".dmg — Image disque",
+    "featuresTitle": "Fonctionnalités",
+    "featureChampSelectTitle": "Champion Select Helper",
+    "featureChampSelectDescription": "Suggestions de picks en temps réel pendant la sélection des champions",
+    "featureOverlayTitle": "Overlay Transparent",
+    "featureOverlayDescription": "S'affiche par-dessus le jeu sans bloquer votre vue",
+    "featureSafeTitle": "100% Safe",
+    "featureSafeDescription": "Utilise uniquement l'API officielle de Riot Games, aucun risque de ban",
+    "howItWorksTitle": "Comment ça marche ?",
+    "step1": "Téléchargez et installez l'application",
+    "step2": "Lancez MidOrFeed Overlay",
+    "step3": "Lancez League of Legends",
+    "step4": "L'overlay détecte automatiquement le client et s'affiche pendant le Champion Select",
+    "complianceTitle": "Conforme aux conditions d'utilisation de Riot Games",
+    "complianceDescription": "Cette application utilise uniquement l'API officielle League Client Update (LCU) et ne modifie en aucun cas les fichiers du jeu."
+  },
   "draft": {
     "title": "Simulateur de Draft",
     "description": "Entraînez-vous à la phase de sélection des champions contre une IA. Construisez votre composition, puis découvrez son score.",
