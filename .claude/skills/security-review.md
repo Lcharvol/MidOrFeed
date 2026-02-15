@@ -122,3 +122,52 @@ catch (error) {
 - `Content-Security-Policy` — restricts script/style sources
 - `HSTS: max-age=31536000; includeSubDomains; preload` (production only)
 - `Cache-Control: no-store` on `/api/auth` and `/api/admin` routes
+
+## Sharp Edges — API Footgun Detection
+
+When reviewing APIs and configurations, check for these misuse-prone patterns:
+
+### Dangerous Defaults
+```typescript
+// What happens with zero/null/empty?
+const timeout = config.timeout || 0;    // 0 = infinite? immediate?
+const maxRetries = options.max ?? -1;   // -1 = unlimited?
+const secret = env.KEY || '';           // empty string bypasses checks?
+```
+
+### Silent Failures
+```typescript
+// BAD: verification that doesn't throw
+function verifyToken(token: string): boolean {
+  if (!token) return false; // Caller forgets to check return value
+}
+
+// GOOD: throw on failure
+function verifyToken(token: string): DecodedToken {
+  if (!token) throw new AuthError('Token required');
+}
+```
+
+### Type Confusion
+```typescript
+// BAD: same type for different security concepts
+function encrypt(data: string, key: string, iv: string) {} // easy to swap key/iv
+
+// GOOD: distinct types or validated wrappers
+function encrypt(data: string, key: EncryptionKey, iv: InitVector) {}
+```
+
+### Configuration Cliffs
+```yaml
+# One typo = disaster
+verify_ssl: fasle   # Typo silently treated as truthy?
+auth_required: true
+bypass_for_health: true
+health_path: "/"    # Oops — bypasses auth for everything
+```
+
+### Three Adversary Lens
+When reviewing security code, consider:
+1. **The Scoundrel** — malicious actor controlling config/input. Can they disable security?
+2. **The Lazy Developer** — copy-pastes examples, skips docs. Is the default path secure?
+3. **The Confused Developer** — misunderstands the API. Can they swap params without type errors?
