@@ -41,16 +41,6 @@ export const SummonerHeader = ({
           <SkeletonAvatar size="lg" className="size-28" aria-busy="true" />
         ) : (
           <>
-            {wingsUrl && (
-              <Image
-                src={wingsUrl}
-                alt=""
-                width={180}
-                height={233}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[48%] pointer-events-none z-10"
-                unoptimized
-              />
-            )}
             {profileIconUrl ? (
               <Avatar className="size-28 border-4 border-primary/20">
                 <AvatarImage src={profileIconUrl} alt={details?.gameName ? `${details.gameName} profile icon` : "Profile icon"} />
@@ -62,6 +52,16 @@ export const SummonerHeader = ({
                   {details?.gameName?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
+            )}
+            {wingsUrl && (
+              <Image
+                src={wingsUrl}
+                alt=""
+                width={158}
+                height={205}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[38%] pointer-events-none z-10"
+                unoptimized
+              />
             )}
             {details?.summonerLevel && (
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-lg bg-muted px-2 py-0.5 text-xs font-semibold shadow-sm z-20">
