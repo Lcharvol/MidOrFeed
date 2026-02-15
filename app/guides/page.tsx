@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,22 +50,7 @@ import { toast } from "sonner";
 import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
 import { useI18n } from "@/lib/i18n-context";
 import { GuideCard } from "./components/GuideCard";
-import type { GuideSummary, GuideListResponse, GuideRole } from "@/types/guides";
-
-const ROLES: { value: GuideRole | "all"; label: string }[] = [
-  { value: "all", label: "Tous les rôles" },
-  { value: "TOP", label: "Top" },
-  { value: "JUNGLE", label: "Jungle" },
-  { value: "MID", label: "Mid" },
-  { value: "ADC", label: "ADC" },
-  { value: "SUPPORT", label: "Support" },
-];
-
-const SORT_OPTIONS = [
-  { value: "popular", label: "Populaires" },
-  { value: "recent", label: "Récents" },
-  { value: "views", label: "Plus vus" },
-];
+import type { GuideListResponse, GuideRole } from "@/types/guides";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -81,6 +66,21 @@ const GuidesPage = () => {
   const [role, setRole] = useState<GuideRole | "all">("all");
   const [sort, setSort] = useState<"popular" | "recent" | "views">("popular");
   const [page, setPage] = useState(0);
+
+  const roles = useMemo(() => [
+    { value: "all" as const, label: t("guides.allRoles") },
+    { value: "TOP" as const, label: "Top" },
+    { value: "JUNGLE" as const, label: "Jungle" },
+    { value: "MID" as const, label: "Mid" },
+    { value: "ADC" as const, label: "ADC" },
+    { value: "SUPPORT" as const, label: "Support" },
+  ], [t]);
+
+  const sortOptions = useMemo(() => [
+    { value: "popular" as const, label: t("guides.sortPopular") },
+    { value: "recent" as const, label: t("guides.sortRecent") },
+    { value: "views" as const, label: t("guides.sortViews") },
+  ], [t]);
 
   // Reset page when filters change
   const handleRoleChange = (v: GuideRole | "all") => { setRole(v); setPage(0); };
@@ -120,7 +120,7 @@ const GuidesPage = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Guides</BreadcrumbPage>
+            <BreadcrumbPage>{t("guides.breadcrumb")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -129,16 +129,16 @@ const GuidesPage = () => {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <BookOpenIcon className="size-8 text-muted-foreground" />
-            Guides Champions
+            {t("guides.title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Découvrez les meilleurs guides créés par la communauté
+            {t("guides.subtitle")}
           </p>
         </div>
         <Button asChild>
           <Link href="/guides/create">
             <PlusIcon className="size-4 mr-2" />
-            Créer un guide
+            {t("guides.createGuide")}
           </Link>
         </Button>
       </div>
@@ -150,7 +150,7 @@ const GuidesPage = () => {
             <div className="relative">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher..."
+                placeholder={t("guides.search")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -168,7 +168,7 @@ const GuidesPage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROLES.map((r) => (
+                  {roles.map((r) => (
                     <SelectItem key={r.value} value={r.value}>
                       {r.label}
                     </SelectItem>
@@ -187,7 +187,7 @@ const GuidesPage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {SORT_OPTIONS.map((s) => (
+                  {sortOptions.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
                       {s.label}
                     </SelectItem>
@@ -222,7 +222,7 @@ const GuidesPage = () => {
           <Card>
             <CardContent className="px-8 text-center">
               <p className="text-muted-foreground">
-                Erreur lors du chargement des guides
+                {t("guides.loadingError")}
               </p>
             </CardContent>
           </Card>
@@ -233,18 +233,18 @@ const GuidesPage = () => {
               <EmptyMedia variant="icon">
                 {search ? <SearchIcon /> : <BookOpenIcon />}
               </EmptyMedia>
-              <EmptyTitle>Aucun guide trouvé</EmptyTitle>
+              <EmptyTitle>{t("guides.noGuideFound")}</EmptyTitle>
               <EmptyDescription>
                 {search
-                  ? "Aucun guide ne correspond à votre recherche"
-                  : "Soyez le premier à créer un guide !"}
+                  ? t("guides.noGuideMatchSearch")
+                  : t("guides.beFirstToCreate")}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>
                 <Link href="/guides/create">
                   <PlusIcon className="size-4 mr-2" />
-                  Créer un guide
+                  {t("guides.createGuide")}
                 </Link>
               </Button>
             </EmptyContent>
@@ -263,19 +263,19 @@ const GuidesPage = () => {
                   onClick={() => window.open(`/guides/${guide.id}`, "_blank")}
                 >
                   <ExternalLinkIcon className="size-4" />
-                  Ouvrir dans un nouvel onglet
+                  {t("guides.openNewTab")}
                 </ContextMenuItem>
                 <ContextMenuItem
                   onClick={() => {
                     const url = `${window.location.origin}/guides/${guide.id}`;
                     navigator.clipboard.writeText(url).then(
-                      () => toast.success("Lien copié"),
-                      () => toast.error("Impossible de copier le lien")
+                      () => toast.success(t("guides.linkCopied")),
+                      () => toast.error(t("guides.linkCopyFailed"))
                     );
                   }}
                 >
                   <CopyIcon className="size-4" />
-                  Copier le lien
+                  {t("guides.copyLink")}
                 </ContextMenuItem>
               </ContextMenuContent>
             </ContextMenu>
@@ -287,7 +287,10 @@ const GuidesPage = () => {
       {!isLoading && total > PAGE_SIZE && !search && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, total)} sur {total} guides
+            {t("guides.showingRange")
+              .replace("{start}", String(page * PAGE_SIZE + 1))
+              .replace("{end}", String(Math.min((page + 1) * PAGE_SIZE, total)))
+              .replace("{total}", String(total))}
           </p>
           <div className="flex gap-2">
             <Button
@@ -297,7 +300,7 @@ const GuidesPage = () => {
               disabled={page === 0}
             >
               <ChevronLeftIcon className="size-4 mr-1" />
-              Précédent
+              {t("guides.previous")}
             </Button>
             <Button
               variant="outline"
@@ -305,7 +308,7 @@ const GuidesPage = () => {
               onClick={() => { setPage((p) => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
               disabled={!hasMore}
             >
-              Suivant
+              {t("guides.next")}
               <ChevronRightIcon className="size-4 ml-1" />
             </Button>
           </div>

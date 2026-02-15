@@ -66,6 +66,9 @@ export function SearchResultsList({
 
   if (results.length === 0) return null;
 
+  const featured = results[0];
+  const rest = results.slice(1);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -76,59 +79,114 @@ export function SearchResultsList({
           </h2>
           <Button variant="ghost" size="sm" onClick={onClear}>
             <XIcon className="size-4 mr-1" />
-            Effacer
+            {t("searchResults.clear")}
           </Button>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {results.map((result) => (
-            <Card key={`${result.puuid}-${result.region}`} variant="interactive" className="group">
-              <CardContent className="px-3">
-                <Link
-                  href={`/summoners/${result.puuid}/overview?region=${result.region}`}
-                  className="flex items-center gap-3"
-                >
-                  <Avatar className="size-10 border-0">
-                    {result.profileIconId ? (
-                      <AvatarImage
-                        src={getProfileIconUrl(result.profileIconId)}
-                        alt={result.gameName || ""}
-                      />
-                    ) : null}
-                    <AvatarFallback className="text-sm">
-                      {result.gameName?.[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-                      {result.gameName || "Unknown"}
-                      {result.tagLine && (
-                        <span className="text-muted-foreground text-xs">
-                          #{result.tagLine}
+
+        <div className="space-y-3">
+          {/* Featured first result */}
+          <Card variant="interactive" className="group border-primary/30">
+            <CardContent className="px-4">
+              <Link
+                href={`/summoners/${featured.puuid}/overview?region=${featured.region}`}
+                className="flex items-center gap-4"
+              >
+                <Avatar className="size-14 border-2 border-primary/20">
+                  {featured.profileIconId ? (
+                    <AvatarImage
+                      src={getProfileIconUrl(featured.profileIconId)}
+                      alt={featured.gameName || ""}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-lg">
+                    {featured.gameName?.[0]?.toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-base truncate group-hover:text-primary transition-colors">
+                    {featured.gameName || "Unknown"}
+                    {featured.tagLine && (
+                      <span className="text-muted-foreground text-sm ml-1">
+                        #{featured.tagLine}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                    <Badge emphasis="info" emphasisVariant="subtle" className="text-xs">
+                      {featured.region.toUpperCase()}
+                    </Badge>
+                    {typeof featured.stats?.totalMatches === "number" &&
+                      featured.stats.totalMatches > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {featured.stats.totalMatches} {t("common.games")}
                         </span>
                       )}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge emphasis="info" emphasisVariant="subtle" className="text-[10px]">
-                        {result.region.toUpperCase()}
-                      </Badge>
-                      {typeof result.stats?.totalMatches === "number" &&
-                        result.stats.totalMatches > 0 && (
-                          <span className="text-[10px] text-muted-foreground">
-                            {result.stats.totalMatches} {t("common.games")}
-                          </span>
-                        )}
-                      {typeof result.stats?.winRate === "number" &&
-                        result.stats.winRate > 0 && (
-                          <span className="text-[10px] text-muted-foreground">
-                            {result.stats.winRate.toFixed(0)}% WR
-                          </span>
-                        )}
-                    </div>
+                    {typeof featured.stats?.winRate === "number" &&
+                      featured.stats.winRate > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {featured.stats.winRate.toFixed(0)}% WR
+                        </span>
+                      )}
                   </div>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+                </div>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Remaining results in grid */}
+          {rest.length > 0 && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {rest.map((result) => (
+                <Card key={`${result.puuid}-${result.region}`} variant="interactive" className="group">
+                  <CardContent className="px-3">
+                    <Link
+                      href={`/summoners/${result.puuid}/overview?region=${result.region}`}
+                      className="flex items-center gap-3"
+                    >
+                      <Avatar className="size-10 border-0">
+                        {result.profileIconId ? (
+                          <AvatarImage
+                            src={getProfileIconUrl(result.profileIconId)}
+                            alt={result.gameName || ""}
+                          />
+                        ) : null}
+                        <AvatarFallback className="text-sm">
+                          {result.gameName?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                          {result.gameName || "Unknown"}
+                          {result.tagLine && (
+                            <span className="text-muted-foreground text-xs">
+                              #{result.tagLine}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge emphasis="info" emphasisVariant="subtle" className="text-[10px]">
+                            {result.region.toUpperCase()}
+                          </Badge>
+                          {typeof result.stats?.totalMatches === "number" &&
+                            result.stats.totalMatches > 0 && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {result.stats.totalMatches} {t("common.games")}
+                              </span>
+                            )}
+                          {typeof result.stats?.winRate === "number" &&
+                            result.stats.winRate > 0 && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {result.stats.winRate.toFixed(0)}% WR
+                              </span>
+                            )}
+                        </div>
+                      </div>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

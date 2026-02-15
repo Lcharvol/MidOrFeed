@@ -57,20 +57,20 @@ export default function PricingPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Tarifs</BreadcrumbPage>
+            <BreadcrumbPage>{t("pricing.breadcrumb")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <div className="text-center mb-16 animate-fade-up">
-        <h1 className="text-5xl font-bold mb-4">Choisissez votre plan</h1>
+        <h1 className="text-5xl font-bold mb-4">{t("pricing.title")}</h1>
         <p className="text-xl text-muted-foreground">
-          Débloquez tout le potentiel de l'IA pour progresser plus rapidement
+          {t("pricing.subtitle")}
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-[1fr_1.15fr] gap-8 max-w-4xl mx-auto items-start">
         {/* Free Plan */}
-        <Card className="relative">
+        <Card className="relative animate-fade-up">
           <CardHeader className="text-center">
             <div className="mb-4 flex justify-center">
               <div className="size-16 rounded-full bg-muted flex items-center justify-center">
@@ -95,53 +95,50 @@ export default function PricingPage() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>3 analyses IA par jour</span>
+                <span>{t("pricing.freeAnalyses")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>Statistiques de base</span>
+                <span>{t("pricing.basicStats")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>Accès aux tier lists</span>
+                <span>{t("pricing.tierListAccess")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <XIcon className="size-5 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  Analyses illimitées
+                  {t("pricing.unlimitedAnalyses")}
                 </span>
               </li>
               <li className="flex items-center gap-2">
                 <XIcon className="size-5 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  Coaching IA personnalisé
+                  {t("pricing.aiCoaching")}
                 </span>
               </li>
               <li className="flex items-center gap-2">
                 <XIcon className="size-5 text-muted-foreground" />
-                <span className="text-muted-foreground">Assistant in-game</span>
+                <span className="text-muted-foreground">{t("pricing.inGameAssistant")}</span>
               </li>
             </ul>
             <Button className="w-full" variant="default" disabled>
-              Plan actuel
+              {t("pricing.currentPlanButton")}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Premium Plan */}
-        <Card className="border-primary relative">
-          {isPremium && (
-            <Badge
-              className="absolute -top-3 left-1/2 -translate-x-1/2"
-              variant="default"
-            >
-              {t("subscription.currentPlan")}
+        {/* Premium Plan — visually prominent */}
+        <Card className="border-primary relative shadow-glow animate-fade-up-delay-1">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+            <Badge variant="default">
+              {isPremium ? t("subscription.currentPlan") : t("subscription.premiumTitle")}
             </Badge>
-          )}
-          <CardHeader className="text-center">
+          </div>
+          <CardHeader className="text-center pt-8">
             <div className="mb-4 flex justify-center">
-              <div className="size-16 rounded-full bg-primary/20 flex items-center justify-center">
-                <CrownIcon className="size-8 text-primary" />
+              <div className="size-20 rounded-full bg-primary/20 flex items-center justify-center">
+                <CrownIcon className="size-10 text-primary" />
               </div>
             </div>
             <CardTitle className="text-2xl">
@@ -162,27 +159,27 @@ export default function PricingPage() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>Analyses IA illimitées</span>
+                <span>{t("pricing.unlimitedAnalyses")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>Statistiques avancées</span>
+                <span>{t("pricing.advancedStats")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>Tier lists & synergies</span>
+                <span>{t("pricing.tierListSynergies")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>Coaching IA personnalisé</span>
+                <span>{t("pricing.aiCoaching")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>Assistant in-game temps réel</span>
+                <span>{t("pricing.realtimeAssistant")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-5 text-success" />
-                <span>Suggestions de composition IA</span>
+                <span>{t("pricing.aiCompositions")}</span>
               </li>
             </ul>
             <Button
@@ -191,7 +188,7 @@ export default function PricingPage() {
               onClick={() => handleUpgrade()}
               disabled
             >
-              Indisponible
+              {t("pricing.unavailable")}
             </Button>
           </CardContent>
         </Card>
@@ -200,18 +197,16 @@ export default function PricingPage() {
       {/* FAQ Section */}
       <div className="mt-20 max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12">
-          Questions fréquentes
+          {t("pricing.faqTitle")}
         </h2>
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Puis-je changer de plan à tout moment ?</CardTitle>
+              <CardTitle>{t("pricing.faqChangePlan")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Oui, vous pouvez passer du plan gratuit au Premium à tout
-                moment. L'abonnement Premium peut être annulé à tout moment sans
-                engagement.
+                {t("pricing.faqChangePlanAnswer")}
               </p>
             </CardContent>
           </Card>
@@ -219,27 +214,23 @@ export default function PricingPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                Quand sont réinitialisées mes analyses quotidiennes ?
+                {t("pricing.faqResetAnalyses")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Vos 3 analyses gratuites sont réinitialisées chaque jour à
-                minuit UTC. Avec le plan Premium, vous avez accès à des analyses
-                illimitées.
+                {t("pricing.faqResetAnalysesAnswer")}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Y a-t-il un engagement à long terme ?</CardTitle>
+              <CardTitle>{t("pricing.faqCommitment")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Non, l'abonnement Premium est mensuel et peut être annulé à tout
-                moment. Vous conservez l'accès jusqu'à la fin de la période
-                payée.
+                {t("pricing.faqCommitmentAnswer")}
               </p>
             </CardContent>
           </Card>
