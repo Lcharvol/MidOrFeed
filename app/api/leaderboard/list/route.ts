@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrSetCache, CacheTTL } from "@/lib/cache";
 import { createLogger } from "@/lib/logger";
 import { toError } from "@/lib/errors";
+import { ShardedLeagueAccounts } from "@/lib/prisma-sharded-accounts";
 
 const logger = createLogger("leaderboard");
 
@@ -49,14 +50,34 @@ export async function GET(req: NextRequest) {
           take,
         });
 
-        return raw.map((entry) => ({
+        const entries = raw.map((entry) => ({
           ...entry,
           summonerName:
             entry.gameName && entry.tagLine
               ? `${entry.gameName}#${entry.tagLine}`
               : entry.gameName || entry.summonerName,
           profileIconId: entry.profileIconId ?? null,
+          mostPlayedChampion: null as string | null,
         }));
+
+        // Enrich top 5 with mostPlayedChampion from sharded accounts
+        const top5WithPuuid = entries.slice(0, 5).filter((e) => e.puuid);
+        if (top5WithPuuid.length > 0) {
+          try {
+            const puuids = top5WithPuuid.map((e) => e.puuid!);
+            const shardedData = await ShardedLeagueAccounts.findManyByPuuidsForLeaderboard(puuids, region);
+            const champMap = new Map(shardedData.map((d) => [d.puuid, d.mostPlayedChampion]));
+            for (const entry of entries.slice(0, 5)) {
+              if (entry.puuid && champMap.has(entry.puuid)) {
+                entry.mostPlayedChampion = champMap.get(entry.puuid) ?? null;
+              }
+            }
+          } catch (err) {
+            logger.error("Failed to enrich leaderboard with mostPlayedChampion", toError(err));
+          }
+        }
+
+        return entries;
       }
     );
 

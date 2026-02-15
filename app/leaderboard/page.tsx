@@ -91,6 +91,7 @@ export default function LeaderboardPage() {
   const allRows = useMemo(() => {
     const list: Array<{
       summonerId?: string;
+      puuid?: string | null;
       summonerName: string;
       gameName?: string | null;
       tagLine?: string | null;
@@ -200,14 +201,14 @@ export default function LeaderboardPage() {
           <>
             {/* #1 Featured Card */}
             {top1 && (
-              <FeaturedCard player={top1} tier={tier} />
+              <FeaturedCard player={top1} tier={tier} region={region} />
             )}
 
             {/* #2-5 Grid */}
             {top2to5.length > 0 && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {top2to5.map((player, idx) => (
-                  <TopCard key={player.summonerId ?? idx} player={player} rank={idx + 2} tier={tier} />
+                  <TopCard key={player.summonerId ?? idx} player={player} rank={idx + 2} tier={tier} region={region} />
                 ))}
               </div>
             )}
@@ -239,31 +240,7 @@ export default function LeaderboardPage() {
                                 {globalIdx + 1}
                               </TableCell>
                               <TableCell>
-                                <div className="flex items-center gap-2">
-                                  {e.profileIconId ? (
-                                    <Image
-                                      src={getProfileIconUrl(e.profileIconId)}
-                                      alt={e.summonerName}
-                                      width={24}
-                                      height={24}
-                                      className="shrink-0 rounded-full"
-                                    />
-                                  ) : (
-                                    <Image
-                                      src={getTierIconUrl(tier)}
-                                      alt={TIER_LABEL[tier] ?? tier}
-                                      width={24}
-                                      height={24}
-                                      className="shrink-0"
-                                    />
-                                  )}
-                                  <div className="min-w-0">
-                                    <span className="font-medium truncate block">{e.summonerName}</span>
-                                    <span className="text-[10px] text-muted-foreground md:hidden">
-                                      {e.leaguePoints} LP &middot; {e.wins}W {e.losses}L
-                                    </span>
-                                  </div>
-                                </div>
+                                <PlayerCellContent player={e} tier={tier} region={region} />
                               </TableCell>
                               <TableCell className="hidden md:table-cell">
                                 <span className={cn("font-medium", TIER_TEXT[tier])}>
@@ -339,17 +316,21 @@ export default function LeaderboardPage() {
 function FeaturedCard({
   player,
   tier,
+  region,
 }: {
-  player: { summonerName: string; leaguePoints: number; wins: number; losses: number; profileIconId?: number | null; mostPlayedChampion?: string | null };
+  player: { puuid?: string | null; summonerName: string; leaguePoints: number; wins: number; losses: number; profileIconId?: number | null; mostPlayedChampion?: string | null };
   tier: string;
+  region: string;
 }) {
   const wr = computeWinRate(player.wins, player.losses);
   const wrNum = parseFloat(wr);
+  const href = player.puuid ? `/summoners/${player.puuid}/overview?region=${region}` : undefined;
 
-  return (
+  const card = (
     <Card className={cn(
       "relative overflow-hidden border",
       TIER_BORDER[tier],
+      href && "cursor-pointer transition-colors hover:bg-muted/30",
     )}>
       {/* Splash background */}
       {player.mostPlayedChampion && (
@@ -359,9 +340,9 @@ function FeaturedCard({
             alt=""
             fill
             sizes="100vw"
-            className="object-cover object-center opacity-30"
+            className="object-cover object-right opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/60 to-background/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
         </div>
       )}
       {/* Fallback gradient when no splash */}
@@ -423,6 +404,9 @@ function FeaturedCard({
       </CardContent>
     </Card>
   );
+
+  if (href) return <Link href={href}>{card}</Link>;
+  return card;
 }
 
 /* ─── #2-5 Grid Card ─── */
@@ -430,16 +414,22 @@ function TopCard({
   player,
   rank,
   tier,
+  region,
 }: {
-  player: { summonerName: string; leaguePoints: number; wins: number; losses: number; summonerId?: string; profileIconId?: number | null; mostPlayedChampion?: string | null };
+  player: { puuid?: string | null; summonerName: string; leaguePoints: number; wins: number; losses: number; summonerId?: string; profileIconId?: number | null; mostPlayedChampion?: string | null };
   rank: number;
   tier: string;
+  region: string;
 }) {
   const wr = computeWinRate(player.wins, player.losses);
   const wrNum = parseFloat(wr);
+  const href = player.puuid ? `/summoners/${player.puuid}/overview?region=${region}` : undefined;
 
-  return (
-    <Card className="relative overflow-hidden hover:bg-muted/30 transition-colors">
+  const card = (
+    <Card className={cn(
+      "relative overflow-hidden transition-colors",
+      href && "cursor-pointer hover:bg-muted/30",
+    )}>
       {/* Splash background */}
       {player.mostPlayedChampion && (
         <div className="pointer-events-none absolute inset-0 z-0">
@@ -448,9 +438,9 @@ function TopCard({
             alt=""
             fill
             sizes="(max-width: 1024px) 50vw, 25vw"
-            className="object-cover object-center opacity-20"
+            className="object-cover object-right opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-background/70 to-background/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
         </div>
       )}
 
@@ -500,6 +490,53 @@ function TopCard({
       </CardContent>
     </Card>
   );
+
+  if (href) return <Link href={href}>{card}</Link>;
+  return card;
+}
+
+/* ─── Player Cell (table rows) ─── */
+function PlayerCellContent({
+  player,
+  tier,
+  region,
+}: {
+  player: { puuid?: string | null; summonerName: string; profileIconId?: number | null; leaguePoints: number; wins: number; losses: number };
+  tier: string;
+  region: string;
+}) {
+  const content = (
+    <div className={cn("flex items-center gap-2", player.puuid && "hover:underline")}>
+      {player.profileIconId ? (
+        <Image
+          src={getProfileIconUrl(player.profileIconId)}
+          alt={player.summonerName}
+          width={24}
+          height={24}
+          className="shrink-0 rounded-full"
+        />
+      ) : (
+        <Image
+          src={getTierIconUrl(tier)}
+          alt={TIER_LABEL[tier] ?? tier}
+          width={24}
+          height={24}
+          className="shrink-0"
+        />
+      )}
+      <div className="min-w-0">
+        <span className="font-medium truncate block">{player.summonerName}</span>
+        <span className="text-[10px] text-muted-foreground md:hidden">
+          {player.leaguePoints} LP &middot; {player.wins}W {player.losses}L
+        </span>
+      </div>
+    </div>
+  );
+
+  if (player.puuid) {
+    return <Link href={`/summoners/${player.puuid}/overview?region=${region}`}>{content}</Link>;
+  }
+  return content;
 }
 
 /* ─── Loading Skeleton ─── */
