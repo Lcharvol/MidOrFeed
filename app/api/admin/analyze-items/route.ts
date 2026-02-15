@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { invalidateCachePrefix } from "@/lib/cache";
 
 const SUMMONERS_RIFT_MAP_ID = 11;
 const MIN_GAMES_FOR_SCORE = 10;
@@ -173,6 +174,9 @@ export async function POST(request: NextRequest) {
         updated++;
       }
     }
+
+    // Invalidate server-side cache so fresh data is served immediately
+    invalidateCachePrefix("items:");
 
     logger.info("Analyse des items terminée", {
       totalItems: statsByItem.size,

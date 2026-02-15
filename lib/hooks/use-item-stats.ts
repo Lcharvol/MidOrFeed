@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { ApiResponse, ItemStatsData } from "@/types";
-import { useApiSWR } from "./swr";
+import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "./swr";
 import { apiKeys } from "@/lib/api/keys";
 import { validateItemStatsResponse } from "@/lib/api/schemas";
 
@@ -12,9 +12,7 @@ type ItemStatsResponse = ApiResponse<ItemStatsData[]> & {
 
 export const useItemStats = () => {
   const { data, error, isLoading, mutate, isValidating } =
-    useApiSWR<ItemStatsResponse>(apiKeys.itemStats(), {
-      revalidateOnFocus: false,
-    });
+    useApiSWR<ItemStatsResponse>(apiKeys.itemStats(), SEMI_DYNAMIC_CONFIG);
 
   const validation = useMemo(
     () => (data ? validateItemStatsResponse(data) : null),
