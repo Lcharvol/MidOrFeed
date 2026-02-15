@@ -141,7 +141,32 @@ export async function GET(request: NextRequest) {
 - `prismaWithTimeout` for operations that may hang
 - **Sharded accounts**: `lib/prisma-sharded-accounts.ts` for region-based account queries
 - **SQL sanitization**: `escapeLikePattern()`, `escapeSqlIdentifier()`, `validateTableName()`, `validateRegion()` from `lib/sql-sanitization.ts`
-- **Migrations**: run `pnpm prisma migrate dev --name descriptive-name`
+- **Migrations**: run `pnpm prisma migrate dev --name descriptive-name`. Never use `migrate dev` in production — use `prisma migrate deploy`
+
+**N+1 prevention** — always include/select relations upfront:
+```typescript
+// BAD: N+1 — one query per iteration
+const users = await prisma.user.findMany();
+for (const user of users) {
+  const posts = await prisma.post.findMany({ where: { authorId: user.id } });
+}
+
+// GOOD: single query with include
+const users = await prisma.user.findMany({
+  select: { id: true, email: true, posts: { select: { id: true, title: true } } }
+});
+```
+
+**Transactions** — use interactive transactions for multi-step operations:
+```typescript
+const result = await prisma.$transaction(async (tx) => {
+  const user = await tx.user.create({ data: userData });
+  const profile = await tx.profile.create({ data: { ...profileData, userId: user.id } });
+  return { user, profile };
+}, { maxWait: 5000, timeout: 10000 });
+```
+
+**Schema best practices**: explicit `@relation` with `fields`/`references`, `@@index` on frequently queried fields, `onDelete: Cascade` where appropriate, `@@map` for table naming conventions.
 
 ### SEO
 
@@ -275,6 +300,13 @@ Shared types live in `types/` and are barrel-exported from `types/index.ts`:
 - **Icons**: lucide-react + custom SVG role icons in `components/icons/` (`TopRoleIcon`, `JungleRoleIcon`, `MidRoleIcon`, `BottomRoleIcon`, `SupportRoleIcon`)
 - **Fonts**: Geist Sans + Geist Mono via `next/font/google` (CSS vars `--font-geist-sans`, `--font-geist-mono`)
 - **Color space**: OKLCh for perceptual uniformity
+
+**Tailwind v4 rules**:
+- Configuration is CSS-first via `@theme` directive in `globals.css` — no `tailwind.config.js`
+- All design tokens exposed as CSS custom properties (`--color-*`, `--spacing-*`, etc.)
+- Avoid `@apply` — prefer component extraction or utility classes directly
+- Never construct class names dynamically with template strings (breaks purging): use `cn()` with conditional objects instead
+- Prefer container queries (`@container`, `@sm:`, `@md:`) for reusable components that need to be context-independent
 
 ### Color System
 
@@ -493,15 +525,42 @@ Use CSS custom properties `--chart-1` through `--chart-5` for consistent chart c
 
 ## Performance
 
-- **Lazy loading**: `dynamic(() => import(...), { loading, ssr: false })` for heavy components (admin tabs, charts)
+### Core Web Vitals Targets
+
+| Metric | Target | What it measures |
+|--------|--------|-----------------|
+| **LCP** (Largest Contentful Paint) | < 2.5s | Main content visibility |
+| **FID** (First Input Delay) | < 100ms | Input responsiveness |
+| **CLS** (Cumulative Layout Shift) | < 0.1 | Visual stability |
+| **TTFB** (Time to First Byte) | < 600ms | Server response time |
+
+### Optimization Rules
+
+- **Lazy loading**: `dynamic(() => import(...), { loading, ssr: false })` for heavy components (admin tabs, charts, data grids)
 - **SWR deduplication**: prevents duplicate requests within configurable windows (5min/2min/10sec)
-- **`keepPreviousData: true`**: shows stale data while revalidating, avoids layout shift
+- **`keepPreviousData: true`**: shows stale data while revalidating, avoids layout shift (CLS)
 - **`revalidateOnFocus: false`**: SWR default overridden to avoid unnecessary refetches
 - **`prefetchSWR(key)`**: preload data on hover/anticipation
-- **Image optimization**: Next.js `<Image>` with remote patterns, disabled in dev
+- **Image optimization**: Next.js `<Image>` with remote patterns, always set `width`/`height` to prevent CLS
 - **Standalone output**: `next.config.ts` uses `output: "standalone"` for minimal Docker images
+- **Above-the-fold images**: use `priority` prop on hero/splash images, `loading="lazy"` on everything else
+- **Bundle discipline**: avoid importing entire libraries (use `import { specific } from "lib"` not `import lib`). Prefer native JS over heavy dependencies (e.g. `Set` over lodash `uniq`)
+- **Debounce** search inputs at 300–500ms to avoid unnecessary API calls
 
 ## Security
+
+### OWASP API Security Top 10
+
+1. **Broken Object Level Authorization** — always verify user owns the resource before operating on it
+2. **Broken Authentication** — use `requireAuth()`/`requireAdmin()`, never trust client-side auth alone
+3. **Broken Object Property Level Authorization** — use `select` to expose only allowed fields
+4. **Unrestricted Resource Consumption** — apply `rateLimitPresets.*` on all endpoints
+5. **Broken Function Level Authorization** — admin routes must use `requireAdmin()`, not just `requireAuth()`
+6. **Server Side Request Forgery** — validate/sanitize URLs before server-side fetches
+7. **Security Misconfiguration** — security headers are enforced via middleware
+8. **Improper Inventory Management** — document all API routes, remove unused endpoints
+9. **Unsafe Consumption of APIs** — validate Riot API responses before using them
+10. **Verbose Error Messages** — never expose stack traces or DB details; use generic error messages in French
 
 ### Middleware
 
