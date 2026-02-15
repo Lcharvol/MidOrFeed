@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
+import { requireCsrf } from "@/lib/csrf";
 import { createLogger } from "@/lib/logger";
 import { toError } from "@/lib/errors";
 
@@ -41,6 +42,9 @@ export const POST = async (request: NextRequest) => {
         { status: 401 }
       );
     }
+
+    const csrfError = await requireCsrf(request);
+    if (csrfError) return csrfError;
 
     const body = await request.json().catch(() => null);
     const parsed = saveSchema.safeParse(body);

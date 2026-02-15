@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 import { toError } from "@/lib/errors";
 
 const logger = createLogger("draft-history");
 
 export const GET = async (request: NextRequest) => {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) {
@@ -26,6 +30,19 @@ export const GET = async (request: NextRequest) => {
       where: { userId: user.id },
       orderBy: { recordedAt: "desc" },
       take: limit,
+      select: {
+        id: true,
+        blueWinProbability: true,
+        bluePicks: true,
+        redPicks: true,
+        blueAvgWinRate: true,
+        blueAvgKDA: true,
+        blueAvgScore: true,
+        redAvgWinRate: true,
+        redAvgKDA: true,
+        redAvgScore: true,
+        recordedAt: true,
+      },
     });
 
     const totalDrafts = await prisma.draftHistory.count({

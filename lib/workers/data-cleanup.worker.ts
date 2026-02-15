@@ -61,28 +61,19 @@ export async function createDataCleanupWorker() {
 
           if (!dryRun && oldMatchesCount > 0) {
             // Delete in batches to avoid timeout
-            const batchSize = CLEANUP_BATCH_SIZE;
             let deleted = 0;
 
             while (deleted < oldMatchesCount) {
-              const matchesToDelete = await prisma.match.findMany({
+              const result = await prisma.match.deleteMany({
                 where: {
                   gameCreation: { lt: matchCutoffTimestamp },
                 },
-                take: batchSize,
-                select: { id: true },
               });
 
-              if (matchesToDelete.length === 0) break;
+              if (result.count === 0) break;
 
-              await prisma.match.deleteMany({
-                where: {
-                  id: { in: matchesToDelete.map((m) => m.id) },
-                },
-              });
-
-              deleted += matchesToDelete.length;
-              matchesDeleted += matchesToDelete.length;
+              deleted += result.count;
+              matchesDeleted += result.count;
 
               logger.info(`Deleted ${deleted}/${oldMatchesCount} matches`);
             }

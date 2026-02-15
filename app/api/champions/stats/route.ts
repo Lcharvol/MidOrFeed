@@ -59,6 +59,28 @@ export async function GET(request: NextRequest) {
     // Default: use pre-calculated ChampionStats table
     const stats = await prisma.championStats.findMany({
       orderBy: [{ score: "desc" }, { totalGames: "desc" }],
+      select: {
+        id: true,
+        championId: true,
+        totalGames: true,
+        totalWins: true,
+        totalLosses: true,
+        winRate: true,
+        avgKills: true,
+        avgDeaths: true,
+        avgAssists: true,
+        avgKDA: true,
+        avgGoldEarned: true,
+        avgGoldSpent: true,
+        avgDamageDealt: true,
+        avgDamageTaken: true,
+        avgVisionScore: true,
+        topRole: true,
+        topLane: true,
+        weakAgainst: true,
+        score: true,
+        lastAnalyzedAt: true,
+      },
     });
 
     // Compter le nombre total de matchs uniques dans la base de données

@@ -119,71 +119,49 @@ export async function createDDragonSyncWorker() {
               data: Record<string, ChampionData>;
             };
 
-            for (const [championId, champion] of Object.entries(championsData.data)) {
-              await prisma.champion.upsert({
-                where: { championId },
-                create: {
-                  championId,
-                  championKey: parseInt(champion.key, 10),
-                  name: champion.name,
-                  title: champion.title,
-                  blurb: champion.blurb,
-                  attack: champion.info.attack,
-                  defense: champion.info.defense,
-                  magic: champion.info.magic,
-                  difficulty: champion.info.difficulty,
-                  hp: champion.stats.hp,
-                  hpPerLevel: champion.stats.hpperlevel,
-                  mp: champion.stats.mp,
-                  mpPerLevel: champion.stats.mpperlevel,
-                  moveSpeed: champion.stats.movespeed,
-                  armor: champion.stats.armor,
-                  armorPerLevel: champion.stats.armorperlevel,
-                  spellBlock: champion.stats.spellblock,
-                  spellBlockPerLevel: champion.stats.spellblockperlevel,
-                  attackRange: champion.stats.attackrange,
-                  hpRegen: champion.stats.hpregen,
-                  hpRegenPerLevel: champion.stats.hpregenperlevel,
-                  mpRegen: champion.stats.mpregen,
-                  mpRegenPerLevel: champion.stats.mpregenperlevel,
-                  crit: champion.stats.crit,
-                  critPerLevel: champion.stats.critperlevel,
-                  attackDamage: champion.stats.attackdamage,
-                  attackDamagePerLevel: champion.stats.attackdamageperlevel,
-                  attackSpeed: champion.stats.attackspeed,
-                  attackSpeedPerLevel: champion.stats.attackspeedperlevel,
-                },
-                update: {
-                  name: champion.name,
-                  title: champion.title,
-                  blurb: champion.blurb,
-                  attack: champion.info.attack,
-                  defense: champion.info.defense,
-                  magic: champion.info.magic,
-                  difficulty: champion.info.difficulty,
-                  hp: champion.stats.hp,
-                  hpPerLevel: champion.stats.hpperlevel,
-                  mp: champion.stats.mp,
-                  mpPerLevel: champion.stats.mpperlevel,
-                  moveSpeed: champion.stats.movespeed,
-                  armor: champion.stats.armor,
-                  armorPerLevel: champion.stats.armorperlevel,
-                  spellBlock: champion.stats.spellblock,
-                  spellBlockPerLevel: champion.stats.spellblockperlevel,
-                  attackRange: champion.stats.attackrange,
-                  hpRegen: champion.stats.hpregen,
-                  hpRegenPerLevel: champion.stats.hpregenperlevel,
-                  mpRegen: champion.stats.mpregen,
-                  mpRegenPerLevel: champion.stats.mpregenperlevel,
-                  crit: champion.stats.crit,
-                  critPerLevel: champion.stats.critperlevel,
-                  attackDamage: champion.stats.attackdamage,
-                  attackDamagePerLevel: champion.stats.attackdamageperlevel,
-                  attackSpeed: champion.stats.attackspeed,
-                  attackSpeedPerLevel: champion.stats.attackspeedperlevel,
-                },
-              });
-              championsUpdated++;
+            const championEntries = Object.entries(championsData.data);
+            const BATCH_SIZE = 50;
+            for (let i = 0; i < championEntries.length; i += BATCH_SIZE) {
+              const batch = championEntries.slice(i, i + BATCH_SIZE);
+              await prisma.$transaction(
+                batch.map(([championId, champion]) => {
+                  const shared = {
+                    name: champion.name,
+                    title: champion.title,
+                    blurb: champion.blurb,
+                    attack: champion.info.attack,
+                    defense: champion.info.defense,
+                    magic: champion.info.magic,
+                    difficulty: champion.info.difficulty,
+                    hp: champion.stats.hp,
+                    hpPerLevel: champion.stats.hpperlevel,
+                    mp: champion.stats.mp,
+                    mpPerLevel: champion.stats.mpperlevel,
+                    moveSpeed: champion.stats.movespeed,
+                    armor: champion.stats.armor,
+                    armorPerLevel: champion.stats.armorperlevel,
+                    spellBlock: champion.stats.spellblock,
+                    spellBlockPerLevel: champion.stats.spellblockperlevel,
+                    attackRange: champion.stats.attackrange,
+                    hpRegen: champion.stats.hpregen,
+                    hpRegenPerLevel: champion.stats.hpregenperlevel,
+                    mpRegen: champion.stats.mpregen,
+                    mpRegenPerLevel: champion.stats.mpregenperlevel,
+                    crit: champion.stats.crit,
+                    critPerLevel: champion.stats.critperlevel,
+                    attackDamage: champion.stats.attackdamage,
+                    attackDamagePerLevel: champion.stats.attackdamageperlevel,
+                    attackSpeed: champion.stats.attackspeed,
+                    attackSpeedPerLevel: champion.stats.attackspeedperlevel,
+                  };
+                  return prisma.champion.upsert({
+                    where: { championId },
+                    create: { championId, championKey: parseInt(champion.key, 10), ...shared },
+                    update: shared,
+                  });
+                })
+              );
+              championsUpdated += batch.length;
             }
 
             logger.info(`Updated ${championsUpdated} champions`);
@@ -202,26 +180,33 @@ export async function createDDragonSyncWorker() {
               data: Record<string, ItemData>;
             };
 
-            for (const [itemId, item] of Object.entries(itemsData.data)) {
-              const shared = {
-                name: item.name,
-                description: item.description,
-                plaintext: item.plaintext,
-                image: item.image.full,
-                gold: JSON.stringify(item.gold),
-                tags: item.tags ? JSON.stringify(item.tags) : null,
-                depth: item.depth ?? null,
-                fromItems: item.from ? JSON.stringify(item.from) : null,
-                maps: item.maps ? JSON.stringify(item.maps) : null,
-                inStore: item.inStore ?? true,
-                requiredChampion: item.requiredChampion ?? null,
-              };
-              await prisma.item.upsert({
-                where: { itemId },
-                create: { itemId, ...shared },
-                update: shared,
-              });
-              itemsUpdated++;
+            const itemEntries = Object.entries(itemsData.data);
+            const ITEM_BATCH_SIZE = 50;
+            for (let i = 0; i < itemEntries.length; i += ITEM_BATCH_SIZE) {
+              const batch = itemEntries.slice(i, i + ITEM_BATCH_SIZE);
+              await prisma.$transaction(
+                batch.map(([itemId, item]) => {
+                  const shared = {
+                    name: item.name,
+                    description: item.description,
+                    plaintext: item.plaintext,
+                    image: item.image.full,
+                    gold: JSON.stringify(item.gold),
+                    tags: item.tags ? JSON.stringify(item.tags) : null,
+                    depth: item.depth ?? null,
+                    fromItems: item.from ? JSON.stringify(item.from) : null,
+                    maps: item.maps ? JSON.stringify(item.maps) : null,
+                    inStore: item.inStore ?? true,
+                    requiredChampion: item.requiredChampion ?? null,
+                  };
+                  return prisma.item.upsert({
+                    where: { itemId },
+                    create: { itemId, ...shared },
+                    update: shared,
+                  });
+                })
+              );
+              itemsUpdated += batch.length;
             }
 
             logger.info(`Updated ${itemsUpdated} items`);

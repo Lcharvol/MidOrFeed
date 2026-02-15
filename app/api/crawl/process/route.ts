@@ -76,7 +76,10 @@ const processSchema = z.object({
  * Retourne l'état actuel du processus de crawl
  */
 export async function GET(request: NextRequest) {
-  const rateLimitResponse = await rateLimit(request, rateLimitPresets.api);
+  const authError = await requireAdmin(request, { skipCsrf: true });
+  if (authError) return authError;
+
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
   if (rateLimitResponse) return rateLimitResponse;
 
   const state = getState();
@@ -200,7 +203,10 @@ export async function POST(request: NextRequest) {
  * DELETE /api/crawl/process
  * Arrête le processus de crawl en cours
  */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   const state = getState();
 
   if (!state.isRunning) {

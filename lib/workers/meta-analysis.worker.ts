@@ -68,20 +68,18 @@ export async function createMetaAnalysisWorker() {
               LIMIT 20
             `;
 
-            for (const stat of stats) {
-              const totalGames = Number(stat.total);
-              const totalWins = Number(stat.wins);
-              const winRate = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
-              const avgKDA =
-                stat.avgDeaths > 0
-                  ? (stat.avgKills + stat.avgAssists) / stat.avgDeaths
-                  : stat.avgKills + stat.avgAssists;
+            const now = new Date();
+            await prisma.$transaction(
+              stats.map((stat) => {
+                const totalGames = Number(stat.total);
+                const totalWins = Number(stat.wins);
+                const winRate = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
+                const avgKDA =
+                  stat.avgDeaths > 0
+                    ? (stat.avgKills + stat.avgAssists) / stat.avgDeaths
+                    : stat.avgKills + stat.avgAssists;
 
-              // Update champion stats with role-specific meta data
-              await prisma.championStats.upsert({
-                where: { championId: stat.championId },
-                create: {
-                  championId: stat.championId,
+                const data = {
                   totalGames,
                   totalWins,
                   totalLosses: totalGames - totalWins,
@@ -92,26 +90,19 @@ export async function createMetaAnalysisWorker() {
                   avgKDA,
                   topRole: role,
                   score: winRate * Math.log10(totalGames + 1),
-                  lastAnalyzedAt: new Date(),
-                },
-                update: {
-                  totalGames,
-                  totalWins,
-                  totalLosses: totalGames - totalWins,
-                  winRate,
-                  avgKills: stat.avgKills,
-                  avgDeaths: stat.avgDeaths,
-                  avgAssists: stat.avgAssists,
-                  avgKDA,
-                  topRole: role,
-                  score: winRate * Math.log10(totalGames + 1),
-                  lastAnalyzedAt: new Date(),
-                },
-              });
+                  lastAnalyzedAt: now,
+                };
 
-              championsAnalyzed++;
-              topPicksGenerated++;
-            }
+                return prisma.championStats.upsert({
+                  where: { championId: stat.championId },
+                  create: { championId: stat.championId, ...data },
+                  update: data,
+                });
+              })
+            );
+
+            championsAnalyzed += stats.length;
+            topPicksGenerated += stats.length;
 
             logger.info(`Analyzed ${stats.length} champions for ${role}`);
           } catch (err) {

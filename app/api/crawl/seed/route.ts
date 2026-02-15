@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { REGION_TO_ROUTING } from "@/constants/regions";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
+import { rateLimit, rateLimitPresets } from "@/lib/rate-limit";
 import { z } from "zod";
 import { getEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -39,6 +40,9 @@ const REGION_TO_PLATFORM: Record<string, string> = {
  * via Riot API (Challenger/Master/GrandMaster)
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await rateLimit(request, rateLimitPresets.admin);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const authError = await requireAdmin(request);
   if (authError) return authError;
 

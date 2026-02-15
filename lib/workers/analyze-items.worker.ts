@@ -165,48 +165,56 @@ export async function createAnalyzeItemsWorker() {
           message: `Upserting ${allStats.length} item stats`,
         });
 
-        // Upsert all item stats
+        // Upsert all item stats in batched transactions
         let created = 0;
         let updated = 0;
         const now = new Date();
 
-        for (const { itemId, stats, winRate, pickRate, avgKDA } of allStats) {
-          let score = 0;
-          if (stats.games >= MIN_GAMES_FOR_SCORE) {
-            score =
-              normalize(winRate, minWR, maxWR) * 0.4 +
-              normalize(pickRate, minPR, maxPR) * 0.3 +
-              normalize(avgKDA, minKDA, maxKDA) * 0.3;
-          }
-
-          const data = {
-            totalGames: stats.games,
-            totalWins: stats.wins,
-            winRate,
-            pickRate,
-            avgKDA,
-            avgKills: stats.games > 0 ? stats.kills / stats.games : 0,
-            avgDeaths: stats.games > 0 ? stats.deaths / stats.games : 0,
-            avgAssists: stats.games > 0 ? stats.assists / stats.games : 0,
-            score,
-            lastAnalyzedAt: now,
-          };
-
+        const BATCH_SIZE = 50;
+        for (let batchStart = 0; batchStart < allStats.length; batchStart += BATCH_SIZE) {
+          const batch = allStats.slice(batchStart, batchStart + BATCH_SIZE);
           try {
-            const result = await prisma.itemStats.upsert({
-              where: { itemId },
-              update: data,
-              create: { itemId, ...data },
-              select: { createdAt: true, updatedAt: true },
-            });
+            const results = await prisma.$transaction(
+              batch.map(({ itemId, stats, winRate, pickRate, avgKDA }) => {
+                let score = 0;
+                if (stats.games >= MIN_GAMES_FOR_SCORE) {
+                  score =
+                    normalize(winRate, minWR, maxWR) * 0.4 +
+                    normalize(pickRate, minPR, maxPR) * 0.3 +
+                    normalize(avgKDA, minKDA, maxKDA) * 0.3;
+                }
 
-            if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-              created++;
-            } else {
-              updated++;
+                const data = {
+                  totalGames: stats.games,
+                  totalWins: stats.wins,
+                  winRate,
+                  pickRate,
+                  avgKDA,
+                  avgKills: stats.games > 0 ? stats.kills / stats.games : 0,
+                  avgDeaths: stats.games > 0 ? stats.deaths / stats.games : 0,
+                  avgAssists: stats.games > 0 ? stats.assists / stats.games : 0,
+                  score,
+                  lastAnalyzedAt: now,
+                };
+
+                return prisma.itemStats.upsert({
+                  where: { itemId },
+                  update: data,
+                  create: { itemId, ...data },
+                  select: { createdAt: true, updatedAt: true },
+                });
+              })
+            );
+
+            for (const result of results) {
+              if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+                created++;
+              } else {
+                updated++;
+              }
             }
           } catch (err) {
-            errors.push(`Failed to upsert item ${itemId}: ${err instanceof Error ? err.message : "Unknown"}`);
+            errors.push(`Failed to upsert batch at ${batchStart}: ${err instanceof Error ? err.message : "Unknown"}`);
           }
         }
 
