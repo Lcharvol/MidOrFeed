@@ -12,6 +12,7 @@ export type LeaderboardEntry = {
   losses: number;
   rank: string;
   tier: string;
+  profileIconId?: number | null;
 };
 
 export type NewsArticle = {

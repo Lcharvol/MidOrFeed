@@ -15,49 +15,23 @@ import {
 } from "@/components/ui/empty";
 import { CrownIcon, ChevronRightIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
-import { LeaderboardEntry, TIER_EMPHASIS } from "./types";
-import { getTierIconUrl } from "@/constants/ddragon";
+import {
+  TIER_LABEL,
+  TIER_TEXT,
+  TIER_BORDER,
+  TIER_GRADIENT,
+  computeWinRate,
+  getWinRateColor,
+} from "@/lib/leaderboard-utils";
+import type { LeaderboardEntry } from "./types";
+import { TIER_EMPHASIS } from "./types";
+import { getTierIconUrl, getProfileIconUrl } from "@/constants/ddragon";
 import { cn } from "@/lib/utils";
 
 type LeaderboardSectionProps = {
   leaderboard: LeaderboardEntry[];
   leaderboardLoading: boolean;
 };
-
-const TIER_LABEL: Record<string, string> = {
-  CHALLENGER: "Challenger",
-  GRANDMASTER: "Grandmaster",
-  MASTER: "Master",
-};
-
-const TIER_TEXT: Record<string, string> = {
-  CHALLENGER: "text-tier-challenger",
-  GRANDMASTER: "text-tier-grandmaster",
-  MASTER: "text-tier-master",
-};
-
-const TIER_BORDER: Record<string, string> = {
-  CHALLENGER: "border-tier-challenger/30",
-  GRANDMASTER: "border-tier-grandmaster/30",
-  MASTER: "border-tier-master/30",
-};
-
-const TIER_GRADIENT: Record<string, string> = {
-  CHALLENGER: "from-tier-challenger/10",
-  GRANDMASTER: "from-tier-grandmaster/10",
-  MASTER: "from-tier-master/10",
-};
-
-function computeWinRate(wins: number, losses: number): string {
-  const total = wins + losses;
-  return total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
-}
-
-function getWinRateColor(wr: number): "positive" | "neutral" | "danger" {
-  if (wr >= 55) return "positive";
-  if (wr >= 50) return "neutral";
-  return "danger";
-}
 
 export const LeaderboardSection = ({
   leaderboard,
@@ -107,14 +81,14 @@ export const LeaderboardSection = ({
           </Card>
         ) : (
           <div className="space-y-4">
-            {/* #1 Mini Featured Card */}
-            {top1 && <MiniFeaturedCard player={top1} />}
+            {/* #1 Featured Card */}
+            {top1 && <FeaturedCard player={top1} />}
 
             {/* #2-5 Grid */}
             {top2to5.length > 0 && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {top2to5.map((player, idx) => (
-                  <CompactCard key={player.id} player={player} rank={idx + 2} />
+                  <TopCard key={player.id} player={player} rank={idx + 2} />
                 ))}
               </div>
             )}
@@ -125,11 +99,10 @@ export const LeaderboardSection = ({
   );
 };
 
-/* ─── #1 Mini Featured Card ─── */
-function MiniFeaturedCard({ player }: { player: LeaderboardEntry }) {
+/* ─── #1 Featured Card (matches leaderboard page FeaturedCard) ─── */
+function FeaturedCard({ player }: { player: LeaderboardEntry }) {
   const wr = computeWinRate(player.wins, player.losses);
   const wrNum = parseFloat(wr);
-  const tierEmphasis = TIER_EMPHASIS[player.tier] ?? "neutral";
 
   return (
     <Card className={cn(
@@ -139,7 +112,7 @@ function MiniFeaturedCard({ player }: { player: LeaderboardEntry }) {
       TIER_GRADIENT[player.tier],
       "to-transparent"
     )}>
-      <CardContent className="flex items-center gap-4 sm:gap-6 p-4 sm:p-6">
+      <CardContent className="relative z-10 flex items-center gap-4 sm:gap-6 p-4 sm:p-6">
         {/* Rank watermark */}
         <span className={cn(
           "text-4xl sm:text-5xl font-black tabular-nums opacity-15 select-none shrink-0",
@@ -148,20 +121,30 @@ function MiniFeaturedCard({ player }: { player: LeaderboardEntry }) {
           1
         </span>
 
-        {/* Tier icon */}
-        <Image
-          src={getTierIconUrl(player.tier)}
-          alt={TIER_LABEL[player.tier] ?? player.tier}
-          width={56}
-          height={56}
-          className="shrink-0 drop-shadow-md"
-        />
+        {/* Profile icon or tier icon fallback */}
+        {player.profileIconId ? (
+          <Image
+            src={getProfileIconUrl(player.profileIconId)}
+            alt={player.summonerName}
+            width={56}
+            height={56}
+            className="shrink-0 rounded-full border-2 border-border drop-shadow-md"
+          />
+        ) : (
+          <Image
+            src={getTierIconUrl(player.tier)}
+            alt={TIER_LABEL[player.tier] ?? player.tier}
+            width={56}
+            height={56}
+            className="shrink-0 drop-shadow-md"
+          />
+        )}
 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <p className="text-base sm:text-lg font-bold truncate">{player.summonerName}</p>
           <div className="flex flex-wrap items-center gap-2 mt-0.5">
-            <Badge emphasis={tierEmphasis} emphasisVariant="subtle" rounded="full" className="text-[10px]">
+            <Badge emphasis={TIER_EMPHASIS[player.tier] ?? "neutral"} emphasisVariant="subtle" rounded="full" className="text-[10px]">
               {TIER_LABEL[player.tier] ?? player.tier} &middot; {player.leaguePoints.toLocaleString()} LP
             </Badge>
             <span className="text-[10px] sm:text-xs text-muted-foreground tabular-nums">
@@ -184,8 +167,8 @@ function MiniFeaturedCard({ player }: { player: LeaderboardEntry }) {
   );
 }
 
-/* ─── #2-5 Compact Card ─── */
-function CompactCard({
+/* ─── #2-5 Top Card (matches leaderboard page TopCard) ─── */
+function TopCard({
   player,
   rank,
 }: {
@@ -194,7 +177,6 @@ function CompactCard({
 }) {
   const wr = computeWinRate(player.wins, player.losses);
   const wrNum = parseFloat(wr);
-  const tierEmphasis = TIER_EMPHASIS[player.tier] ?? "neutral";
 
   return (
     <Card className="hover:bg-muted/30 transition-colors">
@@ -203,13 +185,23 @@ function CompactCard({
           <span className="text-xl sm:text-2xl font-black tabular-nums text-muted-foreground/40 select-none">
             {rank}
           </span>
-          <Image
-            src={getTierIconUrl(player.tier)}
-            alt={TIER_LABEL[player.tier] ?? player.tier}
-            width={40}
-            height={40}
-            className="shrink-0"
-          />
+          {player.profileIconId ? (
+            <Image
+              src={getProfileIconUrl(player.profileIconId)}
+              alt={player.summonerName}
+              width={40}
+              height={40}
+              className="shrink-0 rounded-full border border-border"
+            />
+          ) : (
+            <Image
+              src={getTierIconUrl(player.tier)}
+              alt={TIER_LABEL[player.tier] ?? player.tier}
+              width={40}
+              height={40}
+              className="shrink-0"
+            />
+          )}
           <div className="min-w-0 flex-1">
             <p className="font-semibold truncate text-xs sm:text-sm">{player.summonerName}</p>
             <p className="text-[10px] sm:text-xs text-muted-foreground tabular-nums">

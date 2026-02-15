@@ -44,6 +44,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useI18n } from "@/lib/i18n-context";
 import { getTierIconUrl, getProfileIconUrl, getChampionSplashUrl } from "@/constants/ddragon";
+import {
+  TIER_LABEL,
+  TIER_TEXT,
+  TIER_BORDER,
+  TIER_GRADIENT,
+  computeWinRate,
+  getWinRateColor,
+} from "@/lib/leaderboard-utils";
 import { cn } from "@/lib/utils";
 
 const REGIONS = [
@@ -64,42 +72,7 @@ const TIERS = [
   { label: "Master", value: "MASTER" },
 ];
 
-const TIER_LABEL: Record<string, string> = {
-  CHALLENGER: "Challenger",
-  GRANDMASTER: "Grandmaster",
-  MASTER: "Master",
-};
-
-const TIER_GRADIENT: Record<string, string> = {
-  CHALLENGER: "from-tier-challenger/10",
-  GRANDMASTER: "from-tier-grandmaster/10",
-  MASTER: "from-tier-master/10",
-};
-
-const TIER_TEXT: Record<string, string> = {
-  CHALLENGER: "text-tier-challenger",
-  GRANDMASTER: "text-tier-grandmaster",
-  MASTER: "text-tier-master",
-};
-
-const TIER_BORDER: Record<string, string> = {
-  CHALLENGER: "border-tier-challenger/30",
-  GRANDMASTER: "border-tier-grandmaster/30",
-  MASTER: "border-tier-master/30",
-};
-
 const LB_PAGE_SIZE = 50;
-
-function computeWinRate(wins: number, losses: number): string {
-  const total = wins + losses;
-  return total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
-}
-
-function getWinRateColor(wr: number): "positive" | "neutral" | "danger" {
-  if (wr >= 55) return "positive";
-  if (wr >= 50) return "neutral";
-  return "danger";
-}
 
 export default function LeaderboardPage() {
   const { t } = useI18n();

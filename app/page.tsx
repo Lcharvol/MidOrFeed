@@ -61,6 +61,10 @@ export default function Home() {
       <AnnouncementBanner article={newsArticles[0] ?? null} />
       <HeroSection stats={stats} statsLoading={statsLoading} />
       <NewsSection articles={newsArticles} isLoading={newsLoading} />
+      <LeaderboardSection
+        leaderboard={leaderboard}
+        leaderboardLoading={leaderboardLoading}
+      />
       <TopChampionsSection
         topChampions={topChampions}
         championsLoading={championsLoading}
@@ -72,10 +76,6 @@ export default function Home() {
         championsListLoading={championsListLoading}
         championKeyToIdMap={championKeyToIdMap}
         resolveName={resolveName}
-      />
-      <LeaderboardSection
-        leaderboard={leaderboard}
-        leaderboardLoading={leaderboardLoading}
       />
       <FeaturedGamesSection
         featuredGames={featuredGames}
