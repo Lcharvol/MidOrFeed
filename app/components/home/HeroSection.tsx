@@ -34,10 +34,18 @@ export const HeroSection = ({ stats, statsLoading }: HeroSectionProps) => {
           alt="League of Legends Background"
           fill
           sizes="100vw"
-          className="object-cover object-center"
+          className="hidden dark:block object-cover object-center"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90" />
+        <Image
+          src="/home_background_light.png"
+          alt="League of Legends Background"
+          fill
+          sizes="100vw"
+          className="block dark:hidden object-cover object-center"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-white/90 dark:from-black/80 dark:via-black/60 dark:to-black/90" />
       </div>
 
       <div className="relative z-10">
@@ -46,7 +54,7 @@ export const HeroSection = ({ stats, statsLoading }: HeroSectionProps) => {
             <BrainIcon className="mr-2 size-3" />
             {t("home.poweredByAI")}
           </Badge>
-          <h1 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-6xl animate-fade-up">
+          <h1 className="mb-4 text-4xl font-bold tracking-tight text-foreground dark:text-white md:text-6xl animate-fade-up">
             {t("home.aiCoach")}{" "}
             <span className="text-primary">
               {t("home.dominateRift")}
