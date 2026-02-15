@@ -98,7 +98,7 @@ export function QueueStatusCard({
               )}
               {status.deferred > 0 && (
                 <Badge variant="warning">
-                  {status.deferred} diff\u00e9r\u00e9
+                  {status.deferred} différé
                 </Badge>
               )}
               {status.total > 0 && (
@@ -129,7 +129,7 @@ export function QueueStatusCard({
           </div>
         ) : (
           <span className="text-xs text-muted-foreground">
-            Aucune donn\u00e9e
+            Aucune donnée
           </span>
         )}
       </CardContent>

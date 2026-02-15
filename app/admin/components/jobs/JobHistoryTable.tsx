@@ -143,7 +143,7 @@ export function JobHistoryTable({ recentJobs }: JobHistoryTableProps) {
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             <ClockIcon className="size-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Aucun job r\u00e9cent</p>
+            <p className="text-sm">Aucun job récent</p>
           </div>
         )}
       </CardContent>

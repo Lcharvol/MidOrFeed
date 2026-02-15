@@ -119,7 +119,7 @@ const QUEUE_CATEGORIES: Record<string, "analysis" | "sync" | "maintenance"> = {
 };
 
 export const CATEGORY_LABELS: Record<string, string> = {
-  analysis: "Analyse & Donn\u00e9es",
+  analysis: "Analyse & Données",
   sync: "Synchronisation",
   maintenance: "Maintenance",
 };
@@ -170,7 +170,7 @@ export function formatTime(timestamp: number): string {
   const now = new Date();
   const diff = now.getTime() - date.getTime();
 
-  if (diff < 60000) return "\u00e0 l'instant";
+  if (diff < 60000) return "à l'instant";
   if (diff < 3600000) return `il y a ${Math.floor(diff / 60000)}min`;
   if (diff < 86400000) return `il y a ${Math.floor(diff / 3600000)}h`;
   return date.toLocaleDateString("fr-FR");
@@ -195,7 +195,7 @@ export function formatCron(cron: string): string {
   if (dayOfMonth === "*" && month === "*" && dayOfWeek === "*" && !hour.includes("/") && !hour.includes("*")) {
     const h = hour.padStart(2, "0");
     const m = minute.padStart(2, "0");
-    return `Tous les jours \u00e0 ${h}h${m}`;
+    return `Tous les jours à ${h}h${m}`;
   }
 
   // Every N hours: "M */N * * *"
@@ -203,7 +203,7 @@ export function formatCron(cron: string): string {
   if (everyNHours && dayOfMonth === "*" && month === "*" && dayOfWeek === "*") {
     const n = parseInt(everyNHours[1], 10);
     const label = n === 1 ? "Toutes les heures" : `Toutes les ${n}h`;
-    if (minute !== "0") return `${label} \u00e0 :${minute.padStart(2, "0")}`;
+    if (minute !== "0") return `${label} à :${minute.padStart(2, "0")}`;
     return label;
   }
 

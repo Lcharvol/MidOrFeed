@@ -45,7 +45,7 @@ export function ActiveJobsList({
           />
           Jobs en cours ({activeJobs.length})
         </CardTitle>
-        <CardDescription>Suivi en temps r\u00e9el</CardDescription>
+        <CardDescription>Suivi en temps réel</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {activeJobs.map((job) => {
@@ -89,7 +89,7 @@ export function ActiveJobsList({
                   ) : (
                     <>
                       <SquareIcon className="size-4 mr-1" />
-                      Arr\u00eater
+                      Arrêter
                     </>
                   )}
                 </Button>
@@ -109,11 +109,11 @@ export function ActiveJobsList({
 
               <div className="flex gap-4 text-xs text-muted-foreground">
                 <span>
-                  D\u00e9marr\u00e9:{" "}
+                  Démarré:{" "}
                   {formatTime(job.processedOn || job.timestamp)}
                 </span>
                 <span>
-                  Dur\u00e9e: {getElapsedTime(job.processedOn || job.timestamp)}
+                  Durée: {getElapsedTime(job.processedOn || job.timestamp)}
                 </span>
               </div>
             </div>

@@ -161,7 +161,7 @@ export function JobsTab() {
         const count = json.entriesSynced ?? 0;
         const errCount = json.errors?.length ?? 0;
         toast.success(
-          `Leaderboard sync\u00e9 : ${count} entr\u00e9es${errCount > 0 ? ` (${errCount} erreurs)` : ""}`
+          `Leaderboard syncé : ${count} entrées${errCount > 0 ? ` (${errCount} erreurs)` : ""}`
         );
         await fetchJobs();
         return;
@@ -176,7 +176,7 @@ export function JobsTab() {
       if (!res.ok) {
         throw new Error(json.error || "Failed to trigger job");
       }
-      toast.success(`Job ${QUEUE_CONFIG[queue]?.label || queue} lanc\u00e9`);
+      toast.success(`Job ${QUEUE_CONFIG[queue]?.label || queue} lancé`);
       await fetchJobs();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur");
@@ -201,7 +201,7 @@ export function JobsTab() {
         delete next[key];
         return next;
       });
-      toast.success("Job annul\u00e9");
+      toast.success("Job annulé");
       await fetchJobs();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur");
@@ -219,7 +219,7 @@ export function JobsTab() {
         const json = await res.json();
         throw new Error(json.error || "Failed to clean queue");
       }
-      toast.success("Jobs nettoy\u00e9s");
+      toast.success("Jobs nettoyés");
       await fetchJobs();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur");
@@ -260,16 +260,16 @@ export function JobsTab() {
           {error ? (
             <Badge variant="destructive">Erreur</Badge>
           ) : data?.connected ? (
-            <Badge variant="success">Connect\u00e9</Badge>
+            <Badge variant="success">Connecté</Badge>
           ) : (
-            <Badge variant="outline">Non connect\u00e9</Badge>
+            <Badge variant="outline">Non connecté</Badge>
           )}
         </div>
         <Button variant="outline" size="sm" onClick={fetchJobs}>
           <RefreshCwIcon
             className={cn("size-4 mr-2", hasActiveJobs && "animate-spin")}
           />
-          {hasActiveJobs ? "Auto..." : "Rafra\u00eechir"}
+          {hasActiveJobs ? "Auto..." : "Rafraîchir"}
         </Button>
       </div>
 
