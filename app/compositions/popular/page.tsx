@@ -34,7 +34,7 @@ import { Button } from "@/components/ui/button";
 const ROLE_KEYS = ["top", "jungle", "mid", "adc", "support"] as const;
 
 const PopularCompositionsPage = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { user } = useAuth();
   const [savingId, setSavingId] = useState<string | null>(null);
   const { data, error, isLoading, mutate, isValidating } = useApiSWR<
@@ -161,7 +161,7 @@ const PopularCompositionsPage = () => {
       <PopularHero
         onRefresh={handleRefresh}
         isRefreshing={isValidating}
-        lastGeneratedAt={generatedAt ? formatUpdatedAt(generatedAt) : undefined}
+        lastGeneratedAt={generatedAt ? formatUpdatedAt(generatedAt, locale === "fr" ? "fr-FR" : "en-US") : undefined}
       />
 
       {compositions.length === 0 ? (
@@ -172,19 +172,37 @@ const PopularCompositionsPage = () => {
           containerClassName="py-12"
         />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          {compositions.map((composition) => (
-            <CompositionCard
-              key={composition.id}
-              resolveSlug={resolveSlug}
-              resolveName={resolveName}
-              onCopy={handleCopy}
-              onSave={handleSave}
-              isSaving={savingId === composition.id}
-              saveLabel={t("compositions.popular.save")}
-              composition={composition}
-            />
-          ))}
+        <div className="space-y-6">
+          {/* #1 Featured — full-width */}
+          <CompositionCard
+            key={compositions[0].id}
+            resolveSlug={resolveSlug}
+            resolveName={resolveName}
+            onCopy={handleCopy}
+            onSave={handleSave}
+            isSaving={savingId === compositions[0].id}
+            saveLabel={t("compositions.popular.save")}
+            composition={compositions[0]}
+            featured
+          />
+
+          {/* #2+ Standard grid */}
+          {compositions.length > 1 && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              {compositions.slice(1).map((composition) => (
+                <CompositionCard
+                  key={composition.id}
+                  resolveSlug={resolveSlug}
+                  resolveName={resolveName}
+                  onCopy={handleCopy}
+                  onSave={handleSave}
+                  isSaving={savingId === composition.id}
+                  saveLabel={t("compositions.popular.save")}
+                  composition={composition}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

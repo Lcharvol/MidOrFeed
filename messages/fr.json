@@ -1264,6 +1264,21 @@
     "complianceTitle": "Conforme aux conditions d'utilisation de Riot Games",
     "complianceDescription": "Cette application utilise uniquement l'API officielle League Client Update (LCU) et ne modifie en aucun cas les fichiers du jeu."
   },
+  "freeRotation": {
+    "title": "Rotation gratuite",
+    "subtitle": "Champions jouables gratuitement cette semaine"
+  },
+  "compositionCard": {
+    "aiRanking": "#{rank} au classement IA",
+    "confidence": "Confiance",
+    "updatedAt": "Mis à jour le {date}",
+    "copy": "Copier",
+    "strengths": "Points forts",
+    "weaknesses": "Points faibles",
+    "playstyle": "Comment la jouer",
+    "pendingTitle": "Descriptif en attente",
+    "pendingDescription": "Ajoutez les points forts, les points faibles et les conseils de jeu via l'analyse ou une IA pour enrichir cette composition."
+  },
   "draft": {
     "title": "Simulateur de Draft",
     "description": "Entraînez-vous à la phase de sélection des champions contre une IA. Construisez votre composition, puis découvrez son score.",

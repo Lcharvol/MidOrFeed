@@ -4,9 +4,9 @@ import type { CompositionRole } from "@/lib/compositions/roles";
 export const formatConfidence = (confidence: number): string =>
   `${Math.round(Math.min(Math.max(confidence * 100, 0), 100))}%`;
 
-export const formatUpdatedAt = (value: string): string => {
+export const formatUpdatedAt = (value: string, locale?: string): string => {
   try {
-    return new Intl.DateTimeFormat("fr-FR", {
+    return new Intl.DateTimeFormat(locale ?? "fr-FR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

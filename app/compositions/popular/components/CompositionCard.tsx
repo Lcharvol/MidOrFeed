@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { BookmarkIcon, CopyIcon, Loader2Icon } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/compositions/roles";
+import { useI18n } from "@/lib/i18n-context";
 import type { CompositionSuggestionDTO } from "@/types";
 import {
   championBadgeClass,
@@ -21,6 +22,7 @@ type CompositionCardProps = {
   isSaving: boolean;
   saveLabel: string;
   composition: CompositionSuggestionDTO;
+  featured?: boolean;
 };
 
 export const CompositionCard = ({
@@ -31,8 +33,11 @@ export const CompositionCard = ({
   onSave,
   isSaving,
   saveLabel,
+  featured = false,
 }: CompositionCardProps) => {
-  const narrativeSection = renderNarrativeSection(composition);
+  const { t, locale } = useI18n();
+  const iconSize = featured ? 72 : 56;
+  const intlLocale = locale === "fr" ? "fr-FR" : "en-US";
 
   return (
     <div className={compositionBackground(composition.role)}>
@@ -42,11 +47,11 @@ export const CompositionCard = ({
           {ROLE_LABELS[composition.role]}
         </Badge>
         <Badge variant="secondary" className="w-fit">
-          #{composition.rank} au classement IA
+          {t("compositionCard.aiRanking").replace("{rank}", String(composition.rank))}
         </Badge>
       </div>
       <Badge variant="outline">
-        Confiance {formatConfidence(composition.confidence)}
+        {t("compositionCard.confidence")} {formatConfidence(composition.confidence)}
       </Badge>
     </div>
     <div className="grid gap-3">
@@ -58,7 +63,7 @@ export const CompositionCard = ({
           >
             <ChampionIcon
               championId={resolveSlug(championId)}
-              size={56}
+              size={iconSize}
               shape="rounded"
               className="border border-primary/30"
             />
@@ -73,10 +78,10 @@ export const CompositionCard = ({
           {composition.reasoning}
         </p>
       )}
-      {narrativeSection}
+      <NarrativeSection composition={composition} />
       <div className="flex items-center justify-between pt-2">
         <p className="text-xs text-muted-foreground">
-          Mis à jour le {formatUpdatedAt(composition.updatedAt)}
+          {t("compositionCard.updatedAt").replace("{date}", formatUpdatedAt(composition.updatedAt, intlLocale))}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -100,7 +105,7 @@ export const CompositionCard = ({
             className="gap-2"
           >
             <CopyIcon className="size-4" />
-            Copier
+            {t("compositionCard.copy")}
           </Button>
         </div>
       </div>
@@ -109,21 +114,23 @@ export const CompositionCard = ({
   );
 };
 
-const renderNarrativeSection = (composition: CompositionSuggestionDTO) => {
+function NarrativeSection({ composition }: { composition: CompositionSuggestionDTO }) {
+  const { t } = useI18n();
+
   const blocks = [
-    renderNarrativeBlock("Points forts", composition.strengths),
-    renderNarrativeBlock("Points faibles", composition.weaknesses),
-    renderNarrativeBlock("Comment la jouer", composition.playstyle),
-  ].filter(Boolean);
+    { title: t("compositionCard.strengths"), content: composition.strengths },
+    { title: t("compositionCard.weaknesses"), content: composition.weaknesses },
+    { title: t("compositionCard.playstyle"), content: composition.playstyle },
+  ].filter((b) => b.content);
 
   if (blocks.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border/40 bg-background/40 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
-          Descriptif en attente
+          {t("compositionCard.pendingTitle")}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ajoutez les points forts, les points faibles et les conseils de jeu via l’analyse ou une IA pour enrichir cette composition.
+          {t("compositionCard.pendingDescription")}
         </p>
       </div>
     );
@@ -131,22 +138,16 @@ const renderNarrativeSection = (composition: CompositionSuggestionDTO) => {
 
   return (
     <div className="grid gap-3 rounded-xl border border-border/40 bg-background/60 p-4">
-      {blocks}
+      {blocks.map((block) => (
+        <div key={block.title} className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
+            {block.title}
+          </p>
+          <p className="whitespace-pre-line text-sm text-muted-foreground">
+            {block.content}
+          </p>
+        </div>
+      ))}
     </div>
   );
-};
-
-const renderNarrativeBlock = (title: string, content?: string | null) => {
-  if (!content) return null;
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
-        {title}
-      </p>
-      <p className="whitespace-pre-line text-sm text-muted-foreground">
-        {content}
-      </p>
-    </div>
-  );
-};
-
+}

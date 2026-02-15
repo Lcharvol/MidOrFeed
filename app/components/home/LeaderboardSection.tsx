@@ -40,7 +40,8 @@ export const LeaderboardSection = ({
   const { t } = useI18n();
 
   const top1 = leaderboard[0] ?? null;
-  const top2to5 = leaderboard.slice(1, 5);
+  const top2to3 = leaderboard.slice(1, 3);
+  const top4to5 = leaderboard.slice(3, 5);
 
   return (
     <section className="py-14 md:py-20 bg-gradient-to-b from-muted/30 to-background border-y">
@@ -82,13 +83,22 @@ export const LeaderboardSection = ({
         ) : (
           <div className="space-y-4">
             {/* #1 Featured Card */}
-            {top1 && <FeaturedCard player={top1} />}
+            {top1 && <div className="animate-fade-up"><FeaturedCard player={top1} /></div>}
 
-            {/* #2-5 Grid */}
-            {top2to5.length > 0 && (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {top2to5.map((player, idx) => (
+            {/* #2-3 Medium Cards */}
+            {top2to3.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 animate-fade-up-delay-1">
+                {top2to3.map((player, idx) => (
                   <TopCard key={player.id} player={player} rank={idx + 2} />
+                ))}
+              </div>
+            )}
+
+            {/* #4-5 Compact Rows */}
+            {top4to5.length > 0 && (
+              <div className="space-y-1.5 animate-fade-up-delay-2">
+                {top4to5.map((player, idx) => (
+                  <CompactRow key={player.id} player={player} rank={idx + 4} />
                 ))}
               </div>
             )}
@@ -228,11 +238,60 @@ function TopCard({
   );
 }
 
+/* ─── #4-5 Compact Row ─── */
+function CompactRow({
+  player,
+  rank,
+}: {
+  player: LeaderboardEntry;
+  rank: number;
+}) {
+  const wr = computeWinRate(player.wins, player.losses);
+  const wrNum = parseFloat(wr);
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted/30 transition-colors">
+      <span className="text-sm font-bold tabular-nums text-muted-foreground/50 select-none w-5 text-center">
+        {rank}
+      </span>
+      {player.profileIconId ? (
+        <Image
+          src={getProfileIconUrl(player.profileIconId)}
+          alt={player.summonerName}
+          width={32}
+          height={32}
+          className="shrink-0 rounded-full border border-border"
+        />
+      ) : (
+        <Image
+          src={getTierIconUrl(player.tier)}
+          alt={TIER_LABEL[player.tier] ?? player.tier}
+          width={32}
+          height={32}
+          className="shrink-0"
+        />
+      )}
+      <p className="font-medium truncate text-sm flex-1 min-w-0">{player.summonerName}</p>
+      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+        {player.leaguePoints.toLocaleString()} LP
+      </span>
+      <Badge
+        emphasis={getWinRateColor(wrNum)}
+        emphasisVariant="subtle"
+        rounded="full"
+        className="text-[10px] shrink-0"
+      >
+        {wr}%
+      </Badge>
+    </div>
+  );
+}
+
 /* ─── Loading Skeleton ─── */
 function LoadingSkeleton() {
   return (
     <div className="space-y-4">
-      {/* #1 skeleton */}
+      {/* #1 featured skeleton */}
       <Card>
         <CardContent className="flex items-center gap-4 sm:gap-6 px-4 sm:px-6">
           <Skeleton className="h-12 w-8 rounded" />
@@ -245,9 +304,9 @@ function LoadingSkeleton() {
         </CardContent>
       </Card>
 
-      {/* #2-5 skeleton */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }).map((_, i) => (
+      {/* #2-3 medium skeleton */}
+      <div className="grid grid-cols-2 gap-3">
+        {Array.from({ length: 2 }).map((_, i) => (
           <Card key={i}>
             <CardContent className="px-3 sm:px-4 space-y-2">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -264,6 +323,19 @@ function LoadingSkeleton() {
               </div>
             </CardContent>
           </Card>
+        ))}
+      </div>
+
+      {/* #4-5 compact skeleton */}
+      <div className="space-y-1.5">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 px-3 py-2">
+            <Skeleton className="h-4 w-5 rounded" />
+            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="h-3.5 w-24 flex-1" />
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-4 w-9 rounded-full" />
+          </div>
         ))}
       </div>
     </div>

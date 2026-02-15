@@ -1262,6 +1262,21 @@
     "complianceTitle": "Compliant with Riot Games Terms of Service",
     "complianceDescription": "This application only uses the official League Client Update (LCU) API and does not modify any game files."
   },
+  "freeRotation": {
+    "title": "Free Rotation",
+    "subtitle": "Champions playable for free this week"
+  },
+  "compositionCard": {
+    "aiRanking": "#{rank} in AI ranking",
+    "confidence": "Confidence",
+    "updatedAt": "Updated on {date}",
+    "copy": "Copy",
+    "strengths": "Strengths",
+    "weaknesses": "Weaknesses",
+    "playstyle": "How to play",
+    "pendingTitle": "Description pending",
+    "pendingDescription": "Add strengths, weaknesses and gameplay tips via analysis or AI to enrich this composition."
+  },
   "draft": {
     "title": "Draft Simulator",
     "description": "Practice the ranked champion select against an AI opponent. Build your team composition, then see how it scores.",

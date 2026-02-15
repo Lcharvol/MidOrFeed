@@ -22,6 +22,7 @@ import {
   ChevronRightIcon,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
+import { cn } from "@/lib/utils";
 
 const CAROUSEL_OPTS = { align: "start" as const, slidesToScroll: 5 };
 
@@ -49,10 +50,10 @@ export const FreeRotationSection = ({
           <div>
             <h2 className="text-2xl font-bold md:text-3xl flex items-center gap-2">
               <RefreshCwIcon className="size-6 text-primary" />
-              Rotation gratuite
+              {t("freeRotation.title")}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Champions jouables gratuitement cette semaine
+              {t("freeRotation.subtitle")}
             </p>
           </div>
           <Button variant="ghost" size="sm" asChild>
@@ -75,9 +76,10 @@ export const FreeRotationSection = ({
         ) : (
           <Carousel opts={CAROUSEL_OPTS} className="mx-12">
             <CarouselContent>
-              {freeChampionIds.map((key) => {
+              {freeChampionIds.map((key, index) => {
                 const champId = championKeyToIdMap.get(String(key)) ?? String(key);
                 const champName = resolveName(String(key));
+                const isHighlighted = index < 3;
                 return (
                   <CarouselItem key={key} className="basis-1/4 sm:basis-1/5 md:basis-1/7 lg:basis-1/10">
                     <Tooltip>
@@ -88,9 +90,12 @@ export const FreeRotationSection = ({
                         >
                           <ChampionIcon
                             championId={champId}
-                            size={56}
+                            size={isHighlighted ? 64 : 56}
                             alt={champName}
-                            className="group-hover:scale-105 transition-transform"
+                            className={cn(
+                              "group-hover:scale-105 transition-transform",
+                              isHighlighted && "ring-2 ring-primary/30"
+                            )}
                           />
                           <span className="text-xs text-muted-foreground truncate max-w-[64px] text-center">
                             {champName}
