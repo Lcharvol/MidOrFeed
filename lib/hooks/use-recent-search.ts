@@ -5,6 +5,7 @@ export type RecentSearch = {
   tagLine: string;
   region: string;
   puuid: string;
+  profileIconId?: number | null;
   timestamp: number;
 };
 
@@ -35,12 +36,13 @@ export const useRecentSearch = () => {
   }, []);
 
   const addRecentSearch = useCallback(
-    (gameName: string, tagLine: string, region: string, puuid: string) => {
+    (gameName: string, tagLine: string, region: string, puuid: string, profileIconId?: number | null) => {
       const entry: RecentSearch = {
         gameName: gameName.trim(),
         tagLine: tagLine.trim(),
         region,
         puuid,
+        profileIconId: profileIconId ?? null,
         timestamp: Date.now(),
       };
       const key = `${entry.gameName.toLowerCase()}#${entry.tagLine.toLowerCase()}@${

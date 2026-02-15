@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -21,10 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2Icon, SearchIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2Icon, SearchIcon, UserIcon } from "lucide-react";
 import { useSummonerSearch } from "@/lib/hooks/use-summoner-search";
 import { RIOT_REGIONS } from "@/lib/riot-regions";
 import { useI18n } from "@/lib/i18n-context";
+import { getProfileIconUrl } from "@/constants/ddragon";
 
 export function HeaderSearch({
   isSearchOpen,
@@ -114,10 +117,25 @@ export function HeaderSearch({
                     key={result.puuid}
                     value={result.puuid}
                     onSelect={() => navigateToResult(result)}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/80 hover:border-primary/40 hover:bg-background transition-colors"
+                    className="flex items-center gap-3 rounded-lg border border-border/40 bg-background/80 hover:border-primary/40 hover:bg-background transition-colors"
                   >
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">
+                    <Avatar className="size-8 shrink-0">
+                      {result.profileIconId ? (
+                        <AvatarImage asChild src={getProfileIconUrl(result.profileIconId)}>
+                          <Image
+                            src={getProfileIconUrl(result.profileIconId)}
+                            alt=""
+                            width={32}
+                            height={32}
+                          />
+                        </AvatarImage>
+                      ) : null}
+                      <AvatarFallback className="bg-muted">
+                        <UserIcon className="size-4 text-muted-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium truncate">
                         {result.gameName ?? t("headerSearch.unknown")}
                         {result.tagLine && (
                           <span className="text-muted-foreground">
@@ -142,10 +160,25 @@ export function HeaderSearch({
                     key={`${recent.gameName}#${recent.tagLine}@${recent.region}`}
                     value={`${recent.gameName}#${recent.tagLine}`}
                     onSelect={() => handleRecentClick(recent)}
-                    className="flex items-center justify-between gap-3"
+                    className="flex items-center gap-3"
                   >
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">
+                    <Avatar className="size-8 shrink-0">
+                      {recent.profileIconId ? (
+                        <AvatarImage asChild src={getProfileIconUrl(recent.profileIconId)}>
+                          <Image
+                            src={getProfileIconUrl(recent.profileIconId)}
+                            alt=""
+                            width={32}
+                            height={32}
+                          />
+                        </AvatarImage>
+                      ) : null}
+                      <AvatarFallback className="bg-muted">
+                        <UserIcon className="size-4 text-muted-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium truncate">
                         {recent.gameName}
                         <span className="text-muted-foreground">
                           #{recent.tagLine}

@@ -96,7 +96,8 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
         result.gameName || result.puuid,
         result.tagLine || result.region,
         result.region,
-        result.puuid
+        result.puuid,
+        result.profileIconId
       );
 
       setSearchQuery("");
@@ -136,7 +137,8 @@ export function useSummonerSearch(options: UseSummonerSearchOptions = {}) {
             r.gameName || r.puuid,
             r.tagLine || r.region,
             r.region,
-            r.puuid
+            r.puuid,
+            r.profileIconId
           );
           setSearchQuery("");
           setSearchResults([]);
