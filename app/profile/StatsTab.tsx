@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -19,6 +20,9 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useApiSWR, SEMI_DYNAMIC_CONFIG } from "@/lib/hooks/swr";
+import { useI18n } from "@/lib/i18n-context";
+import { getTierIconUrl } from "@/constants/ddragon";
+import { cn } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -55,30 +59,43 @@ interface StatsTabProps {
   user: User;
 }
 
-const TIER_ORDER = [
-  "IRON",
-  "BRONZE",
-  "SILVER",
-  "GOLD",
-  "PLATINUM",
-  "EMERALD",
-  "DIAMOND",
-  "MASTER",
-  "GRANDMASTER",
-  "CHALLENGER",
-];
+const TIER_TEXT_COLOR: Record<string, string> = {
+  IRON: "text-tier-iron",
+  BRONZE: "text-tier-bronze",
+  SILVER: "text-tier-silver",
+  GOLD: "text-tier-gold",
+  PLATINUM: "text-tier-platinum",
+  EMERALD: "text-tier-emerald",
+  DIAMOND: "text-tier-diamond",
+  MASTER: "text-tier-master",
+  GRANDMASTER: "text-tier-grandmaster",
+  CHALLENGER: "text-tier-challenger",
+};
 
-const TIER_COLORS: Record<string, string> = {
-  IRON: "from-zinc-400 to-zinc-600",
-  BRONZE: "from-amber-700 to-amber-900",
-  SILVER: "from-slate-300 to-slate-500",
-  GOLD: "from-yellow-400 to-yellow-600",
-  PLATINUM: "from-cyan-300 to-cyan-500",
-  EMERALD: "from-emerald-400 to-emerald-600",
-  DIAMOND: "from-blue-300 to-blue-500",
-  MASTER: "from-purple-400 to-purple-600",
-  GRANDMASTER: "from-red-400 to-red-600",
-  CHALLENGER: "from-amber-300 via-yellow-400 to-amber-500",
+const TIER_BG_COLOR: Record<string, string> = {
+  IRON: "bg-tier-iron",
+  BRONZE: "bg-tier-bronze",
+  SILVER: "bg-tier-silver",
+  GOLD: "bg-tier-gold",
+  PLATINUM: "bg-tier-platinum",
+  EMERALD: "bg-tier-emerald",
+  DIAMOND: "bg-tier-diamond",
+  MASTER: "bg-tier-master",
+  GRANDMASTER: "bg-tier-grandmaster",
+  CHALLENGER: "bg-tier-challenger",
+};
+
+const TIER_KEYS: Record<string, string> = {
+  IRON: "tierIron",
+  BRONZE: "tierBronze",
+  SILVER: "tierSilver",
+  GOLD: "tierGold",
+  PLATINUM: "tierPlatinum",
+  EMERALD: "tierEmerald",
+  DIAMOND: "tierDiamond",
+  MASTER: "tierMaster",
+  GRANDMASTER: "tierGrandmaster",
+  CHALLENGER: "tierChallenger",
 };
 
 function RankCard({
@@ -86,11 +103,13 @@ function RankCard({
   icon: Icon,
   data,
   isLoading,
+  t,
 }: {
   title: string;
   icon: React.ElementType;
   data: RankData | null;
   isLoading: boolean;
+  t: (key: string) => string;
 }) {
   if (isLoading) {
     return (
@@ -107,22 +126,29 @@ function RankCard({
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center text-center">
           <Icon className="size-10 text-muted-foreground/50 mb-3" />
-          <p className="text-sm text-muted-foreground">Non classé</p>
+          <p className="text-sm text-muted-foreground">{t("profile.stats.unranked")}</p>
           <p className="text-xs text-muted-foreground/70 mt-1">
-            Jouez des parties classées pour voir votre rang
+            {t("profile.stats.unrankedMessage")}
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  const tierColor = TIER_COLORS[data.current.tier] || "from-gray-400 to-gray-600";
+  const { tier, rank } = data.current;
+  const tierKey = TIER_KEYS[tier];
+  const tierName = tierKey ? t(`ranking.${tierKey}`) : tier.charAt(0) + tier.slice(1).toLowerCase();
   const totalGames = data.current.wins + data.current.losses;
   const lpProgress = (data.current.lp / 100) * 100;
 
+  const bestTierKey = TIER_KEYS[data.best.tier];
+  const bestTierName = bestTierKey
+    ? t(`ranking.${bestTierKey}`)
+    : data.best.tier.charAt(0) + data.best.tier.slice(1).toLowerCase();
+
   return (
     <Card className="overflow-hidden">
-      <div className={`h-2 bg-gradient-to-r ${tierColor}`} />
+      <div className={cn("h-1.5", TIER_BG_COLOR[tier] || "bg-muted")} />
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -130,25 +156,24 @@ function RankCard({
             {title}
           </CardTitle>
           <Badge variant="outline" className="font-mono text-xs">
-            {totalGames} games
+            {totalGames} {t("profile.stats.games")}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Rank display */}
         <div className="flex items-center gap-4">
-          <div
-            className={`flex size-16 items-center justify-center rounded-full bg-gradient-to-br ${tierColor} text-white font-bold text-lg shadow-lg`}
-          >
-            {data.current.tier.charAt(0)}
-            {data.current.rank !== "I" && (
-              <span className="text-sm">{data.current.rank}</span>
-            )}
-          </div>
+          <Image
+            src={getTierIconUrl(tier, rank, "medals")}
+            alt={tierName}
+            width={64}
+            height={64}
+            className="shrink-0"
+            unoptimized
+          />
           <div className="flex-1">
-            <p className="text-lg font-bold">
-              {data.current.tier.charAt(0) + data.current.tier.slice(1).toLowerCase()}{" "}
-              {data.current.rank}
+            <p className={cn("text-lg font-bold", TIER_TEXT_COLOR[tier])}>
+              {tierName} {rank}
             </p>
             <p className="text-sm text-muted-foreground">
               {data.current.lp} LP
@@ -171,13 +196,13 @@ function RankCard({
             <p className="text-lg font-bold text-success-muted-foreground">
               {data.current.wins}
             </p>
-            <p className="text-xs text-muted-foreground">Victoires</p>
+            <p className="text-xs text-muted-foreground">{t("profile.stats.victories")}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-danger-muted-foreground">
               {data.current.losses}
             </p>
-            <p className="text-xs text-muted-foreground">Défaites</p>
+            <p className="text-xs text-muted-foreground">{t("profile.stats.defeats")}</p>
           </div>
           <div className="text-center">
             <p
@@ -189,15 +214,38 @@ function RankCard({
             >
               {data.current.winRate.toFixed(1)}%
             </p>
-            <p className="text-xs text-muted-foreground">Win Rate</p>
+            <p className="text-xs text-muted-foreground">{t("profile.stats.winRate")}</p>
           </div>
         </div>
+
+        {/* Best rank */}
+        {data.best && (
+          <div className="flex items-center justify-between border-t border-border/50 pt-3">
+            <div className="flex items-center gap-2">
+              <Image
+                src={getTierIconUrl(data.best.tier, data.best.rank, "medals_mini")}
+                alt={bestTierName}
+                width={40}
+                height={40}
+                unoptimized
+              />
+              <div>
+                <p className={cn("text-sm font-bold", TIER_TEXT_COLOR[data.best.tier])}>
+                  {bestTierName} {data.best.rank}
+                </p>
+                <p className="text-[10px] text-muted-foreground">{data.best.lp} LP</p>
+              </div>
+            </div>
+            <span className="text-[10px] text-muted-foreground">{t("profile.stats.bestRank")}</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export function StatsTab({ user }: StatsTabProps) {
+  const { t } = useI18n();
   const hasRiotAccount = user.riotPuuid && user.riotRegion;
 
   const { data: response, isLoading, error } = useApiSWR<{
@@ -219,14 +267,13 @@ export function StatsTab({ user }: StatsTabProps) {
         <CardContent className="flex flex-col items-center justify-center text-center">
           <LinkIcon className="size-12 text-muted-foreground/50 mb-4" />
           <h3 className="text-lg font-semibold mb-2">
-            Liez votre compte Riot Games
+            {t("profile.stats.linkRiotTitle")}
           </h3>
           <p className="text-sm text-muted-foreground max-w-md mb-4">
-            Pour voir vos statistiques et votre classement, liez votre compte
-            League of Legends dans l'onglet Compte.
+            {t("profile.stats.linkRiotDescription")}
           </p>
           <Button variant="outline" asChild>
-            <Link href="#account">Lier mon compte</Link>
+            <Link href="#account">{t("profile.stats.linkAccount")}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -239,7 +286,7 @@ export function StatsTab({ user }: StatsTabProps) {
         <CardContent className="flex flex-col items-center justify-center text-center">
           <AlertCircleIcon className="size-10 text-destructive mb-3" />
           <p className="text-sm text-destructive">
-            {error instanceof Error ? error.message : "Erreur de connexion"}
+            {error instanceof Error ? error.message : t("profile.stats.connectionError")}
           </p>
         </CardContent>
       </Card>
@@ -250,16 +297,18 @@ export function StatsTab({ user }: StatsTabProps) {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <RankCard
-          title="Solo/Duo"
+          title={t("profile.stats.soloDuo")}
           icon={SwordsIcon}
           data={rankedData?.solo ?? null}
           isLoading={isLoading}
+          t={t}
         />
         <RankCard
-          title="Flex"
+          title={t("profile.stats.flex")}
           icon={UsersIcon}
           data={rankedData?.flex ?? null}
           isLoading={isLoading}
+          t={t}
         />
       </div>
 
@@ -270,9 +319,9 @@ export function StatsTab({ user }: StatsTabProps) {
             <div className="flex items-center gap-3">
               <TrophyIcon className="size-5 text-primary" />
               <div>
-                <p className="font-medium">Voir toutes les statistiques</p>
+                <p className="font-medium">{t("profile.stats.viewAllStats")}</p>
                 <p className="text-sm text-muted-foreground">
-                  Historique des matchs, champions joués, et plus
+                  {t("profile.stats.viewAllStatsDescription")}
                 </p>
               </div>
             </div>
@@ -280,7 +329,7 @@ export function StatsTab({ user }: StatsTabProps) {
               <Link
                 href={`/summoners/${user.riotRegion}/${user.leagueAccount.riotGameName}-${user.leagueAccount.riotTagLine}`}
               >
-                Voir le profil
+                {t("profile.stats.viewProfile")}
               </Link>
             </Button>
           </CardContent>

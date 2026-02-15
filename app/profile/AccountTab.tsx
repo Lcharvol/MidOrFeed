@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { RiotAccountSection } from "@/components/RiotAccountSection";
 import { MailIcon, UserIcon, HashIcon } from "lucide-react";
+import { useI18n } from "@/lib/i18n-context";
 
 interface User {
   id: string;
@@ -23,6 +24,8 @@ interface AccountTabProps {
 }
 
 export function AccountTab({ user }: AccountTabProps) {
+  const { t } = useI18n();
+
   return (
     <div className="space-y-6">
       {/* Personal Info */}
@@ -30,10 +33,10 @@ export function AccountTab({ user }: AccountTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserIcon className="size-5 text-primary" />
-            Informations personnelles
+            {t("profile.account.personalInfoTitle")}
           </CardTitle>
           <CardDescription>
-            Vos informations de compte Mid or Feed
+            {t("profile.account.personalInfoDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -41,23 +44,23 @@ export function AccountTab({ user }: AccountTabProps) {
             <div className="space-y-1">
               <label className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
                 <UserIcon className="size-3.5" />
-                Nom
+                {t("profile.account.name")}
               </label>
               <p className="text-sm font-medium">
-                {user.name || "Non renseigné"}
+                {user.name || t("profile.account.notProvided")}
               </p>
             </div>
             <div className="space-y-1">
               <label className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
                 <MailIcon className="size-3.5" />
-                Email
+                {t("profile.account.email")}
               </label>
               <p className="text-sm font-medium">{user.email}</p>
             </div>
             <div className="space-y-1 sm:col-span-2">
               <label className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
                 <HashIcon className="size-3.5" />
-                ID Utilisateur
+                {t("profile.account.userId")}
               </label>
               <p className="text-sm font-mono text-muted-foreground">
                 {user.id}

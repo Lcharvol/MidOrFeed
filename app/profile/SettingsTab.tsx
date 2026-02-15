@@ -33,7 +33,7 @@ import { toast } from "sonner";
 
 export function SettingsTab() {
   const { theme, setTheme } = useTheme();
-  const { locale, setLocale } = useI18n();
+  const { t, locale, setLocale } = useI18n();
 
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -49,12 +49,12 @@ export function SettingsTab() {
     setPasswordError(null);
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError("Les mots de passe ne correspondent pas");
+      setPasswordError(t("profile.settings.passwordsMismatch"));
       return;
     }
 
     if (passwordForm.newPassword.length < 8) {
-      setPasswordError("Le mot de passe doit contenir au moins 8 caractères");
+      setPasswordError(t("profile.settings.passwordTooShort"));
       return;
     }
 
@@ -73,7 +73,7 @@ export function SettingsTab() {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success("Mot de passe modifié avec succès");
+        toast.success(t("profile.settings.passwordChanged"));
         setIsChangingPassword(false);
         setPasswordForm({
           currentPassword: "",
@@ -81,10 +81,10 @@ export function SettingsTab() {
           confirmPassword: "",
         });
       } else {
-        setPasswordError(result.error || "Erreur lors du changement de mot de passe");
+        setPasswordError(result.error || t("profile.settings.passwordChangeError"));
       }
     } catch (error) {
-      setPasswordError("Erreur de connexion");
+      setPasswordError(t("profile.settings.connectionError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -97,18 +97,18 @@ export function SettingsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PaletteIcon className="size-5 text-primary" />
-            Apparence
+            {t("profile.settings.appearance")}
           </CardTitle>
           <CardDescription>
-            Personnalisez l'apparence de l'application
+            {t("profile.settings.appearanceDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Thème</Label>
+              <Label>{t("profile.settings.theme")}</Label>
               <p className="text-sm text-muted-foreground">
-                Choisissez entre le mode clair et sombre
+                {t("profile.settings.themeDescription")}
               </p>
             </div>
             <Select value={theme} onValueChange={setTheme}>
@@ -116,9 +116,9 @@ export function SettingsTab() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="light">Clair</SelectItem>
-                <SelectItem value="dark">Sombre</SelectItem>
-                <SelectItem value="system">Système</SelectItem>
+                <SelectItem value="light">{t("profile.settings.light")}</SelectItem>
+                <SelectItem value="dark">{t("profile.settings.dark")}</SelectItem>
+                <SelectItem value="system">{t("profile.settings.system")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -130,18 +130,18 @@ export function SettingsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <GlobeIcon className="size-5 text-primary" />
-            Langue
+            {t("profile.settings.language")}
           </CardTitle>
           <CardDescription>
-            Choisissez la langue de l'interface
+            {t("profile.settings.languageDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Langue de l'interface</Label>
+              <Label>{t("profile.settings.interfaceLanguage")}</Label>
               <p className="text-sm text-muted-foreground">
-                Langue utilisée pour l'affichage
+                {t("profile.settings.interfaceLanguageDescription")}
               </p>
             </div>
             <Select value={locale} onValueChange={setLocale}>
@@ -162,29 +162,29 @@ export function SettingsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <KeyIcon className="size-5 text-primary" />
-            Sécurité
+            {t("profile.settings.security")}
           </CardTitle>
           <CardDescription>
-            Gérez la sécurité de votre compte
+            {t("profile.settings.securityDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!isChangingPassword ? (
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Mot de passe</Label>
+                <Label>{t("profile.settings.password")}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Modifiez votre mot de passe
+                  {t("profile.settings.passwordDescription")}
                 </p>
               </div>
               <Button variant="outline" onClick={() => setIsChangingPassword(true)}>
-                Modifier
+                {t("profile.settings.changePassword")}
               </Button>
             </div>
           ) : (
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                <Label htmlFor="currentPassword">{t("profile.settings.currentPassword")}</Label>
                 <Input
                   id="currentPassword"
                   type="password"
@@ -200,7 +200,7 @@ export function SettingsTab() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                <Label htmlFor="newPassword">{t("profile.settings.newPassword")}</Label>
                 <Input
                   id="newPassword"
                   type="password"
@@ -217,7 +217,7 @@ export function SettingsTab() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <Label htmlFor="confirmPassword">{t("profile.settings.confirmPassword")}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -245,12 +245,12 @@ export function SettingsTab() {
                   {isSubmitting ? (
                     <>
                       <Loader2Icon className="mr-2 size-4 animate-spin" />
-                      Modification...
+                      {t("profile.settings.saving")}
                     </>
                   ) : (
                     <>
                       <CheckIcon className="mr-2 size-4" />
-                      Enregistrer
+                      {t("profile.settings.savePassword")}
                     </>
                   )}
                 </Button>
@@ -268,7 +268,7 @@ export function SettingsTab() {
                   }}
                   disabled={isSubmitting}
                 >
-                  Annuler
+                  {t("profile.settings.cancelPassword")}
                 </Button>
               </div>
             </form>

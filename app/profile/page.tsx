@@ -36,9 +36,9 @@ export default function ProfilePage() {
     return (
       <div className="container mx-auto py-8 sm:py-12 px-4">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="mb-4 text-3xl font-bold">Connexion requise</h1>
+          <h1 className="mb-4 text-3xl font-bold">{t("profile.loginRequired")}</h1>
           <p className="text-muted-foreground">
-            Vous devez être connecté pour accéder à votre profil.
+            {t("profile.loginRequiredMessage")}
           </p>
         </div>
       </div>
@@ -55,7 +55,7 @@ export default function ProfilePage() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Profil</BreadcrumbPage>
+              <BreadcrumbPage>{t("profile.breadcrumb")}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -65,15 +65,15 @@ export default function ProfilePage() {
           <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="account" className="flex-1 sm:flex-none">
               <UserIcon className="size-4" />
-              <span className="hidden sm:inline">Compte</span>
+              <span className="hidden sm:inline">{t("profile.tabs.account")}</span>
             </TabsTrigger>
             <TabsTrigger value="stats" className="flex-1 sm:flex-none">
               <BarChart3Icon className="size-4" />
-              <span className="hidden sm:inline">Statistiques</span>
+              <span className="hidden sm:inline">{t("profile.tabs.stats")}</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex-1 sm:flex-none">
               <SettingsIcon className="size-4" />
-              <span className="hidden sm:inline">Paramètres</span>
+              <span className="hidden sm:inline">{t("profile.tabs.settings")}</span>
             </TabsTrigger>
           </TabsList>
 

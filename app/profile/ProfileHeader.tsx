@@ -8,6 +8,7 @@ import { getInitials } from "@/lib/profile-utils";
 import { Loader2Icon, CrownIcon, SparklesIcon, ZapIcon } from "lucide-react";
 import Image from "next/image";
 import { DDRAGON_VERSION, getProfileIconUrl } from "@/constants/ddragon";
+import { useI18n } from "@/lib/i18n-context";
 
 interface User {
   id: string;
@@ -40,6 +41,7 @@ interface ProfileHeaderProps {
 const FREE_DAILY_LIMIT = 3;
 
 export function ProfileHeader({ user }: ProfileHeaderProps) {
+  const { t, locale } = useI18n();
   const [riotDetails, setRiotDetails] = useState<RiotAccountDetails | null>(null);
   const [isLoadingRiot, setIsLoadingRiot] = useState(false);
 
@@ -83,7 +85,7 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
       ? `${riotDetails.gameName}#${riotDetails.tagLine}`
       : user.leagueAccount?.riotGameName && user.leagueAccount?.riotTagLine
       ? `${user.leagueAccount.riotGameName}#${user.leagueAccount.riotTagLine}`
-      : user.name || "Utilisateur";
+      : user.name || t("profile.header.user");
 
   const isPremium =
     user.subscriptionTier === "premium" &&
@@ -164,7 +166,7 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-1.5 text-muted-foreground">
                     <ZapIcon className="size-3.5" />
-                    Analyses quotidiennes
+                    {t("profile.header.dailyAnalyses")}
                   </span>
                   <span className="font-medium">
                     {dailyRemaining}/{FREE_DAILY_LIMIT}
@@ -186,12 +188,13 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
 
             {isPremium && user.subscriptionExpiresAt && (
               <p className="text-sm text-muted-foreground">
-                Premium jusqu'au{" "}
-                {new Date(user.subscriptionExpiresAt).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {t("profile.header.premiumUntil").replace(
+                  "{date}",
+                  new Date(user.subscriptionExpiresAt).toLocaleDateString(
+                    locale === "fr" ? "fr-FR" : "en-US",
+                    { day: "numeric", month: "long", year: "numeric" }
+                  )
+                )}
               </p>
             )}
           </div>
