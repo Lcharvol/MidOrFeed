@@ -82,6 +82,25 @@ export const getPassiveImageUrl = (
 export const getItemImageUrl = (image: string, version = DDRAGON_VERSION) =>
   buildDdragonUrl("cdn", version, "img", "item", image);
 
+// Wings/frame overlay around summoner avatar based on solo/duo tier
+const TIER_TO_WINGS: Record<string, string> = {
+  IRON: "Iron",
+  BRONZE: "Bronze",
+  SILVER: "Silver",
+  GOLD: "Gold",
+  PLATINUM: "Platinum",
+  EMERALD: "Emerald",
+  DIAMOND: "Diamond",
+  MASTER: "Master",
+  GRANDMASTER: "Grand",
+  CHALLENGER: "Challenger",
+};
+
+export const getWingsUrl = (tier: string): string | null => {
+  const name = TIER_TO_WINGS[tier.toUpperCase()];
+  return name ? `/wings/${name}.webp` : null;
+};
+
 // Tier/Rank icons - utilise les images locales depuis /public/ranks
 export const getTierIconUrl = (
   tier: string,

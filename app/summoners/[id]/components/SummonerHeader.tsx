@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton, SkeletonAvatar } from "@/components/ui/skeleton";
 import { UserIcon } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { getWingsUrl } from "@/constants/ddragon";
 
 type SummonerHeaderProps = {
   loading: boolean;
@@ -18,6 +20,7 @@ type SummonerHeaderProps = {
   region?: string;
   ladderRank: number | null;
   topPercentage: number | null;
+  soloTier?: string | null;
 };
 
 export const SummonerHeader = ({
@@ -27,7 +30,9 @@ export const SummonerHeader = ({
   region,
   ladderRank,
   topPercentage,
+  soloTier,
 }: SummonerHeaderProps) => {
+  const wingsUrl = soloTier ? getWingsUrl(soloTier) : null;
   return (
     <div className="flex items-start gap-6">
       {/* Avatar avec badge du niveau */}
@@ -36,6 +41,16 @@ export const SummonerHeader = ({
           <SkeletonAvatar size="lg" className="size-28" aria-busy="true" />
         ) : (
           <>
+            {wingsUrl && (
+              <Image
+                src={wingsUrl}
+                alt=""
+                width={180}
+                height={233}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[48%] pointer-events-none z-10"
+                unoptimized
+              />
+            )}
             {profileIconUrl ? (
               <Avatar className="size-28 border-4 border-primary/20">
                 <AvatarImage src={profileIconUrl} alt={details?.gameName ? `${details.gameName} profile icon` : "Profile icon"} />
@@ -49,7 +64,7 @@ export const SummonerHeader = ({
               </Avatar>
             )}
             {details?.summonerLevel && (
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-lg bg-muted px-2 py-0.5 text-xs font-semibold shadow-sm">
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-lg bg-muted px-2 py-0.5 text-xs font-semibold shadow-sm z-20">
                 {details.summonerLevel}
               </div>
             )}
