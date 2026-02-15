@@ -10,7 +10,7 @@ import { GameVersionProvider } from "@/components/GameVersionProvider";
 import { ServerStatusBanner } from "@/components/ServerStatusBanner";
 import { ConstructionBanner } from "@/components/ConstructionBanner";
 import { JsonLd } from "@/components/JsonLd";
-import { Footer } from "@/components/Footer";
+import { ConditionalFooter } from "@/components/ConditionalFooter";
 import { buildSiteUrl } from "@/constants/site";
 import { SITE_NAME, TWITTER_HANDLE, DEFAULT_LOCALE, LOGO_URL_PATH } from "@/constants/seo";
 import "./globals.css";
@@ -153,7 +153,7 @@ export default function RootLayout({
                     </div>
                     <div className="relative">{children}</div>
                   </main>
-                  <Footer />
+                  <ConditionalFooter />
                   <Toaster />
                 </NotificationProvider>
               </GameVersionProvider>

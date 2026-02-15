@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -162,14 +162,6 @@ export default function SignupPage() {
       <main className="w-full max-w-md px-4">
         <Card>
           <CardHeader className="text-center">
-            <Image
-              src="/logo.webp"
-              alt="MidOrFeed"
-              width={200}
-              height={50}
-              className="m-auto"
-              priority
-            />
             <CardTitle className="text-2xl">{t("signup.title")}</CardTitle>
             <CardDescription>{t("signup.fillInfo")}</CardDescription>
           </CardHeader>
