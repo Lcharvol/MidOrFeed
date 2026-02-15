@@ -33,17 +33,50 @@ export async function createDataCrawlWorker() {
           region,
           limit = 10,
           matchesPerPlayer = 20,
+          recrawlAfterHours = 24,
+          recrawlRatio = 0.25,
         } = job.data;
 
-        // Get pending players to crawl
-        const players = await prisma.discoveredPlayer.findMany({
+        // Reset players stuck in "crawling" for more than 1 hour
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const stuckReset = await prisma.discoveredPlayer.updateMany({
+          where: {
+            crawlStatus: "crawling",
+            OR: [
+              { lastCrawledAt: { lt: oneHourAgo } },
+              { lastCrawledAt: null, updatedAt: { lt: oneHourAgo } },
+            ],
+          },
+          data: { crawlStatus: "pending" },
+        });
+        if (stuckReset.count > 0) {
+          logger.warn(`Reset ${stuckReset.count} stuck players back to pending`);
+        }
+
+        // Split batch between pending players and stale completed players
+        const recrawlLimit = Math.floor(limit * recrawlRatio);
+        const pendingLimit = limit - recrawlLimit;
+
+        const pendingPlayers = await prisma.discoveredPlayer.findMany({
           where: {
             crawlStatus: "pending",
             ...(region ? { riotRegion: region } : {}),
           },
-          take: limit,
+          take: pendingLimit,
           orderBy: { createdAt: "asc" },
         });
+
+        const stalePlayers = await prisma.discoveredPlayer.findMany({
+          where: {
+            crawlStatus: "completed",
+            lastCrawledAt: { lt: new Date(Date.now() - recrawlAfterHours * 60 * 60 * 1000) },
+            ...(region ? { riotRegion: region } : {}),
+          },
+          take: recrawlLimit,
+          orderBy: { lastCrawledAt: "asc" },
+        });
+
+        const players = [...pendingPlayers, ...stalePlayers];
 
         const total = players.length;
         logger.info(`Found ${total} players to crawl`);

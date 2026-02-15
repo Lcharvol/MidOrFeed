@@ -37,6 +37,8 @@ export interface DataCrawlJobData {
   region?: string;
   limit?: number;
   matchesPerPlayer?: number;
+  recrawlAfterHours?: number;
+  recrawlRatio?: number;
 }
 
 export interface DataCrawlJobResult {

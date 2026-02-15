@@ -113,14 +113,14 @@ export async function scheduleAllJobs() {
     { queue: QUEUE_NAMES.CHAMPION_STATS, cron: "0 */3 * * *", data: {} },
     // Every 6 hours — item builds analysis
     { queue: QUEUE_NAMES.ITEM_BUILDS, cron: "0 */6 * * *", data: {} },
-    // Every 2 hours — crawl new match data
-    { queue: QUEUE_NAMES.DATA_CRAWL, cron: "0 */2 * * *", data: {} },
+    // Every 30 min — crawl match data (40 players/batch, re-crawl completed after 24h)
+    { queue: QUEUE_NAMES.DATA_CRAWL, cron: "*/30 * * * *", data: { limit: 40, matchesPerPlayer: 30, recrawlAfterHours: 24, recrawlRatio: 0.25 } },
     // Every 4 hours — generate compositions
     { queue: QUEUE_NAMES.COMPOSITIONS, cron: "0 */4 * * *", data: {} },
     // Every 4 hours — sync accounts from match participants
     { queue: QUEUE_NAMES.ACCOUNT_SYNC, cron: "0 */4 * * *", data: {} },
-    // Every 6 hours — discover new players from match data
-    { queue: QUEUE_NAMES.CRAWL_SEED, cron: "0 */6 * * *", data: {} },
+    // Every 3 hours — discover new players from match data (100 players/region)
+    { queue: QUEUE_NAMES.CRAWL_SEED, cron: "0 */3 * * *", data: { countPerRegion: 100 } },
   ];
 
   for (const { queue, cron, data } of schedules) {

@@ -13,7 +13,7 @@ export const WORKER_DESCRIPTIONS: Record<string, { name: string; description: st
   },
   "data-crawl": {
     name: "Data Crawl",
-    description: "Collecte les matchs des joueurs découverts pour enrichir la base de données",
+    description: "Collecte les matchs des joueurs découverts et re-crawle les joueurs complétés (toutes les 30 min, 40 joueurs/batch)",
   },
   "account-sync": {
     name: "Account Sync",
