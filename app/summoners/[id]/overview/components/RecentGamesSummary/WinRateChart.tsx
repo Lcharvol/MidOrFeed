@@ -17,8 +17,8 @@ interface RadialChartData {
 
 const calculateRadialData = (stats: SummaryStats): RadialChartData => {
   const total = stats.total;
-  const winsPercent = (stats.wins / total) * 100;
-  const lossesPercent = (stats.losses / total) * 100;
+  const winsPercent = Math.round((stats.wins / total) * 100);
+  const lossesPercent = Math.round((stats.losses / total) * 100);
 
   return {
     wins: winsPercent,
