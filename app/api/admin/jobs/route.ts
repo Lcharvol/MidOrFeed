@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   try {
     const [queuesStatus, recentJobs, schedules] = await Promise.all([
       getAllQueuesStatus(),
-      getRecentJobs(30),
+      getRecentJobs(100),
       getAllSchedules(),
     ]);
 
