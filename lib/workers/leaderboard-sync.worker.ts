@@ -118,13 +118,39 @@ export async function createLeaderboardSyncWorker() {
                   continue;
                 }
 
+                // Preserve existing enrichment data (gameName, tagLine, profileIconId)
+                // before replacing entries
+                const existingEntries = await prisma.leaderboardEntry.findMany({
+                  where: { region, queueType, tier: tierUpper },
+                  select: { summonerId: true, gameName: true, tagLine: true, profileIconId: true },
+                });
+                const enrichMap = new Map(
+                  existingEntries
+                    .filter((e) => e.gameName || e.profileIconId)
+                    .map((e) => [e.summonerId, { gameName: e.gameName, tagLine: e.tagLine, profileIconId: e.profileIconId }])
+                );
+
+                // Merge enrichment data into new entries
+                const enrichedUnique = unique.map((entry) => {
+                  const existing = enrichMap.get(entry.summonerId);
+                  if (existing) {
+                    return {
+                      ...entry,
+                      gameName: existing.gameName,
+                      tagLine: existing.tagLine,
+                      profileIconId: existing.profileIconId,
+                    };
+                  }
+                  return entry;
+                });
+
                 // Delete existing entries for this region/tier/queueType then bulk insert
                 await prisma.leaderboardEntry.deleteMany({
                   where: { region, queueType, tier: tierUpper },
                 });
 
                 const result = await prisma.leaderboardEntry.createMany({
-                  data: unique,
+                  data: enrichedUnique,
                 });
                 entriesSynced += result.count;
 
