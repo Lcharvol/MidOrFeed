@@ -53,6 +53,14 @@ export async function GET(request: NextRequest) {
         lastLoginAt: true,
         createdAt: true,
         updatedAt: true,
+        riotPuuid: true,
+        riotRegion: true,
+        leagueAccount: {
+          select: {
+            riotGameName: true,
+            riotTagLine: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,

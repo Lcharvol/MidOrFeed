@@ -19,9 +19,11 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  GamepadIcon,
   RefreshCwIcon,
   SparklesIcon,
 } from "lucide-react";
+import Link from "next/link";
 
 type UserRow = {
   id: string;
@@ -34,6 +36,12 @@ type UserRow = {
   lastLoginAt: string | null;
   createdAt: string;
   updatedAt: string;
+  riotPuuid: string | null;
+  riotRegion: string | null;
+  leagueAccount: {
+    riotGameName: string | null;
+    riotTagLine: string | null;
+  } | null;
 };
 
 type Pagination = {
@@ -257,9 +265,10 @@ export const RightsTab = () => {
         <div className="grid grid-cols-12 px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/40">
           <div className="col-span-3">{t("admin.rights.email")}</div>
           <div className="col-span-2">{t("admin.rights.name")}</div>
+          <div className="col-span-2">{t("admin.rights.riotAccount")}</div>
+          <div className="col-span-1">{t("admin.rights.aiLimit")}</div>
+          <div className="col-span-1">{t("admin.rights.lastLogin")}</div>
           <div className="col-span-1">{t("admin.rights.role")}</div>
-          <div className="col-span-2">{t("admin.rights.aiLimit")}</div>
-          <div className="col-span-2">{t("admin.rights.lastLogin")}</div>
           <div className="col-span-2 text-right">{t("admin.rights.actions")}</div>
         </div>
         {loading && users.length === 0 ? (
@@ -281,12 +290,30 @@ export const RightsTab = () => {
                   {u.email}
                 </div>
                 <div className="col-span-2 truncate">{u.name ?? "—"}</div>
-                <div className="col-span-1">
-                  <Badge variant={u.role === "admin" ? "default" : "outline"}>
-                    {u.role}
-                  </Badge>
+                <div className="col-span-2 truncate">
+                  {u.riotPuuid && u.riotRegion ? (
+                    <Link
+                      href={`/summoners/${u.riotPuuid}/overview?region=${u.riotRegion}`}
+                      target="_blank"
+                      className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+                      title={
+                        u.leagueAccount?.riotGameName && u.leagueAccount?.riotTagLine
+                          ? `${u.leagueAccount.riotGameName}#${u.leagueAccount.riotTagLine}`
+                          : u.riotPuuid
+                      }
+                    >
+                      <GamepadIcon className="size-3 shrink-0" />
+                      <span className="truncate">
+                        {u.leagueAccount?.riotGameName && u.leagueAccount?.riotTagLine
+                          ? `${u.leagueAccount.riotGameName}#${u.leagueAccount.riotTagLine}`
+                          : u.riotRegion.toUpperCase()}
+                      </span>
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1">
                   {editingLimitId === u.id ? (
                     <Input
                       type="number"
@@ -296,7 +323,7 @@ export const RightsTab = () => {
                       onChange={(e) => setEditingLimitValue(e.target.value)}
                       onKeyDown={(e) => handleLimitKeyDown(e, u.id)}
                       onBlur={() => setEditingLimitId(null)}
-                      className="w-20 h-7 text-xs"
+                      className="w-16 h-7 text-xs"
                       autoFocus
                     />
                   ) : (
@@ -316,8 +343,13 @@ export const RightsTab = () => {
                     </button>
                   )}
                 </div>
-                <div className="col-span-2 text-xs text-muted-foreground">
+                <div className="col-span-1 text-xs text-muted-foreground">
                   {formatRelativeDate(u.lastLoginAt, t)}
+                </div>
+                <div className="col-span-1">
+                  <Badge variant={u.role === "admin" ? "default" : "outline"}>
+                    {u.role}
+                  </Badge>
                 </div>
                 <div className="col-span-2 flex justify-end gap-2">
                   <Select
