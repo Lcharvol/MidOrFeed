@@ -462,6 +462,39 @@
     "searchPlayer": "Rechercher un joueur...",
     "errorLoading": "Erreur lors du chargement des données",
     "loadingAdvice": "Chargement des conseils...",
+    "features": {
+      "detailedStats": "Statistiques détaillées",
+      "detailedStatsDesc": "KDA, winrate, CS/min, vision score et bien plus encore.",
+      "matchHistory": "Historique des matchs",
+      "matchHistoryDesc": "Analysez chaque partie avec des détails complets sur les performances.",
+      "ranking": "Classement",
+      "rankingDesc": "Suivez la progression en ranked Solo/Duo et Flex.",
+      "championMastery": "Champions maîtrise",
+      "championMasteryDesc": "Découvrez les champions les plus joués et leur performance.",
+      "comparePlayers": "Comparer des joueurs",
+      "comparePlayersDesc": "Comparez les statistiques de deux joueurs côte à côte pour une analyse approfondie.",
+      "compare": "Comparer"
+    },
+    "quickLinks": {
+      "leaderboard": "Classement",
+      "tierList": "Tier List",
+      "champions": "Champions"
+    },
+    "actions": {
+      "linkCopied": "Lien copié !",
+      "linkCopyFailed": "Impossible de copier le lien",
+      "updating": "Mise à jour...",
+      "update": "Mettre à jour",
+      "tierChart": "Graphique de tier",
+      "copyProfileLink": "Copier le lien du profil",
+      "copyLink": "Copier le lien"
+    },
+    "mastery": {
+      "title": "Maîtrises",
+      "championsPlayed": "Champions joués",
+      "totalPoints": "Points totaux",
+      "championPool": "Champion Pool"
+    },
     "ranking": {
       "divisionPosition": "Position dans la division",
       "playersInDivision": "joueurs dans cette division",
@@ -556,6 +589,12 @@
     "popular": {
       "title": "Populaires",
       "description": "Les compositions les plus utilisées",
+      "aiSuggestions": "Suggestions IA",
+      "heroTitle": "Compositions populaires",
+      "heroDescription": "Découvrez les compositions globales les mieux notées par notre IA, basées sur les performances agrégées des champions analysés.",
+      "lastGeneration": "Dernière génération : {date}",
+      "refreshing": "Mise à jour...",
+      "refresh": "Rafraîchir",
       "copyUnavailable": "Copie impossible dans cet environnement",
       "copiedToClipboard": "Composition copiée dans le presse-papier",
       "copyFailed": "Impossible de copier la composition",

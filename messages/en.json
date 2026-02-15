@@ -460,6 +460,39 @@
     "searchPlayer": "Search for a player...",
     "errorLoading": "Error loading data",
     "loadingAdvice": "Loading advice...",
+    "features": {
+      "detailedStats": "Detailed statistics",
+      "detailedStatsDesc": "KDA, winrate, CS/min, vision score and much more.",
+      "matchHistory": "Match history",
+      "matchHistoryDesc": "Analyze each game with full performance details.",
+      "ranking": "Ranking",
+      "rankingDesc": "Track progression in ranked Solo/Duo and Flex.",
+      "championMastery": "Champion mastery",
+      "championMasteryDesc": "Discover the most played champions and their performance.",
+      "comparePlayers": "Compare players",
+      "comparePlayersDesc": "Compare two players' statistics side by side for in-depth analysis.",
+      "compare": "Compare"
+    },
+    "quickLinks": {
+      "leaderboard": "Leaderboard",
+      "tierList": "Tier List",
+      "champions": "Champions"
+    },
+    "actions": {
+      "linkCopied": "Link copied!",
+      "linkCopyFailed": "Failed to copy link",
+      "updating": "Updating...",
+      "update": "Update",
+      "tierChart": "Tier chart",
+      "copyProfileLink": "Copy profile link",
+      "copyLink": "Copy link"
+    },
+    "mastery": {
+      "title": "Masteries",
+      "championsPlayed": "Champions played",
+      "totalPoints": "Total points",
+      "championPool": "Champion Pool"
+    },
     "ranking": {
       "divisionPosition": "Division position",
       "playersInDivision": "players in this division",
@@ -554,6 +587,12 @@
     "popular": {
       "title": "Popular",
       "description": "The most used compositions",
+      "aiSuggestions": "AI Suggestions",
+      "heroTitle": "Popular compositions",
+      "heroDescription": "Discover the highest-rated global compositions by our AI, based on aggregated champion performance data.",
+      "lastGeneration": "Last generation: {date}",
+      "refreshing": "Updating...",
+      "refresh": "Refresh",
       "copyUnavailable": "Copy not available in this environment",
       "copiedToClipboard": "Composition copied to clipboard",
       "copyFailed": "Failed to copy composition",

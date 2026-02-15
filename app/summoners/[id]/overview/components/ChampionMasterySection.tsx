@@ -11,6 +11,7 @@ import { useApiSWR } from "@/lib/hooks/swr";
 import { useChampions } from "@/lib/hooks/use-champions";
 import { cn } from "@/lib/utils";
 import { MASTERY_STYLES } from "@/lib/styles/game-colors";
+import { useI18n } from "@/lib/i18n-context";
 
 interface ChampionMasterySectionProps {
   puuid: string;
@@ -58,6 +59,7 @@ const formatPoints = (points: number): string => {
 };
 
 export function ChampionMasterySection({ puuid, region }: ChampionMasterySectionProps) {
+  const { t } = useI18n();
   const { resolveName, championKeyToIdMap } = useChampions();
 
   const { data, isLoading } = useApiSWR<MasteryResponse>(
@@ -107,7 +109,7 @@ export function ChampionMasterySection({ puuid, region }: ChampionMasterySection
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <TrophyIcon className="size-4 text-warning-muted-foreground" />
-            Maitrises
+            {t("summoners.mastery.title")}
           </CardTitle>
           <span className="text-xs text-muted-foreground">
             {totalScore.toLocaleString()} pts
@@ -293,16 +295,16 @@ export function ChampionMasterySection({ puuid, region }: ChampionMasterySection
           <div className="rounded-lg border border-border/60 bg-muted/10 p-3 space-y-2.5">
             <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
               <LayersIcon className="size-3.5 text-muted-foreground" />
-              Champion Pool
+              {t("summoners.mastery.championPool")}
             </div>
             <div className="grid grid-cols-2 gap-2 text-center">
               <div>
                 <p className="text-lg font-bold text-foreground">{poolDepth.totalChampions}</p>
-                <p className="text-[10px] text-muted-foreground">Champions joues</p>
+                <p className="text-[10px] text-muted-foreground">{t("summoners.mastery.championsPlayed")}</p>
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">{formatPoints(poolDepth.totalPoints)}</p>
-                <p className="text-[10px] text-muted-foreground">Points totaux</p>
+                <p className="text-[10px] text-muted-foreground">{t("summoners.mastery.totalPoints")}</p>
               </div>
             </div>
             <div className="space-y-1.5">

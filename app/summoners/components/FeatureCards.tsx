@@ -11,8 +11,11 @@ import {
   UserIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n-context";
 
 export function FeatureCards() {
+  const { t } = useI18n();
+
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <Card variant="interactive" className="group">
@@ -20,9 +23,9 @@ export function FeatureCards() {
           <div className="size-12 rounded-lg bg-info-muted flex items-center justify-center">
             <BarChart3Icon className="size-6 text-info" />
           </div>
-          <h3 className="font-semibold text-lg">Statistiques detaillees</h3>
+          <h3 className="font-semibold text-lg">{t("summoners.features.detailedStats")}</h3>
           <p className="text-sm text-muted-foreground">
-            KDA, winrate, CS/min, vision score et bien plus encore.
+            {t("summoners.features.detailedStatsDesc")}
           </p>
         </CardContent>
       </Card>
@@ -32,9 +35,9 @@ export function FeatureCards() {
           <div className="size-12 rounded-lg bg-danger-muted flex items-center justify-center">
             <SwordsIcon className="size-6 text-danger" />
           </div>
-          <h3 className="font-semibold text-lg">Historique des matchs</h3>
+          <h3 className="font-semibold text-lg">{t("summoners.features.matchHistory")}</h3>
           <p className="text-sm text-muted-foreground">
-            Analysez chaque partie avec des details complets sur les performances.
+            {t("summoners.features.matchHistoryDesc")}
           </p>
         </CardContent>
       </Card>
@@ -44,9 +47,9 @@ export function FeatureCards() {
           <div className="size-12 rounded-lg bg-warning-muted flex items-center justify-center">
             <TrophyIcon className="size-6 text-warning" />
           </div>
-          <h3 className="font-semibold text-lg">Classement</h3>
+          <h3 className="font-semibold text-lg">{t("summoners.features.ranking")}</h3>
           <p className="text-sm text-muted-foreground">
-            Suivez la progression en ranked Solo/Duo et Flex.
+            {t("summoners.features.rankingDesc")}
           </p>
         </CardContent>
       </Card>
@@ -56,9 +59,9 @@ export function FeatureCards() {
           <div className="size-12 rounded-lg bg-success-muted flex items-center justify-center">
             <TargetIcon className="size-6 text-success" />
           </div>
-          <h3 className="font-semibold text-lg">Champions maitrise</h3>
+          <h3 className="font-semibold text-lg">{t("summoners.features.championMastery")}</h3>
           <p className="text-sm text-muted-foreground">
-            Decouvrez les champions les plus joues et leur performance.
+            {t("summoners.features.championMasteryDesc")}
           </p>
         </CardContent>
       </Card>
@@ -69,14 +72,14 @@ export function FeatureCards() {
             <UserIcon className="size-6 text-primary" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-lg">Comparer des joueurs</h3>
+            <h3 className="font-semibold text-lg">{t("summoners.features.comparePlayers")}</h3>
             <p className="text-sm text-muted-foreground">
-              Comparez les statistiques de deux joueurs cote a cote pour une analyse approfondie.
+              {t("summoners.features.comparePlayersDesc")}
             </p>
           </div>
           <Button variant="outline" asChild className="shrink-0">
             <Link href="/compare">
-              Comparer
+              {t("summoners.features.compare")}
               <ChevronRightIcon className="size-4 ml-1" />
             </Link>
           </Button>
