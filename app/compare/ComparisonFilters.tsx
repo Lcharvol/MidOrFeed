@@ -40,7 +40,7 @@ export const ComparisonFilters = ({
   isLoading: boolean;
 }) => (
   <Card className="mb-6 sm:mb-8 border-border/60 shadow-lg">
-    <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+    <CardContent className="px-4 sm:px-6">
       <div className="flex flex-col gap-3 sm:gap-4">
         {/* Player 1 */}
         <div className="space-y-2 w-full">

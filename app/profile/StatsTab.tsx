@@ -95,7 +95,7 @@ function RankCard({
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
+        <CardContent className="flex items-center justify-center">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
         </CardContent>
       </Card>
@@ -105,7 +105,7 @@ function RankCard({
   if (!data) {
     return (
       <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+        <CardContent className="flex flex-col items-center justify-center text-center">
           <Icon className="size-10 text-muted-foreground/50 mb-3" />
           <p className="text-sm text-muted-foreground">Non classé</p>
           <p className="text-xs text-muted-foreground/70 mt-1">
@@ -216,7 +216,7 @@ export function StatsTab({ user }: StatsTabProps) {
   if (!hasRiotAccount) {
     return (
       <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+        <CardContent className="flex flex-col items-center justify-center text-center">
           <LinkIcon className="size-12 text-muted-foreground/50 mb-4" />
           <h3 className="text-lg font-semibold mb-2">
             Liez votre compte Riot Games
@@ -236,7 +236,7 @@ export function StatsTab({ user }: StatsTabProps) {
   if (error) {
     return (
       <Card className="border-destructive/50">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+        <CardContent className="flex flex-col items-center justify-center text-center">
           <AlertCircleIcon className="size-10 text-destructive mb-3" />
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : "Erreur de connexion"}
@@ -266,7 +266,7 @@ export function StatsTab({ user }: StatsTabProps) {
       {/* Link to full stats */}
       {user.leagueAccount?.riotGameName && user.riotRegion && (
         <Card>
-          <CardContent className="flex items-center justify-between py-4">
+          <CardContent className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <TrophyIcon className="size-5 text-primary" />
               <div>

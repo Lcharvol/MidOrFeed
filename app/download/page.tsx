@@ -198,7 +198,7 @@ export default function DownloadPage() {
         <div className="grid md:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <Card key={index} className="text-center">
-              <CardContent className="pt-6">
+              <CardContent>
                 <div className="inline-flex p-3 bg-muted rounded-full mb-4">
                   <feature.icon className="h-6 w-6 text-muted-foreground" />
                 </div>
@@ -233,7 +233,7 @@ export default function DownloadPage() {
       {/* FAQ / Notes */}
       <div className="max-w-2xl mx-auto mt-12 text-center">
         <Card className="bg-muted/50">
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="flex items-center justify-center gap-2 mb-2">
               <CheckCircleIcon className="h-5 w-5 text-success" />
               <span className="font-semibold">Conforme aux conditions d'utilisation de Riot Games</span>

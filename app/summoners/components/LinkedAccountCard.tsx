@@ -22,7 +22,7 @@ interface LinkedAccountCardProps {
 export function LinkedAccountCard({ leagueAccount }: LinkedAccountCardProps) {
   return (
     <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-      <CardContent className="p-6">
+      <CardContent>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Avatar className="size-14 border-2 border-primary/30">

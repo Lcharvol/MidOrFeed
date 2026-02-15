@@ -111,7 +111,7 @@ export function AIInsightCard({
           className
         )}
       >
-        <CardContent className="flex items-start gap-3 p-4">
+        <CardContent className="flex items-start gap-3 px-4">
           <div
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",

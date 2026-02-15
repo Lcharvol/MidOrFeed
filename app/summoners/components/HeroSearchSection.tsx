@@ -53,7 +53,7 @@ export function HeroSearchSection({
 
           {/* Search Box */}
           <Card className="mt-8 border-border/60 shadow-lg bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="px-4 sm:px-6">
               <div className="flex flex-col sm:flex-row gap-3" onKeyDown={onKeyDown}>
                 <Select value={region} onValueChange={setRegion}>
                   <SelectTrigger className="w-full sm:w-28">

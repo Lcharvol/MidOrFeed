@@ -17,7 +17,7 @@ export const EmptyStateCard = () => (
         Les statistiques apparaîtront après avoir collecté des matchs
       </CardDescription>
     </CardHeader>
-    <CardContent className="flex flex-col items-center justify-center gap-4 py-10">
+    <CardContent className="flex flex-col items-center justify-center gap-4">
       <Gamepad2Icon className="size-16 text-muted-foreground" />
     </CardContent>
   </Card>

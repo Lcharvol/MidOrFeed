@@ -275,7 +275,7 @@ export function JobsTab() {
 
       {error && (
         <Card className={cn("border-l-4", STATUS_STYLES.error.border)}>
-          <CardContent className="py-3">
+          <CardContent>
             <p className="text-sm text-destructive">{error}</p>
           </CardContent>
         </Card>

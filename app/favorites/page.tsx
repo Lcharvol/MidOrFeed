@@ -128,7 +128,7 @@ const FavoriteCard = ({
   return (
     <>
       <Card variant="interactive" className="group">
-        <CardContent className="p-3 sm:pt-4 sm:p-4">
+        <CardContent className="px-3 sm:px-4">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="relative shrink-0">
               <Avatar className="size-10 sm:size-14 border border-border">
@@ -388,7 +388,7 @@ export default function FavoritesPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
-              <CardContent className="p-3 sm:pt-4 sm:p-4">
+              <CardContent className="px-3 sm:px-4">
                 <div className="flex items-start gap-3 sm:gap-4">
                   <SkeletonAvatar size="lg" />
                   <div className="flex-1 space-y-2">

@@ -447,7 +447,7 @@ export const ChampionAdviceSection = ({
 
   const emptyState = (
     <Card className="border-dashed border-border/50 bg-background/70">
-      <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center text-sm text-muted-foreground">
+      <CardContent className="flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
         <MessageSquareIcon className="size-6 text-muted-foreground/60" aria-hidden="true" />
         <span>
           Aucun conseil n’a été partagé pour {championName} pour le moment. Sois le premier à raconter
@@ -571,7 +571,7 @@ export const ChampionAdviceSection = ({
 
       {error ? (
         <Card className="border-rose-500/40 bg-rose-500/10">
-          <CardContent className="py-6 text-sm text-rose-600">
+          <CardContent className="text-sm text-rose-600">
             Impossible de charger les conseils pour le moment. Réessaie plus tard.
           </CardContent>
         </Card>

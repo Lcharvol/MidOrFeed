@@ -77,7 +77,7 @@ export const RankInfoSection = ({ puuid, region }: RankInfoSectionProps) => {
               {t("summoners.rankedSolo")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="py-8">
+          <CardContent>
             <div className="text-center text-sm text-muted-foreground">
               {t("summoners.loading")}
             </div>
@@ -89,7 +89,7 @@ export const RankInfoSection = ({ puuid, region }: RankInfoSectionProps) => {
               {t("summoners.rankedFlex")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="py-8">
+          <CardContent>
             <div className="text-center text-sm text-muted-foreground">
               {t("summoners.loading")}
             </div>
@@ -110,7 +110,7 @@ export const RankInfoSection = ({ puuid, region }: RankInfoSectionProps) => {
               {t("summoners.rankedSolo")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="py-8">
+          <CardContent>
             <div className="text-center text-sm text-muted-foreground">
               {t("summoners.unranked")}
             </div>
@@ -126,7 +126,7 @@ export const RankInfoSection = ({ puuid, region }: RankInfoSectionProps) => {
               {t("summoners.rankedFlex")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="py-8">
+          <CardContent>
             <div className="text-center text-sm text-muted-foreground">
               {t("summoners.unranked")}
             </div>

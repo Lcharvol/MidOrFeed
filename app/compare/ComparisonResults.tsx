@@ -64,7 +64,7 @@ export const ComparisonResults = ({
             Vue d&apos;ensemble
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+        <CardContent className="px-4 sm:px-6">
           <div className="flex items-start justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
             <div className="flex-1 min-w-0">
               <PlayerCard player={player1} loading={isLoading} />
@@ -119,7 +119,7 @@ export const ComparisonResults = ({
                     Stats de combat
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-1 bg-muted/20 rounded-xl p-3 border border-border/50">
+                <CardContent className="space-y-1 bg-muted/20 rounded-xl px-3 border border-border/50">
                   <StatCompareRow
                     label="Win Rate"
                     value1={player1.stats.winRate}
@@ -178,7 +178,7 @@ export const ComparisonResults = ({
                     Economie & Vision
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-1 bg-muted/20 rounded-xl p-3 border border-border/50">
+                <CardContent className="space-y-1 bg-muted/20 rounded-xl px-3 border border-border/50">
                   <StatCompareRow
                     label="Gold/min"
                     value1={player1.stats.goldPerMin}

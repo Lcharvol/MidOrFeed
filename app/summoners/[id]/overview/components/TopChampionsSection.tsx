@@ -47,7 +47,7 @@ export const TopChampionsSection = ({
           {t("summoners.topChampionsDescription").replace("{count}", champions.length.toString())}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-3">
+      <CardContent>
         <div className="overflow-hidden rounded-lg border border-border/60">
           <Table>
             <TableHeader className="bg-muted/30">

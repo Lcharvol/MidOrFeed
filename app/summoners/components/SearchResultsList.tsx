@@ -49,7 +49,7 @@ export function SearchResultsList({
             </Button>
           </div>
           <Card>
-            <CardContent className="py-12 text-center">
+            <CardContent className="text-center">
               <UserIcon className="size-10 mx-auto text-muted-foreground/50 mb-3" />
               <p className="text-muted-foreground">
                 {t("searchResults.noPlayerFound")} &quot;{query}&quot;
@@ -82,7 +82,7 @@ export function SearchResultsList({
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {results.map((result) => (
             <Card key={`${result.puuid}-${result.region}`} variant="interactive" className="group">
-              <CardContent className="p-3">
+              <CardContent className="px-3">
                 <Link
                   href={`/summoners/${result.puuid}/overview?region=${result.region}`}
                   className="flex items-center gap-3"

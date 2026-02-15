@@ -16,7 +16,7 @@ export function FeatureCards() {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <Card variant="interactive" className="group">
-        <CardContent className="p-6 space-y-3">
+        <CardContent className="space-y-3">
           <div className="size-12 rounded-lg bg-info-muted flex items-center justify-center">
             <BarChart3Icon className="size-6 text-info" />
           </div>
@@ -28,7 +28,7 @@ export function FeatureCards() {
       </Card>
 
       <Card variant="interactive" className="group">
-        <CardContent className="p-6 space-y-3">
+        <CardContent className="space-y-3">
           <div className="size-12 rounded-lg bg-danger-muted flex items-center justify-center">
             <SwordsIcon className="size-6 text-danger" />
           </div>
@@ -40,7 +40,7 @@ export function FeatureCards() {
       </Card>
 
       <Card variant="interactive" className="group">
-        <CardContent className="p-6 space-y-3">
+        <CardContent className="space-y-3">
           <div className="size-12 rounded-lg bg-warning-muted flex items-center justify-center">
             <TrophyIcon className="size-6 text-warning" />
           </div>
@@ -52,7 +52,7 @@ export function FeatureCards() {
       </Card>
 
       <Card variant="interactive" className="group">
-        <CardContent className="p-6 space-y-3">
+        <CardContent className="space-y-3">
           <div className="size-12 rounded-lg bg-success-muted flex items-center justify-center">
             <TargetIcon className="size-6 text-success" />
           </div>
@@ -64,7 +64,7 @@ export function FeatureCards() {
       </Card>
 
       <Card variant="interactive" className="group sm:col-span-2 lg:col-span-2">
-        <CardContent className="p-6 flex items-center gap-6">
+        <CardContent className="flex items-center gap-6">
           <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <UserIcon className="size-6 text-primary" />
           </div>

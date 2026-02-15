@@ -120,7 +120,7 @@ export function LiveGameBanner({ puuid, region }: LiveGameBannerProps) {
   if (isLoading) {
     return (
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-        <CardContent className="py-3">
+        <CardContent>
           <div className="flex items-center gap-3">
             <Skeleton className="size-5 rounded-full" />
             <Skeleton className="h-5 w-32" />
@@ -139,7 +139,7 @@ export function LiveGameBanner({ puuid, region }: LiveGameBannerProps) {
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <Card className="border-green-500/30 bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent overflow-hidden">
-        <CardContent className="py-3">
+        <CardContent>
           {/* Main banner */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">

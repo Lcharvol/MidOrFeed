@@ -218,7 +218,7 @@ export const ChampionBuildSection = ({
               Combinaisons d’objets les plus jouées.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pb-2">
+          <CardContent>
             {build.popularBuilds.length > 0 ? (
               <Table className="text-[13px]">
                 <TableHeader>
@@ -249,7 +249,7 @@ export const ChampionBuildSection = ({
               Les objets les plus performants pour {championName}.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pb-2">
+          <CardContent>
             <Table className="text-[13px]">
               <TableHeader>
                 <TableRow className="border-border/60 bg-background/60">
@@ -283,7 +283,7 @@ export const ChampionBuildSection = ({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground">Bottes favorites</CardTitle>
           </CardHeader>
-          <CardContent className="pb-2">
+          <CardContent>
             <Table className="text-[13px]">
               <TableHeader>
                 <TableRow className="border-border/60 bg-background/60">

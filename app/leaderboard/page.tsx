@@ -185,7 +185,7 @@ export default function LeaderboardPage() {
           <LoadingSkeleton />
         ) : allRows.length === 0 ? (
           <Card>
-            <CardContent className="p-6">
+            <CardContent>
               <Empty className="py-8">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
@@ -369,7 +369,7 @@ function FeaturedCard({
         <div className={cn("absolute inset-0 z-0 bg-gradient-to-br", TIER_GRADIENT[tier], "to-transparent")} />
       )}
 
-      <CardContent className="relative z-10 flex items-center gap-5 sm:gap-8 p-5 sm:p-8">
+      <CardContent className="relative z-10 flex items-center gap-5 sm:gap-8 px-5 sm:px-8">
         {/* Rank number */}
         <span className={cn(
           "text-5xl sm:text-7xl font-black tabular-nums opacity-20 select-none shrink-0",
@@ -454,7 +454,7 @@ function TopCard({
         </div>
       )}
 
-      <CardContent className="relative z-10 p-4 space-y-3">
+      <CardContent className="relative z-10 px-4 space-y-3">
         <div className="flex items-center gap-3">
           <span className="text-2xl font-black tabular-nums text-muted-foreground/50 select-none">
             {rank}
@@ -508,7 +508,7 @@ function LoadingSkeleton() {
     <div className="space-y-6">
       {/* #1 skeleton */}
       <Card>
-        <CardContent className="flex items-center gap-5 sm:gap-8 p-5 sm:p-8">
+        <CardContent className="flex items-center gap-5 sm:gap-8 px-5 sm:px-8">
           <Skeleton className="h-16 w-10 rounded" />
           <Skeleton className="size-20 rounded-full" />
           <div className="flex-1 space-y-2">
@@ -523,7 +523,7 @@ function LoadingSkeleton() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="px-4 space-y-3">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-8 w-6 rounded" />
                 <Skeleton className="size-12 rounded-full" />

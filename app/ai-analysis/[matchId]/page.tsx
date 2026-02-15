@@ -357,7 +357,7 @@ function AIAnalysisContent() {
       <div className="grid md:grid-cols-[1fr,auto] gap-6 mb-8">
         {/* Score Card */}
         <Card className="overflow-hidden">
-          <CardContent className="p-6">
+          <CardContent>
             <div className="flex items-center gap-6">
               <ScoreCircle score={analysis.overall.score} />
               <div className="flex-1">
@@ -372,7 +372,7 @@ function AIAnalysisContent() {
 
         {/* Champion Card */}
         <Card className="md:w-72">
-          <CardContent className="p-6">
+          <CardContent>
             <div className="flex items-center gap-4">
               <div className="relative">
                 <ChampionIcon
@@ -400,7 +400,7 @@ function AIAnalysisContent() {
 
       {/* Champion Details */}
       <Card className="mb-8">
-        <CardContent className="p-6">
+        <CardContent>
           <div className="grid md:grid-cols-2 gap-6">
             {/* Strengths */}
             <div>
@@ -514,7 +514,7 @@ function AIAnalysisContent() {
 
       {/* Key Moments Timeline */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent>
           <div className="flex items-center gap-2 mb-6">
             <div className="p-2 rounded-lg bg-muted">
               <SwordsIcon className="size-4 text-muted-foreground" />

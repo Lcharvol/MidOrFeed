@@ -27,7 +27,7 @@ export function RecentSearches({ recentSearches }: RecentSearchesProps) {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {recentSearches.map((s) => (
           <Card key={`${s.puuid}-${s.region}`} variant="interactive" className="group">
-            <CardContent className="p-3">
+            <CardContent className="px-3">
               <Link
                 href={`/summoners/${s.puuid}/overview?region=${s.region}`}
                 className="flex items-center gap-3"

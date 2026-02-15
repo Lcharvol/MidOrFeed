@@ -12,7 +12,7 @@ export function LinkRiotAccountCard() {
 
   return (
     <Card className="border-dashed">
-      <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+      <CardContent className="flex flex-col items-center justify-center text-center">
         <LinkIcon className="size-10 text-muted-foreground/50 mb-3" />
         <h3 className="text-lg font-semibold mb-2">
           {t("summoners.linkRiotAccountTitle")}

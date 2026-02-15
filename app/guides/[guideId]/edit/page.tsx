@@ -162,7 +162,7 @@ const EditGuidePage = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent className="px-8 text-center">
             <h2 className="text-xl font-semibold mb-2">Connexion requise</h2>
             <p className="text-muted-foreground mb-4">
               Vous devez être connecté pour modifier un guide.
@@ -190,7 +190,7 @@ const EditGuidePage = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent className="px-8 text-center">
             <h2 className="text-xl font-semibold mb-2">Guide non trouvé</h2>
             <p className="text-muted-foreground mb-4">
               Ce guide n&apos;existe pas ou a été supprimé.
@@ -209,7 +209,7 @@ const EditGuidePage = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent className="px-8 text-center">
             <h2 className="text-xl font-semibold mb-2">Accès refusé</h2>
             <p className="text-muted-foreground mb-4">
               Vous ne pouvez modifier que vos propres guides.

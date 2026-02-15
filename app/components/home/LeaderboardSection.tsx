@@ -112,7 +112,7 @@ function FeaturedCard({ player }: { player: LeaderboardEntry }) {
       TIER_GRADIENT[player.tier],
       "to-transparent"
     )}>
-      <CardContent className="relative z-10 flex items-center gap-4 sm:gap-6 p-4 sm:p-6">
+      <CardContent className="relative z-10 flex items-center gap-4 sm:gap-6 px-4 sm:px-6">
         {/* Rank watermark */}
         <span className={cn(
           "text-4xl sm:text-5xl font-black tabular-nums opacity-15 select-none shrink-0",
@@ -180,7 +180,7 @@ function TopCard({
 
   return (
     <Card className="hover:bg-muted/30 transition-colors">
-      <CardContent className="p-3 sm:p-4 space-y-2">
+      <CardContent className="px-3 sm:px-4 space-y-2">
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-xl sm:text-2xl font-black tabular-nums text-muted-foreground/40 select-none">
             {rank}
@@ -234,7 +234,7 @@ function LoadingSkeleton() {
     <div className="space-y-4">
       {/* #1 skeleton */}
       <Card>
-        <CardContent className="flex items-center gap-4 sm:gap-6 p-4 sm:p-6">
+        <CardContent className="flex items-center gap-4 sm:gap-6 px-4 sm:px-6">
           <Skeleton className="h-12 w-8 rounded" />
           <Skeleton className="size-14 rounded-full" />
           <div className="flex-1 space-y-2">
@@ -249,7 +249,7 @@ function LoadingSkeleton() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
-            <CardContent className="p-3 sm:p-4 space-y-2">
+            <CardContent className="px-3 sm:px-4 space-y-2">
               <div className="flex items-center gap-2 sm:gap-3">
                 <Skeleton className="h-6 w-5 rounded" />
                 <Skeleton className="size-10 rounded-full" />

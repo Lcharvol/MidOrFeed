@@ -135,7 +135,7 @@ export const ChampionLeadershipSection = ({
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-3 sm:p-6">
+        <CardContent className="px-3 sm:px-6">
           <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-border/60">
             <Table className="text-xs sm:text-sm">
               <TableHeader className="bg-muted/30">

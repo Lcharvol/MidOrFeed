@@ -66,7 +66,7 @@ const GuidePage = () => {
       <div className="container mx-auto px-4 py-8 space-y-6">
         <Skeleton className="h-8 w-32" />
         <Card>
-          <CardContent className="p-6">
+          <CardContent>
             <div className="flex gap-6">
               <Skeleton className="size-24 rounded-lg" />
               <div className="flex-1 space-y-4">
@@ -85,7 +85,7 @@ const GuidePage = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent className="px-8 text-center">
             <h2 className="text-xl font-semibold mb-2">Guide non trouvé</h2>
             <p className="text-muted-foreground mb-4">
               Ce guide n'existe pas ou a été supprimé.
@@ -114,7 +114,7 @@ const GuidePage = () => {
 
       {/* Header */}
       <Card>
-        <CardContent className="p-4 sm:p-6">
+        <CardContent className="px-4 sm:px-6">
           <div className="flex flex-col gap-4 sm:gap-6 sm:flex-row">
             {/* Champion icon */}
             <div className="shrink-0 flex items-start gap-4 sm:block">

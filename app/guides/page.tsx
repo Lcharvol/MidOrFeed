@@ -145,7 +145,7 @@ const GuidesPage = () => {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-3 sm:p-4">
+        <CardContent className="px-3 sm:px-4">
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="relative">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -205,7 +205,7 @@ const GuidesPage = () => {
           // Loading skeleton
           Array.from({ length: 5 }).map((_, i) => (
             <Card key={i}>
-              <CardContent className="p-4">
+              <CardContent className="px-4">
                 <div className="flex gap-4">
                   <Skeleton className="size-14 rounded-lg" />
                   <div className="flex-1 space-y-2">
@@ -220,7 +220,7 @@ const GuidesPage = () => {
         ) : error || data?.success === false ? (
           // Error state
           <Card>
-            <CardContent className="p-8 text-center">
+            <CardContent className="px-8 text-center">
               <p className="text-muted-foreground">
                 Erreur lors du chargement des guides
               </p>

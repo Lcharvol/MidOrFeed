@@ -85,7 +85,7 @@ const CompositionCard = ({
 
   return (
     <Card variant="interactive" className="group">
-      <CardContent className="pt-4">
+      <CardContent>
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="min-w-0">
             <h3 className="font-semibold truncate">{composition.name}</h3>
@@ -255,7 +255,7 @@ export default function CompositionsFavoritesPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
-              <CardContent className="pt-4">
+              <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <Skeleton className="h-5 w-32" />

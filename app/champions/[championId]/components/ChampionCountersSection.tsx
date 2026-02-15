@@ -61,7 +61,7 @@ export const ChampionCountersSection = ({
   if (isLoading) {
     return (
       <Card aria-live="polite">
-        <CardContent className="flex items-center justify-center gap-3 py-12 text-muted-foreground">
+        <CardContent className="flex items-center justify-center gap-3 text-muted-foreground">
           <Loader2Icon className="size-5 animate-spin" />
           {t("counterPicks.loading")}
         </CardContent>

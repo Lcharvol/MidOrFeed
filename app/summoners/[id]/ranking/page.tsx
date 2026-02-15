@@ -289,7 +289,7 @@ export default function RankingByIdPage() {
   if (!hasData) {
     return (
       <Card>
-        <CardContent className="py-20">
+        <CardContent>
           <div className="text-center">
             <TrophyIcon className="size-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">{t("ranking.unranked")}</h3>

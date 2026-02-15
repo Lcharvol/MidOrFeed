@@ -61,7 +61,7 @@ export const TopChampionsSection = ({
           {championsLoading
             ? Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="overflow-hidden">
-                  <CardContent className="p-4">
+                  <CardContent className="px-4">
                     <div className="flex flex-col items-center gap-3">
                       <SkeletonAvatar size="lg" className="size-16 rounded-xl" />
                       <Skeleton className="h-4 w-20" />
@@ -79,7 +79,7 @@ export const TopChampionsSection = ({
                       className="block"
                     >
                       <Card variant="interactive" className="overflow-hidden group">
-                        <CardContent className="p-4">
+                        <CardContent className="px-4">
                           <div className="flex flex-col items-center gap-3">
                             <div className="relative">
                               {index < 3 && (
