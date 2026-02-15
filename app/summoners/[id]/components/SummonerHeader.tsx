@@ -53,17 +53,19 @@ export const SummonerHeader = ({
                 </AvatarFallback>
               </Avatar>
             )}
-            {/* Wings overlay: 300×389 image, circle center at (50%, 38.6%).
-                Displayed at 180×233; circle center = (90, 90).
-                Avatar center = (56, 56) → offset = 56−90 = −34px each axis. */}
+            {/* Wings overlay: 300×389 image, inner circle ≈43% of width,
+                circle center at (50%, 46%). Displayed at 260×337 so that
+                the inner opening (≈112px) matches the avatar.
+                Circle center = (130, 155). Avatar center = (56, 56).
+                Offsets: top = 56−155 = −99, left = 56−130 = −74. */}
             {wingsUrl && (
               <Image
                 src={wingsUrl}
                 alt=""
-                width={180}
-                height={233}
+                width={260}
+                height={337}
                 className="absolute pointer-events-none z-10"
-                style={{ top: -34, left: -34 }}
+                style={{ top: -99, left: -74 }}
                 unoptimized
               />
             )}
