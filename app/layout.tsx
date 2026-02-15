@@ -147,7 +147,7 @@ export default function RootLayout({
                   <ConditionalHeader />
                   <ConstructionBanner />
                   <ServerStatusBanner />
-                  <main id="main-content" className="relative px-4 sm:px-6 lg:px-8">
+                  <main id="main-content" className="relative">
                     <div className="pointer-events-none absolute inset-0 -z-10 select-none">
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--color-primary),transparent_70%)]/[8]" />
                     </div>
