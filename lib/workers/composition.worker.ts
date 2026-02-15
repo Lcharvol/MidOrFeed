@@ -17,13 +17,13 @@ const logger = createLogger("composition-worker");
 const ROLES = ["top", "jungle", "mid", "adc", "support"] as const;
 type Role = (typeof ROLES)[number];
 
-// Role pairs for synergy analysis
+// Role pairs for synergy analysis (expanded for better coverage)
 const ROLE_SYNERGY_PAIRS: Record<Role, Role[]> = {
-  top: ["jungle"],
-  jungle: ["mid", "top"],
-  mid: ["jungle"],
-  adc: ["support"],
-  support: ["adc"],
+  top: ["jungle", "mid"],
+  jungle: ["mid", "top", "support"],
+  mid: ["jungle", "top"],
+  adc: ["support", "mid"],
+  support: ["adc", "jungle"],
 };
 
 interface AdvancedMetrics {
@@ -129,6 +129,87 @@ export async function createCompositionWorker() {
   );
 }
 
+// Map role to position values used in match data
+const POSITION_MAP: Record<Role, string[]> = {
+  top: ["TOP", "top", "SOLO"],
+  jungle: ["JUNGLE", "jungle", "NONE"],
+  mid: ["MIDDLE", "mid", "MID"],
+  adc: ["BOTTOM", "bottom", "ADC", "adc"],
+  support: ["UTILITY", "utility", "SUPPORT", "support"],
+};
+
+// Role order matching ROLE_PRIORITY: [top, jungle, mid, adc, support]
+const ROLE_ORDER: Role[] = ["top", "jungle", "mid", "adc", "support"];
+
+/**
+ * Build a full 5-champion team ordered by role (top, jungle, mid, adc, support).
+ * The main champion is placed at its role, and for each remaining role,
+ * the best synergy champion for that role is picked. Falls back to global
+ * best performers for unfilled roles.
+ */
+async function buildFullTeam(
+  mainChampionId: string,
+  mainRole: Role,
+  roleSynergies: Record<string, RoleSynergy[]>,
+  allSynergies: Array<{ championId: string; winRate: number; games: number }>
+): Promise<string[]> {
+  const team: Record<Role, string> = {
+    top: "",
+    jungle: "",
+    mid: "",
+    adc: "",
+    support: "",
+  };
+
+  // Place the main champion at its role
+  team[mainRole] = mainChampionId;
+  const usedChampions = new Set<string>([mainChampionId]);
+
+  // For each remaining role, find the best champion from role synergies
+  const remainingRoles = ROLE_ORDER.filter((r) => r !== mainRole);
+
+  for (const role of remainingRoles) {
+    const candidates = roleSynergies[role] ?? [];
+    const best = candidates.find((c) => !usedChampions.has(c.championId));
+    if (best) {
+      team[role] = best.championId;
+      usedChampions.add(best.championId);
+    }
+  }
+
+  // Fill any remaining empty roles from general synergies
+  for (const role of remainingRoles) {
+    if (team[role]) continue;
+    const best = allSynergies.find((s) => !usedChampions.has(s.championId));
+    if (best) {
+      team[role] = best.championId;
+      usedChampions.add(best.championId);
+    }
+  }
+
+  // Last resort: fill from global top performers for that role
+  for (const role of remainingRoles) {
+    if (team[role]) continue;
+    const positions = POSITION_MAP[role];
+    const fallback = await prisma.$queryRaw<Array<{ championId: string }>>`
+      SELECT "championId"
+      FROM match_participants
+      WHERE (role = ANY(${positions}) OR lane = ANY(${positions}))
+      GROUP BY "championId"
+      HAVING COUNT(*) >= 10
+      ORDER BY SUM(CASE WHEN win THEN 1 ELSE 0 END)::float / COUNT(*) DESC
+      LIMIT 10
+    `;
+    const pick = fallback.find((f) => !usedChampions.has(f.championId));
+    if (pick) {
+      team[role] = pick.championId;
+      usedChampions.add(pick.championId);
+    }
+  }
+
+  return ROLE_ORDER.map((r) => team[r]);
+}
+
 /**
  * Generate suggestions for a specific role
  */
@@ -136,16 +217,7 @@ async function generateSuggestionsForRole(
   role: Role,
   minSampleSize: number
 ): Promise<string[]> {
-  // Map role to position values used in match data
-  const positionMap: Record<Role, string[]> = {
-    top: ["TOP", "top", "SOLO"],
-    jungle: ["JUNGLE", "jungle", "NONE"],
-    mid: ["MIDDLE", "mid", "MID"],
-    adc: ["BOTTOM", "bottom", "ADC", "adc"],
-    support: ["UTILITY", "utility", "SUPPORT", "support"],
-  };
-
-  const positions = positionMap[role];
+  const positions = POSITION_MAP[role];
 
   // Find top performing champions for this role
   const championPerformance = await prisma.$queryRaw<
@@ -202,6 +274,27 @@ async function generateSuggestionsForRole(
       select: { name: true },
     });
 
+    // Build full 5-champion team ordered by role
+    const teamChampions = await buildFullTeam(
+      champ.championId,
+      role,
+      roleSynergies,
+      synergies
+    );
+
+    // Resolve champion names for the full team
+    const teamNames = await Promise.all(
+      ROLE_ORDER.map(async (r, i) => {
+        const cid = teamChampions[i];
+        if (!cid) return { role: r, championId: cid, name: cid };
+        const c = await prisma.champion.findFirst({
+          where: { championId: cid },
+          select: { name: true },
+        });
+        return { role: r, championId: cid, name: c?.name ?? cid };
+      })
+    );
+
     // Prepare synergies for AI input (flatten role synergies)
     const allRoleSynergies: Array<{ championId: string; role: string; winRate: number }> = [];
     for (const [partnerRole, synergyList] of Object.entries(roleSynergies)) {
@@ -214,7 +307,7 @@ async function generateSuggestionsForRole(
       }
     }
 
-    // Generate AI-powered reasoning
+    // Generate AI-powered reasoning with full team context
     const aiInput: CompositionAnalysisInput = {
       championId: champ.championId,
       championName: champion?.name,
@@ -227,42 +320,31 @@ async function generateSuggestionsForRole(
         championId: c.championId,
         winRateAgainst: c.winRateAgainst,
       })),
+      team: teamNames.map((t) => ({ championName: t.name, role: t.role })),
     };
-    const aiReasoning = await generateCompositionReasoning(aiInput);
+    const aiResult = await generateCompositionReasoning(aiInput);
 
-    // Generate basic reasoning as fallback
+    // Generate basic reasoning as fallback for the main reasoning field
     const reasoning = generateReasoning(champ.championId, winRate, avgKDA, totalGames, synergies);
-
-    // Get champion stats for additional info
-    const championStats = await prisma.championStats.findUnique({
-      where: { championId: champ.championId },
-    });
 
     const created = await prisma.compositionSuggestion.create({
       data: {
         userId: null, // AI-generated
         role,
         suggestedChampion: champ.championId,
-        teamChampions: JSON.stringify(synergies.slice(0, 4).map((s) => s.championId)),
+        teamChampions: JSON.stringify(teamChampions.filter(Boolean)),
         confidence,
-        reasoning,
-        strengths: championStats
-          ? `Win rate: ${(winRate * 100).toFixed(1)}%, KDA moyen: ${avgKDA.toFixed(2)}`
-          : null,
-        weaknesses: championStats?.weakAgainst
-          ? `Difficile contre: ${(championStats.weakAgainst as Array<{ championId: string }>)
-              .slice(0, 3)
-              .map((c) => c.championId)
-              .join(", ")}`
-          : null,
-        playstyle: getPlaystyleDescription(role, avgKDA, winRate),
-        // New enhanced fields
+        reasoning: aiResult.reasoning || reasoning,
+        strengths: aiResult.strengths || null,
+        weaknesses: aiResult.weaknesses || null,
+        playstyle: aiResult.playstyle || null,
+        // Enhanced fields
         counters: JSON.stringify(counters),
         roleSynergies: JSON.stringify(roleSynergies),
         avgDamagePerMin: metrics.avgDamagePerMin,
         avgGoldPerMin: metrics.avgGoldPerMin,
         avgVisionPerMin: metrics.avgVisionPerMin,
-        aiReasoning,
+        aiReasoning: aiResult.reasoning || null,
       },
     });
 
@@ -382,28 +464,20 @@ async function findCounterMatchups(
 }
 
 /**
- * Find role-specific synergies (e.g., ADC+Support, Mid+Jungle)
+ * Find role-specific synergies for all roles (needed to build full 5-champion teams)
  */
 async function findRoleSynergies(
   championId: string,
   role: Role
 ): Promise<Record<string, RoleSynergy[]>> {
   const synergiesResult: Record<string, RoleSynergy[]> = {};
-  const partnerRoles = ROLE_SYNERGY_PAIRS[role];
+  // Query all roles except the main champion's role
+  const partnerRoles = ROLES.filter((r) => r !== role);
 
-  // Map roles to position values
-  const rolePositionMap: Record<Role, string[]> = {
-    top: ["TOP", "top", "SOLO"],
-    jungle: ["JUNGLE", "jungle", "NONE"],
-    mid: ["MIDDLE", "mid", "MID"],
-    adc: ["BOTTOM", "bottom", "ADC", "adc"],
-    support: ["UTILITY", "utility", "SUPPORT", "support"],
-  };
-
-  const myPositions = rolePositionMap[role];
+  const myPositions = POSITION_MAP[role];
 
   for (const partnerRole of partnerRoles) {
-    const partnerPositions = rolePositionMap[partnerRole];
+    const partnerPositions = POSITION_MAP[partnerRole];
 
     const synergies = await prisma.$queryRaw<
       Array<{
@@ -484,29 +558,3 @@ function generateReasoning(
   return parts.join(". ") + ".";
 }
 
-/**
- * Get playstyle description based on stats
- */
-function getPlaystyleDescription(
-  role: Role,
-  avgKDA: number,
-  winRate: number
-): string {
-  const roleDescriptions: Record<Role, string> = {
-    top: "Lane isolée, focus sur les duels et le split push",
-    jungle: "Contrôle de la carte, ganks et objectifs",
-    mid: "Roaming et impact sur les autres lanes",
-    adc: "Farming intensif et damage dealing en teamfight",
-    support: "Protection des alliés et contrôle de vision",
-  };
-
-  let style = roleDescriptions[role];
-
-  if (avgKDA >= 3.5) {
-    style += ". Style de jeu sécurisé avec peu de morts.";
-  } else if (winRate >= 0.55) {
-    style += ". Style agressif efficace pour gagner les parties.";
-  }
-
-  return style;
-}

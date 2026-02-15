@@ -17,14 +17,23 @@ export interface CompositionAnalysisInput {
   };
   synergies: Array<{ championId: string; role: string; winRate: number }>;
   counters: Array<{ championId: string; winRateAgainst: number }>;
+  team?: Array<{ championName: string; role: string }>;
+}
+
+export interface CompositionAnalysisResult {
+  reasoning: string;
+  strengths: string;
+  weaknesses: string;
+  playstyle: string;
 }
 
 /**
- * Generate AI-powered reasoning for a composition suggestion
+ * Generate AI-powered structured analysis for a composition suggestion.
+ * Returns reasoning, strengths, weaknesses, and playstyle as separate fields.
  */
 export async function generateCompositionReasoning(
   input: CompositionAnalysisInput
-): Promise<string> {
+): Promise<CompositionAnalysisResult> {
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!anthropicApiKey) {
@@ -53,9 +62,14 @@ export async function generateCompositionReasoning(
           .join("\n")
       : "Aucun matchup favorable détecté";
 
-  const prompt = `Tu es un expert du draft League of Legends. Génère un raisonnement de 2-3 phrases expliquant pourquoi ce champion est recommandé pour ce rôle.
+  const teamText =
+    input.team && input.team.length > 0
+      ? input.team.map((t) => `- ${t.championName} (${t.role})`).join("\n")
+      : "Équipe non définie";
 
-Champion: ${championDisplay}
+  const prompt = `Tu es un expert du draft League of Legends. Analyse cette composition d'équipe et génère une analyse structurée en JSON.
+
+Champion principal: ${championDisplay}
 Rôle: ${input.role}
 Win rate: ${(input.winRate * 100).toFixed(1)}%
 KDA moyen: ${input.avgKDA.toFixed(2)}
@@ -65,18 +79,29 @@ Métriques (par minute):
 - Gold: ${input.metrics.avgGoldPerMin.toFixed(0)}
 - Vision: ${input.metrics.avgVisionPerMin.toFixed(1)}
 
+Composition complète:
+${teamText}
+
 Meilleures synergies:
 ${synergiesText}
 
 Efficace contre:
 ${countersText}
 
-Réponds uniquement avec le raisonnement, sans introduction ni conclusion. Utilise un ton expert mais accessible. Réponds en français.`;
+Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks) avec ces 4 champs :
+{
+  "reasoning": "2-3 phrases expliquant pourquoi cette composition est recommandée, en tenant compte des synergies entre les 5 champions",
+  "strengths": "2-3 points forts spécifiques à cette composition (pas juste des stats brutes)",
+  "weaknesses": "2-3 faiblesses spécifiques et comment les adversaires peuvent en profiter",
+  "playstyle": "Comment jouer cette composition concrètement (phases de jeu, objectifs prioritaires, style de teamfight)"
+}
+
+Utilise un ton expert mais accessible. Réponds en français.`;
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 256,
+      max_tokens: 512,
       messages: [
         {
           role: "user",
@@ -93,7 +118,13 @@ Réponds uniquement avec le raisonnement, sans introduction ni conclusion. Utili
       role: input.role,
     });
 
-    return responseText.trim();
+    const parsed = JSON.parse(responseText.trim()) as Record<string, unknown>;
+    return {
+      reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : "",
+      strengths: typeof parsed.strengths === "string" ? parsed.strengths : "",
+      weaknesses: typeof parsed.weaknesses === "string" ? parsed.weaknesses : "",
+      playstyle: typeof parsed.playstyle === "string" ? parsed.playstyle : "",
+    };
   } catch (error) {
     logger.error("Error generating AI reasoning", toError(error));
     return generateBasicReasoning(input);
@@ -103,49 +134,67 @@ Réponds uniquement avec le raisonnement, sans introduction ni conclusion. Utili
 /**
  * Generate basic reasoning without AI (fallback)
  */
-function generateBasicReasoning(input: CompositionAnalysisInput): string {
-  const parts: string[] = [];
+function generateBasicReasoning(input: CompositionAnalysisInput): CompositionAnalysisResult {
   const championDisplay = input.championName || input.championId;
 
-  // Win rate assessment
+  // Reasoning
+  const reasoningParts: string[] = [];
   if (input.winRate >= 0.55) {
-    parts.push(
+    reasoningParts.push(
       `${championDisplay} affiche une excellente performance avec ${(input.winRate * 100).toFixed(1)}% de victoires`
     );
   } else if (input.winRate >= 0.5) {
-    parts.push(
+    reasoningParts.push(
       `${championDisplay} montre une bonne performance avec ${(input.winRate * 100).toFixed(1)}% de victoires`
     );
   } else {
-    parts.push(
+    reasoningParts.push(
       `${championDisplay} a un win rate de ${(input.winRate * 100).toFixed(1)}%`
     );
   }
-
-  // KDA assessment
   if (input.avgKDA >= 3.5) {
-    parts.push(`Son KDA élevé de ${input.avgKDA.toFixed(2)} démontre une excellente capacité à rester en vie`);
+    reasoningParts.push(`Son KDA élevé de ${input.avgKDA.toFixed(2)} démontre une excellente capacité à rester en vie`);
   } else if (input.avgKDA >= 2.5) {
-    parts.push(`Avec un KDA de ${input.avgKDA.toFixed(2)}, il contribue positivement aux combats`);
+    reasoningParts.push(`Avec un KDA de ${input.avgKDA.toFixed(2)}, il contribue positivement aux combats`);
   }
-
-  // Synergies
   if (input.synergies.length > 0 && input.synergies[0].winRate >= 0.55) {
     const bestSynergy = input.synergies[0];
-    parts.push(
+    reasoningParts.push(
       `Excellente synergie avec ${bestSynergy.championId} (${(bestSynergy.winRate * 100).toFixed(1)}% de victoires ensemble)`
     );
   }
 
-  // Counters
-  if (input.counters.length > 0 && input.counters[0].winRateAgainst >= 0.55) {
-    const bestCounter = input.counters[0];
-    parts.push(
-      `Efficace contre ${bestCounter.championId} avec ${(bestCounter.winRateAgainst * 100).toFixed(1)}% de victoires`
+  // Strengths
+  const strengthParts: string[] = [];
+  strengthParts.push(`Win rate: ${(input.winRate * 100).toFixed(1)}%, KDA moyen: ${input.avgKDA.toFixed(2)}`);
+  if (input.synergies.length > 0 && input.synergies[0].winRate >= 0.55) {
+    strengthParts.push(`Synergie forte avec ${input.synergies[0].championId}`);
+  }
+
+  // Weaknesses
+  const weaknessParts: string[] = [];
+  if (input.counters.length > 0) {
+    weaknessParts.push(
+      `Difficile contre: ${input.counters.slice(0, 3).map((c) => c.championId).join(", ")}`
     );
   }
 
-  return parts.join(". ") + ".";
+  // Playstyle
+  const roleDescriptions: Record<string, string> = {
+    top: "Lane isolée, focus sur les duels et le split push",
+    jungle: "Contrôle de la carte, ganks et objectifs",
+    mid: "Roaming et impact sur les autres lanes",
+    adc: "Farming intensif et damage dealing en teamfight",
+    support: "Protection des alliés et contrôle de vision",
+  };
+  const playstyle = roleDescriptions[input.role] ?? "Adaptez votre style de jeu à la composition";
+
+  return {
+    reasoning: reasoningParts.join(". ") + ".",
+    strengths: strengthParts.join(". "),
+    weaknesses: weaknessParts.join(". ") || "",
+    playstyle,
+  };
 }
 
 /**
@@ -155,21 +204,21 @@ function generateBasicReasoning(input: CompositionAnalysisInput): string {
 export async function batchGenerateReasoning(
   inputs: CompositionAnalysisInput[],
   maxConcurrent: number = 5
-): Promise<Map<string, string>> {
-  const results = new Map<string, string>();
+): Promise<Map<string, CompositionAnalysisResult>> {
+  const results = new Map<string, CompositionAnalysisResult>();
 
   // Process in batches
   for (let i = 0; i < inputs.length; i += maxConcurrent) {
     const batch = inputs.slice(i, i + maxConcurrent);
     const batchPromises = batch.map(async (input) => {
       const key = `${input.championId}-${input.role}`;
-      const reasoning = await generateCompositionReasoning(input);
-      return { key, reasoning };
+      const result = await generateCompositionReasoning(input);
+      return { key, result };
     });
 
     const batchResults = await Promise.all(batchPromises);
-    for (const { key, reasoning } of batchResults) {
-      results.set(key, reasoning);
+    for (const { key, result } of batchResults) {
+      results.set(key, result);
     }
 
     // Small delay between batches to avoid rate limiting

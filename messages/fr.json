@@ -496,7 +496,12 @@
       "retry": "Réessayer",
       "breadcrumb": "Compositions Populaires",
       "emptyTitle": "Aucune composition disponible",
-      "emptyDescription": "Lancez l'analyse des champions puis générez les suggestions dans l'admin panel pour remplir cette liste."
+      "emptyDescription": "Lancez l'analyse des champions puis générez les suggestions dans l'admin panel pour remplir cette liste.",
+      "save": "Sauvegarder",
+      "saved": "Composition sauvegardée dans vos favoris !",
+      "saveFailed": "Impossible de sauvegarder la composition",
+      "loginRequired": "Connectez-vous pour sauvegarder des compositions",
+      "saving": "Sauvegarde en cours..."
     },
     "favorites": {
       "title": "Favoris",

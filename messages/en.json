@@ -494,7 +494,12 @@
       "retry": "Retry",
       "breadcrumb": "Popular Compositions",
       "emptyTitle": "No compositions available",
-      "emptyDescription": "Run the champion analysis then generate suggestions in the admin panel to fill this list."
+      "emptyDescription": "Run the champion analysis then generate suggestions in the admin panel to fill this list.",
+      "save": "Save",
+      "saved": "Composition saved to your favorites!",
+      "saveFailed": "Failed to save composition",
+      "loginRequired": "Log in to save compositions",
+      "saving": "Saving..."
     },
     "favorites": {
       "title": "Favorites",

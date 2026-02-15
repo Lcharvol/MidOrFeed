@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { HomeIcon } from "lucide-react";
 import {
@@ -18,6 +18,8 @@ import type {
 } from "@/types";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n-context";
+import { useAuth } from "@/lib/auth-context";
+import { authenticatedFetch } from "@/lib/api-client";
 import { PopularHero } from "./components/PopularHero";
 import { CompositionCard } from "./components/CompositionCard";
 import { formatUpdatedAt } from "./components/utils";
@@ -28,8 +30,13 @@ import { validateCompositionSuggestionsResponse } from "@/lib/api/schemas";
 import { DataState } from "@/components/ui/data-state";
 import { Button } from "@/components/ui/button";
 
+// Role order matching ROLE_PRIORITY: [top, jungle, mid, adc, support]
+const ROLE_KEYS = ["top", "jungle", "mid", "adc", "support"] as const;
+
 const PopularCompositionsPage = () => {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const [savingId, setSavingId] = useState<string | null>(null);
   const { data, error, isLoading, mutate, isValidating } = useApiSWR<
     ApiResponse<CompositionSuggestionsPayload>
   >(apiKeys.compositionsPopular(), {
@@ -67,6 +74,43 @@ const PopularCompositionsPage = () => {
       .then(() => toast.success(t("compositions.popular.copiedToClipboard")))
       .catch(() => toast.error(t("compositions.popular.copyFailed")));
   }, []);
+
+  const handleSave = useCallback(
+    async (composition: CompositionSuggestionDTO) => {
+      if (!user) {
+        toast.error(t("compositions.popular.loginRequired"));
+        return;
+      }
+
+      setSavingId(composition.id);
+      try {
+        // Map teamChampions array to role-keyed object (ordered by ROLE_PRIORITY)
+        const body: Record<string, string | null> = {
+          name: `${resolveName(composition.suggestedChampion)} Comp`,
+        };
+        for (let i = 0; i < ROLE_KEYS.length; i++) {
+          body[ROLE_KEYS[i]] = composition.teamChampions[i] ?? null;
+        }
+
+        const res = await authenticatedFetch("/api/compositions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          throw new Error("save failed");
+        }
+
+        toast.success(t("compositions.popular.saved"));
+      } catch {
+        toast.error(t("compositions.popular.saveFailed"));
+      } finally {
+        setSavingId(null);
+      }
+    },
+    [user, t, resolveName]
+  );
 
   const handleRefresh = useCallback(() => {
     mutate();
@@ -135,6 +179,9 @@ const PopularCompositionsPage = () => {
               resolveSlug={resolveSlug}
               resolveName={resolveName}
               onCopy={handleCopy}
+              onSave={handleSave}
+              isSaving={savingId === composition.id}
+              saveLabel={t("compositions.popular.save")}
               composition={composition}
             />
           ))}

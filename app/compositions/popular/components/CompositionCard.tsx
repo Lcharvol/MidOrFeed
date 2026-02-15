@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { CopyIcon } from "lucide-react";
+import { BookmarkIcon, CopyIcon, Loader2Icon } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/compositions/roles";
 import type { CompositionSuggestionDTO } from "@/types";
 import {
@@ -17,6 +17,9 @@ type CompositionCardProps = {
   resolveSlug: (championId: string) => string;
   resolveName: (championId: string) => string;
   onCopy: (suggestion: CompositionSuggestionDTO) => void;
+  onSave: (suggestion: CompositionSuggestionDTO) => void;
+  isSaving: boolean;
+  saveLabel: string;
   composition: CompositionSuggestionDTO;
 };
 
@@ -25,6 +28,9 @@ export const CompositionCard = ({
   resolveSlug,
   resolveName,
   onCopy,
+  onSave,
+  isSaving,
+  saveLabel,
 }: CompositionCardProps) => {
   const narrativeSection = renderNarrativeSection(composition);
 
@@ -73,6 +79,20 @@ export const CompositionCard = ({
           Mis à jour le {formatUpdatedAt(composition.updatedAt)}
         </p>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onSave(composition)}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            {isSaving ? (
+              <Loader2Icon className="size-4 animate-spin" />
+            ) : (
+              <BookmarkIcon className="size-4" />
+            )}
+            {saveLabel}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
