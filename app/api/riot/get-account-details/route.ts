@@ -158,29 +158,49 @@ export async function POST(request: Request) {
               const newAccountData = await reResolveResponse.json();
               const newPuuid: string = newAccountData.puuid;
 
-              // Update the PUUID in the sharded table
-              await ShardedLeagueAccounts.updatePuuid(
-                validatedData.puuid,
-                newPuuid,
-                normalizedRegion
-              );
+              try {
+                // Update the PUUID in the sharded table
+                await ShardedLeagueAccounts.updatePuuid(
+                  validatedData.puuid,
+                  newPuuid,
+                  normalizedRegion
+                );
 
-              // Also update the main league_accounts table if it exists there
-              await prisma.leagueOfLegendsAccount.updateMany({
-                where: { puuid: validatedData.puuid },
-                data: { puuid: newPuuid },
-              });
+                // Also update the main league_accounts table if it exists there
+                await prisma.leagueOfLegendsAccount.updateMany({
+                  where: { puuid: validatedData.puuid },
+                  data: { puuid: newPuuid },
+                });
 
-              // Update any User references
-              await prisma.user.updateMany({
-                where: { riotPuuid: validatedData.puuid },
-                data: { riotPuuid: newPuuid },
-              });
+                // Update any User references
+                await prisma.user.updateMany({
+                  where: { riotPuuid: validatedData.puuid },
+                  data: { riotPuuid: newPuuid },
+                });
 
-              logger.info("PUUID re-resolved successfully", {
-                oldPuuid: validatedData.puuid,
-                newPuuid,
-              });
+                logger.info("PUUID re-resolved successfully", {
+                  oldPuuid: validatedData.puuid,
+                  newPuuid,
+                });
+              } catch (updateError) {
+                const isUniqueViolation =
+                  updateError instanceof Error &&
+                  updateError.message.includes("23505");
+
+                if (isUniqueViolation) {
+                  // The new PUUID already exists — delete the stale old entry
+                  logger.warn("New PUUID already exists, removing stale entry", {
+                    oldPuuid: validatedData.puuid,
+                    newPuuid,
+                  });
+                  await ShardedLeagueAccounts.deleteByPuuid(
+                    validatedData.puuid,
+                    normalizedRegion
+                  );
+                } else {
+                  throw updateError;
+                }
+              }
 
               // Return a redirect-like response so the client navigates to the new profile
               return NextResponse.json(

@@ -45,7 +45,8 @@ export const ChampionIcon = memo(function ChampionIcon({
     if (championId && championId.length > 0) return championId;
     if (championKey !== undefined && championKey !== null) {
       const keyStr = String(championKey);
-      return championKeyToId?.get(keyStr) ?? keyStr;
+      // Only use the mapped slug; numeric keys are not valid DDragon paths
+      return championKeyToId?.get(keyStr) ?? null;
     }
     return null;
   })();

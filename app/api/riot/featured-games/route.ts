@@ -112,12 +112,27 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     const logger = createLogger("riot-featured-games");
+    const errMsg = error instanceof Error ? error.message : "Erreur inconnue";
+
+    // Detect Riot API 403 (expired/invalid API key) — return 403 with cache
+    // header so SWR / CDN doesn't hammer the endpoint
+    if (errMsg.includes("403")) {
+      logger.warn("Riot API 403 on featured games — API key may be invalid or lack permissions");
+      return NextResponse.json(
+        { success: false, error: "Accès refusé par l'API Riot" },
+        {
+          status: 403,
+          headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
+        }
+      );
+    }
+
     logger.error("Erreur featured games", toError(error));
     return NextResponse.json(
       {
         success: false,
         error: "Erreur lors de la récupération des parties en vedette",
-        details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : "Erreur inconnue") : undefined,
+        details: process.env.NODE_ENV === "development" ? errMsg : undefined,
       },
       { status: 500 }
     );
