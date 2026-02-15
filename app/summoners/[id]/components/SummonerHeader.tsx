@@ -35,31 +35,35 @@ export const SummonerHeader = ({
   const wingsUrl = soloTier ? getWingsUrl(soloTier) : null;
   return (
     <div className="flex items-start gap-6">
-      {/* Avatar avec badge du niveau */}
-      <div className="relative shrink-0">
+      {/* Avatar avec bordure de rang (wings) */}
+      <div className="relative shrink-0 size-28">
         {loading ? (
           <SkeletonAvatar size="lg" className="size-28" aria-busy="true" />
         ) : (
           <>
             {profileIconUrl ? (
-              <Avatar className="size-28 border-4 border-primary/20">
+              <Avatar className="size-full border-4 border-primary/20">
                 <AvatarImage src={profileIconUrl} alt={details?.gameName ? `${details.gameName} profile icon` : "Profile icon"} />
                 <AvatarFallback>?</AvatarFallback>
               </Avatar>
             ) : (
-              <Avatar className="size-28 border-4 border-primary/20">
+              <Avatar className="size-full border-4 border-primary/20">
                 <AvatarFallback className="bg-linear-to-br from-primary to-primary/60 text-4xl">
                   {details?.gameName?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
             )}
+            {/* Wings overlay: 300×389 image, circle center at (50%, 38.6%).
+                Displayed at 180×233; circle center = (90, 90).
+                Avatar center = (56, 56) → offset = 56−90 = −34px each axis. */}
             {wingsUrl && (
               <Image
                 src={wingsUrl}
                 alt=""
-                width={158}
-                height={205}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[38%] pointer-events-none z-10"
+                width={180}
+                height={233}
+                className="absolute pointer-events-none z-10"
+                style={{ top: -34, left: -34 }}
                 unoptimized
               />
             )}
