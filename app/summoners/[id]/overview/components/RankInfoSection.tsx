@@ -202,7 +202,7 @@ const RankCard = ({ title, data, queueType }: RankCardProps) => {
               unoptimized
             />
             <div className="flex-1">
-              <div className="text-base font-bold lowercase text-foreground">
+              <div className="text-base font-bold text-foreground">
                 {currentRankDisplay}
               </div>
               <Tooltip>
@@ -246,7 +246,7 @@ const RankCard = ({ title, data, queueType }: RankCardProps) => {
               unoptimized
             />
             <div>
-              <div className="text-sm font-bold lowercase text-foreground">
+              <div className="text-sm font-bold text-foreground">
                 {bestRankDisplay}
               </div>
               <div className="text-[10px] text-muted-foreground">
@@ -304,7 +304,7 @@ const RankCard = ({ title, data, queueType }: RankCardProps) => {
                               className="shrink-0"
                               unoptimized
                             />
-                            <span className="text-xs text-foreground lowercase">
+                            <span className="text-xs text-foreground">
                               {tierName.toLowerCase()}{" "}
                               {RANK_ROMAN[history.rank] || history.rank}
                             </span>

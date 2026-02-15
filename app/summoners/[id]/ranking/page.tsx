@@ -263,7 +263,7 @@ function QueueCard({
                 unoptimized
               />
               <div>
-                <div className="text-sm font-bold lowercase text-foreground">
+                <div className="text-sm font-bold text-foreground">
                   {bestRankDisplay}
                 </div>
                 <div className="text-[10px] text-muted-foreground">
@@ -333,7 +333,7 @@ function QueueCard({
                               className="shrink-0"
                               unoptimized
                             />
-                            <span className="text-xs text-foreground lowercase">
+                            <span className="text-xs text-foreground">
                               {historyTierName.toLowerCase()}{" "}
                               {RANK_ROMAN[history.rank] || history.rank}
                             </span>
