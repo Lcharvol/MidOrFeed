@@ -6,6 +6,7 @@ import { createDDragonSyncWorker } from "./ddragon-sync.worker";
 import { createMetaAnalysisWorker } from "./meta-analysis.worker";
 import { createSynergyAnalysisWorker } from "./synergy-analysis.worker";
 import { createItemBuildsWorker } from "./item-builds.worker";
+import { createAnalyzeItemsWorker } from "./analyze-items.worker";
 import { createDataCleanupWorker } from "./data-cleanup.worker";
 import { createAccountRefreshWorker } from "./account-refresh.worker";
 import { createDailyResetWorker } from "./daily-reset.worker";
@@ -27,6 +28,7 @@ export { createDDragonSyncWorker } from "./ddragon-sync.worker";
 export { createMetaAnalysisWorker } from "./meta-analysis.worker";
 export { createSynergyAnalysisWorker } from "./synergy-analysis.worker";
 export { createItemBuildsWorker } from "./item-builds.worker";
+export { createAnalyzeItemsWorker } from "./analyze-items.worker";
 export { createDataCleanupWorker } from "./data-cleanup.worker";
 export { createAccountRefreshWorker } from "./account-refresh.worker";
 export { createDailyResetWorker } from "./daily-reset.worker";
@@ -52,6 +54,7 @@ export async function startAllWorkers() {
     createMetaAnalysisWorker(),
     createSynergyAnalysisWorker(),
     createItemBuildsWorker(),
+    createAnalyzeItemsWorker(),
 
     // Sync jobs
     createLeaderboardSyncWorker(),
@@ -113,6 +116,8 @@ export async function scheduleAllJobs() {
     { queue: QUEUE_NAMES.CHAMPION_STATS, cron: "0 */3 * * *", data: {} },
     // Every 6 hours — item builds analysis
     { queue: QUEUE_NAMES.ITEM_BUILDS, cron: "0 */6 * * *", data: {} },
+    // Every 3 hours — global item stats for tier list
+    { queue: QUEUE_NAMES.ANALYZE_ITEMS, cron: "0 */3 * * *", data: {} },
     // Every 30 min — crawl match data (40 players/batch, re-crawl completed after 24h)
     { queue: QUEUE_NAMES.DATA_CRAWL, cron: "*/30 * * * *", data: { limit: 40, matchesPerPlayer: 30, recrawlAfterHours: 24, recrawlRatio: 0.25 } },
     // Every 4 hours — generate compositions

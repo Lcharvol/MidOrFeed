@@ -22,6 +22,7 @@ export const QUEUE_NAMES = {
   META_ANALYSIS: "meta-analysis",
   SYNERGY_ANALYSIS: "synergy-analysis",
   ITEM_BUILDS: "item-builds",
+  ANALYZE_ITEMS: "analyze-items",
   DATA_CLEANUP: "data-cleanup",
   ACCOUNT_REFRESH: "account-refresh",
   DAILY_RESET: "daily-reset",

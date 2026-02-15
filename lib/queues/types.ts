@@ -103,6 +103,21 @@ export interface SynergyAnalysisJobResult {
   errors: string[];
 }
 
+// Analyze Items Worker (global item tier list stats)
+export interface AnalyzeItemsJobData {
+  matchLimit?: number;
+}
+
+export interface AnalyzeItemsJobResult {
+  totalItems: number;
+  totalParticipants: number;
+  totalMatches: number;
+  created: number;
+  updated: number;
+  duration: number;
+  errors: string[];
+}
+
 // Item Builds Worker
 export interface ItemBuildsJobData {
   championIds?: string[];
