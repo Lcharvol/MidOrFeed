@@ -87,7 +87,7 @@ export function SearchResultsList({
                   href={`/summoners/${result.puuid}/overview?region=${result.region}`}
                   className="flex items-center gap-3"
                 >
-                  <Avatar className="size-10 border border-primary/20">
+                  <Avatar className="size-10 border-0">
                     {result.profileIconId ? (
                       <AvatarImage
                         src={getProfileIconUrl(result.profileIconId)}

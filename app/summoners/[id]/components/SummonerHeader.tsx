@@ -42,12 +42,12 @@ export const SummonerHeader = ({
         ) : (
           <>
             {profileIconUrl ? (
-              <Avatar className="size-full border-4 border-primary/20">
+              <Avatar className="size-full border-0">
                 <AvatarImage src={profileIconUrl} alt={details?.gameName ? `${details.gameName} profile icon` : "Profile icon"} />
                 <AvatarFallback>?</AvatarFallback>
               </Avatar>
             ) : (
-              <Avatar className="size-full border-4 border-primary/20">
+              <Avatar className="size-full border-0">
                 <AvatarFallback className="bg-linear-to-br from-primary to-primary/60 text-4xl">
                   {details?.gameName?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>

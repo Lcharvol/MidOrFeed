@@ -25,7 +25,7 @@ export function LinkedAccountCard({ leagueAccount }: LinkedAccountCardProps) {
       <CardContent>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Avatar className="size-14 border-2 border-primary/30">
+            <Avatar className="size-14 border-0">
               {leagueAccount.profileIconId ? (
                 <AvatarImage
                   src={getProfileIconUrl(leagueAccount.profileIconId)}
