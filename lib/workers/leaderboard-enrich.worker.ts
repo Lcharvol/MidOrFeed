@@ -49,25 +49,39 @@ export async function createLeaderboardEnrichWorker() {
         const {
           regions = MAIN_REGIONS as unknown as string[],
           limit = 200,
-        } = job.data;
+        } = job.data ?? {};
 
         let totalProcessed = 0;
 
         for (const region of regions) {
           // Find leaderboard entries with puuid that need enrichment
           // (missing gameName or profileIconId directly on the entry)
-          const entries = await prisma.leaderboardEntry.findMany({
-            where: {
-              region,
-              puuid: { not: null },
-              OR: [
-                { gameName: null },
-                { profileIconId: null },
-              ],
-            },
-            select: { puuid: true },
-            distinct: ["puuid"],
-          });
+          let entries: Array<{ puuid: string | null }>;
+          try {
+            entries = await prisma.leaderboardEntry.findMany({
+              where: {
+                region,
+                puuid: { not: null },
+                OR: [
+                  { gameName: null },
+                  { profileIconId: null },
+                ],
+              },
+              select: { puuid: true },
+              distinct: ["puuid"],
+            });
+          } catch {
+            // Fallback if gameName/profileIconId columns don't exist yet (migration pending)
+            logger.warn(`Enrichment columns not available for ${region}, falling back to all entries`);
+            entries = await prisma.leaderboardEntry.findMany({
+              where: {
+                region,
+                puuid: { not: null },
+              },
+              select: { puuid: true },
+              distinct: ["puuid"],
+            });
+          }
 
           const toEnrich = entries
             .map((e) => e.puuid)
@@ -137,14 +151,18 @@ export async function createLeaderboardEnrichWorker() {
               }
 
               // Update LeaderboardEntry directly with enrichment data
-              await prisma.leaderboardEntry.updateMany({
-                where: { puuid, region },
-                data: {
-                  gameName,
-                  tagLine,
-                  profileIconId,
-                },
-              });
+              try {
+                await prisma.leaderboardEntry.updateMany({
+                  where: { puuid, region },
+                  data: {
+                    gameName,
+                    tagLine,
+                    profileIconId,
+                  },
+                });
+              } catch {
+                // Columns may not exist yet if migration hasn't been applied
+              }
 
               // Also upsert into sharded table for other features
               await ShardedLeagueAccounts.upsert({
