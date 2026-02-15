@@ -143,7 +143,6 @@ export default function SummonerProfileLayout({
           region={region}
           ladderRank={ladderRank}
           topPercentage={topPercentage}
-          soloTier={solo?.current.tier ?? null}
         />
 
         <RiotConnectionBanner hasConnectedAccount={hasConnectedAccount} />

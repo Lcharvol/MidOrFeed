@@ -1,11 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton, SkeletonAvatar } from "@/components/ui/skeleton";
 import { UserIcon } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
-import { getWingsUrl } from "@/constants/ddragon";
 
 type SummonerHeaderProps = {
   loading: boolean;
@@ -20,7 +18,6 @@ type SummonerHeaderProps = {
   region?: string;
   ladderRank: number | null;
   topPercentage: number | null;
-  soloTier?: string | null;
 };
 
 export const SummonerHeader = ({
@@ -30,9 +27,7 @@ export const SummonerHeader = ({
   region,
   ladderRank,
   topPercentage,
-  soloTier,
 }: SummonerHeaderProps) => {
-  const wingsUrl = soloTier ? getWingsUrl(soloTier) : null;
   return (
     <div className="flex items-start gap-6">
       {/* Avatar avec bordure de rang (wings) */}
@@ -52,22 +47,6 @@ export const SummonerHeader = ({
                   {details?.gameName?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
-            )}
-            {/* Wings overlay: 300×389 image, inner circle ≈43% of width,
-                circle center at (50%, 46%). Displayed at 260×337 so that
-                the inner opening (≈112px) matches the avatar.
-                Circle center = (130, 155). Avatar center = (56, 56).
-                Offsets: top = 56−155 = −99, left = 56−130 = −74. */}
-            {wingsUrl && (
-              <Image
-                src={wingsUrl}
-                alt=""
-                width={260}
-                height={337}
-                className="absolute pointer-events-none z-10"
-                style={{ top: -99, left: -74 }}
-                unoptimized
-              />
             )}
             {details?.summonerLevel && (
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-lg bg-muted px-2 py-0.5 text-xs font-semibold shadow-sm z-20">
