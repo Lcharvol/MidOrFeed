@@ -1,30 +1,53 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrophyIcon, InfoIcon, UsersIcon } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { TrophyIcon, InfoIcon, UsersIcon, FlameIcon, SparklesIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { DataState } from "@/components/ui/data-state";
 import { Badge } from "@/components/ui/badge";
-import { ColorBadge } from "@/components/ui/badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { AIInsightCard, AIInsight } from "@/components/AIInsightCard";
 import { useParams, useSearchParams } from "next/navigation";
 import { useI18n } from "@/lib/i18n-context";
 import { useApiSWR } from "@/lib/hooks/swr";
+import { getTierIconUrl } from "@/constants/ddragon";
+import { cn } from "@/lib/utils";
 import type { RankedQueueData } from "@/types/api";
 
-const TIER_COLORS: Record<string, string> = {
-  IRON: "bg-tier-iron",
-  BRONZE: "bg-tier-bronze",
-  SILVER: "bg-tier-silver",
-  GOLD: "bg-tier-gold",
-  PLATINUM: "bg-tier-platinum",
-  EMERALD: "bg-tier-emerald",
-  DIAMOND: "bg-tier-diamond",
-  MASTER: "bg-tier-master",
-  GRANDMASTER: "bg-tier-grandmaster",
-  CHALLENGER: "bg-tier-challenger",
+const TIER_TEXT_COLOR: Record<string, string> = {
+  IRON: "text-tier-iron",
+  BRONZE: "text-tier-bronze",
+  SILVER: "text-tier-silver",
+  GOLD: "text-tier-gold",
+  PLATINUM: "text-tier-platinum",
+  EMERALD: "text-tier-emerald",
+  DIAMOND: "text-tier-diamond",
+  MASTER: "text-tier-master",
+  GRANDMASTER: "text-tier-grandmaster",
+  CHALLENGER: "text-tier-challenger",
+};
+
+const TIER_BORDER_COLOR: Record<string, string> = {
+  IRON: "border-tier-iron/30",
+  BRONZE: "border-tier-bronze/30",
+  SILVER: "border-tier-silver/30",
+  GOLD: "border-tier-gold/30",
+  PLATINUM: "border-tier-platinum/30",
+  EMERALD: "border-tier-emerald/30",
+  DIAMOND: "border-tier-diamond/30",
+  MASTER: "border-tier-master/30",
+  GRANDMASTER: "border-tier-grandmaster/30",
+  CHALLENGER: "border-tier-challenger/30",
 };
 
 const TIER_KEYS: Record<string, string> = {
@@ -132,41 +155,55 @@ function QueueCard({
   getTierName: (tier: string) => string;
   t: (key: string) => string;
 }) {
-  const { current } = queueData;
+  const { current, best, seasonHistory } = queueData;
   const winRate = current.winRate.toFixed(1);
-  const tierColor = TIER_COLORS[current.tier] || "bg-gray-500";
   const tierName = getTierName(current.tier);
   const rankDisplay = current.rank
     ? `${tierName} ${RANK_ROMAN[current.rank] || current.rank}`
     : tierName;
 
+  const bestTierName = getTierName(best.tier);
+  const bestRankDisplay = best.rank
+    ? `${bestTierName.toLowerCase()} ${RANK_ROMAN[best.rank] || best.rank}`
+    : bestTierName.toLowerCase();
+
+  const winRateNum = parseFloat(winRate);
+  const wrEmphasis: "positive" | "danger" | "neutral" =
+    winRateNum >= 55 ? "positive" : winRateNum < 45 ? "danger" : "neutral";
+
   return (
-    <Card className="border-2 border-primary/20 relative overflow-hidden">
-      <div
-        className={`absolute inset-0 bg-gradient-to-br from-${current.tier.toLowerCase()}-500/10 to-transparent`}
-      />
-      <CardHeader className="relative">
-        <div className="flex items-center justify-between mb-4">
-          <CardTitle>{queueLabel}</CardTitle>
-          {current.hotStreak && (
-            <ColorBadge emphasis="positive" variant="solid">
-              🔥 {t("ranking.hotStreak")}
-            </ColorBadge>
-          )}
-        </div>
-        <div className="flex items-center gap-4">
-          <div
-            className={`p-4 rounded-full ${tierColor} text-white text-center min-w-[80px]`}
-          >
-            <div className="font-bold text-sm">{tierName}</div>
-            {current.rank && (
-              <div className="text-xs">
-                {RANK_ROMAN[current.rank] || current.rank}
-              </div>
+    <Card className={cn("relative overflow-hidden border-l-4", TIER_BORDER_COLOR[current.tier] || "border-border")}>
+      <CardHeader className="relative pb-3">
+        <div className="flex items-center justify-between mb-3">
+          <CardTitle className="text-base">{queueLabel}</CardTitle>
+          <div className="flex items-center gap-1.5">
+            {current.hotStreak && (
+              <Badge emphasis="warning" emphasisVariant="subtle">
+                <FlameIcon className="size-3 mr-1" />
+                {t("ranking.hotStreak")}
+              </Badge>
+            )}
+            {current.freshBlood && (
+              <Badge emphasis="info" emphasisVariant="subtle">
+                <SparklesIcon className="size-3 mr-1" />
+                {t("ranking.freshBlood")}
+              </Badge>
             )}
           </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <Image
+            src={getTierIconUrl(current.tier, current.rank, "medals")}
+            alt={`${tierName} ${current.rank || ""}`}
+            width={64}
+            height={64}
+            className="shrink-0"
+            unoptimized
+          />
           <div className="flex-1">
-            <div className="text-3xl font-bold">{rankDisplay}</div>
+            <div className={cn("text-2xl font-bold", TIER_TEXT_COLOR[current.tier] || "text-foreground")}>
+              {rankDisplay}
+            </div>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="text-sm text-muted-foreground cursor-help">
@@ -178,7 +215,7 @@ function QueueCard({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="relative">
+      <CardContent className="relative space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-success">
@@ -199,7 +236,11 @@ function QueueCard({
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="text-center cursor-help">
-                <div className="text-2xl font-bold">{winRate}%</div>
+                <div className="text-2xl font-bold">
+                  <Badge emphasis={wrEmphasis} emphasisVariant="subtle" className="text-lg px-2 py-0.5">
+                    {winRate}%
+                  </Badge>
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {t("ranking.winRate")}
                 </div>
@@ -208,15 +249,34 @@ function QueueCard({
             <TooltipContent>{t("summoners.ranking.winRateTooltip")}</TooltipContent>
           </Tooltip>
         </div>
-        {current.freshBlood && (
-          <ColorBadge
-            emphasis="info"
-            variant="subtle"
-            className="mt-4 inline-flex w-full justify-center"
-          >
-            🆕 {t("ranking.freshBlood")}
-          </ColorBadge>
+
+        {/* Best rank */}
+        {best.tier && (
+          <div className="flex items-center justify-between border-t border-border/50 pt-3">
+            <div className="flex items-center gap-2">
+              <Image
+                src={getTierIconUrl(best.tier, best.rank, "medals_mini")}
+                alt={`${bestTierName} ${best.rank || ""}`}
+                width={40}
+                height={40}
+                className="shrink-0"
+                unoptimized
+              />
+              <div>
+                <div className="text-sm font-bold lowercase text-foreground">
+                  {bestRankDisplay}
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  {best.lp} LP
+                </div>
+              </div>
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {t("summoners.ranking.bestRank")}
+            </div>
+          </div>
         )}
+
         {region && (
           <DivisionStanding
             tier={current.tier}
@@ -225,6 +285,70 @@ function QueueCard({
             region={region}
             queueType={queueType}
           />
+        )}
+
+        {/* Season history */}
+        {seasonHistory.length > 0 && (
+          <div className="space-y-2 border-t border-border/50 pt-3">
+            <div className="text-xs font-semibold text-foreground">
+              {t("summoners.ranking.seasonHistory")}
+            </div>
+            <div className="overflow-hidden rounded border border-border/60">
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="border-border/50">
+                    <TableHead className="h-8 text-[10px] uppercase text-muted-foreground">
+                      {t("summoners.season")}
+                    </TableHead>
+                    <TableHead className="h-8 text-[10px] uppercase text-muted-foreground">
+                      {t("summoners.tier")}
+                    </TableHead>
+                    <TableHead className="h-8 text-right text-[10px] uppercase text-muted-foreground">
+                      {t("summoners.lp")}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {seasonHistory.map((history) => {
+                    const historyTierName = getTierName(history.tier);
+                    return (
+                      <TableRow
+                        key={history.season}
+                        className="border-border/50"
+                      >
+                        <TableCell className="h-8 text-xs font-semibold text-foreground">
+                          {history.season}
+                        </TableCell>
+                        <TableCell className="h-8">
+                          <div className="flex items-center gap-1.5">
+                            <Image
+                              src={getTierIconUrl(
+                                history.tier,
+                                history.rank,
+                                "medals_mini"
+                              )}
+                              alt={`${historyTierName} ${history.rank || ""}`}
+                              width={40}
+                              height={40}
+                              className="shrink-0"
+                              unoptimized
+                            />
+                            <span className="text-xs text-foreground lowercase">
+                              {historyTierName.toLowerCase()}{" "}
+                              {RANK_ROMAN[history.rank] || history.rank}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="h-8 text-right text-xs text-foreground">
+                          {history.lp}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -304,13 +428,6 @@ export default function RankingByIdPage() {
 
   return (
     <div className="space-y-6">
-      {aiInsights.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {aiInsights.map((insight, index) => (
-            <AIInsightCard key={index} insight={insight} size="compact" />
-          ))}
-        </div>
-      )}
       <div className="grid gap-4 md:grid-cols-2">
         {soloData && (
           <QueueCard
@@ -333,6 +450,13 @@ export default function RankingByIdPage() {
           />
         )}
       </div>
+      {aiInsights.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {aiInsights.slice(0, 2).map((insight, index) => (
+            <AIInsightCard key={index} insight={insight} size="compact" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -395,7 +519,7 @@ function getRankingInsights(
     if (current.hotStreak) {
       insights.push({
         type: "positive",
-        title: `🔥 ${t("ranking.winningStreak")}`,
+        title: t("ranking.winningStreak"),
         description: t("ranking.winningStreakDescription"),
         confidence: 95,
         recommendation: t("ranking.winningStreakRecommendation"),

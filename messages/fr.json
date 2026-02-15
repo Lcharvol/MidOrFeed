@@ -399,7 +399,9 @@
       "playersInDivision": "joueurs dans cette division",
       "lpTooltip": "League Points — Points de classement accumulés dans cette division",
       "winRateTooltip": "Victoires / (Victoires + Défaites) × 100",
-      "loading": "Chargement du classement..."
+      "loading": "Chargement du classement...",
+      "bestRank": "Meilleur rang",
+      "seasonHistory": "Historique des saisons"
     }
   },
   "matches": {

@@ -397,7 +397,9 @@
       "playersInDivision": "players in this division",
       "lpTooltip": "League Points — Ranking points accumulated in this division",
       "winRateTooltip": "Victories / (Victories + Defeats) × 100",
-      "loading": "Loading ranking..."
+      "loading": "Loading ranking...",
+      "bestRank": "Best rank",
+      "seasonHistory": "Season history"
     }
   },
   "matches": {
