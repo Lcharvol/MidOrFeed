@@ -38,6 +38,7 @@ function FeaturedCard({ article }: { article: NewsArticle }) {
           src={article.imageUrl}
           alt={article.title}
           fill
+          priority
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 1024px) 100vw, 66vw"
         />

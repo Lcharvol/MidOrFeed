@@ -31,6 +31,7 @@ import {
 import { toast } from "sonner";
 import { authenticatedFetch } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n-context";
+import { formatDuration } from "@/lib/format-duration";
 
 interface SyncAccountsState {
   isRunning: boolean;
@@ -55,19 +56,6 @@ interface SyncAccountsState {
 
 interface SyncAccountsCardProps {
   onSyncComplete: () => void;
-}
-
-function formatDuration(seconds: number | null): string {
-  if (seconds === null || seconds <= 0) return "—";
-  if (seconds < 60) return `${Math.round(seconds)}s`;
-  if (seconds < 3600) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.round(seconds % 60);
-    return `${mins}m ${secs}s`;
-  }
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${mins}m`;
 }
 
 export function SyncAccountsCard({ onSyncComplete }: SyncAccountsCardProps) {
