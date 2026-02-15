@@ -180,3 +180,44 @@ export function getElapsedTime(startTime: number): string {
   const elapsed = Date.now() - startTime;
   return formatDuration(elapsed);
 }
+
+/**
+ * Convert a cron expression to a human-readable French string.
+ * Handles the common patterns used by our scheduled jobs.
+ */
+export function formatCron(cron: string): string {
+  const parts = cron.trim().split(/\s+/);
+  if (parts.length !== 5) return cron;
+
+  const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+
+  // Daily at specific time: "M H * * *"
+  if (dayOfMonth === "*" && month === "*" && dayOfWeek === "*" && !hour.includes("/") && !hour.includes("*")) {
+    const h = hour.padStart(2, "0");
+    const m = minute.padStart(2, "0");
+    return `Tous les jours \u00e0 ${h}h${m}`;
+  }
+
+  // Every N hours: "M */N * * *"
+  const everyNHours = hour.match(/^\*\/(\d+)$/);
+  if (everyNHours && dayOfMonth === "*" && month === "*" && dayOfWeek === "*") {
+    const n = parseInt(everyNHours[1], 10);
+    const label = n === 1 ? "Toutes les heures" : `Toutes les ${n}h`;
+    if (minute !== "0") return `${label} \u00e0 :${minute.padStart(2, "0")}`;
+    return label;
+  }
+
+  // Every hour: "0 * * * *"
+  if (minute === "0" && hour === "*" && dayOfMonth === "*" && month === "*" && dayOfWeek === "*") {
+    return "Toutes les heures";
+  }
+
+  // Every N minutes: "*/N * * * *"
+  const everyNMin = minute.match(/^\*\/(\d+)$/);
+  if (everyNMin && hour === "*" && dayOfMonth === "*" && month === "*" && dayOfWeek === "*") {
+    const n = parseInt(everyNMin[1], 10);
+    return `Toutes les ${n} min`;
+  }
+
+  return cron;
+}

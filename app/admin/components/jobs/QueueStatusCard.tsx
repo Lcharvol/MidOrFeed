@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import {
   QUEUE_CONFIG,
   CATEGORY_LABELS,
+  formatCron,
   type QueueStatus,
   type ScheduleInfo,
 } from "./constants";
@@ -62,7 +63,7 @@ export function QueueStatusCard({
             <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
               <ClockIcon className="size-3 shrink-0" />
               {schedule ? (
-                <code className="text-[11px]">{schedule.cron}</code>
+                <span title={schedule.cron}>{formatCron(schedule.cron)}</span>
               ) : (
                 <span>Non planifié</span>
               )}
