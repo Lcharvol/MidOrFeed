@@ -52,8 +52,8 @@ const SummonerOverviewClient = () => {
 
     const entries: RecentMatchEntry[] = [];
 
-    for (const match of overview.matches.slice(0, matchLimit)) {
-      const participant = match.participants.find(
+    for (const match of (overview.matches ?? []).slice(0, matchLimit)) {
+      const participant = match.participants?.find(
         (entry) => entry.participantPUuid === puuid
       );
 
@@ -92,9 +92,9 @@ const SummonerOverviewClient = () => {
         queueId: match.queueId,
         gameCreation: match.gameCreation,
         gameDuration: match.gameDuration,
-        kills: participant.kills,
-        deaths: participant.deaths,
-        assists: participant.assists,
+        kills: participant.kills ?? 0,
+        deaths: participant.deaths ?? 0,
+        assists: participant.assists ?? 0,
         win: Boolean(participant.win),
         items: items.length > 0 ? items : undefined,
         summoner1Id:
@@ -116,7 +116,7 @@ const SummonerOverviewClient = () => {
 
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;
-  if (!overview || overview.stats.totalGames === 0) return <EmptyStateCard />;
+  if (!overview || !overview.stats || overview.stats.totalGames === 0) return <EmptyStateCard />;
 
   return (
     <div className="space-y-4">

@@ -222,7 +222,7 @@ const RankCard = ({ title, data, queueType }: RankCardProps) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="font-semibold text-foreground cursor-help">
-                  {t("summoners.winRateLabel")} {winRate.toFixed(0)}%
+                  {t("summoners.winRateLabel")} {Number.isFinite(winRate) ? winRate.toFixed(0) : "0"}%
                 </div>
               </TooltipTrigger>
               <TooltipContent>Victoires / (Victoires + Défaites) × 100</TooltipContent>

@@ -16,13 +16,13 @@ interface RadialChartData {
 }
 
 const calculateRadialData = (stats: SummaryStats): RadialChartData => {
-  const total = stats.total;
-  const winsPercent = Math.round((stats.wins / total) * 100);
-  const lossesPercent = Math.round((stats.losses / total) * 100);
+  const total = stats.total || 1;
+  const winsPercent = Math.round((stats.wins / total) * 100) || 0;
+  const lossesPercent = Math.round((stats.losses / total) * 100) || 0;
 
   return {
-    wins: winsPercent,
-    losses: lossesPercent,
+    wins: Number.isFinite(winsPercent) ? winsPercent : 0,
+    losses: Number.isFinite(lossesPercent) ? lossesPercent : 0,
   };
 };
 

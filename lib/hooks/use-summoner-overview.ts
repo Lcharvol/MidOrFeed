@@ -78,10 +78,11 @@ export const useSummonerOverview = (
     [overview]
   );
 
-  const winRateValue = useMemo(
-    () => (overview ? parseFloat(overview.stats.winRate) : 0),
-    [overview]
-  );
+  const winRateValue = useMemo(() => {
+    if (!overview?.stats?.winRate) return 0;
+    const parsed = parseFloat(overview.stats.winRate);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }, [overview]);
 
   const aiInsights = useMemo(
     () => computeAiInsights(overview, topChampions, championNameMap),

@@ -104,7 +104,7 @@ export const SummonerHeader = ({
                     <span className="font-semibold text-primary">
                       {ladderRank.toLocaleString("fr-FR")}
                     </span>
-                    {topPercentage !== null && (
+                    {topPercentage !== null && Number.isFinite(topPercentage) && (
                       <span className="text-muted-foreground">
                         ({topPercentage.toFixed(2)}% du top)
                       </span>

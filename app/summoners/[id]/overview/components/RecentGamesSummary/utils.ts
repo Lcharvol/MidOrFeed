@@ -13,9 +13,9 @@ export const calculateSummaryStats = (
   const losses = matches.length - wins;
   const winRate = (wins / matches.length) * 100;
 
-  const totalKills = matches.reduce((acc, m) => acc + m.kills, 0);
-  const totalDeaths = matches.reduce((acc, m) => acc + m.deaths, 0);
-  const totalAssists = matches.reduce((acc, m) => acc + m.assists, 0);
+  const totalKills = matches.reduce((acc, m) => acc + (m.kills ?? 0), 0);
+  const totalDeaths = matches.reduce((acc, m) => acc + (m.deaths ?? 0), 0);
+  const totalAssists = matches.reduce((acc, m) => acc + (m.assists ?? 0), 0);
 
   const avgKills = totalKills / matches.length;
   const avgDeaths = totalDeaths / matches.length;

@@ -70,15 +70,18 @@ export const MatchEntry = memo(function MatchEntry({
   winPrediction,
 }: MatchEntryProps) {
   const { t } = useI18n();
-  const kdaLabel = `${match.kills}/${match.deaths}/${match.assists}`;
+  const kills = match.kills ?? 0;
+  const deaths = match.deaths ?? 0;
+  const assists = match.assists ?? 0;
+  const kdaLabel = `${kills}/${deaths}/${assists}`;
   const kdaRatio =
-    match.deaths === 0
-      ? match.kills + match.assists
-      : (match.kills + match.assists) / match.deaths;
+    deaths === 0
+      ? kills + assists
+      : (kills + assists) / deaths;
 
   // Calculer P/Kill
-  const totalKills = match.kills + match.assists;
-  const totalTeamKills = match.kills + match.assists + match.deaths;
+  const totalKills = kills + assists;
+  const totalTeamKills = kills + assists + deaths;
   const pkill =
     totalTeamKills > 0 ? Math.round((totalKills / totalTeamKills) * 100) : 0;
 
@@ -185,14 +188,14 @@ export const MatchEntry = memo(function MatchEntry({
               </span>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-semibold">
-                  <span className="text-foreground">{match.kills}</span>
+                  <span className="text-foreground">{kills}</span>
                   <span className="text-muted-foreground/60"> / </span>
-                  <span className="text-danger-muted-foreground">{match.deaths}</span>
+                  <span className="text-danger-muted-foreground">{deaths}</span>
                   <span className="text-muted-foreground/60"> / </span>
-                  <span className="text-foreground">{match.assists}</span>
+                  <span className="text-foreground">{assists}</span>
                 </span>
                 <span className={cn("text-xs", getKdaColor(kdaRatio))}>
-                  {kdaRatio.toFixed(2)} KDA
+                  {Number.isFinite(kdaRatio) ? kdaRatio.toFixed(2) : "0.00"} KDA
                 </span>
               </div>
             </div>

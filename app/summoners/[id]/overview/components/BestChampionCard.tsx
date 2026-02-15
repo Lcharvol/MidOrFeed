@@ -37,8 +37,10 @@ export const BestChampionCard = ({
   }
 
   const [bestChampionId, stats] = bestChampion;
-  const winRate = ((stats.wins / (stats.played || 1)) * 100).toFixed(1);
-  const kda = ((stats.kills + stats.assists) / (stats.deaths || 1)).toFixed(2);
+  const rawWinRate = ((stats.wins ?? 0) / (stats.played || 1)) * 100;
+  const winRate = Number.isFinite(rawWinRate) ? rawWinRate.toFixed(1) : "0.0";
+  const rawKda = ((stats.kills ?? 0) + (stats.assists ?? 0)) / (stats.deaths || 1);
+  const kda = Number.isFinite(rawKda) ? rawKda.toFixed(2) : "0.00";
   const championName = championNameMap.get(bestChampionId) ?? bestChampionId;
 
   return (

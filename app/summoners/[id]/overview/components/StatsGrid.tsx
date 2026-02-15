@@ -26,7 +26,8 @@ export const StatsGrid = ({
   resolveSlug,
 }: StatsGridProps) => {
   const { t } = useI18n();
-  const winRatio = stats.totalWins / Math.max(stats.totalGames, 1);
+  const rawWinRatio = (stats.totalWins ?? 0) / Math.max(stats.totalGames, 1);
+  const winRatio = Number.isFinite(rawWinRatio) ? rawWinRatio : 0;
 
   return (
     <div className="grid gap-3 sm:gap-6 grid-cols-2 md:grid-cols-4 animate-fade-up">
