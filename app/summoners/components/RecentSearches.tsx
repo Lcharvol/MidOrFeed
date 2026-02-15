@@ -1,12 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SearchIcon, ChevronRightIcon } from "lucide-react";
 import { formatRelativeDate } from "@/lib/format-date";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
+import { getProfileIconUrl } from "@/constants/ddragon";
 import type { RecentSearch } from "@/lib/hooks/use-recent-search";
 
 interface RecentSearchesProps {
@@ -32,7 +34,17 @@ export function RecentSearches({ recentSearches }: RecentSearchesProps) {
                 href={`/summoners/${s.puuid}/overview?region=${s.region}`}
                 className="flex items-center gap-3"
               >
-                <Avatar className="size-10 border border-primary/20">
+                <Avatar className="size-10 border-0">
+                  {s.profileIconId ? (
+                    <AvatarImage asChild src={getProfileIconUrl(s.profileIconId)}>
+                      <Image
+                        src={getProfileIconUrl(s.profileIconId)}
+                        alt=""
+                        width={40}
+                        height={40}
+                      />
+                    </AvatarImage>
+                  ) : null}
                   <AvatarFallback className="text-sm">
                     {s.gameName[0]?.toUpperCase() || "?"}
                   </AvatarFallback>
