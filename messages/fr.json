@@ -149,7 +149,11 @@
     "connecting": "Connexion...",
     "orContinueWith": "Ou continuer avec",
     "googleError": "Connexion Google impossible",
-    "googleNotConfigured": "non configuré"
+    "googleNotConfigured": "non configuré",
+    "riotGames": "Riot Games",
+    "riotError": "Connexion Riot Games impossible",
+    "riotDenied": "Autorisation Riot Games refusée",
+    "riotNotConfigured": "non configuré"
   },
   "signup": {
     "title": "Créer votre compte",

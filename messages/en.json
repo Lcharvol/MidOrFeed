@@ -149,7 +149,11 @@
     "connecting": "Connecting...",
     "orContinueWith": "Or continue with",
     "googleError": "Google sign-in failed",
-    "googleNotConfigured": "not configured"
+    "googleNotConfigured": "not configured",
+    "riotGames": "Riot Games",
+    "riotError": "Riot Games sign-in failed",
+    "riotDenied": "Riot Games authorization denied",
+    "riotNotConfigured": "not configured"
   },
   "signup": {
     "title": "Create Your Account",

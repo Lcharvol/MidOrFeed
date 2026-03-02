@@ -136,7 +136,7 @@ export const setAuthCookie = (
     `Path=/`,
     `Max-Age=${AUTH_COOKIE_MAX_AGE}`,
     `HttpOnly`,
-    `SameSite=Strict`,
+    `SameSite=Lax`,
   ];
 
   if (isProduction) {
@@ -164,7 +164,7 @@ export const createAuthResponse = (
     `Path=/`,
     `Max-Age=${AUTH_COOKIE_MAX_AGE}`,
     `HttpOnly`,
-    `SameSite=Strict`,
+    `SameSite=Lax`,
   ];
 
   if (isProduction) {
@@ -186,7 +186,7 @@ export const createLogoutResponse = (): NextResponse => {
     `Path=/`,
     `Max-Age=0`,
     `HttpOnly`,
-    `SameSite=Strict`,
+    `SameSite=Lax`,
   ];
 
   if (process.env.NODE_ENV === "production") {

@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { RiotSignInButton } from "@/components/RiotSignInButton";
 import {
   Card,
   CardContent,
@@ -43,6 +44,8 @@ export default function LoginPage() {
     isConfigured: isGoogleConfigured,
     isLoading: isGoogleConfigLoading,
   } = useGoogleClientId();
+  const searchParams = useSearchParams();
+
   // Redirect authenticated users away from login
   useEffect(() => {
     if (user) {
@@ -51,6 +54,23 @@ export default function LoginPage() {
   }, [user, router]);
 
   const { t } = useI18n();
+
+  // Handle RSO error query params
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (!error) return;
+    const errorMessages: Record<string, string> = {
+      riot_denied: t("login.riotDenied"),
+      riot_error: t("login.riotError"),
+      riot_not_configured: t("login.riotNotConfigured"),
+    };
+    const message = errorMessages[error];
+    if (message) {
+      toast.error(message);
+      // Clean URL without reloading
+      router.replace("/login", { scroll: false });
+    }
+  }, [searchParams, t, router]);
 
   // Create schema dynamically based on locale
   const loginSchema = z.object({
@@ -221,7 +241,7 @@ export default function LoginPage() {
                 </span>
               </div>
             </div>
-            <div className="w-full">
+            <div className="flex w-full flex-col gap-2">
               {isGoogleConfigLoading ? (
                 <Button variant="outline" className="w-full" disabled>
                   {t("common.loading")}
@@ -238,6 +258,7 @@ export default function LoginPage() {
                   Google ({t("login.googleNotConfigured")})
                 </Button>
               )}
+              <RiotSignInButton />
             </div>
             <p className="text-center text-sm text-muted-foreground">
               {t("login.noAccount")}{" "}

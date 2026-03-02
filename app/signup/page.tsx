@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { RiotSignInButton } from "@/components/RiotSignInButton";
 import {
   Card,
   CardContent,
@@ -47,12 +48,30 @@ export default function SignupPage() {
     isLoading: isGoogleConfigLoading,
   } = useGoogleClientId();
 
+  const searchParams = useSearchParams();
+
   // Redirect authenticated users away from signup
   useEffect(() => {
     if (user) {
       router.replace("/");
     }
   }, [user, router]);
+
+  // Handle RSO error query params
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (!error) return;
+    const errorMessages: Record<string, string> = {
+      riot_denied: t("login.riotDenied"),
+      riot_error: t("login.riotError"),
+      riot_not_configured: t("login.riotNotConfigured"),
+    };
+    const message = errorMessages[error];
+    if (message) {
+      toast.error(message);
+      router.replace("/signup", { scroll: false });
+    }
+  }, [searchParams, t, router]);
 
   const signupSchema = z
     .object({
@@ -343,7 +362,7 @@ export default function SignupPage() {
                 </span>
               </div>
             </div>
-            <div className="w-full">
+            <div className="flex w-full flex-col gap-2">
               {isGoogleConfigLoading ? (
                 <Button variant="outline" className="w-full" disabled>
                   {t("common.loading")}
@@ -360,6 +379,7 @@ export default function SignupPage() {
                   Google ({t("login.googleNotConfigured")})
                 </Button>
               )}
+              <RiotSignInButton />
             </div>
             <p className="text-center text-sm text-muted-foreground">
               {t("signup.hasAccount")}{" "}

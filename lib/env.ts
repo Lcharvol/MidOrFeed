@@ -18,6 +18,10 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),
 
+  // Riot Sign On (RSO) OAuth2
+  RIOT_RSO_CLIENT_ID: z.string().optional(),
+  RIOT_RSO_CLIENT_SECRET: z.string().optional(),
+
   // Environnement
   NODE_ENV: z
     .enum(["development", "production", "test"])

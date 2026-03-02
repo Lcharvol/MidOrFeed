@@ -49,6 +49,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
+      // Check for RSO user data cookie (set after Riot OAuth redirect)
+      const rsoCookie = document.cookie
+        .split("; ")
+        .find((c) => c.startsWith("rso-user-data="));
+      if (rsoCookie) {
+        const encoded = rsoCookie.split("=").slice(1).join("=");
+        const userData = JSON.parse(decodeURIComponent(encoded));
+        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+        // Clear the cookie
+        document.cookie =
+          "rso-user-data=; Path=/; Max-Age=0; SameSite=Lax";
+        setIsLoading(false);
+        return;
+      }
+
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         setUser(JSON.parse(storedUser));
