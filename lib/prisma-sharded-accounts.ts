@@ -371,8 +371,8 @@ export class ShardedLeagueAccounts {
 
       return existing;
     } else {
-      // Créer - utiliser Prisma.$queryRawUnsafe avec INSERT
-      const id = `acc_${data.puuid.slice(0, 12)}_${Date.now()}`;
+      // Créer - utiliser INSERT ON CONFLICT pour éviter les race conditions
+      const id = `acc_${data.puuid.slice(0, 12)}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
       await prisma.$executeRawUnsafe(
         `INSERT INTO "${tableName}" (
@@ -386,7 +386,15 @@ export class ShardedLeagueAccounts {
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
           $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, NOW(), NOW()
-        )`,
+        )
+        ON CONFLICT ("puuid") DO UPDATE SET
+          "riotGameName" = COALESCE(EXCLUDED."riotGameName", "${tableName}"."riotGameName"),
+          "riotTagLine" = COALESCE(EXCLUDED."riotTagLine", "${tableName}"."riotTagLine"),
+          "riotSummonerId" = COALESCE(EXCLUDED."riotSummonerId", "${tableName}"."riotSummonerId"),
+          "riotAccountId" = COALESCE(EXCLUDED."riotAccountId", "${tableName}"."riotAccountId"),
+          "summonerLevel" = COALESCE(EXCLUDED."summonerLevel", "${tableName}"."summonerLevel"),
+          "profileIconId" = COALESCE(EXCLUDED."profileIconId", "${tableName}"."profileIconId"),
+          "updatedAt" = NOW()`,
         id,
         data.puuid,
         region,

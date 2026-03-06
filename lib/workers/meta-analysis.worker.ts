@@ -74,10 +74,11 @@ export async function createMetaAnalysisWorker() {
                 const totalGames = Number(stat.total);
                 const totalWins = Number(stat.wins);
                 const winRate = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
-                const avgKDA =
+                const rawKDA =
                   stat.avgDeaths > 0
                     ? (stat.avgKills + stat.avgAssists) / stat.avgDeaths
                     : stat.avgKills + stat.avgAssists;
+                const avgKDA = Number.isFinite(rawKDA) ? rawKDA : 0;
 
                 const data = {
                   totalGames,
